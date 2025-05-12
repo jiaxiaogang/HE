@@ -1,5 +1,5 @@
 //
-//  InputFeatureModel.h
+//  InputGroupFeatureModel.h
 //  SMG_NothingIsAll
 //
 //  Created by jia on 2025/5/12.
@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface InputFeatureModel : NSObject
+@interface InputGroupFeatureModel : NSObject
 
 +(id) new:(AIKVPointer*)feature_p rect:(CGRect)rect;
 

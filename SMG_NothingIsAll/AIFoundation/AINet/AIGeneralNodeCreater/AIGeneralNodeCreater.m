@@ -71,10 +71,10 @@
  */
 +(AIGroupFeatureNode*) createGroupFeatureNode:(NSArray*)subTModels conNodes:(NSArray*)conNodes at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut isJiao:(BOOL)isJiao {
     //2. 数据准备：转content_ps。
-    NSArray *content_ps = [SMGUtils convertArr:subTModels convertBlock:^id(InputFeatureModel *obj) {
+    NSArray *content_ps = [SMGUtils convertArr:subTModels convertBlock:^id(InputGroupFeatureModel *obj) {
         return obj.feature_p;
     }];
-    NSArray *rects = [SMGUtils convertArr:subTModels convertBlock:^id(InputFeatureModel *obj) {
+    NSArray *rects = [SMGUtils convertArr:subTModels convertBlock:^id(InputGroupFeatureModel *obj) {
         return @(obj.rect);
     }];
     

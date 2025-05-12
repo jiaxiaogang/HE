@@ -348,5 +348,6 @@
  *  MARK:--------------------补上特征的conPort存rect--------------------
  */
 +(void) updateConPortRect:(AIFeatureNode*)absT conT:(AIKVPointer*)conT rect:(CGRect)rect;
++(AIPort*) getConPort:(AINodeBase*)abs con:(AIKVPointer*)con;
 
 @end

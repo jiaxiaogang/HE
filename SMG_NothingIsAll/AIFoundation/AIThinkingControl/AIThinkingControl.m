@@ -249,14 +249,27 @@ static AIThinkingControl *_instance;
     //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
     //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
     //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
+    NSMutableArray *groupTModels = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
         //用于类比的数据用完就删，避免太占空间（参考34137-TODO2）。
         model.assT.jvBuModelV2 = nil;
         
-        //TODOTOMORROW20250512：此处有absTAtAssTRect，也有assTAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用。
+        //============== 此处有absTAtAssTRect，也有assTAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
+        //1. 计算abs在ass中的位置，以及ass在proto中的位置。
+        AIPort *conPort = [AINetUtils getConPort:itemAbsT con:model.assT.p];
+        CGRect absAtAssR = conPort.rect;
+        CGRect assAtProtoR = model.assTAtProtoTRect;
+        
+        //2. 计算abs在proto中的位置。
+        CGRect absAtProtoR = absAtAssR;
+        absAtProtoR.origin.x += assAtProtoR.origin.x;
+        absAtProtoR.origin.y += assAtProtoR.origin.y;
+        
+        //3. 收集为InputGroupFeatureModel。
+        [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
     }
-    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:nil conNodes:nil at:at ds:ds isOut:false isJiao:true];
+    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIMatchModel *model in zenTiModel) {

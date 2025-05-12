@@ -1,17 +1,17 @@
 //
-//  InputFeatureModel.m
+//  InputGroupFeatureModel.m
 //  SMG_NothingIsAll
 //
 //  Created by jia on 2025/5/12.
 //  Copyright © 2025 XiaoGang. All rights reserved.
 //
 
-#import "InputFeatureModel.h"
+#import "InputGroupFeatureModel.h"
 
-@implementation InputFeatureModel
+@implementation InputGroupFeatureModel
 
 +(id) new:(AIKVPointer*)feature_p rect:(CGRect)rect {
-    InputFeatureModel *result = [[InputFeatureModel alloc] init];
+    InputGroupFeatureModel *result = [[InputGroupFeatureModel alloc] init];
     result.rect = rect;
     result.feature_p = feature_p;
     if (rect.size.width == 0 || rect.size.height == 0) {

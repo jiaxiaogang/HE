@@ -1214,13 +1214,19 @@
  */
 +(void) updateConPortRect:(AIFeatureNode*)absT conT:(AIKVPointer*)conT rect:(CGRect)rect {
     NSArray *conPorts = [AINetUtils conPorts_All:absT];
-    for (AIPort *conPort in conPorts) {
-        if ([conPort.target_p isEqual:conT]) [conPort.params setObject:@(rect) forKey:@"r"];
-        if (rect.size.width == 0 || rect.size.height == 0) {
-            ELog(@"查下这里rect尺寸为0复现时，这个尺寸为0哪来的2");
-        }
+    AIPort *conPort = [self getConPort:absT con:conT];
+    [conPort.params setObject:@(rect) forKey:@"r"];
+    if (rect.size.width == 0 || rect.size.height == 0) {
+        ELog(@"查下这里rect尺寸为0复现时，这个尺寸为0哪来的2");
     }
     [SMGUtils insertNode:absT];
+}
+
++(AIPort*) getConPort:(AINodeBase*)abs con:(AIKVPointer*)con {
+    NSArray *conPorts = [AINetUtils conPorts_All:abs];
+    return [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) {
+        return [item.target_p isEqual:con];
+    }];
 }
 
 @end

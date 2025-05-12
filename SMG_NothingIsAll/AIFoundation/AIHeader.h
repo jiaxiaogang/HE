@@ -115,7 +115,7 @@
 #import "AIRank.h"
 #import "AIFilter.h"
 #import "InputGroupValueModel.h"
-#import "InputFeatureModel.h"
+#import "InputGroupFeatureModel.h"
 #import "AIVisionAlgsModelV2.h"
 #import "AIVisionAlgsV2.h"
 
