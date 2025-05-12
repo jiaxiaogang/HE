@@ -39,6 +39,8 @@
 		081B3ADB1F6E2CCD008A7F36 /* AINet.m in Sources */ = {isa = PBXBuildFile; fileRef = 081B3ADA1F6E2CCD008A7F36 /* AINet.m */; };
 		081BD08825B94F1B003C3038 /* ReasonDemandModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 081BD08725B94F1B003C3038 /* ReasonDemandModel.m */; };
 		081BD08B25B94F24003C3038 /* PerceptDemandModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 081BD08A25B94F24003C3038 /* PerceptDemandModel.m */; };
+		081E3A2F2DD21DC000897ED0 /* AIGroupFeatureNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 081E3A2E2DD21DC000897ED0 /* AIGroupFeatureNode.m */; };
+		081E3A322DD2234000897ED0 /* InputFeatureModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 081E3A312DD2234000897ED0 /* InputFeatureModel.m */; };
 		082075F627EDFFE70005D7A8 /* TVideoWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 082075F427EDFFE70005D7A8 /* TVideoWindow.xib */; };
 		082075F727EDFFE70005D7A8 /* TVideoWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 082075F527EDFFE70005D7A8 /* TVideoWindow.m */; };
 		082104122DBDAD8900FE0794 /* ImgTrainerPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 082104112DBDAD8800FE0794 /* ImgTrainerPreview.m */; };
@@ -307,6 +309,10 @@
 		081BD08725B94F1B003C3038 /* ReasonDemandModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReasonDemandModel.m; sourceTree = "<group>"; };
 		081BD08925B94F24003C3038 /* PerceptDemandModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PerceptDemandModel.h; sourceTree = "<group>"; };
 		081BD08A25B94F24003C3038 /* PerceptDemandModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PerceptDemandModel.m; sourceTree = "<group>"; };
+		081E3A2D2DD21DC000897ED0 /* AIGroupFeatureNode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIGroupFeatureNode.h; sourceTree = "<group>"; };
+		081E3A2E2DD21DC000897ED0 /* AIGroupFeatureNode.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIGroupFeatureNode.m; sourceTree = "<group>"; };
+		081E3A302DD2234000897ED0 /* InputFeatureModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InputFeatureModel.h; sourceTree = "<group>"; };
+		081E3A312DD2234000897ED0 /* InputFeatureModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InputFeatureModel.m; sourceTree = "<group>"; };
 		082075F327EDFFE60005D7A8 /* TVideoWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TVideoWindow.h; sourceTree = "<group>"; };
 		082075F427EDFFE70005D7A8 /* TVideoWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TVideoWindow.xib; sourceTree = "<group>"; };
 		082075F527EDFFE70005D7A8 /* TVideoWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TVideoWindow.m; sourceTree = "<group>"; };
@@ -1278,6 +1284,8 @@
 			children = (
 				081321982D8A5107005B9F4B /* InputGroupValueModel.h */,
 				081321992D8A5107005B9F4B /* InputGroupValueModel.m */,
+				081E3A302DD2234000897ED0 /* InputFeatureModel.h */,
+				081E3A312DD2234000897ED0 /* InputFeatureModel.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -1833,6 +1841,8 @@
 				089E66B321B9F84500ECA28A /* AIAlgNode.m */,
 				08081DD621DD8BDC005B867F /* AIAlgNodeBase.h */,
 				08081DD721DD8BDC005B867F /* AIAlgNodeBase.m */,
+				081E3A2D2DD21DC000897ED0 /* AIGroupFeatureNode.h */,
+				081E3A2E2DD21DC000897ED0 /* AIGroupFeatureNode.m */,
 			);
 			path = AINode;
 			sourceTree = "<group>";
@@ -2210,6 +2220,7 @@
 				88C258C1209E99B00042CB6A /* AIMvFoManager.m in Sources */,
 				0843AADF281419C2002B9AA9 /* XGDebugModel.m in Sources */,
 				08366B9027DFFCC3004EBBB9 /* TOMVisionItemModel.m in Sources */,
+				081E3A322DD2234000897ED0 /* InputFeatureModel.m in Sources */,
 				08EF706421E5743F009B5194 /* OutputModel.m in Sources */,
 				0832AD4325BC5AEF001B4DB1 /* AIMatchFoModel.m in Sources */,
 				08EA48D1202932E70038B982 /* AICustomAlgs.m in Sources */,
@@ -2281,6 +2292,7 @@
 				0867338F2D850B650073DCD5 /* AIVisionAlgsV2.m in Sources */,
 				08DB40CB1F11A65E003162C8 /* TestHungryPage.m in Sources */,
 				087E7FCB258053D90097E0B9 /* NSFile+Extension.m in Sources */,
+				081E3A2F2DD21DC000897ED0 /* AIGroupFeatureNode.m in Sources */,
 				08E74B342D9380F80052D8C2 /* AIGroupValueNextVModel.m in Sources */,
 				087418D22DA893D80019908C /* AIFeatureZenTiModel.m in Sources */,
 				08250AE0228112C000FC497C /* XGWedis.m in Sources */,

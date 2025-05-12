@@ -47,6 +47,7 @@
 +(AIKVPointer*) createPointerForGroupValue:(NSString*)at dataSource:(NSString*)dataSource isOut:(BOOL)isOut;
 +(AIKVPointer*) createPointerForGroupValue:(NSInteger)pId at:(NSString*)at dataSource:(NSString*)dataSource isOut:(BOOL)isOut;
 +(AIKVPointer*) createPointerForFeature:(NSString*)at dataSource:(NSString*)dataSource isOut:(BOOL)isOut;
++(AIKVPointer*) createPointerForGroupFeature:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut;
 /**
  *  MARK:--------------------概念节点指针--------------------
  *  @param dataSource : 有三种情况;

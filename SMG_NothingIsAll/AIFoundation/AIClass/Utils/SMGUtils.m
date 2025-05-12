@@ -105,6 +105,11 @@
     return [AIKVPointer newWithPointerId:pointerId folderName:kPN_FEATURE_NODE algsType:at dataSource:dataSource isOut:isOut type:ATDefault];
 }
 
++(AIKVPointer*) createPointerForGroupFeature:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut {
+    NSInteger pointerId = [SMGUtils createPointerId:DefaultAlgsType dataSource:ds];
+    return [AIKVPointer newWithPointerId:pointerId folderName:kPN_GROUPFEATURE_NODE algsType:at dataSource:ds isOut:isOut type:ATDefault];
+}
+
 /**
  *  MARK:--------------------生成alg指针--------------------
  *  @version

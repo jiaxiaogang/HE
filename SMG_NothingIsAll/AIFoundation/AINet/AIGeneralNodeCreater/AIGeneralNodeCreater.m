@@ -64,6 +64,43 @@
 }
 
 /**
+ *  MARK:--------------------构建组特征--------------------
+ *  @version
+ *      2025.05.12: 支持构建组特征，由多个单特征组成。
+ *  @result notnull
+ */
++(AIGroupFeatureNode*) createGroupFeatureNode:(NSArray*)subTModels conNodes:(NSArray*)conNodes at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut isJiao:(BOOL)isJiao {
+    //2. 数据准备：转content_ps。
+    NSArray *content_ps = [SMGUtils convertArr:subTModels convertBlock:^id(InputFeatureModel *obj) {
+        return obj.feature_p;
+    }];
+    NSArray *rects = [SMGUtils convertArr:subTModels convertBlock:^id(InputFeatureModel *obj) {
+        return @(obj.rect);
+    }];
+    
+    //3. 生成node
+    //注意：即使content_ps一模一样，level,x,y不一样时，一样不可以复用（所以要把level,x,y生成一个字符串也用于生成header）。
+    NSString *header = [AINetUtils getFeatureNodeHeader:content_ps rects:rects];
+    
+    //4. 构建节点
+    AIGroupFeatureNode *result = [AIGeneralNodeCreater createNode:content_ps conNodes:conNodes at:at ds:ds isOut:isOut newBlock:^id{
+        AIGroupFeatureNode *newNode = [[AIGroupFeatureNode alloc] init];
+        newNode.pointer = [SMGUtils createPointerForGroupFeature:at ds:ds isOut:isOut];
+        
+        //5. 单独存level,x,y值。
+        newNode.rects = rects;
+        
+        //6. 是否交层,特征无法用长度来判断（类比时为交层，别的识别和proto构建全是似层）。
+        newNode.pointer.isJiao = isJiao;
+        
+        return newNode;
+    } header:header getRefPortsBlock:^NSArray *(AIKVPointer *item_p, NSInteger contentIndex) {
+        return [AINetUtils refPorts_All:item_p];
+    }];
+    return result;
+}
+
+/**
  *  MARK:--------------------通用节点构建器--------------------
  *  @param content_ps     : 要构建Node的content_ps (稀疏码组) notnull;
  *  @param conNodes      : 具象Node数组（可为空）。

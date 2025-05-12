@@ -92,6 +92,7 @@
 #import "AITransferPort.h"
 #import "AIGroupValueNode.h"
 #import "AIFeatureNode.h"
+#import "AIGroupFeatureNode.h"
 #import "AIAbsAlgNode.h"
 #import "AIAlgNodeBase.h"
 #import "AIFrontOrderNode.h"
@@ -114,6 +115,7 @@
 #import "AIRank.h"
 #import "AIFilter.h"
 #import "InputGroupValueModel.h"
+#import "InputFeatureModel.h"
 #import "AIVisionAlgsModelV2.h"
 #import "AIVisionAlgsV2.h"
 
@@ -147,6 +149,7 @@
 
 #define kPN_GROUPVALUE_NODE       @"PN_GROUPVALUE_NODE"
 #define kPN_FEATURE_NODE       @"PN_FEATURE_NODE"
+#define kPN_GROUPFEATURE_NODE       @"PN_GROUPFEATURE_NODE"
 
 //algNode
 #define kPN_ALG_NODE           @"PN_ALG_NODE"          //Alg节点根目录;(白质)
