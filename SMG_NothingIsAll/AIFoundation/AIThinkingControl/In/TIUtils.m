@@ -637,39 +637,36 @@
  *  @version
  *      2025.05.07: v2-支持自适应粒度。
  */
-+(NSArray*) recognitionFeature_ZenTi_V2:(AIFeatureJvBuModels*)jvBuModel {
++(NSArray*) recognitionFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT {
     //1. 数据准备
+    
+    //TODOTOMORROW20250512: 这里看下不用ZenTiModels来，但判断位置符合度等是否要用？
+    
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     AIKVPointer *protoFeature_p = [SMGUtils createPointerForFeature:@"tempAT" dataSource:@"tempDS" isOut:false];
     
     //11. 收集：每个absT分别向整体取conPorts。
-    for (AIFeatureJvBuModel *model in jvBuModel.models) {
-        AIFeatureNode *absT = model.assT;
-        NSArray *conPorts = [AINetUtils conPorts_All:absT];
+    for (NSInteger i = 0; i < protoGT.count; i++) {
+        AIKVPointer *item_p = ARR_INDEX(protoGT.content_ps, i);
+        CGRect itemAtProtoGTRect = VALTOOK(ARR_INDEX(protoGT.rects, i)).CGRectValue;
+        AIFeatureNode *itemT = [SMGUtils searchNode:item_p];
+        NSArray *refPorts = [AINetUtils refPorts_All:item_p];
         
         //TODOTOMORROW20250511: 查下整体识别v2一直输出0条。
-        //9451 [23:24:31:572 TI           TIUtils.m 641] 局部特征assT交层 GV数:10 conPorts数:1
-        //9452 [23:24:31:572 TI           TIUtils.m 641] 局部特征assT交层 GV数:10 conPorts数:1
-        //9453 [23:24:31:573 TI           TIUtils.m 641] 局部特征assT交层 GV数:8 conPorts数:1
-        //9454 [23:24:31:573 TI           TIUtils.m 641] 局部特征assT交层 GV数:11 conPorts数:1
-        //9455 [23:24:31:573 TI           TIUtils.m 641] 局部特征assT交层 GV数:8 conPorts数:2
-        //分析：查下，这里absT都只有一条conPort，现在的局部特征类比算法不和protoT类比，所以absT的gvs都来自conT中。
-        //思路：如果要识别整体特征，就必须有多个conPorts，一对多的抽具象关联才行。
-        //问题：那一对多抽具象关联应改成怎么做才行？经分析应该只是同一个特征应该有多个局部特征被识别，但识别的太少，导致提取数不足。所以转到局部特征识别算法去修这个BUG。
-        NSLog(@"局部特征assT%@层 GV数:%ld conPorts数:%ld",model.assT.isJiao?@"交":@"似",model.assT.count,conPorts.count);
+        NSLog(@"局部特征assT%@层 GV数:%ld refPorts数:%ld",item_p.isJiao?@"交":@"似",itemT.count,refPorts.count);
         
         //12. 将每个conPort先收集到zenTiModel。
-        for (AIPort *conPort in conPorts) {
+        for (AIPort *refPort in refPorts) {
             
             //13. 只要似层结果（参考34135-TODO6）。
-            if (conPort.target_p.isJiao) continue;
+            if (refPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）。
-            [zenTiModel updateItem:conPort.target_p absT:absT.p absAtConRect:conPort.rect];
+            [zenTiModel updateItem:refPort.target_p absT:item_p absAtConRect:refPort.rect];
         }
         
         //16. protoFeature单独收集（step1结束时才会存rectDic中，此时还在matchModel.rect中）。
-        [zenTiModel updateItem:protoFeature_p absT:absT.p absAtConRect:model.assTAtProtoTRect];
+        [zenTiModel updateItem:protoGT.p absT:item_p absAtConRect:itemAtProtoGTRect];
     }
     
     //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。

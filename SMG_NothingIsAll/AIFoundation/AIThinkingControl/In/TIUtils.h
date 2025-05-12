@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class AIFeatureJvBuModels,DDic;
+@class AIFeatureJvBuModels,DDic,AIGroupFeatureNode;
 @interface TIUtils : NSObject
 
 //MARK:===============================================================
@@ -16,7 +16,7 @@
 //MARK:===============================================================
 +(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts;
 +(void) recognitionFeature_JvBu_V2_Step2:(AIFeatureJvBuModels*)resultModel;
-+(NSArray*) recognitionFeature_ZenTi_V2:(AIFeatureJvBuModels*)jvBuModel;
++(NSArray*) recognitionFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT;
 
 //MARK:===============================================================
 //MARK:                     < 概念识别 >

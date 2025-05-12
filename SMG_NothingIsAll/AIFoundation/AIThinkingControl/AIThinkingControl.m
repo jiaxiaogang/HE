@@ -242,9 +242,6 @@ static AIThinkingControl *_instance;
     //23. 局部特征过滤和竞争部分。
     [TIUtils recognitionFeature_JvBu_V2_Step2:jvBuModel];
     
-    //31. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:jvBuModel];
-    
     //40. 这里先直接调用下类比，先测试下识别结果的类比。
     //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
     //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
@@ -270,6 +267,9 @@ static AIThinkingControl *_instance;
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
     }
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
+    
+    //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+    NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:protoGT];
     
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIMatchModel *model in zenTiModel) {
