@@ -361,22 +361,25 @@
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         for (AIPort *refPort in refPorts) {
             AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
-            NSInteger indexOf = [assT.content_ps indexOfObject:gModel.match_p];
-            NSValue *lastAtAssRectValue = ARR_INDEX(assT.rects, indexOf);
-            CGRect lastAtAssRect = lastAtAssRectValue.CGRectValue;
+            NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
+            if (beginAssIndex == -1) continue;
+            CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
             CGRect lastProtoRect = protoRect;
             
             //13. 防重（同一个assT也可能有多个assIndex切入点，比如“8有四处下划线”的例子，可以让它多切入点分别自举）。
-            if ([excepts objectV2ForKey1:refPort.target_p k2:gModel.match_p]) continue;
-            [excepts setObjectV2:@"" k1:refPort.target_p k2:gModel.match_p];
+            //2025.05.12: 防重程度说明如下：
+            //说明1：同一个assT有多处局部，protoRect也有多处可能调用它，它俩识别匹配时，必然是多对多的关系。
+            //说明2：而防重很难应对这种多对多的情况，最多是邻近防重，即相邻protoRect与相邻assRect只做一次有效匹配，总之这里切不可轻易过度防重。
+            //说明3：也可能这里的防重，是一个博弈平衡，过于放开性能就不佳，过于防重识别结果就片面。
+            if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
             
             //13. 把tMatchModel收集起来。
             AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT];
-            [model.bestGVs addObject:[AIFeatureJvBuItem new:protoRect matchValue:gModel.matchValue matchDegree:1 assIndex:indexOf]];
+            [model.bestGVs addObject:[AIFeatureJvBuItem new:protoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex]];
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < assT.count; i++) {
-                NSInteger curIndex = (indexOf + i) % assT.count;
+                NSInteger curIndex = (beginAssIndex + i) % assT.count;
                 AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
                 AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
                 NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
@@ -448,11 +451,18 @@
                 lastAtAssRect = curAtAssRect;
                 
                 //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
-                [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:NUMTOOK(best.v3).floatValue assIndex:curIndex]];
+                //2025.05.12: 自适应粒度局部特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
+                [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:1/*NUMTOOK(best.v3).floatValue*/ assIndex:curIndex]];
             }
+            
+            //44. 局部特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到局部特征最低标准）。
+            if (model.bestGVs.count <= 4) continue;
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
+            
+            //52. 有效局部特征条目后，才计为防重。
+            [excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
         }
     }
 }
@@ -645,7 +655,7 @@
         //9455 [23:24:31:573 TI           TIUtils.m 641] 局部特征assT交层 GV数:8 conPorts数:2
         //分析：查下，这里absT都只有一条conPort，现在的局部特征类比算法不和protoT类比，所以absT的gvs都来自conT中。
         //思路：如果要识别整体特征，就必须有多个conPorts，一对多的抽具象关联才行。
-        //问题：那一对多抽具象关联应改成怎么做才行？明天继续分析下：
+        //问题：那一对多抽具象关联应改成怎么做才行？经分析应该只是同一个特征应该有多个局部特征被识别，但识别的太少，导致提取数不足。所以转到局部特征识别算法去修这个BUG。
         NSLog(@"局部特征assT%@层 GV数:%ld conPorts数:%ld",model.assT.isJiao?@"交":@"似",model.assT.count,conPorts.count);
         
         //12. 将每个conPort先收集到zenTiModel。
