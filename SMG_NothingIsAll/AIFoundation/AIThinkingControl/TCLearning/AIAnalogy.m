@@ -520,11 +520,11 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeature_ZenTi_V2:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
++(AIFeatureNode*) analogyFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT assGT:(AIGroupFeatureNode*)assGT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
     NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
-        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchValue * obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchValue * zenTiModel.modelMatchDegree];
+        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchDegree];
     }];
     
     //2. 数据检查
@@ -544,12 +544,12 @@
     }
     
     //12. 取newAbs在protoT的rect，可以用局部特征识别结果中的itemAbsTAtProtoRect来求并集（目前不需要，因为没有protoT，也用不着这个AtProtoTRect）。
-    //CGRect newAbsAtProtoRect = CGRectNull;
-    //for (AIFeatureZenTiItem_Rect *item in sameItems) {
-    //    //取并每个itemAbsT在proto的范围。
-    //    AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.absT];
-    //    newAbsAtProtoRect = CGRectUnion(newAbsAtProtoRect, itemAbsT.jvBuModelV2.assTAtProtoTRect);
-    //}
+    CGRect newAbsAtProtoRect = CGRectNull;
+    for (AIFeatureZenTiItem_Rect *item in sameItems) {
+        //取并每个itemAbsT在proto的范围。
+        AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.fromItemT];
+        newAbsAtProtoRect = CGRectUnion(newAbsAtProtoRect, itemAbsT.jvBuModelV2.assTAtProtoTRect);
+    }
     
     //20. 根据protoT和itemAbsT的映射来实现类比抽象（参考34164-方案2）。
     //2025.05.08: 注意-我们无法从protoT来抽象gvs了，也没法从整体特征assT来抽象gvs（因为它与itemAbsT没有映射，我们无法对应到该取哪个下标）。
@@ -580,7 +580,7 @@
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:absGVModels];
     
     //33. 构建：保留下来的生成为absT。
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[assT] at:assT.at ds:assT.ds isOut:assT.isOut isJiao:true];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createGroupFeatureNode:sortGroupModels conNodes:@[protoT,assT] at:assT.at ds:assT.ds isOut:assT.isOut isJiao:true];
     
     //41. 更新logDesc。
     [absT updateLogDescDic:assT.logDesc];

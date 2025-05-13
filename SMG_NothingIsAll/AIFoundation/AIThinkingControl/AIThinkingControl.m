@@ -274,7 +274,7 @@ static AIThinkingControl *_instance;
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIMatchModel *model in zenTiModel) {
         AIFeatureNode *assT = (AIFeatureNode*)model.matchNode;
-        [AIAnalogy analogyFeature_ZenTi_V2:assT zenTiModel:assT.zenTiModel];
+        [AIAnalogy analogyFeature_ZenTi_V2:protoGT assGT:assT zenTiModel:assT.zenTiModel];
         //借助absT来类比时，复用ZenTi的识别结果model数据，并且用完就清空，防止循环野指针（参考34139-TODO3）。
         assT.zenTiModel = nil;
     }
