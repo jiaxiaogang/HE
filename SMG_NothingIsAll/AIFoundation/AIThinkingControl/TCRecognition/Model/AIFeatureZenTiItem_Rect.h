@@ -13,7 +13,7 @@
  */
 @interface AIFeatureZenTiItem_Rect : NSObject
 
-+(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong;
++(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong protoGTIndex:(NSInteger)protoGTIndex;
 
 //absT.pId
 @property (strong, nonatomic) AIKVPointer *fromItemT;
@@ -29,6 +29,8 @@
 
 //每个item激活ass的强度。
 @property (assign, nonatomic) NSInteger itemToAssStrong;
+//每个self对应的是从哪个protoGTIndex对应过来的（用于类比抽象时，找到在protoGT中的rect）。
+@property (assign, nonatomic) NSInteger protoGTIndex;
 
 /**
  *  MARK:--------------------三个要素与proto的相近度（参考34136-TODO4）--------------------

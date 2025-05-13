@@ -266,6 +266,8 @@ static AIThinkingControl *_instance;
         //3. 收集为InputGroupFeatureModel。
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
     }
+    
+    //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     
     //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
@@ -273,10 +275,10 @@ static AIThinkingControl *_instance;
     
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIMatchModel *model in zenTiModel) {
-        AIFeatureNode *assT = (AIFeatureNode*)model.matchNode;
-        [AIAnalogy analogyFeature_ZenTi_V2:protoGT assGT:assT zenTiModel:assT.zenTiModel];
+        AIGroupFeatureNode *assGT = [SMGUtils searchNode:model.match_p];
+        [AIAnalogy analogyFeature_ZenTi_V2:protoGT assGT:assGT zenTiModel:assGT.zenTiModel];
         //借助absT来类比时，复用ZenTi的识别结果model数据，并且用完就清空，防止循环野指针（参考34139-TODO3）。
-        assT.zenTiModel = nil;
+        assGT.zenTiModel = nil;
     }
 }
 

@@ -539,8 +539,8 @@
             //13. 只要似层结果（参考34135-TODO6）。
             if (conPort.target_p.isJiao) continue;
             
-            //14. 收集原始item数据（参考34136）。
-            [zenTiModel updateItem:conPort fromItemT:absT.p];
+            //14. 收集原始item数据（参考34136）(v1版本没有protoGTIndex，在类比时也不会用，直接传-1）。
+            [zenTiModel updateItem:conPort fromItemT:absT.p protoGTIndex:-1];
         }
         
         //16. protoFeature单独收集（step1结束时才会存rectDic中，此时还在matchModel.rect中）。
@@ -659,7 +659,7 @@
             //if (refPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）。
-            [zenTiModel updateItem:refPort fromItemT:item_p];
+            [zenTiModel updateItem:refPort fromItemT:item_p protoGTIndex:i];
         }
     }
     

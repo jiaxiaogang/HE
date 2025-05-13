@@ -196,6 +196,17 @@
     }];
 }
 
++(NSArray*) sortInputGroupFeatureModels:(NSArray*)models {
+    //2. 分别按x/y排序，然后转成排好的index数组返回。
+    return [SMGUtils sortSmall2Big:models compareBlock1:^double(InputGroupFeatureModel *obj) {
+        return obj.rect.origin.y;
+    } compareBlock2:^double(InputGroupFeatureModel *obj) {
+        return obj.rect.origin.x;
+    } compareBlock3:^double(InputGroupFeatureModel *obj) {
+        return -obj.rect.size.width;
+    }];
+}
+
 /**
  *  MARK:--------------------计算assTo是否在其该出现的位置（返回符合度）--------------------
  *  @desc 公式：推测下一组码的xy位置 : 与真实assTo的xy位置比较 = 得出位置符合预期程度（参考34053-新方案）。

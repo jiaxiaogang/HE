@@ -83,6 +83,7 @@
  *  MARK:--------------------按绝对xy坐标对InputGroupValueModels进行排序--------------------
  */
 +(NSArray*) sortInputGroupValueModels:(NSArray*)models;
++(NSArray*) sortInputGroupFeatureModels:(NSArray*)models;
 
 /**
  *  MARK:--------------------计算assTo是否在其该出现的位置（返回符合度）--------------------

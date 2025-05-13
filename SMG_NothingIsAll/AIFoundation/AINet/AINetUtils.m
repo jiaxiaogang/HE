@@ -1182,7 +1182,7 @@
         AIKVPointer *content_p = ARR_INDEX(tNode.content_ps, index);
         
         //11. 如果是组码。
-        if (PitIsGroupValue(content_p)) {
+        if (PitIsGroupValue(content_p) || PitIsFeature(content_p)) {
             //12. 求出当前层与最细粒度层的比例。
             CGRect itemRect = VALTOOK(ARR_INDEX(tNode.rects, index)).CGRectValue;
             resultRect = CGRectUnion(resultRect, itemRect);
