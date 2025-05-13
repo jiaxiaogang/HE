@@ -17,13 +17,13 @@
  */
 @interface AIFeatureZenTiModel : NSObject
 
-+(AIFeatureZenTiModel*) new:(AIKVPointer*)conT;
++(AIFeatureZenTiModel*) new:(AIKVPointer*)assT;
 
 //每个assT/protoT 各有一到多个absT（表示每个assT/protoT所包含的所有absT）。
 @property (strong, nonatomic) NSMutableArray *rectItems;
 
 //记录assT/protoT的地址。
-@property (strong, nonatomic) AIKVPointer *conT;
+@property (strong, nonatomic) AIKVPointer *assT;
 
 //记录当时识别时的protoT（类比时要用下）。
 @property (strong, nonatomic) AIKVPointer *protoT;
@@ -31,8 +31,8 @@
 //MARK:===============================================================
 //MARK:                     < 收集数据组 >
 //MARK:===============================================================
--(void) updateRectItem:(AIKVPointer*)absT absAtConRect:(CGRect)absAtConRect;
--(CGRect) getRectItem:(AIKVPointer*)absT;
+-(void) updateRectItem:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect;
+-(CGRect) getRectItem:(AIKVPointer*)fromItemT;
 
 //MARK:===============================================================
 //MARK:                     < 计算位置符合度组 >

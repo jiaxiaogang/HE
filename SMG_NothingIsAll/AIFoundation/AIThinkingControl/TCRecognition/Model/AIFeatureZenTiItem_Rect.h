@@ -13,13 +13,13 @@
  */
 @interface AIFeatureZenTiItem_Rect : NSObject
 
-+(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT absAtConRect:(CGRect)absAtConRect;
++(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT itemAtAssRect:(CGRect)itemAtAssRect;
 
 //absT.pId
-@property (strong, nonatomic) AIKVPointer *absT;
+@property (strong, nonatomic) AIKVPointer *fromItemT;
 
 //一直存absAtConRect不变（表示当前itemAbsT在assT中的rect）。
-@property (assign, nonatomic) CGRect absAtConRect;
+@property (assign, nonatomic) CGRect itemAtAssRect;
 
 //conPort.rect（表示absT在assT/protoT中的位置）
 //输入时=absAtConRect

@@ -10,11 +10,11 @@
 
 @implementation AIFeatureZenTiItem_Rect
 
-+(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT absAtConRect:(CGRect)absAtConRect {
++(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect {
     AIFeatureZenTiItem_Rect *result = [[AIFeatureZenTiItem_Rect alloc] init];
-    result.absT = absT;
-    result.absAtConRect = absAtConRect;
-    result.rect = absAtConRect;
+    result.fromItemT = fromItemT;
+    result.itemAtAssRect = itemAtAssRect;
+    result.rect = itemAtAssRect;
     return result;
 }
 

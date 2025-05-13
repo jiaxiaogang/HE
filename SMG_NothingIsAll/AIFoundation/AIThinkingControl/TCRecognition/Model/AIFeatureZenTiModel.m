@@ -10,9 +10,9 @@
 
 @implementation AIFeatureZenTiModel
 
-+(AIFeatureZenTiModel*) new:(AIKVPointer*)conT {
++(AIFeatureZenTiModel*) new:(AIKVPointer*)assT {
     AIFeatureZenTiModel *result = [[AIFeatureZenTiModel alloc] init];
-    result.conT = conT;
+    result.assT = assT;
     result.rectItems = [NSMutableArray new];
     return result;
 }
@@ -20,13 +20,13 @@
 //MARK:===============================================================
 //MARK:                     < 收集数据组 >
 //MARK:===============================================================
--(void) updateRectItem:(AIKVPointer*)absT absAtConRect:(CGRect)absAtConRect {
-    [self.rectItems addObject:[AIFeatureZenTiItem_Rect new:absT absAtConRect:absAtConRect]];
+-(void) updateRectItem:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect {
+    [self.rectItems addObject:[AIFeatureZenTiItem_Rect new:fromItemT itemAtAssRect:itemAtAssRect]];
 }
 
--(CGRect) getRectItem:(AIKVPointer*)absT {
+-(CGRect) getRectItem:(AIKVPointer*)fromItemT {
     for (AIFeatureZenTiItem_Rect *item in self.rectItems) {
-        if ([item.absT isEqual:absT]) return item.rect;
+        if ([item.fromItemT isEqual:fromItemT]) return item.rect;
     }
     return CGRectNull;
 }
@@ -36,7 +36,7 @@
 //MARK:===============================================================
 -(void) run4MatchDegree:(AIFeatureZenTiModel*)protoModel {
     //0. 存下protoT来，类比时要用下。
-    self.protoT = protoModel.conT;
+    self.protoT = protoModel.assT;
     
     //=============== step1: 缩放对齐（参考34136-TODO1）===============
     //1. 比例排序。
@@ -141,17 +141,18 @@
     self.protoT = protoT;
     
     //1. self就是protoT时，直接设为匹配度1。
-    if ([self.conT isEqual:protoT]) {
+    if ([self.assT isEqual:protoT]) {
         self.modelMatchValue = 1;
         return;
     }
     
     //2. 别的assT则计算综合平均匹配度。
     for (AIFeatureZenTiItem_Rect *item in self.rectItems) {
-        AIFeatureNode *absT = [SMGUtils searchNode:item.absT];
+        AIFeatureNode *absT = [SMGUtils searchNode:item.fromItemT];
         
         //3. assT与absT的匹配度 * assT与protoT的匹配度 = assT与protoT的匹配度。
-        item.itemMatchValue = [absT getConMatchValue:self.conT] * [absT getConMatchValue:protoT];
+        //TODOTOMORROW20250513: 当refPort索引组特征时，此处匹配度永远为1。
+        item.itemMatchValue = [absT getConMatchValue:self.assT] * [absT getConMatchValue:protoT];
     }
     
     //4. 求出整体特征：assT 与 protoT 的综合匹配度。
@@ -167,7 +168,7 @@
 //返回 rectItem 在 conAssT 与 protoT 的缩放比例。
 -(CGFloat) scale4RectItemAtProto:(AIFeatureZenTiModel*)protoModel rectItem:(AIFeatureZenTiItem_Rect*)rectItem {
     //1. 取出abs在proto和ass中的范围。
-    CGRect protoRect = [protoModel getRectItem:rectItem.absT];
+    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT];
     CGRect conAssRect = rectItem.rect;
     
     //2. 计算缩放scale。
@@ -177,7 +178,7 @@
 //返回 rectItem 在 conAssT 与 protoT 的deltaX偏移量。
 -(CGFloat) deltaX4RectItemAtProto:(AIFeatureZenTiModel*)protoModel rectItem:(AIFeatureZenTiItem_Rect*)rectItem {
     //1. 取出abs在proto和ass中的范围。
-    CGRect protoRect = [protoModel getRectItem:rectItem.absT];
+    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT];
     
     //2. 计算result。
     return rectItem.rect.origin.x - protoRect.origin.x;
@@ -186,7 +187,7 @@
 //返回 rectItem 在 conAssT 与 protoT 的deltaY偏移量。
 -(CGFloat) deltaY4RectItemAtProto:(AIFeatureZenTiModel*)protoModel rectItem:(AIFeatureZenTiItem_Rect*)rectItem {
     //1. 取出abs在proto和ass中的范围。
-    CGRect protoRect = [protoModel getRectItem:rectItem.absT];
+    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT];
     
     //2. 计算result。
     return rectItem.rect.origin.y - protoRect.origin.y;

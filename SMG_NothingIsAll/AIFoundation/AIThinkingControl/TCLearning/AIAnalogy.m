@@ -456,13 +456,13 @@
     CGRect newAbsAtAssRect = CGRectNull;
     for (AIFeatureZenTiItem_Rect *item in sameItems) {
         //12. 取并每个itemAbsT在assT的范围。
-        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.absAtConRect);
+        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.itemAtAssRect);
     }
     
     //20. 根据protoT和itemAbsT的映射来实现类比抽象（参考34164-方案2）。
     //2025.04.23: 修复收集到的absGVModels数竟然有达到1000的情况，改为通过protoT和itemAbsT的映射，收集protoT的gv元素做抽象。
     NSMutableArray *protoIndexes = [SMGUtils convertArr:sameItems convertItemArrBlock:^NSArray *(AIFeatureZenTiItem_Rect *item) {
-        AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.absT];
+        AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.fromItemT];
         MapModel *jvBuModel = itemAbsT.jvBuModel;
         if (!jvBuModel || ![protoT.p isEqual:jvBuModel.v2]) {
             ELog(@"Step2借助JvBuModel来找映射，找类比抽象gv元素，这里的jvBuModel都不为空才对，因为itemAbsT都是由局部特征识别来的，如果为空查下原因。");
@@ -529,7 +529,7 @@
     
     //2. 数据检查
     if ([SMGUtils filterSingleFromArr:sameItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *item) {
-        AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.absT];
+        AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.fromItemT];
         return !itemAbsT.jvBuModelV2;
     }]) {
         ELog(@"Step2借助JvBuModel来找映射，找类比抽象gv元素，这里的jvBuModel都不为空才对，因为itemAbsT都是由局部特征识别来的，如果为空查下原因。");
@@ -540,7 +540,7 @@
     CGRect newAbsAtAssRect = CGRectNull;
     for (AIFeatureZenTiItem_Rect *item in sameItems) {
         //取并每个itemAbsT在assT的范围。
-        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.absAtConRect);
+        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.itemAtAssRect);
     }
     
     //12. 取newAbs在protoT的rect，可以用局部特征识别结果中的itemAbsTAtProtoRect来求并集（目前不需要，因为没有protoT，也用不着这个AtProtoTRect）。
@@ -557,8 +557,8 @@
     //2025.05.08: 举例-说白了：从乔峰抽象的胳膊腿特征必须是乔峰的，不能是别人的。
     //21. 取出每个itemAbsT中的gv，转换成newAbsT的元素：@[InputGroupValueModel]格式（参考3413a-示图1）。
     NSMutableArray *absGVModels = [SMGUtils convertArr:sameItems convertItemArrBlock:^id(AIFeatureZenTiItem_Rect *zenTiItem) {
-        AIFeatureNode *itemAbsT = [SMGUtils searchNode:zenTiItem.absT];
-        CGRect itemAbsTAtAssRect = zenTiItem.absAtConRect;
+        AIFeatureNode *itemAbsT = [SMGUtils searchNode:zenTiItem.fromItemT];
+        CGRect itemAbsTAtAssRect = zenTiItem.itemAtAssRect;
         return [SMGUtils convertArr:itemAbsT.jvBuModelV2.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
             //22. 从itemAbsT中收集元素（参考34164-方案2）。
             AIKVPointer *itemAbsGV_p = ARR_INDEX(itemAbsT.content_ps, obj.assIndex);

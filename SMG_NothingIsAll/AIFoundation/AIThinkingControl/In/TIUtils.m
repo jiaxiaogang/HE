@@ -540,12 +540,12 @@
             if (conPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）。
-            [zenTiModel updateItem:conPort.target_p absT:absT.p absAtConRect:conPort.rect];
+            [zenTiModel updateItem:conPort.target_p fromItemT:absT.p itemAtAssRect:conPort.rect];
         }
         
         //16. protoFeature单独收集（step1结束时才会存rectDic中，此时还在matchModel.rect中）。
         CGRect rect = [AINetUtils convertPartOfFeatureContent2Rect:protoFeature contentIndexes:matchModel.indexDic.allValues];
-        [zenTiModel updateItem:protoFeature_p absT:absT.p absAtConRect:rect];
+        [zenTiModel updateItem:protoFeature_p fromItemT:absT.p itemAtAssRect:rect];
     }
     
     //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
@@ -556,7 +556,7 @@
     
     //23. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in zenTiModel.models) {
-        AIFeatureNode *assT = [SMGUtils searchNode:model.conT];
+        AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
         NSArray *absPorts = [AINetUtils absPorts_All:assT];
         NSInteger allStrong = 0, validStrong = 0;
         
@@ -585,7 +585,7 @@
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        return obj.conT;
+        return obj.assT;
     }];
     
     //34. 末尾淘汰20%被引用强度最低的。
@@ -596,7 +596,7 @@
     
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (AIFeatureZenTiModel *matchModel in resultModels) {
-        AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.conT];
+        AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.assT];
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
         [protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
@@ -607,7 +607,7 @@
         
         //43. debug
         if (Log4RecogDesc || resultModels.count > 0) NSLog(@"整体特征识别结果:T%ld%@\t（局部特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
-                                                           matchModel.conT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
+                                                           matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
                                                            matchModel.rectItems.count,assFeature.count,protoFeature.count,
                                                            matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.modelMatchConStrongRatio);
         
@@ -624,7 +624,7 @@
     
     //51. 转成AIMatchModel格式返回（识别后就用match_p,matchCount,matchValue这三个值）。
     return [SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        AIMatchModel *model = [[AIMatchModel alloc] initWithMatch_p:obj.conT];
+        AIMatchModel *model = [[AIMatchModel alloc] initWithMatch_p:obj.assT];
         model.matchCount = obj.rectItems.count;
         model.matchValue = obj.modelMatchValue;
         return model;
@@ -643,7 +643,6 @@
     //TODOTOMORROW20250512: 这里看下不用ZenTiModels来，但判断位置符合度等是否要用？
     
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
-    AIKVPointer *protoFeature_p = [SMGUtils createPointerForFeature:@"tempAT" dataSource:@"tempDS" isOut:false];
     
     //11. 收集：每个absT分别向整体取conPorts。
     for (NSInteger i = 0; i < protoGT.count; i++) {
@@ -662,30 +661,32 @@
             if (refPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）。
-            [zenTiModel updateItem:refPort.target_p absT:item_p absAtConRect:refPort.rect];
+            [zenTiModel updateItem:refPort.target_p fromItemT:item_p itemAtAssRect:refPort.rect];
         }
         
         //16. protoFeature单独收集（step1结束时才会存rectDic中，此时还在matchModel.rect中）。
-        [zenTiModel updateItem:protoGT.p absT:item_p absAtConRect:itemAtProtoGTRect];
+        [zenTiModel updateItem:protoGT.p fromItemT:item_p itemAtAssRect:itemAtProtoGTRect];
     }
     
     //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
-    [zenTiModel run4MatchDegree:protoFeature_p];
+    [zenTiModel run4MatchDegree:protoGT.p];
     
     //22. 计算：每个assT和protoT的综合匹配度。
-    [zenTiModel run4MatchValue:protoFeature_p];
+    [zenTiModel run4MatchValue:protoGT.p];
     
     //23. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in zenTiModel.models) {
-        AIFeatureNode *assT = [SMGUtils searchNode:model.conT];
+        AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
         NSArray *absPorts = [AINetUtils absPorts_All:assT];
         NSInteger allStrong = 0, validStrong = 0;
         
         //24. 显著度公式（参考34175-公式3）。
         for (AIPort *absPort in absPorts) {
             allStrong += absPort.strong.value;
-            if ([SMGUtils filterSingleFromArr:jvBuModel.models checkValid:^BOOL(AIFeatureJvBuModel *itemAbsT) {
-                return [itemAbsT.assT.p isEqual:absPort.target_p];
+            
+            //TODOTOMORROW20250513: 这里根本不是抽具象关联，所以是无法从absprots中找着显著度的，应该从refPort.strong累计来。
+            if ([SMGUtils filterSingleFromArr:protoGT.content_ps checkValid:^BOOL(AIKVPointer *itemAbsT) {
+                return [itemAbsT isEqual:absPort.target_p];
             }]) {
                 validStrong += absPort.strong.value;
             }
@@ -706,7 +707,7 @@
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        return obj.conT;
+        return obj.assT;
     }];
     
     //34. 末尾淘汰20%被引用强度最低的。
@@ -717,7 +718,7 @@
     
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (AIFeatureZenTiModel *matchModel in resultModels) {
-        AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.conT];
+        AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.assT];
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
         //[protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
@@ -728,7 +729,7 @@
         
         //43. debug
         if (Log4RecogDesc || resultModels.count > 0) NSLog(@"整体特征识别结果:T%ld%@\t（局部特征数:%ld assGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
-                                                           matchModel.conT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
+                                                           matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
                                                            matchModel.rectItems.count,assFeature.count,
                                                            matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.modelMatchConStrongRatio);
         
@@ -745,12 +746,12 @@
     
     //46. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        return obj.conT;
+        return obj.assT;
     }] protoLogDesc:nil prefix:@"整体特征"];
     
     //51. 转成AIMatchModel格式返回（识别后就用match_p,matchCount,matchValue这三个值）。
     return [SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        AIMatchModel *model = [[AIMatchModel alloc] initWithMatch_p:obj.conT];
+        AIMatchModel *model = [[AIMatchModel alloc] initWithMatch_p:obj.assT];
         model.matchCount = obj.rectItems.count;
         model.matchValue = obj.modelMatchValue;
         return model;

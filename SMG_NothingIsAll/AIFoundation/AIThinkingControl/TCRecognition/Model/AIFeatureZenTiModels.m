@@ -15,21 +15,21 @@
     return _models;
 }
 
--(AIFeatureZenTiModel*) getModelIfNullCreate:(AIKVPointer*)conT {
+-(AIFeatureZenTiModel*) getModelIfNullCreate:(AIKVPointer*)assT {
     //1. 优先找旧的。
     for (AIFeatureZenTiModel *model in self.models) {
-        if ([model.conT isEqual:conT]) return model;
+        if ([model.assT isEqual:assT]) return model;
     }
     
     //2. 找不到则新建。
-    AIFeatureZenTiModel *newModel = [AIFeatureZenTiModel new:conT];
+    AIFeatureZenTiModel *newModel = [AIFeatureZenTiModel new:assT];
     [self.models addObject:newModel];
     return newModel;
 }
 
--(void) updateItem:(AIKVPointer*)conT absT:(AIKVPointer*)absT absAtConRect:(CGRect)absAtConRect {
-    AIFeatureZenTiModel *model = [self getModelIfNullCreate:conT];
-    [model updateRectItem:absT absAtConRect:absAtConRect];
+-(void) updateItem:(AIKVPointer*)assT fromItemT:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect {
+    AIFeatureZenTiModel *model = [self getModelIfNullCreate:assT];
+    [model updateRectItem:fromItemT itemAtAssRect:itemAtAssRect];
 }
 
 /**
@@ -41,7 +41,7 @@
     
     //2. 把两个rect缩放一致（归一化），将absAtAssRect缩放成absAtProtoRect。
     for (AIFeatureZenTiModel *assModel in self.models) {
-        if ([assModel.conT isEqual:protoT]) continue;
+        if ([assModel.assT isEqual:protoT]) continue;
         
         //3. 计算assModel的位置符合度。
         [assModel run4MatchDegree:protoModel];
