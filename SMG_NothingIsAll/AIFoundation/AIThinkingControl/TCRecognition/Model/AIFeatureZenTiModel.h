@@ -48,6 +48,7 @@
 //MARK:                     < 计算所有absT与assT的综合匹配度 >
 //MARK:===============================================================
 -(void) run4MatchValue:(AIKVPointer*)protoT;
+-(void) run4MatchValueV2:(AIKVPointer*)protoT;
 @property (assign, nonatomic) CGFloat modelMatchValue;
 
 //MARK:===============================================================

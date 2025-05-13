@@ -27,5 +27,6 @@
  *  MARK:--------------------跑出综合匹配度--------------------
  */
 -(void) run4MatchValue:(AIKVPointer*)protoT;
+-(void) run4MatchValueV2:(AIKVPointer*)protoT;
 
 @end

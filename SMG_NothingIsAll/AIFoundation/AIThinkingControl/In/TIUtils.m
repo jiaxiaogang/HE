@@ -640,9 +640,6 @@
  */
 +(NSArray*) recognitionFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT {
     //1. 数据准备
-    
-    //TODOTOMORROW20250512: 这里看下不用ZenTiModels来，但判断位置符合度等是否要用？
-    
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     
     //11. 收集：每个absT分别向整体取conPorts。
@@ -670,7 +667,7 @@
     [zenTiModel run4MatchDegree:protoGT.p];
     
     //22. 计算：每个assT和protoT的综合匹配度。
-    [zenTiModel run4MatchValue:protoGT.p];
+    [zenTiModel run4MatchValueV2:protoGT.p];
     
     //23. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in zenTiModel.models) {

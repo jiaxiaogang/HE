@@ -148,17 +148,25 @@
     
     //2. 别的assT则计算综合平均匹配度。
     for (AIFeatureZenTiItem_Rect *item in self.rectItems) {
-        AIFeatureNode *absT = [SMGUtils searchNode:item.fromItemT];
+        AIFeatureNode *fromItemT = [SMGUtils searchNode:item.fromItemT];
         
         //3. assT与absT的匹配度 * assT与protoT的匹配度 = assT与protoT的匹配度。
-        //TODOTOMORROW20250513: 当refPort索引组特征时，此处匹配度永远为1。
-        item.itemMatchValue = [absT getConMatchValue:self.assT] * [absT getConMatchValue:protoT];
+        item.itemMatchValue = [fromItemT getConMatchValue:self.assT] * [fromItemT getConMatchValue:protoT];
     }
     
     //4. 求出整体特征：assT 与 protoT 的综合匹配度。
     self.modelMatchValue = self.rectItems.count == 0 ? 0 : [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
         return obj.itemMatchValue;
     }] / self.rectItems.count;
+}
+
+-(void) run4MatchValueV2:(AIKVPointer*)protoT {
+    //0. 存下protoT来，类比时要用下。
+    self.protoT = protoT;
+    
+    //4. 求出整体特征：assT 与 protoT 的综合匹配度。
+    AIGroupFeatureNode *assGT = [SMGUtils searchNode:self.assT];
+    self.modelMatchValue = assGT.count == 0 ? 0 : self.rectItems.count / assGT.count;
 }
 
 //MARK:===============================================================

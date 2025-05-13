@@ -57,4 +57,10 @@
     }
 }
 
+-(void) run4MatchValueV2:(AIKVPointer*)protoT {
+    for (AIFeatureZenTiModel *conModel in self.models) {
+        [conModel run4MatchValueV2:protoT];
+    }
+}
+
 @end
