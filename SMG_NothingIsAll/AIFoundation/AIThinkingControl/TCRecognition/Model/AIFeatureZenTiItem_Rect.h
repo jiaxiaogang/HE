@@ -13,7 +13,7 @@
  */
 @interface AIFeatureZenTiItem_Rect : NSObject
 
-+(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT itemAtAssRect:(CGRect)itemAtAssRect;
++(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong;
 
 //absT.pId
 @property (strong, nonatomic) AIKVPointer *fromItemT;
@@ -26,6 +26,9 @@
 //缩放对齐后=(x/pinJunScale, y/pinJunScale, w/pinJunScale, h/pinJunScale)
 //Delta对齐后=(x - deltaX, y - deltaY, w, h)
 @property (assign, nonatomic) CGRect rect;
+
+//每个item激活ass的强度。
+@property (assign, nonatomic) NSInteger itemToAssStrong;
 
 /**
  *  MARK:--------------------三个要素与proto的相近度（参考34136-TODO4）--------------------

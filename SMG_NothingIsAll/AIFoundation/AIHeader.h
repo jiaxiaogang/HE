@@ -231,6 +231,7 @@
 #define PitIsValue(p) [NVHeUtil isValue:p]                              //是否稀疏码
 #define PitIsGroupValue(p) [NVHeUtil isGroupValue:p]
 #define PitIsFeature(p) [NVHeUtil isFeature:p]
+#define PitIsGroupFeature(p) [NVHeUtil isGroupFeature:p]
 #define PitIsAlg(p) [NVHeUtil isAlg:p]                                  //是否概念
 #define PitIsFo(p) [NVHeUtil isFo:p]                                    //是否时序
 #define PitIsMv(p) [NVHeUtil isMv:p]                                    //是否价值

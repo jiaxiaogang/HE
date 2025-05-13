@@ -245,7 +245,7 @@
                 
                 //4. 如果是特征时，记录上level,x,y值到refPort中。
                 NSDictionary *findParams = nil;
-                if (PitIsFeature(biger_p)) {
+                if (PitIsFeature(biger_p) || PitIsGroupFeature(biger_p)) {
                     AIFeatureNode *feature = [SMGUtils searchNode:biger_p];
                     findParams = @{@"r":ARR_INDEX(feature.rects, i)};
                 }
@@ -1213,7 +1213,6 @@
  *  @desc 一般构建特征时，还没有存indexDic映射，所以在：1、构建后 2、并且设置indexDic映射后 3、再补上conPort.rect。
  */
 +(void) updateConPortRect:(AIFeatureNode*)absT conT:(AIKVPointer*)conT rect:(CGRect)rect {
-    NSArray *conPorts = [AINetUtils conPorts_All:absT];
     AIPort *conPort = [self getConPort:absT con:conT];
     [conPort.params setObject:@(rect) forKey:@"r"];
     if (rect.size.width == 0 || rect.size.height == 0) {

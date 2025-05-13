@@ -211,6 +211,10 @@
     return [kPN_FEATURE_NODE isEqualToString:node_p.folderName];
 }
 
++(BOOL) isGroupFeature:(AIKVPointer*)node_p{
+    return [kPN_GROUPFEATURE_NODE isEqualToString:node_p.folderName];
+}
+
 +(BOOL) isAlg:(AIKVPointer*)node_p{
     return [kPN_ALG_NODE isEqualToString:node_p.folderName] || [kPN_ALG_ABS_NODE isEqualToString:node_p.folderName];
 }

@@ -20,8 +20,8 @@
 //MARK:===============================================================
 //MARK:                     < 收集数据组 >
 //MARK:===============================================================
--(void) updateRectItem:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect {
-    [self.rectItems addObject:[AIFeatureZenTiItem_Rect new:fromItemT itemAtAssRect:itemAtAssRect]];
+-(void) updateRectItem:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong {
+    [self.rectItems addObject:[AIFeatureZenTiItem_Rect new:fromItemT itemAtAssRect:itemAtAssRect itemToAssStrong:itemToAssStrong]];
 }
 
 -(CGRect) getRectItem:(AIKVPointer*)fromItemT {

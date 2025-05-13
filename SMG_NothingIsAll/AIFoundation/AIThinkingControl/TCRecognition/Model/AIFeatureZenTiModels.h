@@ -16,7 +16,7 @@
 @property (strong, nonatomic) NSMutableArray *models;
 
 -(AIFeatureZenTiModel*) getModelIfNullCreate:(AIKVPointer*)assT;
--(void) updateItem:(AIKVPointer*)assT fromItemT:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect;
+-(void) updateItem:(AIPort*)assPort fromItemT:(AIKVPointer*)fromItemT;
 
 /**
  *  MARK:--------------------跑出位置符合度--------------------

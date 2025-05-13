@@ -31,7 +31,7 @@
 //MARK:===============================================================
 //MARK:                     < 收集数据组 >
 //MARK:===============================================================
--(void) updateRectItem:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect;
+-(void) updateRectItem:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong;
 -(CGRect) getRectItem:(AIKVPointer*)fromItemT;
 
 //MARK:===============================================================

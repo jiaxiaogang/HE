@@ -534,18 +534,19 @@
         for (AIPort *conPort in conPorts) {
             
             //13. protoFeature单独收集。
-            if ([conPort.target_p isEqual:protoFeature_p]) continue;
+            //if ([conPort.target_p isEqual:protoFeature_p]) continue;
             
             //13. 只要似层结果（参考34135-TODO6）。
             if (conPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）。
-            [zenTiModel updateItem:conPort.target_p fromItemT:absT.p itemAtAssRect:conPort.rect];
+            [zenTiModel updateItem:conPort fromItemT:absT.p];
         }
         
         //16. protoFeature单独收集（step1结束时才会存rectDic中，此时还在matchModel.rect中）。
-        CGRect rect = [AINetUtils convertPartOfFeatureContent2Rect:protoFeature contentIndexes:matchModel.indexDic.allValues];
-        [zenTiModel updateItem:protoFeature_p fromItemT:absT.p itemAtAssRect:rect];
+        //2025.05.13: 改回在上面的for循环中收集proto，因为我看在局部识别中，已经把rect存到conPort中了，不需要这里单独处理了。
+        //CGRect rect = [AINetUtils convertPartOfFeatureContent2Rect:protoFeature contentIndexes:matchModel.indexDic.allValues];
+        //[zenTiModel updateItem:protoFeature_p fromItemT:absT.p itemAtAssRect:rect];
     }
     
     //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
@@ -647,25 +648,22 @@
     //11. 收集：每个absT分别向整体取conPorts。
     for (NSInteger i = 0; i < protoGT.count; i++) {
         AIKVPointer *item_p = ARR_INDEX(protoGT.content_ps, i);
-        CGRect itemAtProtoGTRect = VALTOOK(ARR_INDEX(protoGT.rects, i)).CGRectValue;
-        AIFeatureNode *itemT = [SMGUtils searchNode:item_p];
         NSArray *refPorts = [AINetUtils refPorts_All:item_p];
         
         //TODOTOMORROW20250511: 查下整体识别v2一直输出0条。
+        AIFeatureNode *itemT = [SMGUtils searchNode:item_p];
         NSLog(@"局部特征assT%@层 GV数:%ld refPorts数:%ld",item_p.isJiao?@"交":@"似",itemT.count,refPorts.count);
         
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
             
             //13. 只要似层结果（参考34135-TODO6）。
-            if (refPort.target_p.isJiao) continue;
+            //2025.05.13: 只有预测时，才只保留似层，反馈等还是需要交层的，在特征识别时当然就应该打开交层。
+            //if (refPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）。
-            [zenTiModel updateItem:refPort.target_p fromItemT:item_p itemAtAssRect:refPort.rect];
+            [zenTiModel updateItem:refPort fromItemT:item_p];
         }
-        
-        //16. protoFeature单独收集（step1结束时才会存rectDic中，此时还在matchModel.rect中）。
-        [zenTiModel updateItem:protoGT.p fromItemT:item_p itemAtAssRect:itemAtProtoGTRect];
     }
     
     //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
@@ -677,21 +675,12 @@
     //23. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in zenTiModel.models) {
         AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
-        NSArray *absPorts = [AINetUtils absPorts_All:assT];
-        NSInteger allStrong = 0, validStrong = 0;
-        
         //24. 显著度公式（参考34175-公式3）。
-        for (AIPort *absPort in absPorts) {
-            allStrong += absPort.strong.value;
-            
-            //TODOTOMORROW20250513: 这里根本不是抽具象关联，所以是无法从absprots中找着显著度的，应该从refPort.strong累计来。
-            if ([SMGUtils filterSingleFromArr:protoGT.content_ps checkValid:^BOOL(AIKVPointer *itemAbsT) {
-                return [itemAbsT isEqual:absPort.target_p];
-            }]) {
-                validStrong += absPort.strong.value;
-            }
-        }
-        model.modelMatchConStrongRatio = allStrong > 0 ? validStrong / (float)allStrong : 0;
+        //2025.05.13: contentPorts没有存强度，所以此处改为用assT.count做分母，实测下应该没问题（这应该会容易激活抽象组特征，后续看边测再边调整这些参数竞争公式）。
+        NSInteger validStrong = [SMGUtils sumOfArr:model.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
+            return obj.itemToAssStrong;
+        }];
+        model.modelMatchConStrongRatio = assT.count > 0 ? validStrong / (float)assT.count : 0;
     }
     
     //31. 无效过滤器1、位置符合度=0排除掉。
@@ -719,8 +708,8 @@
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (AIFeatureZenTiModel *matchModel in resultModels) {
         AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.assT];
-        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
-        //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
+        //2025.05.13: 组特征识别需要refStrong做竞争。
+        [AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
         //[protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
         //[protoFeature updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
         

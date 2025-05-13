@@ -32,6 +32,7 @@
 +(BOOL) isValue:(AIKVPointer*)node_p;
 +(BOOL) isGroupValue:(AIKVPointer*)node_p;
 +(BOOL) isFeature:(AIKVPointer*)node_p;
++(BOOL) isGroupFeature:(AIKVPointer*)node_p;
 +(BOOL) isAlg:(AIKVPointer*)node_p;
 +(BOOL) isFo:(AIKVPointer*)node_p;
 +(BOOL) isMv:(AIKVPointer*)node_p;

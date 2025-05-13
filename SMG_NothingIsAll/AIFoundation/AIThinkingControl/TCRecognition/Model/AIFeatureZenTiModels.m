@@ -27,9 +27,9 @@
     return newModel;
 }
 
--(void) updateItem:(AIKVPointer*)assT fromItemT:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect {
-    AIFeatureZenTiModel *model = [self getModelIfNullCreate:assT];
-    [model updateRectItem:fromItemT itemAtAssRect:itemAtAssRect];
+-(void) updateItem:(AIPort*)assPort fromItemT:(AIKVPointer*)fromItemT {
+    AIFeatureZenTiModel *model = [self getModelIfNullCreate:assPort.target_p];
+    [model updateRectItem:fromItemT itemAtAssRect:assPort.rect itemToAssStrong:assPort.strong.value];
 }
 
 /**
