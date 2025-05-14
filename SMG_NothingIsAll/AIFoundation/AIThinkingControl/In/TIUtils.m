@@ -726,7 +726,7 @@
         for (AIKVPointer *item_p in assFeature.content_ps) {
             AIFeatureNode *item = [SMGUtils searchNode:item_p];
             [SMGUtils runByMainQueue:^{
-                [theApp.imgTrainerView setDataForFeature:item lab:STRFORMAT(@"GT.itemT%ld",assFeature.pId)];
+                [theApp.imgTrainerView setDataForFeature:item lab:STRFORMAT(@"GT.itemT%ld",item.pId)];
             }];
         }
         [SMGUtils runByMainQueue:^{
