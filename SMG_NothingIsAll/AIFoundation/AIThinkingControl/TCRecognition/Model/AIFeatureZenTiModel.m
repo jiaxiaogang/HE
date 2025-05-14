@@ -166,7 +166,7 @@
     
     //4. 求出整体特征：assT 与 protoT 的综合匹配度。
     AIGroupFeatureNode *assGT = [SMGUtils searchNode:self.assT];
-    self.modelMatchValue = assGT.count == 0 ? 0 : self.rectItems.count / assGT.count;
+    self.modelMatchValue = assGT.count == 0 ? 0 : self.rectItems.count / (float)assGT.count;
 }
 
 //MARK:===============================================================

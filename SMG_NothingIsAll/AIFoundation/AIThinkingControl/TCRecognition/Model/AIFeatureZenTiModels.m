@@ -38,11 +38,8 @@
 -(void) run4MatchDegree:(AIKVPointer*)protoT {
     //1. 求出比例。
     AIFeatureZenTiModel *protoModel = [self getModelIfNullCreate:protoT];
-    
-    //2. 把两个rect缩放一致（归一化），将absAtAssRect缩放成absAtProtoRect。
     for (AIFeatureZenTiModel *assModel in self.models) {
         if ([assModel.assT isEqual:protoT]) continue;
-        
         //3. 计算assModel的位置符合度。
         [assModel run4MatchDegree:protoModel];
     }
@@ -58,8 +55,11 @@
 }
 
 -(void) run4MatchValueV2:(AIKVPointer*)protoT {
-    for (AIFeatureZenTiModel *conModel in self.models) {
-        [conModel run4MatchValueV2:protoT];
+    //1. 求出比例。
+    for (AIFeatureZenTiModel *assModel in self.models) {
+        if ([assModel.assT isEqual:protoT]) continue;
+        //3. 计算assModel的匹配度。
+        [assModel run4MatchValueV2:protoT];
     }
 }
 

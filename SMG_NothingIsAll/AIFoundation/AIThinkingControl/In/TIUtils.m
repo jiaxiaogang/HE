@@ -669,6 +669,8 @@
     //22. 计算：每个assT和protoT的综合匹配度。
     [zenTiModel run4MatchValueV2:protoGT.p];
     
+    //TODOTOMORROW20250514: 此处有rectItems.count>assT.count的情况。导致符合度>1，
+    
     //23. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in zenTiModel.models) {
         AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
