@@ -56,41 +56,48 @@
     
 }
 
--(void) setData:(AIFeatureNode*)tNode contentIndexes:(NSArray*)contentIndexes lab:(NSString*)lab {
+-(void) setData:(AIFeatureNode*)tNode lab:(NSString*)lab {
+    //1. 数据准备。
+    NSArray *gvModels = [tNode convert2GVModels];
+    NSString *at = tNode.at;
+    NSString *ds = tNode.ds;
     
     //2. 三个单码索引序列。
-    NSDictionary *directionDataDic = [AINetIndexUtils searchDataDic:tNode.p.algsType ds:STRFORMAT(@"%@_direction",tNode.p.dataSource) isOut:false];
-    NSDictionary *diffDataDic = [AINetIndexUtils searchDataDic:tNode.p.algsType ds:STRFORMAT(@"%@_diff",tNode.p.dataSource) isOut:false];
-    NSDictionary *junDataDic = [AINetIndexUtils searchDataDic:tNode.p.algsType ds:STRFORMAT(@"%@_jun",tNode.p.dataSource) isOut:false];
+    NSDictionary *directionDataDic = [AINetIndexUtils searchDataDic:at ds:STRFORMAT(@"%@_direction",ds) isOut:false];
+    NSDictionary *diffDataDic = [AINetIndexUtils searchDataDic:at ds:STRFORMAT(@"%@_diff",ds) isOut:false];
+    NSDictionary *junDataDic = [AINetIndexUtils searchDataDic:at ds:STRFORMAT(@"%@_jun",ds) isOut:false];
     
     //3. 按level从粗到细排序（因为细粒度优先级更高：粗粒度先显示，细粒度再复写它）（参考34176-TODO2.1）。
-    contentIndexes = [SMGUtils sortBig2Small:contentIndexes compareBlock:^double(NSNumber *contentIndex) {
-        NSValue *rect = ARR_INDEX(tNode.rects,contentIndex.integerValue);
-        return rect.CGRectValue.size.width;
+    gvModels = [SMGUtils sortBig2Small:gvModels compareBlock:^double(InputGroupValueModel *item) {
+        return item.rect.size.width;
+    }];
+    
+    //4. 过滤重复。
+    gvModels = [SMGUtils removeRepeat:gvModels convertBlock:^id(InputGroupValueModel *obj) {
+        return @(obj.rect);
     }];
     
     //11. 每个rect分别可视化。
-    for (NSNumber *contentIndex in contentIndexes) {
-        AIKVPointer *gv_p = ARR_INDEX(tNode.content_ps, contentIndex.integerValue);
-        NSValue *rect = ARR_INDEX(tNode.rects, contentIndex.integerValue);
+    for (InputGroupValueModel *item in gvModels) {
+        AIKVPointer *gv_p = item.groupValue_p;
         
         //12. 三个索引的指针地址：均值、差值、方向。
         AIGroupValueNode *gvNode = [SMGUtils searchNode:gv_p];
         AIKVPointer *directionV_p = [SMGUtils filterSingleFromArr:gvNode.content_ps checkValid:^BOOL(AIKVPointer *item) {
-            return [item.dataSource isEqualToString:STRFORMAT(@"%@_direction",tNode.p.dataSource)];
+            return [item.dataSource isEqualToString:STRFORMAT(@"%@_direction",ds)];
         }];
         AIKVPointer *diffV_p = [SMGUtils filterSingleFromArr:gvNode.content_ps checkValid:^BOOL(AIKVPointer *item) {
-            return [item.dataSource isEqualToString:STRFORMAT(@"%@_diff",tNode.p.dataSource)];
+            return [item.dataSource isEqualToString:STRFORMAT(@"%@_diff",ds)];
         }];
         AIKVPointer *junV_p = [SMGUtils filterSingleFromArr:gvNode.content_ps checkValid:^BOOL(AIKVPointer *item) {
-            return [item.dataSource isEqualToString:STRFORMAT(@"%@_jun",tNode.p.dataSource)];
+            return [item.dataSource isEqualToString:STRFORMAT(@"%@_jun",ds)];
         }];
         double directionData = [NUMTOOK([AINetIndex getData:directionV_p fromDataDic:directionDataDic]) doubleValue];
         double diffData = [NUMTOOK([AINetIndex getData:diffV_p fromDataDic:diffDataDic]) doubleValue];
         double junData = [NUMTOOK([AINetIndex getData:junV_p fromDataDic:junDataDic]) doubleValue];
         
         //13. 用这三个索引值，生成当前特征通道的九宫每像素色值。
-        [self createItemLight:rect.CGRectValue directionData:directionData diffData:diffData junData:junData ds:tNode.p.dataSource];
+        [self createItemLight:item.rect directionData:directionData diffData:diffData junData:junData ds:ds];
     }
     
     //21. lab

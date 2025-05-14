@@ -226,9 +226,7 @@
     }
     
     //2. 并更新显示;
-    NSMutableArray *collectProtoIndexs = [NSMutableArray new];
-    for (NSInteger i = 0; i < tNode.count; i++) [collectProtoIndexs addObject:@(i)];
-    [preview setData:tNode contentIndexes:collectProtoIndexs lab:lab];
+    [preview setData:tNode lab:lab];
 }
 
 -(void) addAlgToPreview:(AINodeBase*)algNode lab:(NSString*)lab{
@@ -244,9 +242,7 @@
     
     for (AIKVPointer *itemT_p in algNode.content_ps) {
         AIFeatureNode *itemT = [SMGUtils searchNode:itemT_p];
-        NSMutableArray *collectProtoIndexs = [NSMutableArray new];
-        for (NSInteger i = 0; i < itemT.count; i++) [collectProtoIndexs addObject:@(i)];
-        [preview setData:itemT contentIndexes:collectProtoIndexs lab:lab];
+        [preview setData:itemT lab:lab];
     }
 }
 

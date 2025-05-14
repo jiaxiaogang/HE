@@ -84,6 +84,14 @@
     return [self.degreeDDic objectForKey:@(assPId)];
 }
 
+-(NSArray*) convert2GVModels {
+    NSMutableArray *gvModels = [NSMutableArray new];
+    for (NSInteger i = 0; i < self.count; i++) {
+        [gvModels addObject:[InputGroupValueModel new:ARR_INDEX(self.content_ps, i) rect:VALTOOK(ARR_INDEX(self.rects, i)).CGRectValue]];
+    }
+    return gvModels;
+}
+
 /**
  *  MARK:--------------------NSCoding--------------------
  */

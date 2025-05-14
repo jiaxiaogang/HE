@@ -647,10 +647,6 @@
         AIKVPointer *item_p = ARR_INDEX(protoGT.content_ps, i);
         NSArray *refPorts = [AINetUtils refPorts_All:item_p];
         
-        //TODOTOMORROW20250511: 查下整体识别v2一直输出0条。
-        AIFeatureNode *itemT = [SMGUtils searchNode:item_p];
-        NSLog(@"局部特征assT%@层 GV数:%ld refPorts数:%ld",item_p.isJiao?@"交":@"似",itemT.count,refPorts.count);
-        
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
             
@@ -727,9 +723,9 @@
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
         //45. 整体特征识别结果可视化（参考34176）。
-        //[SMGUtils runByMainQueue:^{
-        //    [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId)];
-        //}];
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId)];
+        }];
     }
     
     //46. debugLog
