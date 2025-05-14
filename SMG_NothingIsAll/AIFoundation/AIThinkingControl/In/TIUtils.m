@@ -691,7 +691,7 @@
     //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
     resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchValue * obj.modelMatchConStrongRatio;
-    }], 0, resultModels.count * 0.5);
+    }], 0, MAX(3, resultModels.count * 0.5));
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
@@ -702,7 +702,7 @@
     //TODO: 应该可以去掉了，因为显著度已经做为竞争因子了，此处不再有什么意义（随后测下明确没用就删掉）。
     resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
         return obj.rectItems.count;
-    }], 0, MAX(resultModels.count * 0.9f, 10));
+    }], 0, MAX(resultModels.count * 0.9f, 3));
     
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (AIFeatureZenTiModel *matchModel in resultModels) {
