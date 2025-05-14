@@ -404,6 +404,15 @@
         CGRect assRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
         assRect.origin.x -= absAtAssRect.origin.x;
         assRect.origin.y -= absAtAssRect.origin.y;
+        
+        //TODOTOMORROW20250514
+        if (assRect.size.width != assRect.size.height) {
+            NSLog(@"");
+        }
+        
+        if (assRect.size.width == 0 || assRect.size.height == 0) {
+            NSLog(@"");
+        }
         return [InputGroupValueModel new:assGV_p rect:assRect];
     }];
     if (jvBuModel.matchValue == 1 && absGVModels.count == 0) {
@@ -436,9 +445,9 @@
     
     //41. debugLog
     NSLog(@"局部识别类比结果absT长度：%ld",absT.count);
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"局部特征类比absT%ld",absT.pId)];
-    }];
+    //[SMGUtils runByMainQueue:^{
+    //    [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"局部特征类比absT%ld",absT.pId)];
+    //}];
     if (Log4Ana || true) NSLog(@"\n局部特征类比结果(%@) ======================> \n局部Ass特征T%ld（GV数:%ld）%@\n%@局部Abs特征T%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
                                absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));

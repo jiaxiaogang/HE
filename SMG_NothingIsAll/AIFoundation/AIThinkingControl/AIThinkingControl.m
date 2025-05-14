@@ -586,11 +586,11 @@ static AIThinkingControl *_instance;
     NSLog(@"%@ H ====================================\n%@",logDesc,FeatureDesc(hFeature.p,1));
     NSLog(@"%@ S ====================================\n%@",logDesc,FeatureDesc(sFeature.p,1));
     NSLog(@"%@ B ====================================\n%@",logDesc,FeatureDesc(bFeature.p,1));
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:hFeature lab:STRFORMAT(@"入%@T%ld",hFeature.ds,hFeature.pId)];
-        [theApp.imgTrainerView setDataForFeature:sFeature lab:STRFORMAT(@"入%@T%ld",sFeature.ds,sFeature.pId)];
-        [theApp.imgTrainerView setDataForFeature:bFeature lab:STRFORMAT(@"入%@T%ld",bFeature.ds,bFeature.pId)];
-    }];
+    //[SMGUtils runByMainQueue:^{
+    //    [theApp.imgTrainerView setDataForFeature:hFeature lab:STRFORMAT(@"入%@T%ld",hFeature.ds,hFeature.pId)];
+    //    [theApp.imgTrainerView setDataForFeature:sFeature lab:STRFORMAT(@"入%@T%ld",sFeature.ds,sFeature.pId)];
+    //    [theApp.imgTrainerView setDataForFeature:bFeature lab:STRFORMAT(@"入%@T%ld",bFeature.ds,bFeature.pId)];
+    //}];
     return [MapModel newWithV1:hFeature v2:sFeature v3:bFeature];
 }
 

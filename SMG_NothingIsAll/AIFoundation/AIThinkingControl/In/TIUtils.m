@@ -505,9 +505,9 @@
         //52. debug
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"局部特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree);
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:model.assT lab:STRFORMAT(@"局部%@T%ld",model.assT.ds,model.assT.pId)];
-        }];
+        //[SMGUtils runByMainQueue:^{
+        //    [theApp.imgTrainerView setDataForFeature:model.assT lab:STRFORMAT(@"局部%@T%ld",model.assT.ds,model.assT.pId)];
+        //}];
     }
     
     //61. debugLog
@@ -723,8 +723,14 @@
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
         //45. 整体特征识别结果可视化（参考34176）。
+        for (AIKVPointer *item_p in assFeature.content_ps) {
+            AIFeatureNode *item = [SMGUtils searchNode:item_p];
+            [SMGUtils runByMainQueue:^{
+                [theApp.imgTrainerView setDataForFeature:item lab:STRFORMAT(@"GT.itemT%ld",assFeature.pId)];
+            }];
+        }
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId)];
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"GT.groupT%ld",assFeature.pId)];
         }];
     }
     
