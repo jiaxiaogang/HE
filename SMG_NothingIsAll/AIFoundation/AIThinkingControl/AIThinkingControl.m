@@ -249,8 +249,6 @@ static AIThinkingControl *_instance;
     NSMutableArray *groupTModels = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
-        //用于类比的数据用完就删，避免太占空间（参考34137-TODO2）。
-        model.assT.jvBuModelV2 = nil;
         
         //============== 此处有absTAtAssTRect，也有assTAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
         //1. 计算abs在ass中的位置，以及ass在proto中的位置。
@@ -264,21 +262,24 @@ static AIThinkingControl *_instance;
         absAtProtoR.origin.y += assAtProtoR.origin.y;
         
         //3. 收集为InputGroupFeatureModel。
+        if (absAtProtoR.size.width == 0 || absAtProtoR.size.height == 0) {
+            //查下如果abs就是ass的时候，absAtAssR是多少，这里能不能取到？
+            AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
+            NSLog(@"TODOTOMORROW20250515: 查下此处为什么有wh=0的情况，经查是类比后absT就是assT，二者没有抽具象关联");
+        }
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
     }
     
     //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
+    [protoGT updateLogDescItem:logDesc];
     
     //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:protoGT];
     
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
-    for (AIMatchModel *model in zenTiModel) {
-        AIGroupFeatureNode *assGT = [SMGUtils searchNode:model.match_p];
-        [AIAnalogy analogyFeature_ZenTi_V2:protoGT assGT:assGT zenTiModel:assGT.zenTiModel];
-        //借助absT来类比时，复用ZenTi的识别结果model数据，并且用完就清空，防止循环野指针（参考34139-TODO3）。
-        assGT.zenTiModel = nil;
+    for (AIFeatureZenTiModel *model in zenTiModel) {
+        [AIAnalogy analogyFeature_ZenTi_V2:protoGT assModel:model];
     }
 }
 

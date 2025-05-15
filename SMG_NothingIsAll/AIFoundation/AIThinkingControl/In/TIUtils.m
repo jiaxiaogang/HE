@@ -361,6 +361,7 @@
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         for (AIPort *refPort in refPorts) {
             AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
+            if (!assT) continue;
             NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
             if (beginAssIndex == -1) continue;
             CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
@@ -497,7 +498,7 @@
         //[protoFeature updateMatchValue:assFeature matchValue:matchModel.matchValue];
         //[protoFeature updateMatchDegree:assFeature matchDegree:matchModel.matchDegree];
         //[AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
-        model.assT.jvBuModelV2 = model;
+        //model.assT.jvBuModelV2 = model;
         //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
         //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
@@ -709,7 +710,7 @@
         //[protoFeature updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
         
         //42. 存下来zenTiModel用于类比时用一下（参考34139-TODO3）。
-        assFeature.zenTiModel = matchModel;
+        //assFeature.zenTiModel = matchModel;
         
         //43. debug
         if (Log4RecogDesc || resultModels.count > 0) NSLog(@"整体特征识别结果:T%ld%@\t（局部特征数:%ld assGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
@@ -739,13 +740,8 @@
         return obj.assT;
     }] protoLogDesc:nil prefix:@"整体特征"];
     
-    //51. 转成AIMatchModel格式返回（识别后就用match_p,matchCount,matchValue这三个值）。
-    return [SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        AIMatchModel *model = [[AIMatchModel alloc] initWithMatch_p:obj.assT];
-        model.matchCount = obj.rectItems.count;
-        model.matchValue = obj.modelMatchValue;
-        return model;
-    }];
+    //51. 直接返回：zenTiModel在类比时还要用。
+    return resultModels;
 }
 
 //MARK:===============================================================

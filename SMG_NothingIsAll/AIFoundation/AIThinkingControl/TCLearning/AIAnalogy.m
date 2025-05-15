@@ -529,22 +529,14 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT assGT:(AIGroupFeatureNode*)assGT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
++(AIFeatureNode*) analogyFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT assModel:(AIFeatureZenTiModel*)assModel {
+    AIGroupFeatureNode *assGT = [SMGUtils searchNode:assModel.assT];
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
-        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchDegree];
+    NSArray *sameItems = [SMGUtils filterArr:assModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
+        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree bigerMatchValue:assModel.modelMatchDegree];
     }];
     if (!ARRISOK(sameItems)) return nil;
-    
-    //2. 数据检查
-    if ([SMGUtils filterSingleFromArr:sameItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *item) {
-        AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.fromItemT];
-        return !itemAbsT.jvBuModelV2;
-    }]) {
-        ELog(@"Step2借助JvBuModel来找映射，找类比抽象gv元素，这里的jvBuModel都不为空才对，因为itemAbsT都是由局部特征识别来的，如果为空查下原因。");
-        return nil;
-    }
     
     //11. 将每个absT指向具象整体特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
     CGRect newAbsAtAssRect = CGRectNull;
@@ -573,6 +565,7 @@
     
     //41. 更新logDesc。
     [absGT updateLogDescDic:assGT.logDesc];
+    [absGT updateLogDescDic:protoGT.logDesc];
     
     //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。
     //42. 记录匹配度：根据每个匹配itemAbsT，来计算平均匹配度。

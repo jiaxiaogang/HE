@@ -1228,4 +1228,11 @@
     }];
 }
 
+//+(AIPort*) getRefPort:(AIKVPointer*)sub biger:(AIKVPointer*)biger {
+//    NSArray *refPorts = [AINetUtils refPorts_All:sub];
+//    return [SMGUtils filterSingleFromArr:refPorts checkValid:^BOOL(AIPort *item) {
+//        return [item.target_p isEqual:biger];
+//    }];
+//}
+
 @end
