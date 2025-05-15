@@ -404,14 +404,8 @@
         CGRect assRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
         assRect.origin.x -= absAtAssRect.origin.x;
         assRect.origin.y -= absAtAssRect.origin.y;
-        
-        //TODOTOMORROW20250514
-        if (assRect.size.width != assRect.size.height) {
-            NSLog(@"");
-        }
-        
-        if (assRect.size.width == 0 || assRect.size.height == 0) {
-            NSLog(@"");
+        if (assRect.size.width != assRect.size.height || assRect.size.width == 0 || assRect.size.height == 0) {
+            ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
         }
         return [InputGroupValueModel new:assGV_p rect:assRect];
     }];

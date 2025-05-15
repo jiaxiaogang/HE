@@ -252,8 +252,12 @@ static AIThinkingControl *_instance;
         
         //============== 此处有absTAtAssTRect，也有assTAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
         //1. 计算abs在ass中的位置，以及ass在proto中的位置。
-        AIPort *conPort = [AINetUtils getConPort:itemAbsT con:model.assT.p];
-        CGRect absAtAssR = conPort.rect;
+        CGRect absAtAssR = CGRectNull;
+        if ([itemAbsT.p isEqual:model.assT.p]) {
+            absAtAssR = [AINetUtils convertAllOfFeatureContent2Rect:itemAbsT];
+        } else {
+            absAtAssR = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
+        }
         CGRect assAtProtoR = model.assTAtProtoTRect;
         
         //2. 计算abs在proto中的位置。
@@ -262,11 +266,6 @@ static AIThinkingControl *_instance;
         absAtProtoR.origin.y += assAtProtoR.origin.y;
         
         //3. 收集为InputGroupFeatureModel。
-        if (absAtProtoR.size.width == 0 || absAtProtoR.size.height == 0) {
-            //查下如果abs就是ass的时候，absAtAssR是多少，这里能不能取到？
-            AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
-            NSLog(@"TODOTOMORROW20250515: 查下此处为什么有wh=0的情况，经查是类比后absT就是assT，二者没有抽具象关联");
-        }
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
     }
     

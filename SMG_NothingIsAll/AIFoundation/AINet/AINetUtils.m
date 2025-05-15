@@ -1170,8 +1170,15 @@
 
 /**
  *  MARK:--------------------把特征的一部分content转成rect（参考34133-TODO1）--------------------
- *  @param contentIndexes 将每个absT转成protoT的rect（根据indexDic可以取得protoIndexes，然后根据这个下标组来取并集区域范围）。
+ *  _param contentIndexes 将每个absT转成protoT的rect（根据indexDic可以取得protoIndexes，然后根据这个下标组来取并集区域范围）。
  */
++(CGRect) convertAllOfFeatureContent2Rect:(AIFeatureNode*)tNode {
+    NSMutableArray *indexes = [NSMutableArray new];
+    for (NSInteger i = 0; i < tNode.count; i++) {
+        [indexes addObject:@(i)];
+    }
+    return [self convertPartOfFeatureContent2Rect:tNode contentIndexes:indexes];
+}
 +(CGRect) convertPartOfFeatureContent2Rect:(AIFeatureNode*)tNode contentIndexes:(NSArray*)contentIndexes {
     //1. 数据准备。
     CGRect resultRect = CGRectNull;
@@ -1214,6 +1221,7 @@
  */
 +(void) updateConPortRect:(AIFeatureNode*)absT conT:(AIKVPointer*)conT rect:(CGRect)rect {
     AIPort *conPort = [self getConPort:absT con:conT];
+    if (!conPort) return;
     [conPort.params setObject:@(rect) forKey:@"r"];
     if (rect.size.width == 0 || rect.size.height == 0) {
         ELog(@"查下这里rect尺寸为0复现时，这个尺寸为0哪来的2");

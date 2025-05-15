@@ -337,6 +337,7 @@
 /**
  *  MARK:--------------------把特征的一部分content转成rect（参考34133-TODO1）--------------------
  */
++(CGRect) convertAllOfFeatureContent2Rect:(AIFeatureNode*)tNode;
 +(CGRect) convertPartOfFeatureContent2Rect:(AIFeatureNode*)tNode contentIndexes:(NSArray*)contentIndexes;
 
 /**
