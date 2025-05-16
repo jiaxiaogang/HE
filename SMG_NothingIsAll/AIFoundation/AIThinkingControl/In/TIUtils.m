@@ -657,6 +657,29 @@
             
             //14. 收集原始item数据（参考34136）。
             [zenTiModel updateItem:refPort fromItemT:item_p protoGTIndex:i];
+            
+            
+            NSLog(@"%ld %@ %ld",i,@(refPort.rect),refPort.target_p.pointerId);
+            //TODOTOMORROW20250516: 重影问题：如下日志，可见GT中有重复，或者说，没在一个位置上，又是同一个单特征。
+            //  > 并且是批量的错位，如下有3条错位重复，所以7条assT却索引出10处rectItems。
+            //  > 分析下，这咱情况，是否在单特征识别时，就加以分组防重？因为这里其实相当于是“重影“。
+            //0 NSRect: {{0, 0}, {27, 27}} 1118
+            //1 NSRect: {{0, 0}, {27, 27}} 1118
+            //2 NSRect: {{0, 0}, {15, 3}} 1118 错位
+            //2 NSRect: {{3, 12}, {15, 3}} 1118 错位
+            //2 NSRect: {{3, 12}, {15, 3}} 1089
+            //3 NSRect: {{0, 0}, {15, 3}} 1118 错位
+            //3 NSRect: {{3, 12}, {15, 3}} 1118 错位
+            //3 NSRect: {{3, 12}, {15, 3}} 1089
+            //4 NSRect: {{0, 9}, {18, 9}} 1118
+            //5 NSRect: {{0, 0}, {15, 3}} 1118 错位
+            //5 NSRect: {{3, 12}, {15, 3}} 1118 错位
+            //5 NSRect: {{3, 12}, {15, 3}} 1089
+            //6 NSRect: {{0, 18}, {21, 9}} 1118
+            // rectItem数:10 assT数:7 protoGT数:7
+            
+            
+            
         }
     }
     
@@ -671,6 +694,10 @@
     //23. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in zenTiModel.models) {
         AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
+        if (model.rectItems.count > assT.count) {
+            NSLog(@"rectItem数:%ld assT数:%ld protoGT数:%ld",model.rectItems.count,assT.count,protoGT.count);
+            NSLog(@"");
+        }
         //24. 显著度公式（参考34175-公式3）。
         //2025.05.13: contentPorts没有存强度，所以此处改为用assT.count做分母，实测下应该没问题（这应该会容易激活抽象组特征，后续看边测再边调整这些参数竞争公式）。
         NSInteger validStrong = [SMGUtils sumOfArr:model.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
