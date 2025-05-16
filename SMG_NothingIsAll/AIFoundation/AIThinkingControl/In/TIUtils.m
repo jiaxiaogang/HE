@@ -650,6 +650,7 @@
         
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
+            if ([refPort.target_p isEqual:protoGT.p]) continue;
             
             //13. 只要似层结果（参考34135-TODO6）。
             //2025.05.13: 只有预测时，才只保留似层，反馈等还是需要交层的，在特征识别时当然就应该打开交层。
@@ -659,26 +660,16 @@
             [zenTiModel updateItem:refPort fromItemT:item_p protoGTIndex:i];
             
             
-            NSLog(@"%ld %@ %ld",i,@(refPort.rect),refPort.target_p.pointerId);
+            NSLog(@"protoGT:%ld %ld refRect:%@ assGT:%ld",protoGT.pId,i,@(refPort.rect),refPort.target_p.pointerId);
             //TODOTOMORROW20250516: 重影问题：如下日志，可见GT中有重复，或者说，没在一个位置上，又是同一个单特征。
             //  > 并且是批量的错位，如下有3条错位重复，所以7条assT却索引出10处rectItems。
             //  > 分析下，这咱情况，是否在单特征识别时，就加以分组防重？因为这里其实相当于是“重影“。
-            //0 NSRect: {{0, 0}, {27, 27}} 1118
-            //1 NSRect: {{0, 0}, {27, 27}} 1118
-            //2 NSRect: {{0, 0}, {15, 3}} 1118 错位
-            //2 NSRect: {{3, 12}, {15, 3}} 1118 错位
-            //2 NSRect: {{3, 12}, {15, 3}} 1089
-            //3 NSRect: {{0, 0}, {15, 3}} 1118 错位
-            //3 NSRect: {{3, 12}, {15, 3}} 1118 错位
-            //3 NSRect: {{3, 12}, {15, 3}} 1089
-            //4 NSRect: {{0, 9}, {18, 9}} 1118
-            //5 NSRect: {{0, 0}, {15, 3}} 1118 错位
-            //5 NSRect: {{3, 12}, {15, 3}} 1118 错位
-            //5 NSRect: {{3, 12}, {15, 3}} 1089
-            //6 NSRect: {{0, 18}, {21, 9}} 1118
-            // rectItem数:10 assT数:7 protoGT数:7
-            
-            
+            //  > 如下：明明三条都指向一条，没防重？protoGT三个方块，assGT一个。
+            //  > 那么：此处多条指向同一个assT的同一个assIndex时，它其实是冲突的，这几个应该竞争一下，只保留最优best那一个。
+            //protoGT:1318 2 refRect:NSRect: {{3, 12}, {15, 3}} assGT:1289
+            //protoGT:1318 3 refRect:NSRect: {{3, 12}, {15, 3}} assGT:1289
+            //protoGT:1318 5 refRect:NSRect: {{3, 12}, {15, 3}} assGT:1289
+            //rectItem数:3 assT数:1 protoGT数:7
             
         }
     }
