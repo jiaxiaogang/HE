@@ -668,6 +668,7 @@
             //  > 如下：明明三条都指向一条，没防重？protoGT三个方块，assGT一个。
             //  > 那么：此处多条指向同一个assT的同一个assIndex时，它其实是冲突的，这几个应该竞争一下，只保留最优best那一个。
             //  > 方案：到run4MatchDegree中，对deltaX和deltaY排序，把最近的做为best留下。
+            //  > 方案2：如果同一个subT指向同一个groupT.同一个itemT，此时为什么在GT中的rect一致，但refPort.rect却不一样呢？要不统一表征一下，这样就可以防重了。
             //protoGT1722 protoItem:3 T1690 NSRect: {{0, 0}, {15, 3}} refRect:NSRect: {{3, 12}, {15, 3}} assGT:1691
             //protoGT1722 protoItem:6 T1690 NSRect: {{3, 12}, {15, 3}} refRect:NSRect: {{3, 12}, {15, 3}} assGT:1691
             //rectItem数:2 assT数:1 protoGT数:8
