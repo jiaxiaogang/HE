@@ -74,6 +74,11 @@
     //有序：为增加特征content_ps的有序性：对groupModels进行排序（特征的content是有序的，所以要先排下序）。
     subTModels = [ThinkingUtils sortInputGroupFeatureModels:subTModels];
     
+    //2. 数据准备：subTModels防重。
+    subTModels = [SMGUtils removeRepeat:subTModels convertBlock:^id(InputGroupFeatureModel *obj) {
+        return STRFORMAT(@"%ld_%@",obj.feature_p.pointerId,@(obj.rect));
+    }];
+    
     //2. 数据准备：转content_ps。
     NSArray *content_ps = [SMGUtils convertArr:subTModels convertBlock:^id(InputGroupFeatureModel *obj) {
         return obj.feature_p;

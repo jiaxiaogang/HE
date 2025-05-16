@@ -646,6 +646,7 @@
     //11. 收集：每个absT分别向整体取conPorts。
     for (NSInteger i = 0; i < protoGT.count; i++) {
         AIKVPointer *item_p = ARR_INDEX(protoGT.content_ps, i);
+        NSValue *itemRect = ARR_INDEX(protoGT.rects, i);
         NSArray *refPorts = [AINetUtils refPorts_All:item_p];
         
         //12. 将每个conPort先收集到zenTiModel。
@@ -660,17 +661,16 @@
             [zenTiModel updateItem:refPort fromItemT:item_p protoGTIndex:i];
             
             
-            NSLog(@"protoGT:%ld %ld refRect:%@ assGT:%ld",protoGT.pId,i,@(refPort.rect),refPort.target_p.pointerId);
+            NSLog(@"protoGT%ld protoItem:%ld T%ld %@ refRect:%@ assGT:%ld",protoGT.pId,i,item_p.pointerId,itemRect,@(refPort.rect),refPort.target_p.pointerId);
             //TODOTOMORROW20250516: 重影问题：如下日志，可见GT中有重复，或者说，没在一个位置上，又是同一个单特征。
             //  > 并且是批量的错位，如下有3条错位重复，所以7条assT却索引出10处rectItems。
             //  > 分析下，这咱情况，是否在单特征识别时，就加以分组防重？因为这里其实相当于是“重影“。
             //  > 如下：明明三条都指向一条，没防重？protoGT三个方块，assGT一个。
             //  > 那么：此处多条指向同一个assT的同一个assIndex时，它其实是冲突的，这几个应该竞争一下，只保留最优best那一个。
-            //protoGT:1318 2 refRect:NSRect: {{3, 12}, {15, 3}} assGT:1289
-            //protoGT:1318 3 refRect:NSRect: {{3, 12}, {15, 3}} assGT:1289
-            //protoGT:1318 5 refRect:NSRect: {{3, 12}, {15, 3}} assGT:1289
-            //rectItem数:3 assT数:1 protoGT数:7
-            
+            //  > 方案：到run4MatchDegree中，对deltaX和deltaY排序，把最近的做为best留下。
+            //protoGT1722 protoItem:3 T1690 NSRect: {{0, 0}, {15, 3}} refRect:NSRect: {{3, 12}, {15, 3}} assGT:1691
+            //protoGT1722 protoItem:6 T1690 NSRect: {{3, 12}, {15, 3}} refRect:NSRect: {{3, 12}, {15, 3}} assGT:1691
+            //rectItem数:2 assT数:1 protoGT数:8
         }
     }
     
