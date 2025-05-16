@@ -273,6 +273,17 @@ static AIThinkingControl *_instance;
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     [protoGT updateLogDescItem:logDesc];
     
+    
+    for (NSInteger i = 0; i < protoGT.count; i++) {
+        AIKVPointer *item = ARR_INDEX(protoGT.content_ps, i);
+        NSValue *itemRect = ARR_INDEX(protoGT.rects, i);
+        AIPort *refPort = [AINetUtils getRefPort:item biger:protoGT.p refRect:itemRect.CGRectValue];
+        NSLog(@"aaaaa2 subT%ld:targetT%ld > %@ : %@",item.pointerId,protoGT.pId,itemRect,@(refPort.rect));
+        if (![itemRect isEqual:@(refPort.rect)]) {
+            NSLog(@"");
+        }
+    }
+    
     //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:protoGT];
     

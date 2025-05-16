@@ -557,6 +557,13 @@
     //33. 构建：保留下来的生成为absT。
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:absTModels conNodes:@[protoGT,assGT] at:assGT.at ds:assGT.ds isOut:assGT.isOut isJiao:true];
     
+    for (NSInteger i = 0; i < absGT.count; i++) {
+        AIKVPointer *item = ARR_INDEX(absGT.content_ps, i);
+        NSValue *itemRect = ARR_INDEX(absGT.rects, i);
+        AIPort *refPort = [AINetUtils getRefPort:item biger:absGT.p refRect:itemRect.CGRectValue];
+        NSLog(@"aaaaa1 %ld:%ld > %@ : %@",item.pointerId,absGT.pId,itemRect,@(refPort.rect));
+    }
+    
     //41. 更新logDesc。
     [absGT updateLogDescDic:assGT.logDesc];
     [absGT updateLogDescDic:protoGT.logDesc];

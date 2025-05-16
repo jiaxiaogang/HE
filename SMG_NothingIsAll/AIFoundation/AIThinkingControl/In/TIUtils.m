@@ -661,14 +661,16 @@
             [zenTiModel updateItem:refPort fromItemT:item_p protoGTIndex:i];
             
             
-            NSLog(@"protoGT%ld protoItem:%ld T%ld %@ refRect:%@ assGT:%ld",protoGT.pId,i,item_p.pointerId,itemRect,@(refPort.rect),refPort.target_p.pointerId);
+            NSLog(@"protoGT%ld protoItem:%ld T%ld 在ProtoGT范围%@ 在assGT范围:%@ assGT:%ld",protoGT.pId,i,item_p.pointerId,itemRect,@(refPort.rect),refPort.target_p.pointerId);
             //TODOTOMORROW20250516: 重影问题：如下日志，可见GT中有重复，或者说，没在一个位置上，又是同一个单特征。
             //  > 并且是批量的错位，如下有3条错位重复，所以7条assT却索引出10处rectItems。
             //  > 分析下，这咱情况，是否在单特征识别时，就加以分组防重？因为这里其实相当于是“重影“。
             //  > 如下：明明三条都指向一条，没防重？protoGT三个方块，assGT一个。
             //  > 那么：此处多条指向同一个assT的同一个assIndex时，它其实是冲突的，这几个应该竞争一下，只保留最优best那一个。
-            //  > 方案：到run4MatchDegree中，对deltaX和deltaY排序，把最近的做为best留下。
+            //  > 方案1：到run4MatchDegree中，对deltaX和deltaY排序，把最近的做为best留下。
             //  > 方案2：如果同一个subT指向同一个groupT.同一个itemT，此时为什么在GT中的rect一致，但refPort.rect却不一样呢？要不统一表征一下，这样就可以防重了。
+            //      > 此处是在protoGT中的位置不同，比如0的左上角和右下角的两个上划线就是一样的只是位置不同，而在assGT中指向同一个元素，所以范围也是一模一样的。
+            //  > 抉择：只能选回方案1了，方案2不可行，方案1是可行的。
             //protoGT1722 protoItem:3 T1690 NSRect: {{0, 0}, {15, 3}} refRect:NSRect: {{3, 12}, {15, 3}} assGT:1691
             //protoGT1722 protoItem:6 T1690 NSRect: {{3, 12}, {15, 3}} refRect:NSRect: {{3, 12}, {15, 3}} assGT:1691
             //rectItem数:2 assT数:1 protoGT数:8

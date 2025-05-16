@@ -350,6 +350,6 @@
  */
 +(void) updateConPortRect:(AIFeatureNode*)absT conT:(AIKVPointer*)conT rect:(CGRect)rect;
 +(AIPort*) getConPort:(AINodeBase*)abs con:(AIKVPointer*)con;
-//+(AIPort*) getRefPort:(AIKVPointer*)sub biger:(AIKVPointer*)biger;
++(AIPort*) getRefPort:(AIKVPointer*)sub biger:(AIKVPointer*)biger refRect:(CGRect)refRect;
 
 @end

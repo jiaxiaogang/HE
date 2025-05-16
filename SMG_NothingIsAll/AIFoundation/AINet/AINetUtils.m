@@ -411,8 +411,13 @@
     NSArray *cp = [fromPorts copy];
     for (AIPort *port in cp) {
         if ([port.target_p isEqual:pointer]) {
-            //T不判断params，同一个抽象T在同一个具象T之中的Rect是一样的。
-            if (PitIsFeature(pointer) || [port.params isEqual:DICTOOK(findParams)]) {
+            //2025.04.18: bugfix：修复特征conPorts有重复的问题（T不判断params，同一个抽象T在同一个具象T之中的Rect是一样的）。
+            //2025.05.16: 同一个T在ref或con中的位置并不一样，比如分形的特征，可能各种匹配上，但rect各不相同。
+            if (/*PitIsFeature(pointer) || */[port.params isEqual:DICTOOK(findParams)]) {
+                if (port.params.count > 0) {
+                    NSLog(@"aaaaa3 find targetT%ld %@ %@",port.target_p.pointerId,port.params,DICTOOK(findParams));
+                    NSLog(@"TODOTOMORROW20250516");
+                }
                 return port;
             }
         }
@@ -1236,11 +1241,11 @@
     }];
 }
 
-//+(AIPort*) getRefPort:(AIKVPointer*)sub biger:(AIKVPointer*)biger {
-//    NSArray *refPorts = [AINetUtils refPorts_All:sub];
-//    return [SMGUtils filterSingleFromArr:refPorts checkValid:^BOOL(AIPort *item) {
-//        return [item.target_p isEqual:biger];
-//    }];
-//}
++(AIPort*) getRefPort:(AIKVPointer*)sub biger:(AIKVPointer*)biger refRect:(CGRect)refRect {
+    NSArray *refPorts = [AINetUtils refPorts_All:sub];
+    return [SMGUtils filterSingleFromArr:refPorts checkValid:^BOOL(AIPort *item) {
+        return [item.target_p isEqual:biger] && CGRectEqualToRect(item.rect, refRect);
+    }];
+}
 
 @end
