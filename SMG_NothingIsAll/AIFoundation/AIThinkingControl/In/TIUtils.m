@@ -651,7 +651,7 @@
         
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
-            if ([refPort.target_p isEqual:protoGT.p]) continue;
+            //if ([refPort.target_p isEqual:protoGT.p]) continue;
             
             //13. 只要似层结果（参考34135-TODO6）。
             //2025.05.13: 只有预测时，才只保留似层，反馈等还是需要交层的，在特征识别时当然就应该打开交层。
@@ -659,27 +659,23 @@
             
             //14. 收集原始item数据（参考34136）。
             [zenTiModel updateItem:refPort fromItemT:item_p protoGTIndex:i];
-            NSLog(@"protoGT%ld.protoIndex:%ld=T%ld 在ProtoGT范围%@ 在assGT:%ld的范围:%@",protoGT.pId,i,item_p.pointerId,itemRect,refPort.target_p.pointerId,@(refPort.rect));
-        }
-    }
-    
-    for (AIFeatureZenTiModel *model in zenTiModel.models) {
-        AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
-        if (model.rectItems.count > assT.count) {
-            NSLog(@"rectItem数:%ld assT数:%ld protoGT数:%ld",model.rectItems.count,assT.count,protoGT.count);
+            //NSLog(@"protoGT%ld.protoIndex:%ld=T%ld 在ProtoGT范围%@ 在assGT:%ld的范围:%@",protoGT.pId,i,item_p.pointerId,itemRect,refPort.target_p.pointerId,@(refPort.rect));
         }
     }
     
     //20. 防重：protoGT有多条元素，指向同一条assT的同一个元素时，此方法用于防重。
     [zenTiModel run4BestRemoveRepeat:protoGT.p];
     
+    for (AIFeatureZenTiModel *model in zenTiModel.models) {
+        AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
+        NSLog(@"rectItem数:%ld assT数:%ld protoGT数:%ld",model.rectItems.count,assT.count,protoGT.count);
+    }
+    
     //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
     [zenTiModel run4MatchDegree:protoGT.p];
     
     //22. 计算：每个assT和protoT的综合匹配度。
     [zenTiModel run4MatchValueV2:protoGT.p];
-    
-    //TODOTOMORROW20250514: 此处有rectItems.count>assT.count的情况。导致符合度>1，
     
     //23. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in zenTiModel.models) {

@@ -414,9 +414,6 @@
             //2025.04.18: bugfix：修复特征conPorts有重复的问题（T不判断params，同一个抽象T在同一个具象T之中的Rect是一样的）。
             //2025.05.16: 同一个T在ref或con中的位置并不一样，比如分形的特征，可能各种匹配上，但rect各不相同。
             if (/*PitIsFeature(pointer) || */[port.params isEqual:DICTOOK(findParams)]) {
-                if (port.params.count > 0) {
-                    NSLog(@"2025.05.27后可删aaaaa3 find targetT%ld %@ %@",port.target_p.pointerId,port.params,DICTOOK(findParams));
-                }
                 return port;
             }
         }
