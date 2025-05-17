@@ -32,6 +32,38 @@
 }
 
 //MARK:===============================================================
+//MARK:                     < 位置符合度竞争防重 >
+//MARK:===============================================================
+
+/**
+ *  MARK:--------------------组特征rectItems重复问题：位置符合度竞争防重（参考35034）--------------------
+ *  @desc 方法说明：该方法，用best竞争解决重影问题（参考35034）。
+ *  @desc 问题说明：有时protoGT中多个item会指向assGT同一个item，比如protoGT为0时，其左上角(proto2)和右下角(proto5)都是上斜线，可能同时匹配到assGT中的(ass2)左上角。
+ *  @desc 方案说明：但这两个匹配只有一个位置符合度更好，本方法即用于通过位置符合度竞争，保留best一条。
+ */
+-(void) run4BestRemoveRepeat:(AIFeatureZenTiModel*)protoModel {
+    //1. 计算符合度。
+    [self run4MatchDegree:protoModel];
+    
+    //2. 多个protoGT.item指向同一个rectItem时，进行防重。
+    NSArray *sort = [SMGUtils sortBig2Small:self.rectItems compareBlock:^double(AIFeatureZenTiItem_Rect *obj) {
+        return obj.itemMatchDegree;
+    }];
+    NSArray *removeRepeat = [SMGUtils removeRepeat:sort convertBlock:^id(AIFeatureZenTiItem_Rect *obj) {
+        return @(obj.itemAtAssRect);
+    }];
+    
+    //3. 保留防重后的结果。
+    [self.rectItems removeAllObjects];
+    [self.rectItems addObjectsFromArray:removeRepeat];
+    
+    //4. 恢复原状。
+    for (AIFeatureZenTiItem_Rect *item in self.rectItems) {
+        item.rect = item.itemAtAssRect;
+    }
+}
+
+//MARK:===============================================================
 //MARK:                     < 计算位置符合度组 >
 //MARK:===============================================================
 -(void) run4MatchDegree:(AIFeatureZenTiModel*)protoModel {

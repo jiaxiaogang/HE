@@ -561,7 +561,7 @@
         AIKVPointer *item = ARR_INDEX(absGT.content_ps, i);
         NSValue *itemRect = ARR_INDEX(absGT.rects, i);
         AIPort *refPort = [AINetUtils getRefPort:item biger:absGT.p refRect:itemRect.CGRectValue];
-        NSLog(@"aaaaa1 %ld:%ld > %@ : %@",item.pointerId,absGT.pId,itemRect,@(refPort.rect));
+        NSLog(@"2025.05.27后可删aaaaa1 %ld:%ld > %@ : %@",item.pointerId,absGT.pId,itemRect,@(refPort.rect));
     }
     
     //41. 更新logDesc。

@@ -33,6 +33,17 @@
 }
 
 /**
+ *  MARK:--------------------组特征rectItems重复问题：位置符合度竞争防重（参考35034）--------------------
+ */
+-(void) run4BestRemoveRepeat:(AIKVPointer*)protoT {
+    AIFeatureZenTiModel *protoModel = [self getModelIfNullCreate:protoT];
+    for (AIFeatureZenTiModel *assModel in self.models) {
+        if ([assModel.assT isEqual:protoT]) continue;
+        [assModel run4BestRemoveRepeat:protoModel];
+    }
+}
+
+/**
  *  MARK:--------------------跑出位置符合度--------------------
  */
 -(void) run4MatchDegree:(AIKVPointer*)protoT {

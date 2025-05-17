@@ -19,6 +19,11 @@
 -(void) updateItem:(AIPort*)assPort fromItemT:(AIKVPointer*)fromItemT protoGTIndex:(NSInteger)protoGTIndex;
 
 /**
+ *  MARK:--------------------组特征rectItems重复问题：位置符合度竞争防重（参考35034）--------------------
+ */
+-(void) run4BestRemoveRepeat:(AIKVPointer*)protoT;
+
+/**
  *  MARK:--------------------跑出位置符合度--------------------
  */
 -(void) run4MatchDegree:(AIKVPointer*)protoT;

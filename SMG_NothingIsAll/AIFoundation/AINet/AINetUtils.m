@@ -415,8 +415,7 @@
             //2025.05.16: 同一个T在ref或con中的位置并不一样，比如分形的特征，可能各种匹配上，但rect各不相同。
             if (/*PitIsFeature(pointer) || */[port.params isEqual:DICTOOK(findParams)]) {
                 if (port.params.count > 0) {
-                    NSLog(@"aaaaa3 find targetT%ld %@ %@",port.target_p.pointerId,port.params,DICTOOK(findParams));
-                    NSLog(@"TODOTOMORROW20250516");
+                    NSLog(@"2025.05.27后可删aaaaa3 find targetT%ld %@ %@",port.target_p.pointerId,port.params,DICTOOK(findParams));
                 }
                 return port;
             }

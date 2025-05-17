@@ -278,9 +278,9 @@ static AIThinkingControl *_instance;
         AIKVPointer *item = ARR_INDEX(protoGT.content_ps, i);
         NSValue *itemRect = ARR_INDEX(protoGT.rects, i);
         AIPort *refPort = [AINetUtils getRefPort:item biger:protoGT.p refRect:itemRect.CGRectValue];
-        NSLog(@"aaaaa2 subT%ld:targetT%ld > %@ : %@",item.pointerId,protoGT.pId,itemRect,@(refPort.rect));
+        NSLog(@"2025.05.27后可删aaaaa2 subT%ld:targetT%ld > %@ : %@",item.pointerId,protoGT.pId,itemRect,@(refPort.rect));
         if (![itemRect isEqual:@(refPort.rect)]) {
-            NSLog(@"");
+            NSLog(@"2025.05.27后可删");
         }
     }
     
