@@ -332,6 +332,7 @@
 }
 
 +(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts rectExcept:(NSMutableDictionary*)rectExcept {
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     AIFeatureJvBuModels *resultModel = decoratorJvBuModel;
     //1. 单码排序。
     NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
@@ -346,10 +347,12 @@
         CGFloat value = NUMTOOK(obj.v2).floatValue;
         return STRFORMAT(@"%@_%.2f",obj.v1,value);
     }]);
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     //4. 组码识别
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.3 minLimit:3 forProtoGV:nil];
     }];
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //5. rectExcept防重 & 更新（参考35041-TODO4）。
     NSArray *exceptGVs = [ThinkingUtils getRectExceptGV_ps:protoRect rectExcept:rectExcept];
@@ -360,22 +363,29 @@
     [rectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
         return obj.match_p;
     }] forKey:@(protoRect)];
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
         //12. 把rectExcept的gvs防重下。
         if ([exceptGVs containsObject:gModel.match_p]) continue;
+        AddDebugCodeBlock_KeyV2(@"自适应粒度");
         
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
+        AddDebugCodeBlock_KeyV2(@"自适应粒度");
         for (AIPort *refPort in refPorts) {
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             if (!assT) continue;
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
             if (beginAssIndex == -1) continue;
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
             CGRect lastProtoRect = protoRect;
             
@@ -385,16 +395,20 @@
             //说明2：而防重很难应对这种多对多的情况，最多是邻近防重，即相邻protoRect与相邻assRect只做一次有效匹配，总之这里切不可轻易过度防重。
             //说明3：也可能这里的防重，是一个博弈平衡，过于放开性能就不佳，过于防重识别结果就片面。
             if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             
             //13. 把tMatchModel收集起来。
             AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT];
             [model.bestGVs addObject:[AIFeatureJvBuItem new:protoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex]];
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < assT.count; i++) {
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
                 AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
                 AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
                 CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
                 
@@ -418,7 +432,9 @@
                 //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
                 NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
                 MapModel *best = nil;
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 for (NSNumber *item in scales) {
+                    AddDebugCodeBlock_KeyV2(@"自适应粒度");
                     CGFloat scale = item.floatValue;
                     //32. 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
                     //x = anchorX + (CGRectGetMidX(curProtoRect) - anchorX) * scale - curProtoRect.size.width * scale * 0.5;
@@ -426,14 +442,17 @@
                                                           (1 - scale) * anchorY + defaultCurProtoRect.origin.y * scale,
                                                           defaultCurProtoRect.size.width * scale,
                                                           defaultCurProtoRect.size.height * scale);
+                    AddDebugCodeBlock_KeyV2(@"自适应粒度");//计数:138677 均耗:0.05 = 总耗:6847 读:0 写:0
                     
                     //33. 切出当前gv：九宫。
                     //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
                     //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
                     //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
                     NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:checkCurProtoRect];
+                    AddDebugCodeBlock_KeyV2(@"自适应粒度");
                     if (!ARRISOK(subDots)) continue;
                     NSDictionary *protoGVIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+                    AddDebugCodeBlock_KeyV2(@"自适应粒度");//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
                     
                     //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
                     CGFloat curGMatchValue = 1;
@@ -443,12 +462,15 @@
                         CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:nil];
                         curGMatchValue *= vMatchValue;
                     }
+                    AddDebugCodeBlock_KeyV2(@"自适应粒度");
                     
                     //35. 保留最匹配的一条。
                     if (!best || NUMTOOK(best.v1).floatValue < curGMatchValue) {
                         best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale)];
                     }
+                    AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 }
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 //41. 有中断匹配不上的gv，直接计为自举审核失败。
                 //2025.05.10: 这里要注意冷启，如果有条中断立马就停，那像虚线画的图就没法识别到了，还是先去掉>0.1的判断。
                 //2025.05.10: gv太多了，如果中断还继续，性能极大浪费，也会导致真正后来者准确时，却失去自举的机会（虚线画的图也是在宏观一级层面识别它，而非虚线层面）。
@@ -466,7 +488,9 @@
                 //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
                 //2025.05.12: 自适应粒度局部特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
                 [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:1/*NUMTOOK(best.v3).floatValue*/ assIndex:curIndex]];
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
             }
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             
             //44. 局部特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到局部特征最低标准）。
             if (model.bestGVs.count <= 4) continue;
@@ -476,8 +500,11 @@
             
             //52. 有效局部特征条目后，才计为防重。
             [excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
         }
+        AddDebugCodeBlock_KeyV2(@"自适应粒度");
     }
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
 }
 
 +(void) recognitionFeature_JvBu_V2_Step2:(AIFeatureJvBuModels*)resultModel {

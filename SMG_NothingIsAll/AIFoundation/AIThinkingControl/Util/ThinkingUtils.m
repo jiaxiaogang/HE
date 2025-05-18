@@ -399,7 +399,7 @@
         CGFloat newArea = newRect.size.width * newRect.size.height;
         CGFloat oldArea = oldRect.size.width * oldRect.size.height;
         CGFloat unionArea = newArea + oldArea - intersectArea;
-        if (unionArea > 0 && intersectArea / unionArea > 0.7f) {
+        if (unionArea > 0 && intersectArea / unionArea > 0.3f) {
             [result addObjectsFromArray:[rectExcept objectForKey:key]];
         }
     }

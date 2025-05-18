@@ -211,22 +211,22 @@ static AIThinkingControl *_instance;
 
 -(void) commitInputWithSplitV2_Single:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     //1. 对未切粒度的color字典进行自适应粒度并识别。
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     NSMutableDictionary *rectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     DDic *excepts = [DDic new];
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     while (dotSize > 1) {
-        AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+        AddDebugCodeBlock_KeyV2(@"自适应粒度");
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
         for (NSInteger startX = 0; startX < length; startX++) {
-            AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
             for (NSInteger startY = 0; startY < length; startY++) {
-                AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
                 //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在局部特征识别算法中实现防重的）。
                 CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
@@ -235,31 +235,23 @@ static AIThinkingControl *_instance;
                 NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3)];
                 if (!ARRISOK(subDots)) continue;
                 NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-                AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
-                
-                
-                
-                //TODOTOMORROW20250517: 分析下此处怎么复用缓存，优化性能。
-                //subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{
-                //    return [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts];
-                //}];
-                
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 
                 //21. 局部识别特征：通过组码识别。
                 [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts rectExcept:rectExcept];
-                AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+                AddDebugCodeBlock_KeyV2(@"自适应粒度");
             }
-            AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+            AddDebugCodeBlock_KeyV2(@"自适应粒度");
         }
-        AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+        AddDebugCodeBlock_KeyV2(@"自适应粒度");
         //22. 下一层粒度（再/1.3倍）。
         dotSize /= 1.3f;
     }
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //23. 局部特征过滤和竞争部分。
     [TIUtils recognitionFeature_JvBu_V2_Step2:jvBuModel];
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //40. 这里先直接调用下类比，先测试下识别结果的类比。
     //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
@@ -267,7 +259,7 @@ static AIThinkingControl *_instance;
     //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
     NSMutableArray *groupTModels = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
-        AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+        AddDebugCodeBlock_KeyV2(@"自适应粒度");
         AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
         
         //============== 此处有absTAtAssTRect，也有assTAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
@@ -288,12 +280,12 @@ static AIThinkingControl *_instance;
         //3. 收集为InputGroupFeatureModel。
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
     }
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     [protoGT updateLogDescItem:logDesc];
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     
     for (NSInteger i = 0; i < protoGT.count; i++) {
@@ -305,17 +297,17 @@ static AIThinkingControl *_instance;
             NSLog(@"2025.05.27后可删");
         }
     }
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:protoGT];
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIFeatureZenTiModel *model in zenTiModel) {
         [AIAnalogy analogyFeature_ZenTi_V2:protoGT assModel:model];
     }
-    AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
+    AddDebugCodeBlock_KeyV2(@"自适应粒度");
     PrintDebugCodeBlock_Key(@"自适应粒度");
 }
 
