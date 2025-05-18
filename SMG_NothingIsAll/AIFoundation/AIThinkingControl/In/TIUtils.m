@@ -331,7 +331,7 @@
     return resultModels;
 }
 
-+(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts {
++(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts rectExcept:(NSMutableDictionary*)rectExcept {
     AIFeatureJvBuModels *resultModel = decoratorJvBuModel;
     //1. 单码排序。
     NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
@@ -351,8 +351,20 @@
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.3 minLimit:3 forProtoGV:nil];
     }];
     
+    //5. rectExcept防重 & 更新（参考35041-TODO4）。
+    NSArray *exceptGVs = [ThinkingUtils getRectExceptGV_ps:protoRect rectExcept:rectExcept];
+    gMatchModels = [SMGUtils filterArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
+        return ![exceptGVs containsObject:item.match_p];
+    }];
+    if (gMatchModels.count <= 0) return;
+    [rectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
+        return obj.match_p;
+    }] forKey:@(protoRect)];
+    
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
+        //12. 把rectExcept的gvs防重下。
+        if ([exceptGVs containsObject:gModel.match_p]) continue;
         
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;

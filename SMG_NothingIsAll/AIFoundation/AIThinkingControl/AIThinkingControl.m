@@ -230,8 +230,6 @@ static AIThinkingControl *_instance;
                 //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
                 //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在局部特征识别算法中实现防重的）。
                 CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
-                //if (rects.contains(curRect)) continue;
-                NSArray *exceptGVs = [ThinkingUtils getRectExceptGV_ps:curRect rectExcept:rectExcept];
                 
                 //14. 切出当前gv：九宫。
                 NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3)];
@@ -248,7 +246,7 @@ static AIThinkingControl *_instance;
                 
                 
                 //21. 局部识别特征：通过组码识别。
-                [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts];
+                [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts rectExcept:rectExcept];
                 AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
             }
             AddDebugCodeBlock_Key(@"自适应粒度", STRFORMAT(@"%@%d",kFILENAME, kLINE));
