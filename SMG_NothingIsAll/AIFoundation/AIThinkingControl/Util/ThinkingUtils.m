@@ -389,4 +389,21 @@
     return subDots;
 }
 
+//把rcmdExcept中交/并>70%的当时识别过的gv_ps收集返回，用于局部特征识别时防重（参考35041-TODO3）。
++(NSArray*) getRectExceptGV_ps:(CGRect)newRect rectExcept:(NSDictionary*)rectExcept {
+    NSMutableArray *result = [NSMutableArray new];
+    for (NSValue *key in rectExcept) {
+        CGRect oldRect = key.CGRectValue;
+        CGRect intersectsRect = CGRectIntersection(newRect, oldRect);
+        CGFloat intersectArea = intersectsRect.size.width * intersectsRect.size.height;
+        CGFloat newArea = newRect.size.width * newRect.size.height;
+        CGFloat oldArea = oldRect.size.width * oldRect.size.height;
+        CGFloat unionArea = newArea + oldArea - intersectArea;
+        if (unionArea > 0 && intersectArea / unionArea > 0.7f) {
+            [result addObjectsFromArray:[rectExcept objectForKey:key]];
+        }
+    }
+    return result;
+}
+
 @end
