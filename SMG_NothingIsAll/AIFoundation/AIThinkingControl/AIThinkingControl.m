@@ -213,8 +213,9 @@ static AIThinkingControl *_instance;
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     AddDebugCodeBlock_KeyV2(@"自适应粒度");
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
-    NSMutableDictionary *rectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
+    NSMutableDictionary *beginRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     DDic *excepts = [DDic new];
+    NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过防重。
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
@@ -238,7 +239,7 @@ static AIThinkingControl *_instance;
                 AddDebugCodeBlock_KeyV2(@"自适应粒度");
                 
                 //21. 局部识别特征：通过组码识别。
-                [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts rectExcept:rectExcept];
+                [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts beginRectExcept:beginRectExcept assRectExcept:assRectExcept];
                 AddDebugCodeBlock_KeyV2(@"自适应粒度");
             }
             AddDebugCodeBlock_KeyV2(@"自适应粒度");

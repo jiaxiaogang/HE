@@ -366,4 +366,7 @@
 
 +(void) runByMainQueue:(dispatch_block_t)block;
 
+//从mDic中找mArr找到返回，没找到则新建。
++(NSArray*) findOrCreateArr:(NSMutableDictionary*)fromDic key:(id)key;
+
 @end

@@ -331,7 +331,17 @@
     return resultModels;
 }
 
-+(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts rectExcept:(NSMutableDictionary*)rectExcept {
+/**
+ *  MARK:--------------------局部特征识别--------------------
+ *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
+ *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
+ */
++(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts beginRectExcept:(NSMutableDictionary*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
+    //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
+    if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
+        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.7f;
+    }]) return;
+    
     AddDebugCodeBlock_KeyV2(@"自适应粒度");
     AIFeatureJvBuModels *resultModel = decoratorJvBuModel;
     //1. 单码排序。
@@ -354,20 +364,20 @@
     }];
     AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
-    //5. rectExcept防重 & 更新（参考35041-TODO4）。
-    NSArray *exceptGVs = [ThinkingUtils getRectExceptGV_ps:protoRect rectExcept:rectExcept];
+    //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
+    NSArray *exceptGVs = [ThinkingUtils getBeginRectExceptGV_ps:protoRect beginRectExcept:beginRectExcept];
     gMatchModels = [SMGUtils filterArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
         return ![exceptGVs containsObject:item.match_p];
     }];
     if (gMatchModels.count <= 0) return;
-    [rectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
+    [beginRectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
         return obj.match_p;
     }] forKey:@(protoRect)];
     AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
-        //12. 把rectExcept的gvs防重下。
+        //12. 把beginRectExcept的gvs防重下。
         if ([exceptGVs containsObject:gModel.match_p]) continue;
         AddDebugCodeBlock_KeyV2(@"自适应粒度");
         
@@ -501,6 +511,11 @@
             //52. 有效局部特征条目后，才计为防重。
             [excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
             AddDebugCodeBlock_KeyV2(@"自适应粒度");
+            
+            //53. 有效局部特征条目后，计为assRectExcept防重。
+            [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+                return @(obj.bestGVAtProtoTRect);
+            }]];
         }
         AddDebugCodeBlock_KeyV2(@"自适应粒度");
     }

@@ -390,20 +390,26 @@
 }
 
 //把rcmdExcept中交/并>70%的当时识别过的gv_ps收集返回，用于局部特征识别时防重（参考35041-TODO3）。
-+(NSArray*) getRectExceptGV_ps:(CGRect)newRect rectExcept:(NSDictionary*)rectExcept {
++(NSArray*) getBeginRectExceptGV_ps:(CGRect)newRect beginRectExcept:(NSDictionary*)beginRectExcept {
     NSMutableArray *result = [NSMutableArray new];
-    for (NSValue *key in rectExcept) {
+    for (NSValue *key in beginRectExcept) {
         CGRect oldRect = key.CGRectValue;
-        CGRect intersectsRect = CGRectIntersection(newRect, oldRect);
-        CGFloat intersectArea = intersectsRect.size.width * intersectsRect.size.height;
-        CGFloat newArea = newRect.size.width * newRect.size.height;
-        CGFloat oldArea = oldRect.size.width * oldRect.size.height;
-        CGFloat unionArea = newArea + oldArea - intersectArea;
-        if (unionArea > 0 && intersectArea / unionArea > 0.3f) {
-            [result addObjectsFromArray:[rectExcept objectForKey:key]];
+        CGFloat matchOfRect = [self matchOfRect:oldRect newRect:newRect];
+        if (matchOfRect > 0.3f) {
+            [result addObjectsFromArray:[beginRectExcept objectForKey:key]];
         }
     }
     return result;
+}
+
+//两个rect的区域匹配度（度 = 交 / 并）
++(CGFloat) matchOfRect:(CGRect)oldRect newRect:(CGRect)newRect {
+    CGRect intersectsRect = CGRectIntersection(newRect, oldRect);
+    CGFloat intersectArea = intersectsRect.size.width * intersectsRect.size.height;
+    CGFloat newArea = newRect.size.width * newRect.size.height;
+    CGFloat oldArea = oldRect.size.width * oldRect.size.height;
+    CGFloat unionArea = newArea + oldArea - intersectArea;
+    return unionArea > 0 ? intersectArea / unionArea : 0;
 }
 
 @end
