@@ -225,6 +225,8 @@ static AIThinkingControl *_instance;
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
         for (NSInteger startX = 0; startX < length; startX++) {
+            //2025.05.20: 从粗到细，识别十条局部特征即可。
+            if (jvBuModel.models.count >= 10) break;
             AddDebugCodeBlock_KeyV2(@"自适应粒度");
             for (NSInteger startY = 0; startY < length; startY++) {
                 AddDebugCodeBlock_KeyV2(@"自适应粒度");

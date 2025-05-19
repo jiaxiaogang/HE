@@ -375,6 +375,18 @@
     }] forKey:@(protoRect)];
     AddDebugCodeBlock_KeyV2(@"自适应粒度");
     
+    //6. 提前加载好vInfo缓存，后面复用。
+    NSDictionary *vInfoCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
+        AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:protoK isOut:isOut];
+        return @[protoK,vInfo];
+    }];
+    
+    //7. 提前加载好dataDic缓存，后面复用。
+    NSDictionary *dataDicCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
+        NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:isOut];
+        return @[protoK,dataDic];
+    }];
+    
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
         //12. 把beginRectExcept的gvs防重下。
@@ -468,8 +480,10 @@
                     CGFloat curGMatchValue = 1;
                     for (AIKVPointer *assV in curAssGV.content_ps) {
                         CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
-                        double assData = [NUMTOOK([AINetIndex getData:assV]) doubleValue];
-                        CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:nil];
+                        NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
+                        double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
+                        AIValueInfo *vInfo = [vInfoCache objectForKey:assV.dataSource];
+                        CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
                         curGMatchValue *= vMatchValue;
                     }
                     AddDebugCodeBlock_KeyV2(@"自适应粒度");
