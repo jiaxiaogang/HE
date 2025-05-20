@@ -390,13 +390,13 @@
 }
 
 //把rcmdExcept中交/并>70%的当时识别过的gv_ps收集返回，用于局部特征识别时防重（参考35041-TODO3）。
-+(NSArray*) getBeginRectExceptGV_ps:(CGRect)newRect beginRectExcept:(NSDictionary*)beginRectExcept {
++(NSArray*) getGVRectExceptGV_ps:(CGRect)newRect gvRectExcept:(NSDictionary*)gvRectExcept {
     NSMutableArray *result = [NSMutableArray new];
-    for (NSValue *key in beginRectExcept) {
+    for (NSValue *key in gvRectExcept) {
         CGRect oldRect = key.CGRectValue;
         CGFloat matchOfRect = [self matchOfRect:oldRect newRect:newRect];
         if (matchOfRect > 0.3f) {
-            [result addObjectsFromArray:[beginRectExcept objectForKey:key]];
+            [result addObjectsFromArray:[gvRectExcept objectForKey:key]];
         }
     }
     return result;

@@ -213,20 +213,31 @@ static AIThinkingControl *_instance;
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
-    NSMutableDictionary *beginRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
+    NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     DDic *excepts = [DDic new];
-    NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过防重。
+    NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
+    NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     while (dotSize > 1) {
+        
+        //TODOTOMORROW20250520: 此处protoGT也经常不全，比如0，在局部识别，然后构建protoGT后，可能只有上半部分，没有下半部分。
+        //原则是：所有区域都有机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重。
+        //思路1、除非不再限制models.count条数，单纯通过各种防重，把图像识别完成，不然必然可能只识别了一部分，就break掉了。
+        //思路2、查下，是不是宏观粒度dotSize识别结果太多，后面细的没机会了？
+        if (jvBuModel.models.count >= 10) {
+            NSLog(@"break时dotSize = %.3f",dotSize * 1.3f);
+        }
+        
+        
+        //2025.05.20: 从粗到细，识别十条局部特征即可。
+        if (jvBuModel.models.count >= 10) break;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
         for (NSInteger startX = 0; startX < length; startX++) {
-            //2025.05.20: 从粗到细，识别十条局部特征即可。
-            if (jvBuModel.models.count >= 10) break;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             for (NSInteger startY = 0; startY < length; startY++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -241,7 +252,7 @@ static AIThinkingControl *_instance;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 局部识别特征：通过组码识别。
-                [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts beginRectExcept:beginRectExcept assRectExcept:assRectExcept];
+                [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -284,8 +295,6 @@ static AIThinkingControl *_instance;
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //TODOTOMORROW20250520: 此处protoGT也经常不全，比如0，在局部识别，然后构建protoGT后，可能只有上半部分，没有下半部分。
     
     //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];

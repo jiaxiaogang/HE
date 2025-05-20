@@ -336,10 +336,15 @@
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  */
-+(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts beginRectExcept:(NSMutableDictionary*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
++(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
         return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.7f;
+    }]) return;
+    
+    //2. 过滤器2：被切入点成功识别过的相近区域，防重不再做为切入识别。
+    if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
+        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.3f;
     }]) return;
     
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -365,12 +370,12 @@
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
-    NSArray *exceptGVs = [ThinkingUtils getBeginRectExceptGV_ps:protoRect beginRectExcept:beginRectExcept];
+    NSArray *exceptGVs = [ThinkingUtils getGVRectExceptGV_ps:protoRect gvRectExcept:gvRectExcept];
     gMatchModels = [SMGUtils filterArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
         return ![exceptGVs containsObject:item.match_p];
     }];
     if (gMatchModels.count <= 0) return;
-    [beginRectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
+    [gvRectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
         return obj.match_p;
     }] forKey:@(protoRect)];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -530,6 +535,9 @@
             [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
                 return @(obj.bestGVAtProtoTRect);
             }]];
+            
+            //54. 有效局部特征条目后，该切入点beginRectExcept防重。
+            [beginRectExcept addObject:@(protoRect)];
         }
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     }
