@@ -215,25 +215,19 @@ static AIThinkingControl *_instance;
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     DDic *excepts = [DDic new];
-    NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
-    NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     while (dotSize > 1) {
-        
-        //TODOTOMORROW20250520: 此处protoGT也经常不全，比如0，在局部识别，然后构建protoGT后，可能只有上半部分，没有下半部分。
-        //原则是：所有区域都有机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重。
-        //思路1、除非不再限制models.count条数，单纯通过各种防重，把图像识别完成，不然必然可能只识别了一部分，就break掉了。
-        //思路2、查下，是不是宏观粒度dotSize识别结果太多，后面细的没机会了？
-        if (jvBuModel.models.count >= 10) {
-            NSLog(@"break时dotSize = %.3f",dotSize * 1.3f);
-        }
-        
+        //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
+        NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
+        NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
         
         //2025.05.20: 从粗到细，识别十条局部特征即可。
-        if (jvBuModel.models.count >= 10) break;
+        //2025.05.20: BUG-protoGT经常不全：比如有时只识别了0的上半部分，没下半部分，因为这里达到限制条数中断导致的，先关掉，不然肯定有识别一半就中断的情况。
+        //if (jvBuModel.models.count >= 10) break;
+        
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
@@ -258,13 +252,16 @@ static AIThinkingControl *_instance;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         }
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        
         //22. 下一层粒度（再/1.3倍）。
+        NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
         dotSize /= 1.3f;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //23. 局部特征过滤和竞争部分。
     [TIUtils recognitionFeature_JvBu_V2_Step2:jvBuModel];
+    NSLog(@"第2步、局部特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //40. 这里先直接调用下类比，先测试下识别结果的类比。

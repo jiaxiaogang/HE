@@ -338,13 +338,14 @@
  */
 +(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
+    //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
-        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.7f;
+        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.15f;
     }]) return;
     
     //2. 过滤器2：被切入点成功识别过的相近区域，防重不再做为切入识别。
     if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
-        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.3f;
+        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.05f;
     }]) return;
     
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -365,7 +366,7 @@
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     //4. 组码识别
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
-        return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.3 minLimit:3 forProtoGV:nil];
+        return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -401,6 +402,7 @@
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        //refPorts = ARR_SUB(refPorts, 0, 3);
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -741,11 +743,10 @@
     
     //20. 防重：protoGT有多条元素，指向同一条assT的同一个元素时，此方法用于防重。
     [zenTiModel run4BestRemoveRepeat:protoGT.p];
-    
-    for (AIFeatureZenTiModel *model in zenTiModel.models) {
-        AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
-        NSLog(@"rectItem数:%ld assT数:%ld protoGT数:%ld",model.rectItems.count,assT.count,protoGT.count);
-    }
+    //for (AIFeatureZenTiModel *model in zenTiModel.models) {
+    //    AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
+    //    NSLog(@"rectItem数:%ld assT数:%ld protoGT数:%ld",model.rectItems.count,assT.count,protoGT.count);
+    //}
     
     //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
     [zenTiModel run4MatchDegree:protoGT.p];
