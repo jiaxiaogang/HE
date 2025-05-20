@@ -285,6 +285,8 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    //TODOTOMORROW20250520: 此处protoGT也经常不全，比如0，在局部识别，然后构建protoGT后，可能只有上半部分，没有下半部分。
+    
     //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     if (!protoGT) return;
@@ -301,7 +303,6 @@ static AIThinkingControl *_instance;
     //    AIPort *refPort = [AINetUtils getRefPort:item biger:protoGT.p refRect:itemRect.CGRectValue];
     //    //if (![itemRect isEqual:@(refPort.rect)]) NSLog(@"2025.05.27后可删aaaaa2 subT%ld:targetT%ld > %@ : %@",item.pointerId,protoGT.pId,itemRect,@(refPort.rect));
     //}
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:protoGT];
