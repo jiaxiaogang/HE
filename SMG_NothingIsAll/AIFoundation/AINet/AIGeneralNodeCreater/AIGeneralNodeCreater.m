@@ -70,6 +70,7 @@
  *  @result notnull
  */
 +(AIGroupFeatureNode*) createGroupFeatureNode:(NSArray*)subTModels conNodes:(NSArray*)conNodes at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut isJiao:(BOOL)isJiao {
+    if (subTModels.count == 0) return nil;
     //1. 数据准备：subTModels按rect排序。
     //有序：为增加特征content_ps的有序性：对groupModels进行排序（特征的content是有序的，所以要先排下序）。
     subTModels = [ThinkingUtils sortInputGroupFeatureModels:subTModels];

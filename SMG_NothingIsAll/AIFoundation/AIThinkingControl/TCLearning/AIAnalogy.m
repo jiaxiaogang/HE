@@ -550,7 +550,7 @@
     //2025.05.08: 说明-所以我们只能从itemAbsT中取gvs，那么这里就有一个要求：itemAbsT中的元素必须来自自身具象，不允许抽象t时，gv有变化，不然每个itemAbsT中的对应gv不同，会重复收集。
     //2025.05.08: 举例-说白了：从乔峰抽象的胳膊腿特征必须是乔峰的，不能是别人的。
     //21. 取出每个itemAbsT中的gv，转换成newAbsT的元素：@[InputGroupValueModel]格式（参考3413a-示图1）。
-    NSMutableArray *absTModels = [SMGUtils convertArr:sameItems convertItemArrBlock:^id(AIFeatureZenTiItem_Rect *zenTiItem) {
+    NSMutableArray *absTModels = [SMGUtils convertArr:sameItems convertBlock:^id(AIFeatureZenTiItem_Rect *zenTiItem) {
         return [InputGroupFeatureModel new:zenTiItem.fromItemT rect:zenTiItem.itemAtAssRect];
     }];
     
@@ -571,7 +571,6 @@
     
     //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。
     //42. 记录匹配度：根据每个匹配itemAbsT，来计算平均匹配度。
-    //TODO: 考虑下，
     [assGT updateMatchValue:absGT matchValue:1];//此处abs是从ass抽象来的，那这里的匹配度直接=1。
     [protoGT updateMatchValue:absGT matchValue:1];//此处protoGT是从sameItems这些局部特征构建成的，所以匹配也直接=1。
     
@@ -584,6 +583,10 @@
     //44. 记录整体absT.conPort到protoT和assT的rect。
     [AINetUtils updateConPortRect:absGT conT:assGT.p rect:newAbsAtAssRect];
     [AINetUtils updateConPortRect:absGT conT:protoGT.p rect:newAbsAtProtoRect];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:assGT lab:STRFORMAT(@"assGT%ld",assGT.pId)];
+        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"absGT%ld",absGT.pId)];
+    }];
     
     //51. debug
     if (Log4Ana || true) NSLog(@"\n整体特征类比结果(%@) ======================> \n整体Ass特征T%ld（局部特征数:%ld GV数:%ld）%@\n%@整体Abs特征T%ld（局部特征数:%ld GV数:%ld）：%@\n%@",assGT.ds,

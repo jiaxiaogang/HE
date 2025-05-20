@@ -807,9 +807,9 @@
         //        [theApp.imgTrainerView setDataForFeature:item lab:STRFORMAT(@"GT.itemT%ld",item.pId)];
         //    }];
         //}
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"GT.groupT%ld",assFeature.pId)];
-        }];
+        //[SMGUtils runByMainQueue:^{
+        //    [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"GT.groupT%ld",assFeature.pId)];
+        //}];
     }
     
     //46. debugLog

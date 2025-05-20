@@ -287,7 +287,11 @@ static AIThinkingControl *_instance;
     
     //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
+    if (!protoGT) return;
     [protoGT updateLogDescItem:logDesc];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId)];
+    }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //5. debugRect

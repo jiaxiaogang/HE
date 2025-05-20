@@ -100,6 +100,22 @@
         [self createItemLight:item.rect directionData:directionData diffData:diffData junData:junData ds:ds];
     }
     
+    //20. 局部特征边框可视化。
+    if (PitIsGroupFeature(tNode.p)) {
+        CGFloat dotWH = self.width / powf(3, VisionMaxLevel);
+        for (NSInteger i = 0; i < tNode.count; i++) {
+            CGRect rect = VALTOOK(ARR_INDEX(tNode.rects, i)).CGRectValue;
+            UIView *sub = [[UIView alloc] initWithFrame:CGRectMake(rect.origin.x * dotWH, rect.origin.y * dotWH, rect.size.width * dotWH, rect.size.height * dotWH)];
+            if (i % 4 == 0) [sub.layer setBorderColor:UIColor.yellowColor.CGColor];
+            else if (i % 4 == 1) [sub.layer setBorderColor:UIColor.greenColor.CGColor];
+            else if (i % 4 == 2) [sub.layer setBorderColor:UIColor.redColor.CGColor];
+            else if (i % 4 == 3) [sub.layer setBorderColor:UIColor.blueColor.CGColor];
+            [sub.layer setBorderWidth:0.5f];
+            [sub setBackgroundColor:UIColorWithRGBA(0, 0, 0, 0)];
+            [self addSubview:sub];
+        }
+    }
+    
     //21. lab
     [self.lab setText:lab];
 }
