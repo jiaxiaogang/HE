@@ -299,6 +299,8 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    //TODOTOMORROW20250521: 这里应该是protoGT构建的就不准确，查下为什么刚构建就有重影问题，是不是上面局部特征识别的问题？还是类比为抽象局部特征后的问题？
+    
     //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     if (!protoGT) return;
