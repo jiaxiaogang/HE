@@ -340,12 +340,12 @@
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
-        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.15f;
+        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
     }]) return;
     
     //2. 过滤器2：被切入点成功识别过的相近区域，防重不再做为切入识别。
     if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
-        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.05f;
+        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
     }]) return;
     
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -371,15 +371,21 @@
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
-    NSArray *exceptGVs = [ThinkingUtils getGVRectExceptGV_ps:protoRect gvRectExcept:gvRectExcept];
-    gMatchModels = [SMGUtils filterArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
-        return ![exceptGVs containsObject:item.match_p];
-    }];
-    if (gMatchModels.count <= 0) return;
-    [gvRectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
-        return obj.match_p;
-    }] forKey:@(protoRect)];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    //2025.05.21: 关掉，前面的beginRectExcept和assRectExcept已经把重复区的全过滤掉了，这里压根收集不到exceptGVs，并且防重exceptGVs反而会让那些原处边缘地带没什么竞争力的gvs有机会进行识别，这也不利于准确性。
+    //NSArray *exceptGVs = [ThinkingUtils getGVRectExceptGV_ps:protoRect gvRectExcept:gvRectExcept];
+    //gMatchModels = [SMGUtils filterArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
+    //    return ![exceptGVs containsObject:item.match_p];
+    //}];
+    //if (gMatchModels.count <= 0) return;
+    //[gvRectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
+    //    return obj.match_p;
+    //}] forKey:@(protoRect)];
+    //
+    //6. 把exceptGVs防重下。
+    //gMatchModels = [SMGUtils removeArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
+    //    return [exceptGVs containsObject:item.match_p];
+    //}];
+    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //6. 提前加载好vInfo缓存，后面复用。
     NSDictionary *vInfoCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
@@ -395,10 +401,6 @@
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
-        //12. 把beginRectExcept的gvs防重下。
-        if ([exceptGVs containsObject:gModel.match_p]) continue;
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
@@ -423,7 +425,8 @@
             //说明1：同一个assT有多处局部，protoRect也有多处可能调用它，它俩识别匹配时，必然是多对多的关系。
             //说明2：而防重很难应对这种多对多的情况，最多是邻近防重，即相邻protoRect与相邻assRect只做一次有效匹配，总之这里切不可轻易过度防重。
             //说明3：也可能这里的防重，是一个博弈平衡，过于放开性能就不佳，过于防重识别结果就片面。
-            if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
+            //2025.05.21: 去掉，如果一张图里有多个3呢，不能暴力的全过滤掉。
+            //if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //13. 把tMatchModel收集起来。
@@ -518,7 +521,9 @@
                 
                 //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
                 //2025.05.12: 自适应粒度局部特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
-                [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:1/*NUMTOOK(best.v3).floatValue*/ assIndex:curIndex]];
+                CGFloat scale = NUMTOOK(best.v3).floatValue;
+                CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
+                [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex]];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -529,16 +534,16 @@
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
             
-            //52. 有效局部特征条目后，才计为防重。
-            [excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
+            //52. 有效局部特征条目后，才计为防重（关掉，如果一张图有多个3也得能识别）。
+            //[excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
-            //53. 有效局部特征条目后，计为assRectExcept防重。
+            //53. 有效局部特征条目后，计为assRectExcept防重（参考35042-TODO4）。
             [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
                 return @(obj.bestGVAtProtoTRect);
             }]];
             
-            //54. 有效局部特征条目后，该切入点beginRectExcept防重。
+            //54. 有效局部特征条目后，该切入点beginRectExcept防重（参考35042-TODO4）。
             [beginRectExcept addObject:@(protoRect)];
         }
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);

@@ -63,7 +63,7 @@
     self.tv.dataSource = self;
     [self.tv.layer setBorderWidth:1.0f];
     [self.tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
-    [self.tv setContentInset:UIEdgeInsetsMake(0, -10, 0, -10)];
+    //[self.tv setContentInset:UIEdgeInsetsMake(0, -10, 0, -10)];
     
     //previewTableView
     self.previewTableView.delegate = self;
