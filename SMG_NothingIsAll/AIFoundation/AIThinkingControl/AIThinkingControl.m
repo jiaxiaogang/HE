@@ -200,19 +200,19 @@ static AIThinkingControl *_instance;
     
     //2. 对未切粒度的color字典进行自适应粒度并识别。
     //方便测试，只开放b试下。
-    //[self commitInputWithSplitV2_Single:algsModel.hColors whSize:algsModel.whSize at:algsType ds:@"hColors" logDesc:logDesc];
-    //[self commitInputWithSplitV2_Single:algsModel.sColors whSize:algsModel.whSize at:algsType ds:@"sColors" logDesc:logDesc];
-    [self commitInputWithSplitV2_Single:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc];
+    //[self commitInputWithSplitV2_Single_TonDao:algsModel.hColors whSize:algsModel.whSize at:algsType ds:@"hColors" logDesc:logDesc];
+    //[self commitInputWithSplitV2_Single_TonDao:algsModel.sColors whSize:algsModel.whSize at:algsType ds:@"sColors" logDesc:logDesc];
+    [self commitInputWithSplitV2_Single_TonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc];
     
     //3. 异步构建一下默认三分粒度的protoT，不过不用于识别，只用于以后被识别。
     //TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）。
     [self createSplitFor9Block:algsModel algsType:algsType logDesc:logDesc];
 }
 
--(void) commitInputWithSplitV2_Single:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
+//单通道
+-(void) commitInputWithSplitV2_Single_TonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     DDic *excepts = [DDic new];
     
@@ -220,6 +220,7 @@ static AIThinkingControl *_instance;
     CGFloat dotSize = whSize / 3.0f;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     while (dotSize > 1) {
+        AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
@@ -255,10 +256,15 @@ static AIThinkingControl *_instance;
         
         //22. 下一层粒度（再/1.3倍）。
         NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
+        [self commitInputWithSplitV2_Single_DotSize:at ds:ds logDesc:logDesc jvBuModel:jvBuModel];
         dotSize /= 1.3f;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
+    PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
+}
+
+//单粒度层。
+-(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     //23. 局部特征过滤和竞争部分。
     [TIUtils recognitionFeature_JvBu_V2_Step2:jvBuModel];
     NSLog(@"第2步、局部特征竞争后条数:%ld",jvBuModel.models.count);
@@ -319,7 +325,6 @@ static AIThinkingControl *_instance;
         [AIAnalogy analogyFeature_ZenTi_V2:protoGT assModel:model];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
 
 /**
