@@ -28,9 +28,14 @@
     }] / self.bestGVs.count;
     
     //2. 符合度。
-    self.matchDegree = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.matchDegree;
-    }] / self.bestGVs.count;
+    //self.matchDegree = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
+    //    return obj.matchDegree;
+    //}] / self.bestGVs.count;
+    //2025.05.21: 符合度乘积版：改成求乘积，因为看日志，感觉竞争结果中，符合度太弱了，都差不多都很高。
+    self.matchDegree = 1;
+    for (AIFeatureJvBuItem *item in self.bestGVs) {
+        self.matchDegree *= item.matchDegree;
+    }
     
     //3. 此处没有protoT.count，所以健全度直接用assCount也是不影响竞争的。
     //2025.05.11: 修复健全度低问题，由总assT.count改成bestGVs.count，因为并不判断全含，所以由总数改成匹配到的数。

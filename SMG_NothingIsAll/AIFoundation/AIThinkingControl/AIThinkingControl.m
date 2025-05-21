@@ -256,7 +256,7 @@ static AIThinkingControl *_instance;
         
         //22. 下一层粒度（再/1.3倍）。
         NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
-        [self commitInputWithSplitV2_Single_DotSize:at ds:ds logDesc:logDesc jvBuModel:jvBuModel];
+        [self commitInputWithSplitV2_Single_DotSize:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize];
         dotSize /= 1.3f;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -264,7 +264,7 @@ static AIThinkingControl *_instance;
 }
 
 //单粒度层。
--(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
+-(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize {
     //23. 局部特征过滤和竞争部分。
     [TIUtils recognitionFeature_JvBu_V2_Step2:jvBuModel];
     NSLog(@"第2步、局部特征竞争后条数:%ld",jvBuModel.models.count);
@@ -304,7 +304,7 @@ static AIThinkingControl *_instance;
     if (!protoGT) return;
     [protoGT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId)];
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld %.1f",protoGT.pId,dotSize)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     

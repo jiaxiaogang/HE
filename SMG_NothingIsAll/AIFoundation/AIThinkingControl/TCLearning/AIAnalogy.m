@@ -583,10 +583,10 @@
     //44. 记录整体absT.conPort到protoT和assT的rect。
     [AINetUtils updateConPortRect:absGT conT:assGT.p rect:newAbsAtAssRect];
     [AINetUtils updateConPortRect:absGT conT:protoGT.p rect:newAbsAtProtoRect];
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:assGT lab:STRFORMAT(@"assGT%ld",assGT.pId)];
-        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"absGT%ld",absGT.pId)];
-    }];
+    //[SMGUtils runByMainQueue:^{
+    //    [theApp.imgTrainerView setDataForFeature:assGT lab:STRFORMAT(@"assGT%ld",assGT.pId)];
+    //    [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"absGT%ld",absGT.pId)];
+    //}];
     
     //51. debug
     if (Log4Ana || true) NSLog(@"\n整体特征类比结果(%@) ======================> \n整体Ass特征T%ld（局部特征数:%ld GV数:%ld）%@\n%@整体Abs特征T%ld（局部特征数:%ld GV数:%ld）：%@\n%@",assGT.ds,
