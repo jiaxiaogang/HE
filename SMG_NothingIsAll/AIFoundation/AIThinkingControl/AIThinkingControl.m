@@ -296,6 +296,7 @@ static AIThinkingControl *_instance;
         
         //3. 收集为InputGroupFeatureModel。
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
+        NSLog(@"%@ => %@",@(absAtProtoR),@(model.assTAtProtoTRect));
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -304,13 +305,23 @@ static AIThinkingControl *_instance;
     if (!protoGT) return;
     [protoGT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld %.1f",protoGT.pId,dotSize)];
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT1:%ld %.1f",protoGT.pId,dotSize)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     
     //TODOTOMORROW20250521: 这里应该是protoGT构建的就不准确，查下为什么刚构建就有重影问题，是不是上面局部特征识别的问题？还是类比为抽象局部特征后的问题？
     //验证下如果不做单T类比，直接收集为protoGT的效果。
+    //1、继续查下rect是否都正确。
+    //2、protoGT是否可以不生成？可是这样就没整体特征的冷启动了。
+    //3、protoGT的生成如何尽量不失真？a、最原始是从colorDic取数据，b、再然后可从assT取数据，c、再然后也可以从absT取数据，这三种应该都不会影响protoGT生成的大致样子。
+    //4、所以重影肯定是rect算错了，assT组成的protoGT没事，只有absT组成的有问题，明天继续查rect哪里算错了。尤其查下最后一个dotSize，如下日志，xy一样，wh不一样。
+    //5、所以：scale应该乘到里面？
+    //6、或者把局部特征类比的定责去掉，看全抽象，会打出什么？怎么感觉它全剩下15,3了？
+    //NSRect: {{3.3099167688247566, 14.519501653942077}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
+    //NSRect: {{3.3099167688247566, 14.519501653942077}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
+    //NSRect: {{6.3099167688247562, 26.519501653942079}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
+    
     NSMutableArray *groupTModels2 = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         [groupTModels2 addObject:[InputGroupFeatureModel new:model.assT.p rect:model.assTAtProtoTRect]];

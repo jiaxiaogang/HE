@@ -531,6 +531,9 @@
             //44. 局部特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到局部特征最低标准）。
             if (model.bestGVs.count <= 4) continue;
             
+            //45. 根据每个bestGVItems的总和，更新整个ass在proto中的位置。
+            [model run4AssTAtProtoTRect];
+            
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
             
