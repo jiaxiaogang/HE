@@ -822,7 +822,7 @@
         //    }];
         //}
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"assGT%ld",assFeature.pId)];
+            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"assGT%ld",assFeature.pId)];
         }];
     }
     

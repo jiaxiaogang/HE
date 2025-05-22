@@ -299,8 +299,6 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //TODOTOMORROW20250521: 这里应该是protoGT构建的就不准确，查下为什么刚构建就有重影问题，是不是上面局部特征识别的问题？还是类比为抽象局部特征后的问题？
-    
     //4. 构建protoGT组特征。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     if (!protoGT) return;
@@ -309,6 +307,21 @@ static AIThinkingControl *_instance;
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld %.1f",protoGT.pId,dotSize)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    
+    //TODOTOMORROW20250521: 这里应该是protoGT构建的就不准确，查下为什么刚构建就有重影问题，是不是上面局部特征识别的问题？还是类比为抽象局部特征后的问题？
+    //验证下如果不做单T类比，直接收集为protoGT的效果。
+    NSMutableArray *groupTModels2 = [NSMutableArray new];
+    for (AIFeatureJvBuModel *model in jvBuModel.models) {
+        [groupTModels2 addObject:[InputGroupFeatureModel new:model.assT.p rect:model.assTAtProtoTRect]];
+    }
+    AIGroupFeatureNode *protoGT2 = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels2 conNodes:nil at:at ds:ds isOut:false isJiao:true];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoGT2 lab:STRFORMAT(@"protoGT2:%ld",protoGT2.pId)];
+    }];
+    
+    
+    
     
     //5. debugRect
     //for (NSInteger i = 0; i < protoGT.count; i++) {
