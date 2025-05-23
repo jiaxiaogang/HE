@@ -84,9 +84,14 @@
     return [self.degreeDDic objectForKey:@(assPId)];
 }
 
--(NSArray*) convert2GVModels {
+-(NSArray*) convert2GVModels:(NSArray*)indexes {
+    //数据检查。
+    if (!ARRISOK(indexes)) indexes = self.indexes;
+    
+    //转为gvModels数据返回。
     NSMutableArray *gvModels = [NSMutableArray new];
-    for (NSInteger i = 0; i < self.count; i++) {
+    for (NSNumber *index in indexes) {
+        NSInteger i = index.integerValue;
         [gvModels addObject:[InputGroupValueModel new:ARR_INDEX(self.content_ps, i) rect:VALTOOK(ARR_INDEX(self.rects, i)).CGRectValue]];
     }
     return gvModels;

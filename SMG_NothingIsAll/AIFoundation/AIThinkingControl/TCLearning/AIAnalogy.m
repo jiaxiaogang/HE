@@ -439,9 +439,10 @@
     
     //41. debugLog
     NSLog(@"局部识别类比结果absT长度：%ld",absT.count);
-    //[SMGUtils runByMainQueue:^{
-    //    [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"局部特征类比absT%ld",absT.pId)];
-    //}];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"assT%ld(GV%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count)];
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比absT%ld",absT.pId)];
+    }];
     if (Log4Ana || true) NSLog(@"\n局部特征类比结果(%@) ======================> \n局部Ass特征T%ld（GV数:%ld）%@\n%@局部Abs特征T%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
                                absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));

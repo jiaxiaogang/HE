@@ -182,17 +182,25 @@
 /**
  *  MARK:--------------------局部特征识别结果可视化（参考34176）--------------------
  */
--(void) setDataForJvBuModels:(NSArray*)jvBuModels protoT:(AIFeatureNode*)protoT {
-    [self addFeatureToPreview:protoT lab:STRFORMAT(@"protoT%ld:%@",protoT.pId,protoT.ds)];
+-(void) setDataForJvBuModelsV1:(NSArray*)jvBuModels protoT:(AIFeatureNode*)protoT {
+    [self addFeatureToPreview:protoT indexes:nil lab:STRFORMAT(@"protoT%ld:%@",protoT.pId,protoT.ds)];
     for (AIMatchModel *model in jvBuModels) {
         //NSArray *collectProtoIndexs = model.indexDic.allValues;
-        [self addFeatureToPreview:(AIFeatureNode*)model.matchNode lab:STRFORMAT(@"assT%ld:%@",model.matchNode.pId,model.matchNode.ds)];
+        [self addFeatureToPreview:(AIFeatureNode*)model.matchNode indexes:model.indexDic.allKeys lab:STRFORMAT(@"assT%ld:%@",model.matchNode.pId,model.matchNode.ds)];
     }
     [self.previewTableView reloadData];
 }
 
+-(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab {
+    NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+        return @(obj.assIndex);
+    }];
+    [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab];
+    [self.previewTableView reloadData];
+}
+
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab {
-    [self addFeatureToPreview:tNode lab:lab];
+    [self addFeatureToPreview:tNode indexes:nil lab:lab];
     [self.previewTableView reloadData];
 }
 
@@ -214,7 +222,7 @@
 //MARK:                     < privateMethod >
 //MARK:===============================================================
 
--(void) addFeatureToPreview:(AIFeatureNode*)tNode lab:(NSString*)lab {
+-(void) addFeatureToPreview:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab {
     //1. 每条itemAbsT分别可视化。
     MapModel *old = [SMGUtils filterSingleFromArr:self.previewDatas checkValid:^BOOL(MapModel *item) {
         return [lab isEqualToString:item.v1];
@@ -226,7 +234,7 @@
     }
     
     //2. 并更新显示;
-    [preview setData:tNode lab:lab];
+    [preview setData:tNode indexes:indexes lab:lab];
 }
 
 -(void) addAlgToPreview:(AINodeBase*)algNode lab:(NSString*)lab{
@@ -242,7 +250,7 @@
     
     for (AIKVPointer *itemT_p in algNode.content_ps) {
         AIFeatureNode *itemT = [SMGUtils searchNode:itemT_p];
-        [preview setData:itemT lab:lab];
+        [preview setData:itemT indexes:nil lab:lab];
     }
 }
 

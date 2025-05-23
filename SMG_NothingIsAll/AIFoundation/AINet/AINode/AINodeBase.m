@@ -263,6 +263,15 @@
     }];
 }
 
+//取全下标
+-(NSArray*) indexes {
+    NSMutableArray *result = [NSMutableArray new];
+    for (NSInteger i = 0; i < self.count; i++) {
+        [result addObject:@(i)];
+    }
+    return result;
+}
+
 /**
  *  MARK:--------------------NSCoding--------------------
  */

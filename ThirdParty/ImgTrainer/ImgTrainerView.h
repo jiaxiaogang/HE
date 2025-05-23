@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@class AIFeatureNode;
+@class AIFeatureNode,AIFeatureJvBuModel;
 @interface ImgTrainerView : UIView
 
 -(void) open;
@@ -22,7 +22,7 @@
 /**
  *  MARK:--------------------局部特征识别结果可视化（参考34176）--------------------
  */
--(void) setDataForJvBuModels:(NSArray*)jvBuModels protoT:(AIFeatureNode*)protoT;
+-(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab;
 -(void) setDataForAlgs:(NSArray*)models;
 
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab;

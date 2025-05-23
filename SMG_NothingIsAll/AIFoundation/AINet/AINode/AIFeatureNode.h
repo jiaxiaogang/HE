@@ -41,6 +41,6 @@
 @property (strong, nonatomic) AIFeatureJvBuModel *jvBuModelV2;
 @property (strong, nonatomic) AIFeatureZenTiModel *zenTiModel;
 
--(NSArray*) convert2GVModels;
+-(NSArray*) convert2GVModels:(NSArray*)indexes;
 
 @end

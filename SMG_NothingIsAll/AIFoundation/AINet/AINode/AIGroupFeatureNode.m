@@ -10,9 +10,16 @@
 
 @implementation AIGroupFeatureNode
 
--(NSArray*) convert2GVModels {
+-(NSArray*) convert2GVModels:(NSArray*)indexes {
+    // 数据检查。
+    if (!ARRISOK(indexes)) indexes = self.indexes;
+    
+    // 转为gvModels返回。
     NSMutableArray *gvModels = [NSMutableArray new];
-    for (NSInteger i = 0; i < self.count; i++) {
+    for (NSNumber *index in indexes) {
+        NSInteger i = index.integerValue;
+        
+        // 每一条都单独取下面所有的gvs。
         AIKVPointer *itemT_p = ARR_INDEX(self.content_ps, i);
         AIFeatureNode *itemT = [SMGUtils searchNode:itemT_p];
         CGRect itemTRect = VALTOOK(ARR_INDEX(self.rects, i)).CGRectValue;

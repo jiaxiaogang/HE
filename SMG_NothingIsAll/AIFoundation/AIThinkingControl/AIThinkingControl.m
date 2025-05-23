@@ -305,7 +305,7 @@ static AIThinkingControl *_instance;
     if (!protoGT) return;
     [protoGT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT1:%ld %.1f",protoGT.pId,dotSize)];
+        //[theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT1:%ld",protoGT.pId)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -328,7 +328,7 @@ static AIThinkingControl *_instance;
     }
     AIGroupFeatureNode *protoGT2 = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels2 conNodes:nil at:at ds:ds isOut:false isJiao:true];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT2 lab:STRFORMAT(@"protoGT2:%ld",protoGT2.pId)];
+        //[theApp.imgTrainerView setDataForFeature:protoGT2 lab:STRFORMAT(@"protoGT2:%ld",protoGT2.pId)];
     }];
     
     

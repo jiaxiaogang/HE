@@ -56,9 +56,13 @@
     
 }
 
--(void) setData:(AIFeatureNode*)tNode lab:(NSString*)lab {
+/**
+ *  MARK:--------------------特征可视化--------------------
+ *  @param indexes 传值时，仅显示indexes中有的下标。
+ */
+-(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab {
     //1. 数据准备。
-    NSArray *gvModels = [tNode convert2GVModels];
+    NSArray *gvModels = [tNode convert2GVModels:indexes];
     NSString *at = tNode.at;
     NSString *ds = tNode.ds;
     
