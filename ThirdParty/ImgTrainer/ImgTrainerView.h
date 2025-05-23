@@ -23,6 +23,7 @@
  *  MARK:--------------------局部特征识别结果可视化（参考34176）--------------------
  */
 -(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab;
+-(void) setDataForJvBuModelsV2:(NSArray*)jvBuModels lab:(NSString*)lab;
 -(void) setDataForAlgs:(NSArray*)models;
 
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab;

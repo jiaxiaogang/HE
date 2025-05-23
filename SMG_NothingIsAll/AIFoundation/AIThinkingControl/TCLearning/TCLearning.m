@@ -80,7 +80,7 @@
         
         //35. 结果可视化。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForAlg:absA lab:STRFORMAT(@"类比A%ld:A%ld=A%ld",model.protoAlg.pId,matchModel.matchAlg.pointerId,absA.pId)];
+            //[theApp.imgTrainerView setDataForAlg:absA lab:STRFORMAT(@"类比A%ld:A%ld=A%ld",model.protoAlg.pId,matchModel.matchAlg.pointerId,absA.pId)];
         }];
     }
     DebugE();

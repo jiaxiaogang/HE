@@ -275,6 +275,9 @@ static AIThinkingControl *_instance;
     //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
     //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
     NSMutableArray *groupTModels = [NSMutableArray new];
+    
+    //TODOTOMORROW20250523: 此处jvBuModels.models中，很多重复的，6条实际就2条。
+    
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
@@ -304,8 +307,10 @@ static AIThinkingControl *_instance;
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
     if (!protoGT) return;
     [protoGT updateLogDescItem:logDesc];
+    
     [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT1:%ld",protoGT.pId)];
+        [theApp.imgTrainerView setDataForJvBuModelsV2:jvBuModel.models lab:STRFORMAT(@"类比前assTs:%ld %ld",protoGT.pId,protoGT.count)];
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"类比后absTs:%ld %ld",protoGT.pId,protoGT.count)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -322,14 +327,6 @@ static AIThinkingControl *_instance;
     //NSRect: {{3.3099167688247566, 14.519501653942077}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
     //NSRect: {{6.3099167688247562, 26.519501653942079}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
     
-    NSMutableArray *groupTModels2 = [NSMutableArray new];
-    for (AIFeatureJvBuModel *model in jvBuModel.models) {
-        [groupTModels2 addObject:[InputGroupFeatureModel new:model.assT.p rect:model.assTAtProtoTRect]];
-    }
-    AIGroupFeatureNode *protoGT2 = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels2 conNodes:nil at:at ds:ds isOut:false isJiao:true];
-    [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:protoGT2 lab:STRFORMAT(@"protoGT2:%ld",protoGT2.pId)];
-    }];
     
     
     

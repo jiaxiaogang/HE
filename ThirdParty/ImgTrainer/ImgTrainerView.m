@@ -199,6 +199,16 @@
     [self.previewTableView reloadData];
 }
 
+-(void) setDataForJvBuModelsV2:(NSArray*)jvBuModels lab:(NSString*)lab {
+    for (AIFeatureJvBuModel *jvBuModel in jvBuModels) {
+        NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return @(obj.assIndex);
+        }];
+        [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab];
+    }
+    [self.previewTableView reloadData];
+}
+
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab {
     [self addFeatureToPreview:tNode indexes:nil lab:lab];
     [self.previewTableView reloadData];
