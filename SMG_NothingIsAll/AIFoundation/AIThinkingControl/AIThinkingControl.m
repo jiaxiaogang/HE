@@ -270,6 +270,19 @@ static AIThinkingControl *_instance;
     NSLog(@"第2步、局部特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    
+    //TODOTOMORROW20250524: jvBuModel.models中6个有多条的assTAtProtoTRect重复。
+    if ([SMGUtils removeRepeat:jvBuModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return @(obj.assTAtProtoTRect);
+    }].count < jvBuModel.models.count) {
+        NSLog(@"防重后还有重复的话，查一下：总条数:%ld\n%@",jvBuModel.models.count,[SMGUtils convertArr:jvBuModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
+            return STRFORMAT(@"T%ld %@",obj.assT.pId,Rect2Str(obj.assTAtProtoTRect));
+        }]);
+        NSLog(@"");
+    };
+    
+    
+    
     //40. 这里先直接调用下类比，先测试下识别结果的类比。
     //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
     //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。

@@ -537,17 +537,6 @@
             //45. 根据每个bestGVItems的总和，更新整个ass在proto中的位置。
             [model run4AssTAtProtoTRect];
             
-            
-            //TODOTOMORROW20250524: jvBuModel.models中6个有多条的assTAtProtoTRect重复。
-            if ([SMGUtils removeRepeat:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
-                return @(obj.assTAtProtoTRect);
-            }].count < resultModel.models.count) {
-                NSLog(@"总条数:%ld\n%@",resultModel.models.count,[SMGUtils convertArr:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
-                    return STRFORMAT(@"T%ld %@",obj.assT.pId,Rect2Str(obj.assTAtProtoTRect));
-                }]);
-                NSLog(@"");
-            };
-            
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
             
@@ -581,15 +570,26 @@
     //}];
     
     //52. 无效过滤器1、matchValue=0排除掉。
-    resultModel.models = [SMGUtils filterArr:resultModel.models checkValid:^BOOL(AIFeatureJvBuModel *model) {
+    NSArray *validModels = [SMGUtils filterArr:resultModel.models checkValid:^BOOL(AIFeatureJvBuModel *model) {
         return model.matchValue > 0;
     }];
     
-    //53. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
-    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
-    resultModel.models = [[NSMutableArray alloc] initWithArray:ARR_SUB([SMGUtils sortBig2Small:resultModel.models compareBlock:^double(AIFeatureJvBuModel *obj) {
+    //53. 排序
+    validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         return obj.matchValue * obj.matchDegree * obj.matchAssProtoRatio;
-    }], 0, MIN(MAX(resultModel.models.count * 0.5f, 10), 20))];
+    }];
+    
+    //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
+    validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT.p;
+    }];
+    
+    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
+    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.5f, 10), 20));
+    
+    //60. 更新赋值回去。
+    resultModel.models = [[NSMutableArray alloc] initWithArray:validModels];
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in resultModel.models) {
