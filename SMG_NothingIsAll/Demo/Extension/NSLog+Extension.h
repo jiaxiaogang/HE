@@ -18,5 +18,6 @@
 +(NSString*) convertClassName2Desc:(NSString*)className;
 +(NSString*) convertMvp2DeltaDesc:(AIKVPointer*)mv_p;
 +(NSString*) convertSceneType2Desc:(SceneType)type simple:(BOOL)simple;
++(NSString*) convertRect2Desc:(CGRect)rect;
 
 @end

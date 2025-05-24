@@ -98,4 +98,8 @@
     return @"";
 }
 
++(NSString*) convertRect2Desc:(CGRect)rect {
+    return STRFORMAT(@"<x%.3f y%.3f w%.3f h%.3f>",rect.origin.x,rect.origin.y,rect.size.width,rect.size.height);
+}
+
 @end

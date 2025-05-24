@@ -309,7 +309,7 @@ static AIThinkingControl *_instance;
     [protoGT updateLogDescItem:logDesc];
     
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForJvBuModelsV2:jvBuModel.models lab:STRFORMAT(@"类比前assTs:%ld %ld",protoGT.pId,protoGT.count)];
+        [theApp.imgTrainerView setDataForJvBuModelsV2:jvBuModel.models lab:STRFORMAT(@"类比前assTs:%ld %ld",protoGT.pId,jvBuModel.models.count)];
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"类比后absTs:%ld %ld",protoGT.pId,protoGT.count)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);

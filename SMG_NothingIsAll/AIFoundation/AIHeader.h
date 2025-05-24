@@ -287,6 +287,7 @@
 #define ClassName2Str(c) [NSLog_Extension convertClassName2Desc:c]
 #define Mvp2DeltaStr(mv_p) [NSLog_Extension convertMvp2DeltaDesc:mv_p]
 #define SceneType2Str(type) [NSLog_Extension convertSceneType2Desc:type simple:true]
+#define Rect2Str(rect) [NSLog_Extension convertRect2Desc:rect]
 
 //Double转Str
 #define Double2Str_NDZ(value) [NSString double2Str_NoDotZero:value]

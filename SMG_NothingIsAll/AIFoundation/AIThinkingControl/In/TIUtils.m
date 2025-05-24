@@ -404,6 +404,9 @@
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) {
+            return @(obj.target_p.pointerId);
+        }]));
         //refPorts = ARR_SUB(refPorts, 0, 3);
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
@@ -533,6 +536,17 @@
             
             //45. 根据每个bestGVItems的总和，更新整个ass在proto中的位置。
             [model run4AssTAtProtoTRect];
+            
+            
+            //TODOTOMORROW20250524: jvBuModel.models中6个有多条的assTAtProtoTRect重复。
+            if ([SMGUtils removeRepeat:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
+                return @(obj.assTAtProtoTRect);
+            }].count < resultModel.models.count) {
+                NSLog(@"总条数:%ld\n%@",resultModel.models.count,[SMGUtils convertArr:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
+                    return STRFORMAT(@"T%ld %@",obj.assT.pId,Rect2Str(obj.assTAtProtoTRect));
+                }]);
+                NSLog(@"");
+            };
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
