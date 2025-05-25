@@ -396,6 +396,13 @@
     }];
     CGRect absAtAssRect = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
+    
+    
+    
+    //TODOTOMORROW20250525: 这里absAtAssR就是absAtProto了，查下此处absAtAssRect是不是应该把xy归0？assT有多大，似乎与protoT占了同样大的画布？
+    
+    
+    
     //15. 转为List<InputGroupValueModel>模型。
     NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
         AIKVPointer *assGV_p = ARR_INDEX(jvBuModel.assT.content_ps, obj.assIndex);

@@ -270,27 +270,11 @@ static AIThinkingControl *_instance;
     NSLog(@"第2步、局部特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    
-    //TODOTOMORROW20250524: jvBuModel.models中6个有多条的assTAtProtoTRect重复。
-    if ([SMGUtils removeRepeat:jvBuModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return @(obj.assTAtProtoTRect);
-    }].count < jvBuModel.models.count) {
-        NSLog(@"防重后还有重复的话，查一下：总条数:%ld\n%@",jvBuModel.models.count,[SMGUtils convertArr:jvBuModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
-            return STRFORMAT(@"T%ld %@",obj.assT.pId,Rect2Str(obj.assTAtProtoTRect));
-        }]);
-        NSLog(@"");
-    };
-    
-    
-    
     //40. 这里先直接调用下类比，先测试下识别结果的类比。
     //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
     //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
     //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
     NSMutableArray *groupTModels = [NSMutableArray new];
-    
-    //TODOTOMORROW20250523: 此处jvBuModels.models中，很多重复的，6条实际就2条。
-    
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
@@ -303,16 +287,17 @@ static AIThinkingControl *_instance;
         } else {
             absAtAssR = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
         }
-        CGRect assAtProtoR = model.assTAtProtoTRect;
         
         //2. 计算abs在proto中的位置。
         CGRect absAtProtoR = absAtAssR;
-        absAtProtoR.origin.x += assAtProtoR.origin.x;
-        absAtProtoR.origin.y += assAtProtoR.origin.y;
+//        absAtProtoR.origin.x += model.assTAtProtoTRect.origin.x;
+//        absAtProtoR.origin.y += model.assTAtProtoTRect.origin.y;
+        
+        
         
         //3. 收集为InputGroupFeatureModel。
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
-        NSLog(@"%@ => %@",@(absAtProtoR),@(model.assTAtProtoTRect));
+        NSLog(@"类比前%@ => 类比后%@",Rect2Str(model.assTAtProtoTRect),Rect2Str(absAtProtoR));
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -326,23 +311,6 @@ static AIThinkingControl *_instance;
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"类比后absTs:%ld %ld",protoGT.pId,protoGT.count)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    
-    //TODOTOMORROW20250521: 这里应该是protoGT构建的就不准确，查下为什么刚构建就有重影问题，是不是上面局部特征识别的问题？还是类比为抽象局部特征后的问题？
-    //验证下如果不做单T类比，直接收集为protoGT的效果。
-    //1、继续查下rect是否都正确。
-    //2、protoGT是否可以不生成？可是这样就没整体特征的冷启动了。
-    //3、protoGT的生成如何尽量不失真？a、最原始是从colorDic取数据，b、再然后可从assT取数据，c、再然后也可以从absT取数据，这三种应该都不会影响protoGT生成的大致样子。
-    //4、所以重影肯定是rect算错了，assT组成的protoGT没事，只有absT组成的有问题，明天继续查rect哪里算错了。尤其查下最后一个dotSize，如下日志，xy一样，wh不一样。
-    //5、所以：scale应该乘到里面？
-    //6、或者把局部特征类比的定责去掉，看全抽象，会打出什么？怎么感觉它全剩下15,3了？
-    //NSRect: {{3.3099167688247566, 14.519501653942077}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
-    //NSRect: {{3.3099167688247566, 14.519501653942077}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
-    //NSRect: {{6.3099167688247562, 26.519501653942079}, {15, 3}} => NSRect: {{3.3099167688247566, 14.519501653942077}, {18.589657502338245, 5.1634699699716631}}
-    
-    
-    
-    
     
     //5. debugRect
     //for (NSInteger i = 0; i < protoGT.count; i++) {
