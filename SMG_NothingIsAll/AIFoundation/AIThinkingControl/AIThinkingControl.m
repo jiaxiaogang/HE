@@ -289,11 +289,18 @@ static AIThinkingControl *_instance;
         }
         
         //2. 计算abs在proto中的位置。
-        CGRect absT_ProtoT = CGRectMake(absT_AssT.origin.x - model.assTAtProtoTRect.origin.x, absT_AssT.origin.y - model.assTAtProtoTRect.origin.y, absT_AssT.size.width, absT_AssT.size.height);
+        CGRect absT_ProtoT = CGRectMake(absT_AssT.origin.x + model.assTAtProtoTRect.origin.x, absT_AssT.origin.y + model.assTAtProtoTRect.origin.y, absT_AssT.size.width, absT_AssT.size.height);
         
-        //TODOTOMORROW20250526: 再查下这里的rect是不是有问题。
+        //TODOTOMORROW20250526: 再查下这里的rect是不是有问题（主要是protoGT的元素在可视化之后都出界了，查下原因）。
+        //aaaa2: <x3 y12 w15 h3> - <x0 y20.31 w21.893 h6.713> = <x3 y-8.31 w15 h3>
+        //aaaa2: <x0 y0 w21 h3> - <x0 y13.416 w20.972 h5.163> = <x0 y-13.416 w21 h3>
+        //aaaa2: <x3 y12 w21 h3> - <x0 y13.416 w20.972 h5.163> = <x3 y-1.416 w21 h3>
+        //aaaa2: <x0 y0 w15 h3> - <x1.103 y6.51 w25.852 h7.944> = <x-1.103 y-6.51 w15 h3>
+        //如上日志，很多为负的情况，改成加才对。
+        
+        
         //1、首先这里的宽高在proto中的尺寸应该还有个比例。
-        NSLog(@"aaaa2: %@ - %@ = %@",Rect2Str(absT_AssT),Rect2Str(model.assTAtProtoTRect),Rect2Str(absT_ProtoT));
+        NSLog(@"aaaa2: %@ + %@ = %@",Rect2Str(absT_AssT),Rect2Str(model.assTAtProtoTRect),Rect2Str(absT_ProtoT));
         
         
         //3. 收集为InputGroupFeatureModel。
