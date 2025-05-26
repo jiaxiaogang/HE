@@ -281,23 +281,24 @@ static AIThinkingControl *_instance;
         
         //============== 此处有absTAtAssTRect，也有assTAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
         //1. 计算abs在ass中的位置，以及ass在proto中的位置。
-        CGRect absAtAssR = CGRectNull;
+        CGRect absT_AssT = CGRectNull;
         if ([itemAbsT.p isEqual:model.assT.p]) {
-            absAtAssR = [AINetUtils convertAllOfFeatureContent2Rect:itemAbsT];
+            absT_AssT = [AINetUtils convertAllOfFeatureContent2Rect:itemAbsT];
         } else {
-            absAtAssR = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
+            absT_AssT = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
         }
         
         //2. 计算abs在proto中的位置。
-        CGRect absAtProtoR = absAtAssR;
-//        absAtProtoR.origin.x += model.assTAtProtoTRect.origin.x;
-//        absAtProtoR.origin.y += model.assTAtProtoTRect.origin.y;
+        CGRect absT_ProtoT = CGRectMake(absT_AssT.origin.x - model.assTAtProtoTRect.origin.x, absT_AssT.origin.y - model.assTAtProtoTRect.origin.y, absT_AssT.size.width, absT_AssT.size.height);
         
+        //TODOTOMORROW20250526: 再查下这里的rect是不是有问题。
+        //1、首先这里的宽高在proto中的尺寸应该还有个比例。
+        NSLog(@"aaaa2: %@ - %@ = %@",Rect2Str(absT_AssT),Rect2Str(model.assTAtProtoTRect),Rect2Str(absT_ProtoT));
         
         
         //3. 收集为InputGroupFeatureModel。
-        [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absAtProtoR]];
-        NSLog(@"类比前%@ => 类比后%@",Rect2Str(model.assTAtProtoTRect),Rect2Str(absAtProtoR));
+        [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absT_ProtoT]];
+        NSLog(@"类比前%@ => 类比后%@",Rect2Str(model.assTAtProtoTRect),Rect2Str(absT_ProtoT));
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     

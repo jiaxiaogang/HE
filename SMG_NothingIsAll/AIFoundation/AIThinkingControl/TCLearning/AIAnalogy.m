@@ -396,13 +396,6 @@
     }];
     CGRect absT_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
-    
-    
-    
-    //TODOTOMORROW20250525: 这里absAtAssR就是absAtProto了，查下此处absAtAssRect是不是应该把xy归0？assT有多大，似乎与protoT占了同样大的画布？
-    
-    
-    
     //15. 转为List<InputGroupValueModel>模型。
     NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
         AIKVPointer *assGV_p = ARR_INDEX(jvBuModel.assT.content_ps, obj.assIndex);
@@ -411,8 +404,16 @@
         CGRect assRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
         CGRect itemRect = CGRectMake(assRect.origin.x - absT_AssT.origin.x, assRect.origin.y - absT_AssT.origin.y, assRect.size.width, assRect.size.height);
         
-        //TODOTOMORROW20250526: 这里肯定算的不对，abs没排除任一元素，那么abs的rect和ass的rect一样，此时：每个assRect - absRect.xy肯定是不对的。。。
-        NSLog(@"aaaa: %@ - %@ = %@",Rect2Str(itemRect),Rect2Str(absT_AssT),Rect2Str(itemRect));
+        //TODOTOMORROW20250526: 
+        //aaaa: <x0 y0 w9 h9> - <x0 y0 w18 h9> = <x0 y0 w9 h9>
+        //aaaa: <x9 y0 w9 h9> - <x0 y0 w18 h9> = <x9 y0 w9 h9>
+        //aaaa: <x9 y0 w3 h3> - <x0 y0 w18 h9> = <x9 y0 w3 h3>
+        //aaaa: <x12 y0 w3 h3> - <x0 y0 w18 h9> = <x12 y0 w3 h3>
+        //aaaa: <x15 y0 w3 h3> - <x0 y0 w18 h9> = <x15 y0 w3 h3>
+        //类比前<x0 y15.505 w14.604 h8.216> => 类比后<x0 y0 w18 h9>
+        //以上日志看起来也没啥问题，，，
+        
+        NSLog(@"aaaa: %@ - %@ = %@",Rect2Str(assRect),Rect2Str(absT_AssT),Rect2Str(itemRect));
         if (itemRect.size.width != itemRect.size.height || itemRect.size.width == 0 || itemRect.size.height == 0) {
             ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
         }
