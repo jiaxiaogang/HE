@@ -54,7 +54,7 @@
         }
         lastStr = str;
     }
-    return SUBSTR2INDEX(result, result.length - sep.length);
+    return SUBSTRToIndex(result, result.length - sep.length);
 }
 
 +(NSString*) getLightStr:(AIKVPointer*)node_p {

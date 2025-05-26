@@ -203,7 +203,8 @@
 #define STRISOK(s) [SMGUtils strIsOk:s]                                 //是否空字符串
 #define STRTOOK(s) [SMGUtils strToOk:s]                                 //string强检查
 #define STRFORMAT(s, ...) [NSString stringWithFormat:s, ##__VA_ARGS__]  //String.format
-#define SUBSTR2INDEX(s,index) [SMGUtils subStr:s toIndex:index]         //subStr_toIndex
+#define SUBSTRToIndex(s,index) [SMGUtils subStr:s toIndex:index]         //subStr_toIndex
+#define SUBSTRFromIndex(s,index) [SMGUtils subStr:s fromIndex:index]    //subStr_fromIndex
 #define STRTOARR(str, sep) [SMGUtils strToArr:str sep:sep]              //str分隔成arr
 #define CLEANSTR(s) [SMGUtils cleanStr:s]
 
@@ -287,7 +288,7 @@
 #define ClassName2Str(c) [NSLog_Extension convertClassName2Desc:c]
 #define Mvp2DeltaStr(mv_p) [NSLog_Extension convertMvp2DeltaDesc:mv_p]
 #define SceneType2Str(type) [NSLog_Extension convertSceneType2Desc:type simple:true]
-#define Rect2Str(rect) [NSLog_Extension convertRect2Desc:rect]
+#define Rect2Str(rect) [NSLog_Extension convertRect2Desc:rect]//小数精度3位
 
 //Double转Str
 #define Double2Str_NDZ(value) [NSString double2Str_NoDotZero:value]

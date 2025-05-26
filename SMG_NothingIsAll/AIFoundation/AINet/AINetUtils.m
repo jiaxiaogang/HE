@@ -1174,11 +1174,7 @@
  *  _param contentIndexes 将每个absT转成protoT的rect（根据indexDic可以取得protoIndexes，然后根据这个下标组来取并集区域范围）。
  */
 +(CGRect) convertAllOfFeatureContent2Rect:(AIFeatureNode*)tNode {
-    NSMutableArray *indexes = [NSMutableArray new];
-    for (NSInteger i = 0; i < tNode.count; i++) {
-        [indexes addObject:@(i)];
-    }
-    return [self convertPartOfFeatureContent2Rect:tNode contentIndexes:indexes];
+    return [self convertPartOfFeatureContent2Rect:tNode contentIndexes:tNode.indexes];
 }
 +(CGRect) convertPartOfFeatureContent2Rect:(AIFeatureNode*)tNode contentIndexes:(NSArray*)contentIndexes {
     //1. 数据准备。
@@ -1186,25 +1182,11 @@
     
     //2. 把contentIndexes对应的每个组码取出来。
     for (NSNumber *contentIndex in contentIndexes) {
-        NSInteger index = contentIndex.integerValue;
-        AIKVPointer *content_p = ARR_INDEX(tNode.content_ps, index);
-        
-        //11. 如果是组码。
-        if (PitIsGroupValue(content_p) || PitIsFeature(content_p)) {
-            //12. 求出当前层与最细粒度层的比例。
-            CGRect itemRect = VALTOOK(ARR_INDEX(tNode.rects, index)).CGRectValue;
-            resultRect = CGRectUnion(resultRect, itemRect);
-        }
-        //2025.04.13: 特征没有嵌套关系，所以元素必然是GV。
-        ////21. 如果是特征。
-        //else if (PitIsFeature(content_p)) {
-        //    //22. itemRect累加到result的范围中。
-        //    CGRect itemRect = VALTOOK(ARR_INDEX(tNode.rects, index)).CGRectValue;
-        //    resultRect = CGRectUnion(resultRect, itemRect);
-        //}
+        CGRect itemRect = VALTOOK(ARR_INDEX(tNode.rects, contentIndex.integerValue)).CGRectValue;
+        resultRect = CGRectUnion(resultRect, itemRect);
     }
     
-    //31. 将求得的范围并集返回。
+    //3. 将求得的范围并集返回。
     return resultRect;
 }
 

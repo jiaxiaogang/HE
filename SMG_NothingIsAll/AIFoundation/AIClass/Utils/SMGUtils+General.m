@@ -69,12 +69,12 @@
 }
 +(void) checkPrintNSLog:(NSString*)fileName line:(NSInteger)line protoLog:(NSString*)protoLog headerMode:(LogHeaderMode)headerMode{
     //1. 记录下最后一条TC;
-    if ([@"TC" isEqualToString:SUBSTR2INDEX(fileName, 2)]) {
+    if ([@"TC" isEqualToString:SUBSTRToIndex(fileName, 2)]) {
         lastTCName = fileName;
     }
     
     //2. 当TC有效时,打印它;
-    BOOL tcsCanPrint = LogPrintAllTCs || !STRISOK(lastTCName) || [LogJustPrintTCs containsObject:SUBSTR2INDEX(lastTCName, lastTCName.length - 2)];
+    BOOL tcsCanPrint = LogPrintAllTCs || !STRISOK(lastTCName) || [LogJustPrintTCs containsObject:SUBSTRToIndex(lastTCName, lastTCName.length - 2)];
     BOOL logSwitch = cNSLogSwitch && [cNSLogSwitchIsOpenTypes containsObject:[self getQueueStr]];
     
     //3. 打印
@@ -138,6 +138,9 @@
 //notnull
 +(NSString*) subStr:(NSString*)s toIndex:(NSInteger)index{
     return (STRISOK(s) ? [s substringToIndex:MIN(s.length, MAX(0, index))] : @"");
+}
++(NSString*) subStr:(NSString*)s fromIndex:(NSInteger)index{
+    return (STRISOK(s) ? [s substringFromIndex:MIN(s.length, MAX(0, index))] : @"");
 }
 
 +(NSString*) cleanStr:(id)str{

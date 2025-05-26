@@ -39,7 +39,7 @@ static XGDebug *_instance;
  */
 -(void) debugModuleWithFileName:(NSString*)fileName suffix:(NSString*)suffix {
     fileName = STRTOOK(fileName);
-    NSString *prefix = SUBSTR2INDEX(fileName, fileName.length - 2);
+    NSString *prefix = SUBSTRToIndex(fileName, fileName.length - 2);
     [self debugModuleWithPrefix:prefix suffix:suffix];
 }
 

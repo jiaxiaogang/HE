@@ -176,7 +176,7 @@
             [result appendFormat:@"%@%@",str,PitIsValue(item_p) ? @"_" : @","];
         }
     }
-    return SUBSTR2INDEX(result, result.length - 1);
+    return SUBSTRToIndex(result, result.length - 1);
 }
 
 +(NSString*) getLightStr:(AIKVPointer*)node_p {

@@ -23,6 +23,7 @@ static NSString *lastTCName = @""; //记录当前在打日志的TC模块名字;
 +(NSString*) strToOk:(NSString*)s;
 +(NSArray*) strToArr:(NSString*)str sep:(NSString*)sep;     //str分隔arr
 +(NSString*) subStr:(NSString*)s toIndex:(NSInteger)index;  //notnull
++(NSString*) subStr:(NSString*)s fromIndex:(NSInteger)index;
 
 //log
 +(void) inTitle:(NSString*)title log:(NSString*)log fileName:(NSString*)fileName;

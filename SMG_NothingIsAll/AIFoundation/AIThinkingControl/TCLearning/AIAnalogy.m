@@ -394,7 +394,7 @@
     NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
         return @(obj.assIndex);
     }];
-    CGRect absAtAssRect = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
+    CGRect absT_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
     
     
@@ -409,12 +409,14 @@
         
         //16. 将gvRect在assT的范围，转成在newAbsT中的位置。
         CGRect assRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
-        assRect.origin.x -= absAtAssRect.origin.x;
-        assRect.origin.y -= absAtAssRect.origin.y;
-        if (assRect.size.width != assRect.size.height || assRect.size.width == 0 || assRect.size.height == 0) {
+        CGRect itemRect = CGRectMake(assRect.origin.x - absT_AssT.origin.x, assRect.origin.y - absT_AssT.origin.y, assRect.size.width, assRect.size.height);
+        
+        //TODOTOMORROW20250526: 这里肯定算的不对，abs没排除任一元素，那么abs的rect和ass的rect一样，此时：每个assRect - absRect.xy肯定是不对的。。。
+        NSLog(@"aaaa: %@ - %@ = %@",Rect2Str(itemRect),Rect2Str(absT_AssT),Rect2Str(itemRect));
+        if (itemRect.size.width != itemRect.size.height || itemRect.size.width == 0 || itemRect.size.height == 0) {
             ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
         }
-        return [InputGroupValueModel new:assGV_p rect:assRect];
+        return [InputGroupValueModel new:assGV_p rect:itemRect];
     }];
     if (jvBuModel.matchValue == 1 && absGVModels.count == 0) {
         ELog(@"如果匹配度为1，会导致所有indexDic的GV全有责，导致最后absGVModels为0条，如果停此处时，查下来源，这个匹配度1是哪来的");
@@ -436,7 +438,7 @@
     [jvBuModel.assT updateMatchValue:absT matchValue:absMatchValue];
     
     //33. 存conPorts的rect（参考34135-TODO1）。
-    [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:absAtAssRect];
+    [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:absT_AssT];
     
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
     CGFloat absMatchDegree = validItems.count == 0 ? 0 : [SMGUtils sumOfArr:validItems convertBlock:^double(AIFeatureJvBuItem *obj) {

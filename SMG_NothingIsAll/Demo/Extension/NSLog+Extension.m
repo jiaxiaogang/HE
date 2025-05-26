@@ -99,7 +99,24 @@
 }
 
 +(NSString*) convertRect2Desc:(CGRect)rect {
-    return STRFORMAT(@"<x%.3f y%.3f w%.3f h%.3f>",rect.origin.x,rect.origin.y,rect.size.width,rect.size.height);
+    NSString *x = [self convertFloat2NoDotBackZeroStr:rect.origin.x];
+    NSString *y = [self convertFloat2NoDotBackZeroStr:rect.origin.y];
+    NSString *w = [self convertFloat2NoDotBackZeroStr:rect.size.width];
+    NSString *h = [self convertFloat2NoDotBackZeroStr:rect.size.height];
+    return STRFORMAT(@"<x%@ y%@ w%@ h%@>",x,y,w,h);
+}
+
+//float转str: 保留小数后三位，但去掉小数后末尾的0。
++(NSString*) convertFloat2NoDotBackZeroStr:(CGFloat)value {
+    NSString *result = [NSString stringWithFormat:@"%.3f",value];
+    if ([@".000" isEqualToString:SUBSTRFromIndex(result, result.length - 4)]) {
+        result = SUBSTRToIndex(result, result.length - 4);
+    } else if ([@"00" isEqualToString:SUBSTRFromIndex(result, result.length - 2)]) {
+        result = SUBSTRToIndex(result, result.length - 2);
+    } else if ([@"0" isEqualToString:SUBSTRFromIndex(result, result.length - 1)]) {
+        result = SUBSTRToIndex(result, result.length - 1);
+    }
+    return result;
 }
 
 @end
