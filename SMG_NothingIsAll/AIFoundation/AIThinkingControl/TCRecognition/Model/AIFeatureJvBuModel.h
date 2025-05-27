@@ -18,7 +18,7 @@
 //refPort.target。
 @property (weak, nonatomic) AIFeatureNode *assT;
 //每个assT在proto中的rect（用于整体特征识别）。
-@property (assign, nonatomic) CGRect assTAtProtoTRect;
+@property (assign, nonatomic) CGRect bestGVsAtProtoTRect;
 //每条最佳gv的数据：List<AIFeatureJvBuItem>
 @property (strong, nonatomic) NSMutableArray *bestGVs;
 
@@ -30,6 +30,6 @@
 @property (assign, nonatomic) CGFloat matchAssProtoRatio;
 
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
--(void) run4AssTAtProtoTRect;
+-(void) run4BestGvsAtProtoTRect;
 
 @end

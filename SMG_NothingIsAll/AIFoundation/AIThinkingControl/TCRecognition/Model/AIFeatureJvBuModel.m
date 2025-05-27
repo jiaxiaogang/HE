@@ -42,10 +42,10 @@
     self.matchAssProtoRatio = self.bestGVs.count;
 }
 
--(void) run4AssTAtProtoTRect {
-    self.assTAtProtoTRect = CGRectNull;
+-(void) run4BestGvsAtProtoTRect {
+    self.bestGVsAtProtoTRect = CGRectNull;
     for (AIFeatureJvBuItem *item in self.bestGVs) {
-        self.assTAtProtoTRect = CGRectUnion(self.assTAtProtoTRect, item.bestGVAtProtoTRect);
+        self.bestGVsAtProtoTRect = CGRectUnion(self.bestGVsAtProtoTRect, item.bestGVAtProtoTRect);
     }
 }
 

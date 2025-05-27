@@ -376,19 +376,18 @@
     NSMutableArray *validItems = [[NSMutableArray alloc] init];
     
     //11. 外类比有序进行 (记录jMax & 正序)
-    for (AIFeatureJvBuItem *item in jvBuModel.bestGVs) {
+    jvBuModel.bestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
         //12. 当前有主责，直接剔除: GV类比: 进行共同点抽象 (参考29025-11);
         CGFloat curDegree = item.matchDegree;
         CGFloat curMatchValue = item.matchValue;
         BOOL noZeRen = [TCLearningUtil noZeRenForPingJun:curMatchValue * curDegree bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree];
-        if (!noZeRen) continue;
         
         //13. 当前码责任<50%时 (次要责任时,免责): 收集有效的映射：用于后面计算rect用。
-        [validItems addObject:item];
-    }
+        return noZeRen;
+    }]];
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
-    NSArray *sortValidItems = [SMGUtils sortSmall2Big:validItems compareBlock:^double(AIFeatureJvBuItem *obj) {
+    NSArray *sortValidItems = [SMGUtils sortSmall2Big:jvBuModel.bestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.assIndex;
     }];
     NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
@@ -396,18 +395,15 @@
     }];
     CGRect absT_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
-    
-    CGRect assT_ProtoT = jvBuModel.assTAtProtoTRect;
-    if (absT_AssT.origin.y > assT_ProtoT.size.height) {
-        NSLog(@"aaaa6 异常出界:%@.y > %@.h",Rect2Str(absT_AssT),Rect2Str(assT_ProtoT));
-        NSLog(@"");
+    //TODOTOMORROW20250527: 随后回测protoGT显示不出界后，此处再删。
+    CGRect bestGVs_ProtoT = jvBuModel.bestGVsAtProtoTRect;
+    if (absT_AssT.origin.y > bestGVs_ProtoT.size.height) {
+        NSLog(@"aaaa6 异常出界:%@.y > %@.h",Rect2Str(absT_AssT),Rect2Str(bestGVs_ProtoT));
         //assT_ProtoT是用每个bestGVs在proto中的位置，求并出来的。
         //  所以：应该bestGVs其实组成了一个临时的局部assT，而不是原本的整个assT。
         //  而absT_AssT表示的是在整个assT中的rect范围，但它与在临时局部assT的范围是不同的。
         //  1、临时局部assT的左上角为0（即最小的x和y，是0才对）。
         //  2、计算absT_AssT后，应该把这个最小xy减掉，才是absT_临时局部AssT 的正确范围。
-        
-        
     }
     
     //15. 转为List<InputGroupValueModel>模型。

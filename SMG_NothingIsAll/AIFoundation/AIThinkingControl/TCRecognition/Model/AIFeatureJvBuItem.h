@@ -17,7 +17,7 @@
 
 //记录当前gv是assT的哪个下标。
 @property (assign, nonatomic) NSInteger assIndex;
-//每一条bestGV都可以把rect存下来（可用于计算assTAtProtoTRect）。
+//每一条bestGV都可以把rect存下来（可用于计算bestGVsAtProtoTRect）。
 @property (assign, nonatomic) CGRect bestGVAtProtoTRect;
 //每个bestGV的匹配度。
 @property (assign, nonatomic) CGFloat matchValue;

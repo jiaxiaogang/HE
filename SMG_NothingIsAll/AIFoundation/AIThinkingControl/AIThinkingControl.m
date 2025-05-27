@@ -280,7 +280,10 @@ static AIThinkingControl *_instance;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
         
-        //============== 此处有absTAtAssTRect，也有assTAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
+        //43. 类比后，计算bestGVsAtProtoRect，因为类比时会定责淘汰无效gvs：然后留下有效的bestGVItems的总和，更新整个bestGvs at proto中的位置。
+        [model run4BestGvsAtProtoTRect];
+        
+        //============== 此处有absTAtAssTRect，也有bestGVsAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
         //1. 计算abs在ass中的位置，以及ass在proto中的位置。
         CGRect absT_AssT = CGRectNull;
         if ([itemAbsT.p isEqual:model.assT.p]) {
@@ -290,7 +293,11 @@ static AIThinkingControl *_instance;
         }
         
         //2. 计算abs在proto中的位置。
-        CGRect absT_ProtoT = CGRectMake(absT_AssT.origin.x + model.assTAtProtoTRect.origin.x, absT_AssT.origin.y + model.assTAtProtoTRect.origin.y, absT_AssT.size.width, absT_AssT.size.height);
+        //2025.05.27：修复protoGT可视化出界问题：重新分析absT at ProtoT（absT是由bestGVs生成的）所以直接就 = model.bestGVs at protoT）
+        //  A、assT at protoT（没有，识别后只有bestGVsAtProto，没有assT at protoT）。
+        //  B、bestGVs at protoT（有，即本次所需，在model中直接就存着字段）。
+        //  C、bestGVs at assT（有，即conPort中有存着absT at assT)。
+        CGRect absT_ProtoT = model.bestGVsAtProtoTRect;
         
         //TODOTOMORROW20250526: 再查下这里的rect是不是有问题（主要是protoGT的元素在可视化之后都出界了，查下原因）。
         
@@ -301,9 +308,7 @@ static AIThinkingControl *_instance;
         //如上日志，absT是正常的3,12,15,3 assT是正常的5,17,21,7 问题在于：assTAtProtoRect高一共才7.272，为什么abs的y能达到12？它本来就在出界位置？
         
         
-        //1、首先这里的宽高在proto中的尺寸应该还有个比例。
-        NSLog(@"aaaa2: %@ + %@ = %@",Rect2Str(absT_AssT),Rect2Str(model.assTAtProtoTRect),Rect2Str(absT_ProtoT));
-        
+        //1、首先这里的宽高在proto中的尺寸应该还有个比例（没比例，都是maxLevel坐标系）。
         if (absT_ProtoT.origin.x + absT_ProtoT.size.width > 28.5 || absT_ProtoT.origin.y + absT_ProtoT.size.height > 28.5) {
             NSLog(@"aaaa5 异常出界:%@",Rect2Str(absT_ProtoT));
             NSLog(@"");
