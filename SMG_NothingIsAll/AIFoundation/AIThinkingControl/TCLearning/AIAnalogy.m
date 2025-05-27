@@ -396,6 +396,20 @@
     }];
     CGRect absT_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
+    
+    CGRect assT_ProtoT = jvBuModel.assTAtProtoTRect;
+    if (absT_AssT.origin.y > assT_ProtoT.size.height) {
+        NSLog(@"aaaa6 异常出界:%@.y > %@.h",Rect2Str(absT_AssT),Rect2Str(assT_ProtoT));
+        NSLog(@"");
+        //assT_ProtoT是用每个bestGVs在proto中的位置，求并出来的。
+        //  所以：应该bestGVs其实组成了一个临时的局部assT，而不是原本的整个assT。
+        //  而absT_AssT表示的是在整个assT中的rect范围，但它与在临时局部assT的范围是不同的。
+        //  1、临时局部assT的左上角为0（即最小的x和y，是0才对）。
+        //  2、计算absT_AssT后，应该把这个最小xy减掉，才是absT_临时局部AssT 的正确范围。
+        
+        
+    }
+    
     //15. 转为List<InputGroupValueModel>模型。
     NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
         AIKVPointer *assGV_p = ARR_INDEX(jvBuModel.assT.content_ps, obj.assIndex);
