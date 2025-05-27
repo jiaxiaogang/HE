@@ -275,6 +275,7 @@ static AIThinkingControl *_instance;
     //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
     //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
     NSMutableArray *groupTModels = [NSMutableArray new];
+    NSLog(@"aaaa2 begin");
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
@@ -292,21 +293,34 @@ static AIThinkingControl *_instance;
         CGRect absT_ProtoT = CGRectMake(absT_AssT.origin.x + model.assTAtProtoTRect.origin.x, absT_AssT.origin.y + model.assTAtProtoTRect.origin.y, absT_AssT.size.width, absT_AssT.size.height);
         
         //TODOTOMORROW20250526: 再查下这里的rect是不是有问题（主要是protoGT的元素在可视化之后都出界了，查下原因）。
-        //aaaa2: <x3 y12 w15 h3> - <x0 y20.31 w21.893 h6.713> = <x3 y-8.31 w15 h3>
-        //aaaa2: <x0 y0 w21 h3> - <x0 y13.416 w20.972 h5.163> = <x0 y-13.416 w21 h3>
-        //aaaa2: <x3 y12 w21 h3> - <x0 y13.416 w20.972 h5.163> = <x3 y-1.416 w21 h3>
-        //aaaa2: <x0 y0 w15 h3> - <x1.103 y6.51 w25.852 h7.944> = <x-1.103 y-6.51 w15 h3>
-        //如上日志，很多为负的情况，改成加才对。
+        
+        //aaaa2: <x3 y12 w15 h3> + <x4.848 y16.968 w21.285 h7.272> = <x7.848 y28.968 w15 h3>
+        //aaaa5 异常出界:<x7.848 y28.968 w15 h3>
+        
+        
+        //如上日志，absT是正常的3,12,15,3 assT是正常的5,17,21,7 问题在于：assTAtProtoRect高一共才7.272，为什么abs的y能达到12？它本来就在出界位置？
         
         
         //1、首先这里的宽高在proto中的尺寸应该还有个比例。
         NSLog(@"aaaa2: %@ + %@ = %@",Rect2Str(absT_AssT),Rect2Str(model.assTAtProtoTRect),Rect2Str(absT_ProtoT));
         
+        if (absT_ProtoT.origin.x + absT_ProtoT.size.width > 28.5 || absT_ProtoT.origin.y + absT_ProtoT.size.height > 28.5) {
+            NSLog(@"aaaa5 异常出界:%@",Rect2Str(absT_ProtoT));
+            NSLog(@"");
+            CGRect absT_AssT = CGRectNull;
+            if ([itemAbsT.p isEqual:model.assT.p]) {
+                absT_AssT = [AINetUtils convertAllOfFeatureContent2Rect:itemAbsT];
+            } else {
+                absT_AssT = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
+            }
+            NSLog(@"明天继续查下，这个哪来的？单特征识别后，rect是不是就已经出界了？abs.y > ass.h 为出界。");
+        }
+        
         
         //3. 收集为InputGroupFeatureModel。
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absT_ProtoT]];
-        NSLog(@"类比前%@ => 类比后%@",Rect2Str(model.assTAtProtoTRect),Rect2Str(absT_ProtoT));
     }
+    NSLog(@"aaaa2 finish");
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //4. 构建protoGT组特征。
