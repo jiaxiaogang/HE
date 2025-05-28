@@ -209,6 +209,17 @@
     [self.previewTableView reloadData];
 }
 
+//有BUG，可视化像一块块分裂着。
+-(void) setDataForJvBuModelsV3:(NSArray*)jvBuModels lab:(NSString*)lab {
+    for (AIFeatureJvBuModel *jvBuModel in jvBuModels) {
+        NSArray *gvModels = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return [InputGroupValueModel new:ARR_INDEX(jvBuModel.assT.content_ps, obj.assIndex) rect:obj.bestGVAtProtoTRect];
+        }];
+        [self addFeatureToPreview:jvBuModel.assT gvModels:gvModels lab:lab];
+    }
+    [self.previewTableView reloadData];
+}
+
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab {
     [self addFeatureToPreview:tNode indexes:nil lab:lab];
     [self.previewTableView reloadData];
@@ -232,7 +243,26 @@
 //MARK:                     < privateMethod >
 //MARK:===============================================================
 
+-(void) addFeatureToPreview:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab {
+    ImgTrainerPreview *preview = [self getOrCreate:lab];
+    [preview setData:tNode gvModels:gvModels lab:lab];
+}
+
 -(void) addFeatureToPreview:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab {
+    ImgTrainerPreview *preview = [self getOrCreate:lab];
+    [preview setData:tNode indexes:indexes lab:lab];
+}
+
+-(void) addAlgToPreview:(AINodeBase*)algNode lab:(NSString*)lab{
+    //1. 取preview 并更新显示;
+    ImgTrainerPreview *preview = [self getOrCreate:lab];
+    for (AIKVPointer *itemT_p in algNode.content_ps) {
+        AIFeatureNode *itemT = [SMGUtils searchNode:itemT_p];
+        [preview setData:itemT indexes:nil lab:lab];
+    }
+}
+
+-(ImgTrainerPreview*) getOrCreate:(NSString*)lab {
     //1. 每条itemAbsT分别可视化。
     MapModel *old = [SMGUtils filterSingleFromArr:self.previewDatas checkValid:^BOOL(MapModel *item) {
         return [lab isEqualToString:item.v1];
@@ -242,26 +272,7 @@
         preview = [[ImgTrainerPreview alloc] init];
         [self.previewDatas addObject:[MapModel newWithV1:lab v2:preview]];
     }
-    
-    //2. 并更新显示;
-    [preview setData:tNode indexes:indexes lab:lab];
-}
-
--(void) addAlgToPreview:(AINodeBase*)algNode lab:(NSString*)lab{
-    //1. 取preview 并更新显示;
-    MapModel *old = [SMGUtils filterSingleFromArr:self.previewDatas checkValid:^BOOL(MapModel *item) {
-        return [item.v1 isEqual:lab];
-    }];
-    ImgTrainerPreview *preview = old ? old.v2 : nil;
-    if (!preview) {
-        preview = [[ImgTrainerPreview alloc] init];
-        [self.previewDatas addObject:[MapModel newWithV1:lab v2:preview]];
-    }
-    
-    for (AIKVPointer *itemT_p in algNode.content_ps) {
-        AIFeatureNode *itemT = [SMGUtils searchNode:itemT_p];
-        [preview setData:itemT indexes:nil lab:lab];
-    }
+    return preview;
 }
 
 //MARK:===============================================================

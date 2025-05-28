@@ -435,11 +435,6 @@
             //13. 把tMatchModel收集起来。
             AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT];
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex]];
-            
-            if (lastProtoRect.origin.x + lastProtoRect.size.width > 28.5 || lastProtoRect.origin.y + lastProtoRect.size.height > 28.5) {
-                NSLog(@"aaaa3 异常出界:%@",Rect2Str(lastProtoRect));
-            }
-            
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //21. 自举：每个assT一条条自举自身的gv。
@@ -492,12 +487,6 @@
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     if (!ARRISOK(subDots)) continue;
                     NSDictionary *protoGVIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-                    
-                    if (checkCurProtoRect.origin.x + checkCurProtoRect.size.width > 28.5 || checkCurProtoRect.origin.y + checkCurProtoRect.size.height > 28.5) {
-                        NSLog(@"aaaa4 异常出界:%@",Rect2Str(checkCurProtoRect));
-                        NSLog(@"");
-                        NSArray *subDots2 = [ThinkingUtils getSubDots:protoColorDic gvRect:checkCurProtoRect];
-                    }
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
                     
                     //34. 求切出的curProtoGV九宫与curAssGV的匹配度。

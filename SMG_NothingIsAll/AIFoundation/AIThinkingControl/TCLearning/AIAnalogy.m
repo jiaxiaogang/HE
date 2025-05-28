@@ -395,39 +395,15 @@
     }];
     CGRect absT_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
-    //TODOTOMORROW20250527: 随后回测protoGT显示不出界后，此处再删。
-    CGRect bestGVs_ProtoT = jvBuModel.bestGVsAtProtoTRect;
-    if (absT_AssT.origin.y > bestGVs_ProtoT.size.height) {
-        NSLog(@"aaaa6 异常出界:%@.y > %@.h",Rect2Str(absT_AssT),Rect2Str(bestGVs_ProtoT));
-        //assT_ProtoT是用每个bestGVs在proto中的位置，求并出来的。
-        //  所以：应该bestGVs其实组成了一个临时的局部assT，而不是原本的整个assT。
-        //  而absT_AssT表示的是在整个assT中的rect范围，但它与在临时局部assT的范围是不同的。
-        //  1、临时局部assT的左上角为0（即最小的x和y，是0才对）。
-        //  2、计算absT_AssT后，应该把这个最小xy减掉，才是absT_临时局部AssT 的正确范围。
-    }
-    
     //15. 转为List<InputGroupValueModel>模型。
     NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
         AIKVPointer *assGV_p = ARR_INDEX(jvBuModel.assT.content_ps, obj.assIndex);
         
         //16. 将gvRect在assT的范围，转成在newAbsT中的位置。
-        CGRect assRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
-        CGRect itemRect = CGRectMake(assRect.origin.x - absT_AssT.origin.x, assRect.origin.y - absT_AssT.origin.y, assRect.size.width, assRect.size.height);
-        
-        //TODOTOMORROW20250526: 
-        //aaaa: <x0 y0 w9 h9> - <x0 y0 w18 h9> = <x0 y0 w9 h9>
-        //aaaa: <x9 y0 w9 h9> - <x0 y0 w18 h9> = <x9 y0 w9 h9>
-        //aaaa: <x9 y0 w3 h3> - <x0 y0 w18 h9> = <x9 y0 w3 h3>
-        //aaaa: <x12 y0 w3 h3> - <x0 y0 w18 h9> = <x12 y0 w3 h3>
-        //aaaa: <x15 y0 w3 h3> - <x0 y0 w18 h9> = <x15 y0 w3 h3>
-        //类比前<x0 y15.505 w14.604 h8.216> => 类比后<x0 y0 w18 h9>
-        //以上日志看起来也没啥问题，，，
-        
-        NSLog(@"aaaa: %@ - %@ = %@",Rect2Str(assRect),Rect2Str(absT_AssT),Rect2Str(itemRect));
-        if (itemRect.size.width != itemRect.size.height || itemRect.size.width == 0 || itemRect.size.height == 0) {
-            ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
-        }
-        return [InputGroupValueModel new:assGV_p rect:itemRect];
+        CGRect assGVRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
+        CGRect absGVRect = CGRectMake(assGVRect.origin.x - absT_AssT.origin.x, assGVRect.origin.y - absT_AssT.origin.y, assGVRect.size.width, assGVRect.size.height);
+        if (absGVRect.size.width != absGVRect.size.height || absGVRect.size.width == 0 || absGVRect.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
+        return [InputGroupValueModel new:assGV_p rect:absGVRect];
     }];
     if (jvBuModel.matchValue == 1 && absGVModels.count == 0) {
         ELog(@"如果匹配度为1，会导致所有indexDic的GV全有责，导致最后absGVModels为0条，如果停此处时，查下来源，这个匹配度1是哪来的");

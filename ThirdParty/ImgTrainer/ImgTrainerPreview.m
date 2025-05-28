@@ -61,8 +61,11 @@
  *  @param indexes 传值时，仅显示indexes中有的下标。
  */
 -(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab {
-    //1. 数据准备。
     NSArray *gvModels = [tNode convert2GVModels:indexes];
+    [self setData:tNode gvModels:gvModels lab:lab];
+}
+-(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab {
+    //1. 数据准备。
     NSString *at = tNode.at;
     NSString *ds = tNode.ds;
     
@@ -114,7 +117,7 @@
             else if (i % 4 == 1) [sub.layer setBorderColor:UIColor.greenColor.CGColor];
             else if (i % 4 == 2) [sub.layer setBorderColor:UIColor.redColor.CGColor];
             else if (i % 4 == 3) [sub.layer setBorderColor:UIColor.blueColor.CGColor];
-            [sub.layer setBorderWidth:0.5f];
+            [sub.layer setBorderWidth:0.9f];
             [sub setBackgroundColor:UIColorWithRGBA(0, 0, 0, 0)];
             [self addSubview:sub];
         }
