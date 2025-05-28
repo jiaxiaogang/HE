@@ -303,20 +303,6 @@ static AIThinkingControl *_instance;
         
         //TODOTOMORROW20250528：看下，在构建protoGT时，再把这个坐标修正下，不要影响类比这里的代码。
         //CGRect bestGV_absT2 = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
-        //1、微观上：absT.gvs都是以assT为准进行rects计算的。
-        //2、宏观上：protoGT.rects又是以absT at protoT为准的。
-        //3、即absT对protoGT而言可能是rect1，而对其内的gvs而言又可能是rect2。
-        //4、即rect1和rect2之间的比例问题。。。
-        //5、而protoGT中的每个absT的比例差，可能各有不同，所以只有两个方法：
-        //方案1、把absT统一比例向protoGT对齐（即一个个生成protoT单特征），但这样absT与assT的抽具象关联又不那么对齐了。
-        //  缺点：方案1会导致assT和absT之间对齐又不准确了。
-        //方案2、protoGT与其元素本来就有比例问题，记录一下xScales和yScales比例到AIGroupFeatureNode中。
-        //  缺点：方案2可以解决比例问题，不过这太复杂了，组特征识别算法是不是也要因此变的更复杂？（因为计算位置符合度等都是依赖rect来计算的）。
-        //方案3、protoGT的元素的元素都各自有比例，protoGT虽然是用它们表征的，但细到每个gv都得各自变换拼接回protoGT，即每个absT都要存一个dic比例表。
-        //  缺点：方案3更能解决比例问题，不过更复杂，也因此GT识别算法在计算rect时，变的更复杂，容易不可控的出各种太复杂导致的bug。
-        //方案4、类比时，同时生成absT和protoT，这些protoT用于构建protoGT。
-        //  优点：二者兼得，虽然浪费些空间。
-        //  缺点：absT的复用性降低了，因为单独生成protoT了，absT就不易复用到，需要测下GT识别会不会因此受影响？不过GT识别本来就是找protoGT，对于变形严重的不易识别到应属正常。
         
         
         //3. 收集为InputGroupFeatureModel。
