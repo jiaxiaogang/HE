@@ -113,8 +113,8 @@
         for (NSInteger i = 0; i < tNode.count; i++) {
             CGRect rect = VALTOOK(ARR_INDEX(tNode.rects, i)).CGRectValue;
             UIView *sub = [[UIView alloc] initWithFrame:CGRectMake(rect.origin.x * dotWH, rect.origin.y * dotWH, rect.size.width * dotWH, rect.size.height * dotWH)];
-            if (i % 4 == 0) [sub.layer setBorderColor:UIColor.yellowColor.CGColor];
-            else if (i % 4 == 1) [sub.layer setBorderColor:UIColor.greenColor.CGColor];
+            if (i % 4 == 0) [sub.layer setBorderColor:UIColor.purpleColor.CGColor];
+            else if (i % 4 == 1) [sub.layer setBorderColor:UIColor.cyanColor.CGColor];
             else if (i % 4 == 2) [sub.layer setBorderColor:UIColor.redColor.CGColor];
             else if (i % 4 == 3) [sub.layer setBorderColor:UIColor.blueColor.CGColor];
             [sub.layer setBorderWidth:0.9f];

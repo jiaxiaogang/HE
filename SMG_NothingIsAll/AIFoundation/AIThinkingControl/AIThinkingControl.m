@@ -298,6 +298,12 @@ static AIThinkingControl *_instance;
         //  C、bestGVs at assT（有，即conPort中有存着absT at assT)。
         CGRect absT_ProtoT = model.bestGVsAtProtoTRect;
         
+        NSLog(@"aaaa1 第%ld个 absTRect:%@",groupTModels.count,Rect2Str(absT_ProtoT));
+        for (NSInteger i = 0; i < itemAbsT.count; i++) {
+            CGRect itemGVRect = VALTOOK(ARR_INDEX(itemAbsT.rects, i)).CGRectValue;
+            NSLog(@"aaaa2 itemGVRect:%@",Rect2Str(itemGVRect));
+        }
+        
         //3. 收集为InputGroupFeatureModel。
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absT_ProtoT]];
     }
@@ -308,9 +314,9 @@ static AIThinkingControl *_instance;
     if (!protoGT) return;
     [protoGT updateLogDescItem:logDesc];
     
+    NSLog(@"aaaa3 protoGT:%ld",protoGT.pId);
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForJvBuModelsV2:jvBuModel.models lab:STRFORMAT(@"类比前assTs:%ld %ld",protoGT.pId,jvBuModel.models.count)];
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"类比后absTs:%ld %ld",protoGT.pId,protoGT.count)];
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"类比后protoGT:%ld(%ld)",protoGT.pId,protoGT.count)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     

@@ -403,6 +403,17 @@
         CGRect assGVRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
         CGRect absGVRect = CGRectMake(assGVRect.origin.x - absT_AssT.origin.x, assGVRect.origin.y - absT_AssT.origin.y, assGVRect.size.width, assGVRect.size.height);
         if (absGVRect.size.width != absGVRect.size.height || absGVRect.size.width == 0 || absGVRect.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
+        
+        //TODOTOMORROW20250528: 应该是这里，应该取在proto中的范围，而不是在ass中的，因为在ass中是缩放前，去识别时查下缩放前后的区别先？然后再查这里为什么会不同？
+        NSLog(@"aaaa0 assGVRect:%@ bestGVAtProtoRect:%@",Rect2Str(assGVRect),Rect2Str(obj.bestGVAtProtoTRect));
+        //aaaa0 assGVRect:<x3 y12 w3 h3> bestGVAtProtoRect:<x0 y6.302 w9.453 h9.453>
+        //aaaa0 assGVRect:<x6 y12 w3 h3> bestGVAtProtoRect:<x9.453 y8.666 w4.727 h4.727>
+        //aaaa0 assGVRect:<x9 y12 w3 h3> bestGVAtProtoRect:<x14.18 y9.564 w2.931 h2.931>
+        //aaaa0 assGVRect:<x12 y12 w3 h3> bestGVAtProtoRect:<x17.111 y9.857 w2.344 h2.344>
+        //aaaa0 assGVRect:<x15 y12 w3 h3> bestGVAtProtoRect:<x19.455 y9.2 w3.657 h3.657>
+        //说明：显然，这里是不同粒度间的识别匹配，它天然与proto上的rect就是有一个比例的，如果忽略了这个比例，显示到protoGT上当然就尺寸不准确。
+        
+        
         return [InputGroupValueModel new:assGV_p rect:absGVRect];
     }];
     if (jvBuModel.matchValue == 1 && absGVModels.count == 0) {

@@ -199,6 +199,7 @@
     [self.previewTableView reloadData];
 }
 
+//单特征识别结果数组，应该一个个元素显示，而不是一下把所有的显示到一个画布上。
 -(void) setDataForJvBuModelsV2:(NSArray*)jvBuModels lab:(NSString*)lab {
     for (AIFeatureJvBuModel *jvBuModel in jvBuModels) {
         NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
