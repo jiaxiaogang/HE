@@ -404,9 +404,7 @@
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
-        NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) {
-            return @(obj.target_p.pointerId);
-        }]));
+        //NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.target_p.pointerId); }]));
         //refPorts = ARR_SUB(refPorts, 0, 3);
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
@@ -1668,7 +1666,7 @@
         NSInteger itemCount = NUMTOOK([allLogDic objectForKey:key]).integerValue;
         return itemCount / (float)sum;
     }];
-    NSLog(@"%@%@识别结果总结：%@",protoLogDesc,prefix,CLEANSTR([SMGUtils convertArr:allLogKeys convertBlock:^id(NSString *key) {
+    NSLog(@"%@%@识别结果总结：%@",protoLogDesc?protoLogDesc:@"",prefix,CLEANSTR([SMGUtils convertArr:allLogKeys convertBlock:^id(NSString *key) {
         NSInteger itemCount = NUMTOOK([allLogDic objectForKey:key]).integerValue;
         return STRFORMAT(@"%@=%.2f ",key,itemCount / (float)sum);
     }]));

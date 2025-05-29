@@ -67,6 +67,10 @@
 //MARK:                     < 计算位置符合度组 >
 //MARK:===============================================================
 -(void) run4MatchDegree:(AIFeatureZenTiModel*)protoModel {
+    
+    
+    //TODOTOMORROW20250529: 此处判断位置符合度：要对itemT的比例做下兼容处理。
+    
     //0. 存下protoT来，类比时要用下。
     self.protoT = protoModel.assT;
     

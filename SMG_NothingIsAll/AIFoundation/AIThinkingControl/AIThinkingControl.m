@@ -310,14 +310,6 @@ static AIThinkingControl *_instance;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //5. debugRect
-    //for (NSInteger i = 0; i < protoGT.count; i++) {
-    //    AIKVPointer *item = ARR_INDEX(protoGT.content_ps, i);
-    //    NSValue *itemRect = ARR_INDEX(protoGT.rects, i);
-    //    AIPort *refPort = [AINetUtils getRefPort:item biger:protoGT.p refRect:itemRect.CGRectValue];
-    //    //if (![itemRect isEqual:@(refPort.rect)]) NSLog(@"2025.05.27后可删aaaaa2 subT%ld:targetT%ld > %@ : %@",item.pointerId,protoGT.pId,itemRect,@(refPort.rect));
-    //}
-    
     //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:protoGT];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
