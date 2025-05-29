@@ -393,7 +393,7 @@
     NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
         return @(obj.assIndex);
     }];
-    CGRect absT_AssT1 = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
+    CGRect bestGVs_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
     //43. 类比后，计算bestGVsAtProtoRect，因为类比时会定责淘汰无效gvs：然后留下有效的bestGVItems的总和，更新整个bestGvs at proto中的位置。
     [jvBuModel run4BestGvsAtProtoTRect];
@@ -404,14 +404,14 @@
         
         //16A. 方案1、采用bestGV at assT的位置，做absT的元素位置分布：将gvRect在assT的范围，转成在newAbsT中的位置。
         CGRect assGVRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
-        CGRect bestGV_absT1 = CGRectMake(assGVRect.origin.x - absT_AssT1.origin.x, assGVRect.origin.y - absT_AssT1.origin.y, assGVRect.size.width, assGVRect.size.height);
-        if (bestGV_absT1.size.width != bestGV_absT1.size.height || bestGV_absT1.size.width == 0 || bestGV_absT1.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
+        CGRect bestGV_assT = CGRectMake(assGVRect.origin.x - bestGVs_AssT.origin.x, assGVRect.origin.y - bestGVs_AssT.origin.y, assGVRect.size.width, assGVRect.size.height);
+        if (bestGV_assT.size.width != bestGV_assT.size.height || bestGV_assT.size.width == 0 || bestGV_assT.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
         
         //16B. 方案2、采用bestGV at protoT的位置，做absT的元素位置分布：此方案优点在于构建protoGT时，尺寸及位置可以更准确，缺点是类比这里本来就应该以assT为准，不关protoT的事，所以先采用方案1。
-        CGRect bestGV_absT2 = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
+        CGRect bestGV_protoT = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
         
         //TODOTOMORROW20250528: 应该是这里，应该取在proto中的范围，而不是在ass中的，因为在ass中是缩放前，去识别时查下缩放前后的区别先？然后再查这里为什么会不同？
-        NSLog(@"aaaa0 bestGV的Rect：atAss=%@ atProto=%@",Rect2Str(bestGV_absT1),Rect2Str(bestGV_absT2));
+        NSLog(@"aaaa0 bestGV的Rect：atAss=%@ atProto=%@",Rect2Str(bestGV_assT),Rect2Str(bestGV_protoT));
         //aaaa0 bestGV的Rect：atAss=<x0 y0 w3 h3> atProto=<x0 y0 w9.453 h9.453>
         //aaaa0 bestGV的Rect：atAss=<x3 y0 w3 h3> atProto=<x9.453 y2.363 w4.727 h4.727>
         //aaaa0 bestGV的Rect：atAss=<x6 y0 w3 h3> atProto=<x14.18 y3.261 w2.931 h2.931>
@@ -419,7 +419,7 @@
         //aaaa0 bestGV的Rect：atAss=<x12 y0 w3 h3> atProto=<x19.455 y2.898 w3.657 h3.657>
         //说明：显然，这里是不同粒度间的识别匹配，它天然与proto上的rect就是有一个比例的，如果忽略了这个比例，显示到protoGT上当然就尺寸不准确。
         
-        return [InputGroupValueModel new:assGV_p rect:bestGV_absT1];
+        return [InputGroupValueModel new:assGV_p rect:bestGV_assT];
     }];
     if (jvBuModel.matchValue == 1 && absGVModels.count == 0) {
         ELog(@"如果匹配度为1，会导致所有indexDic的GV全有责，导致最后absGVModels为0条，如果停此处时，查下来源，这个匹配度1是哪来的");
@@ -441,7 +441,7 @@
     [jvBuModel.assT updateMatchValue:absT matchValue:absMatchValue];
     
     //33. 存conPorts的rect（参考34135-TODO1）。
-    [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:absT_AssT];
+    [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
     
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
     CGFloat absMatchDegree = validItems.count == 0 ? 0 : [SMGUtils sumOfArr:validItems convertBlock:^double(AIFeatureJvBuItem *obj) {
