@@ -301,10 +301,6 @@ static AIThinkingControl *_instance;
             NSLog(@"aaaa2 itemGVRect:%@",Rect2Str(itemGVRect));
         }
         
-        //TODOTOMORROW20250528：看下，在构建protoGT时，再把这个坐标修正下，不要影响类比这里的代码。
-        //CGRect bestGV_absT2 = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
-        
-        
         //3. 收集为InputGroupFeatureModel。
         [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absT_ProtoT]];
     }
