@@ -408,16 +408,8 @@
         if (bestGV_assT.size.width != bestGV_assT.size.height || bestGV_assT.size.width == 0 || bestGV_assT.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
         
         //16B. 方案2、采用bestGV at protoT的位置，做absT的元素位置分布：此方案优点在于构建protoGT时，尺寸及位置可以更准确，缺点是类比这里本来就应该以assT为准，不关protoT的事，所以先采用方案1。
-        CGRect bestGV_protoT = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
-        
-        //TODOTOMORROW20250528: 应该是这里，应该取在proto中的范围，而不是在ass中的，因为在ass中是缩放前，去识别时查下缩放前后的区别先？然后再查这里为什么会不同？
-        NSLog(@"aaaa0 bestGV的Rect：atAss=%@ atProto=%@",Rect2Str(bestGV_assT),Rect2Str(bestGV_protoT));
-        //aaaa0 bestGV的Rect：atAss=<x0 y0 w3 h3> atProto=<x0 y0 w9.453 h9.453>
-        //aaaa0 bestGV的Rect：atAss=<x3 y0 w3 h3> atProto=<x9.453 y2.363 w4.727 h4.727>
-        //aaaa0 bestGV的Rect：atAss=<x6 y0 w3 h3> atProto=<x14.18 y3.261 w2.931 h2.931>
-        //aaaa0 bestGV的Rect：atAss=<x9 y0 w3 h3> atProto=<x17.111 y3.554 w2.344 h2.344>
-        //aaaa0 bestGV的Rect：atAss=<x12 y0 w3 h3> atProto=<x19.455 y2.898 w3.657 h3.657>
-        //说明：显然，这里是不同粒度间的识别匹配，它天然与proto上的rect就是有一个比例的，如果忽略了这个比例，显示到protoGT上当然就尺寸不准确。
+        //CGRect bestGV_protoT = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
+        //NSLog(@"bestGV的Rect：atAss=%@ atProto=%@",Rect2Str(bestGV_assT),Rect2Str(bestGV_protoT));
         
         return [InputGroupValueModel new:assGV_p rect:bestGV_assT];
     }];
@@ -569,14 +561,6 @@
     
     //33. 构建：保留下来的生成为absT。
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:absTModels conNodes:@[protoGT,assGT] at:assGT.at ds:assGT.ds isOut:assGT.isOut isJiao:true];
-    
-    //34. debugRect
-    //for (NSInteger i = 0; i < absGT.count; i++) {
-    //    AIKVPointer *item = ARR_INDEX(absGT.content_ps, i);
-    //    NSValue *itemRect = ARR_INDEX(absGT.rects, i);
-    //    AIPort *refPort = [AINetUtils getRefPort:item biger:absGT.p refRect:itemRect.CGRectValue];
-    //    NSLog(@"2025.05.27后可删aaaaa1 %ld:%ld > %@ : %@",item.pointerId,absGT.pId,itemRect,@(refPort.rect));
-    //}
     
     //41. 更新logDesc。
     [absGT updateLogDescDic:assGT.logDesc];
