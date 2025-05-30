@@ -558,7 +558,7 @@
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
 }
 
-+(void) recognitionFeature_JvBu_V2_Step2:(AIFeatureJvBuModels*)resultModel {
++(void) recognitionFeature_JvBu_V2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize {
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in resultModel.models) {
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
@@ -607,9 +607,10 @@
         //52. debug
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"局部特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree);
-        //[SMGUtils runByMainQueue:^{
-        //    [theApp.imgTrainerView setDataForFeature:model.assT lab:STRFORMAT(@"局部%@T%ld",model.assT.ds,model.assT.pId)];
-        //}];
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"局部%@T%ld(%.2f)",model.assT.ds,model.assT.pId,dotSize)];
+            //[theApp.imgTrainerView setDataForFeature:model.assT lab:STRFORMAT(@"局部%@T%ld",model.assT.ds,model.assT.pId)];
+        }];
     }
     
     //61. debugLog
