@@ -410,6 +410,11 @@
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
+            
+            // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
+            CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
+            if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
+            
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -463,7 +468,8 @@
                 CGFloat anchorY = (CGRectGetMidY(lastProtoRect) + CGRectGetMidY(defaultCurProtoRect)) / 2;
                 
                 //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
-                NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
+                //NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
+                NSArray *scales = @[@(1)];
                 MapModel *best = nil;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 for (NSNumber *item in scales) {
