@@ -74,4 +74,11 @@
     }
 }
 
+-(void) run4StrongRatio {
+    //1. 计算：每个model的显著度。
+    for (AIFeatureZenTiModel *model in self.models) {
+        [model run4StrongRatio];
+    }
+}
+
 @end

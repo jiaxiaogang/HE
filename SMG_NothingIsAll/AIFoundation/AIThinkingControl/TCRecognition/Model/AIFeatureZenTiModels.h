@@ -33,5 +33,6 @@
  */
 -(void) run4MatchValue:(AIKVPointer*)protoT;
 -(void) run4MatchValueV2:(AIKVPointer*)protoT;
+-(void) run4StrongRatio;
 
 @end

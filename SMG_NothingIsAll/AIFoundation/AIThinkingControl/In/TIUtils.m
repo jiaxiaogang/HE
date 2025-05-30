@@ -771,16 +771,8 @@
     //22. 计算：每个assT和protoT的综合匹配度。
     [zenTiModel run4MatchValueV2:protoGT.p];
     
-    //23. 计算：每个model的显著度。
-    for (AIFeatureZenTiModel *model in zenTiModel.models) {
-        AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
-        //24. 显著度公式（参考34175-公式3）。
-        //2025.05.13: contentPorts没有存强度，所以此处改为用assT.count做分母，实测下应该没问题（这应该会容易激活抽象组特征，后续看边测再边调整这些参数竞争公式）。
-        NSInteger validStrong = [SMGUtils sumOfArr:model.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
-            return obj.itemToAssStrong;
-        }];
-        model.modelMatchConStrongRatio = assT.count > 0 ? validStrong / (float)assT.count : 0;
-    }
+    //23. 计算：每个model的显著度，显著度公式（参考34175-公式3）。
+    [zenTiModel run4StrongRatio];
     
     //31. 无效过滤器1、位置符合度=0排除掉。
     NSArray *resultModels = [SMGUtils filterArr:zenTiModel.models checkValid:^BOOL(AIFeatureZenTiModel *item) {

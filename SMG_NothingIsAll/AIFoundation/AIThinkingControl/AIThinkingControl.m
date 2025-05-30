@@ -306,7 +306,7 @@ static AIThinkingControl *_instance;
     [protoGT updateLogDescItem:logDesc];
     
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"类比后protoGT:%ld(%ld)",protoGT.pId,protoGT.count)];
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"构建protoGT:%ld(%ld)",protoGT.pId,protoGT.count)];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     

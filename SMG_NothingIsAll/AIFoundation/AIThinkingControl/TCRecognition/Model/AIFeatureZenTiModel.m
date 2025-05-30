@@ -67,10 +67,6 @@
 //MARK:                     < 计算位置符合度组 >
 //MARK:===============================================================
 -(void) run4MatchDegree:(AIFeatureZenTiModel*)protoModel {
-    
-    
-    //TODOTOMORROW20250529: 此处判断位置符合度：要对itemT的比例做下兼容处理。
-    
     //0. 存下protoT来，类比时要用下。
     self.protoT = protoModel.assT;
     
@@ -203,6 +199,16 @@
     //4. 求出整体特征：assT 与 protoT 的综合匹配度。
     AIGroupFeatureNode *assGT = [SMGUtils searchNode:self.assT];
     self.modelMatchValue = assGT.count == 0 ? 0 : self.rectItems.count / (float)assGT.count;
+}
+
+-(void) run4StrongRatio {
+    AIFeatureNode *assT = [SMGUtils searchNode:self.assT];
+    //24. 显著度公式（参考34175-公式3）。
+    //2025.05.13: contentPorts没有存强度，所以此处改为用assT.count做分母，实测下应该没问题（这应该会容易激活抽象组特征，后续看边测再边调整这些参数竞争公式）。
+    NSInteger validStrong = [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
+        return obj.itemToAssStrong;
+    }];
+    self.modelMatchConStrongRatio = assT.count > 0 ? validStrong / (float)assT.count : 0;
 }
 
 //MARK:===============================================================
