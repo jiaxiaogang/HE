@@ -277,7 +277,7 @@ static AIThinkingControl *_instance;
     NSMutableArray *groupTModels = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        AIFeatureNode *itemAbsT = [AIAnalogy analogyFeature_JvBu_V2:model];
+        AIFeatureNode *itemAbsT = [AIAnalogy analogyFeatureV2:model];
         
         //============== 此处有absTAtAssTRect，也有bestGVsAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
         //1. 计算abs在ass中的位置，以及ass在proto中的位置。
@@ -316,7 +316,7 @@ static AIThinkingControl *_instance;
     
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIFeatureZenTiModel *model in zenTiModel) {
-        [AIAnalogy analogyFeature_ZenTi_V2:protoGT assModel:model];
+        [AIAnalogy analogyGroupFeatureV2:protoGT assModel:model];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
 }

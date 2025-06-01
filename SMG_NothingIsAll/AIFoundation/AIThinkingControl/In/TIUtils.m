@@ -604,19 +604,11 @@
         //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
         
-        //TODOTOMORROW20250530: 此处7/45也能保留下来，要查下原因，这个健全度没生效么？
-        //局部特征识别结果:T1515{Mnist0 = 4;}     匹配条数:5/ass5    匹配度:0.71    符合度:1.0
-        //局部特征识别结果:T1461{Mnist0 = 2;}     匹配条数:7/ass10    匹配度:0.49    符合度:1.0
-        //局部特征识别结果:T1399{Mnist0 = 24;}     匹配条数:7/ass7    匹配度:0.49    符合度:1.0
-        //局部特征识别结果:T1338{Mnist0 = 1;}     匹配条数:7/ass45    匹配度:0.49    符合度:1.0
-        //局部特征识别结果:T1339{Mnist0 = 10;}     匹配条数:5/ass5    匹配度:0.60    符合度:1.0
-        //局部特征识别结果:T1484{Mnist0 = 2;}     匹配条数:6/ass12    匹配度:0.48    符合度:1.0
-        
         //52. debug
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"局部特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio);
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"单T%ld(%ld/%ld)(%.1f)",model.assT.pId,model.bestGVs.count,model.assT.count,dotSize)];
+            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"单T%ld(%ld/%ld)(%.1f)",model.assT.pId,model.bestGVs.count,model.assT.count,dotSize)];
         }];
     }
     

@@ -203,7 +203,7 @@
 
         //21. ======== 兼容新版组码特征 ========
         if (PitIsFeature(protoV_p) || PitIsFeature(assV_p)) {
-            AIFeatureNode *absT = [self analogyFeature:protoV_p ass:assV_p bigerMatchValue:curMatchValue];
+            AIFeatureNode *absT = [self analogyAllFeatureV1:protoV_p ass:assV_p bigerMatchValue:curMatchValue];
             if (!absT) continue;
             CGFloat valueMatchValue = [absT getConMatchValue:protoA_p];
             [sameValue_ps addObject:absT.p];
@@ -255,7 +255,7 @@
  *      2025.03.21: 改用indexDic映射来实现特征类比 (参考34062-方案2);
  *      2025.03.31: 改为调用组码类比v2。
  */
-+(AIFeatureNode*) analogyFeature:(AIKVPointer*)protoT_p ass:(AIKVPointer*)assT_p bigerMatchValue:(CGFloat)bigerMatchValue {
++(AIFeatureNode*) analogyAllFeatureV1:(AIKVPointer*)protoT_p ass:(AIKVPointer*)assT_p bigerMatchValue:(CGFloat)bigerMatchValue {
     //1. 数据准备。
     //NSLog(@"==============> 特征类比：protoT%ld assT%ld",protoT_p.pointerId,assT_p.pointerId);
     if ([protoT_p isEqual:assT_p]) return [SMGUtils searchNode:assT_p];
@@ -269,18 +269,18 @@
         //12. 借助absT来类比时，复用ZenTi的识别结果model数据，并且用完就清空，防止循环野指针（参考34139-TODO3）。
         AIFeatureZenTiModel *zenTiModel = assFeature.zenTiModel;
         assFeature.zenTiModel = nil;
-        return [self analogyFeature_ZenTi:protoFeature ass:assFeature bigerMatchValue:bigerMatchValue zenTiModel:zenTiModel];
+        return [self analogyGroupFeatureV1:protoFeature ass:assFeature bigerMatchValue:bigerMatchValue zenTiModel:zenTiModel];
     }
     //21. 特征识别step1识别到的结果，复用indexDic进行类比。
     else if(assFeature.jvBuModel && [protoT_p isEqual:assFeature.jvBuModel.v2] ) {
         //22. 用于类比的数据用完就删，避免太占空间（参考34137-TODO2）。
         NSDictionary *indexDic = assFeature.jvBuModel.v1;
-        return [self analogyFeature_JvBu:protoFeature ass:assFeature bigerMatchValue:bigerMatchValue indexDic:indexDic];
+        return [self analogyFeatureV1:protoFeature ass:assFeature bigerMatchValue:bigerMatchValue indexDic:indexDic];
     }
     return nil;
 }
 
-+(AIFeatureNode*) analogyFeature_JvBu:(AIFeatureNode*)protoFeature ass:(AIFeatureNode*)assFeature bigerMatchValue:(CGFloat)bigerMatchValue indexDic:(NSDictionary*)indexDic {
++(AIFeatureNode*) analogyFeatureV1:(AIFeatureNode*)protoFeature ass:(AIFeatureNode*)assFeature bigerMatchValue:(CGFloat)bigerMatchValue indexDic:(NSDictionary*)indexDic {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     //1. 类比orders的规律
     CGFloat sumProtoMatchValue = 0;
@@ -370,11 +370,8 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeature_JvBu_V2:(AIFeatureJvBuModel*)jvBuModel {
++(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
-    //3. 收集有效的映射：用于后面计算rect用。
-    NSMutableArray *validItems = [[NSMutableArray alloc] init];
-    
     //11. 外类比有序进行 (记录jMax & 正序)
     jvBuModel.bestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
         //12. 当前有主责，直接剔除: GV类比: 进行共同点抽象 (参考29025-11);
@@ -427,25 +424,21 @@
     
     //32. 更新匹配度;
     //TODO: 考虑下，此处abs是从ass抽象来的，那这里的匹配度，符合度，是不是应该直接=1。
-    CGFloat absMatchValue = validItems.count == 0 ? 0 : [SMGUtils sumOfArr:validItems convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.matchValue;
-    }] / validItems.count;
+    CGFloat absMatchValue = 1;//sortValidItems.count == 0 ? 0 : [SMGUtils sumOfArr:sortValidItems convertBlock:^double(AIFeatureJvBuItem *obj) { return obj.matchValue; }] / sortValidItems.count;
     [jvBuModel.assT updateMatchValue:absT matchValue:absMatchValue];
     
     //33. 存conPorts的rect（参考34135-TODO1）。
     [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
     
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
-    CGFloat absMatchDegree = validItems.count == 0 ? 0 : [SMGUtils sumOfArr:validItems convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.matchDegree;
-    }] / validItems.count;
+    CGFloat absMatchDegree = 1;//sortValidItems.count == 0 ? 0 : [SMGUtils sumOfArr:sortValidItems convertBlock:^double(AIFeatureJvBuItem *obj) { return obj.matchDegree; }] / sortValidItems.count;
     [jvBuModel.assT updateMatchDegree:absT matchDegree:absMatchDegree];
     
     //41. debugLog
-    NSLog(@"局部识别类比结果absT长度：%ld",absT.count);
+    NSLog(@"局部识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,absMatchValue,absMatchDegree);
     [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"assT%ld(GV%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count)];
-        //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比absT%ld",absT.pId)];
+        [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"assT%ld(GV%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count)];
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比absT%ld",absT.pId)];
     }];
     if (Log4Ana || true) NSLog(@"\n局部特征类比结果(%@) ======================> \n局部Ass特征T%ld（GV数:%ld）%@\n%@局部Abs特征T%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
@@ -453,7 +446,7 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeature_ZenTi:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT bigerMatchValue:(CGFloat)bigerMatchValue zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
++(AIFeatureNode*) analogyGroupFeatureV1:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT bigerMatchValue:(CGFloat)bigerMatchValue zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
     NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
@@ -528,7 +521,7 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT assModel:(AIFeatureZenTiModel*)assModel {
++(AIFeatureNode*) analogyGroupFeatureV2:(AIGroupFeatureNode*)protoGT assModel:(AIFeatureZenTiModel*)assModel {
     AIGroupFeatureNode *assGT = [SMGUtils searchNode:assModel.assT];
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
