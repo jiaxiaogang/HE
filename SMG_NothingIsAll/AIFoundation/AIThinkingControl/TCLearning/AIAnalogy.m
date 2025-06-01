@@ -372,6 +372,9 @@
 
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"%ld类比前(GV%ld ass%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count)];
+    }];
     //11. 外类比有序进行 (记录jMax & 正序)
     jvBuModel.bestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
         //12. 当前有主责，直接剔除: GV类比: 进行共同点抽象 (参考29025-11);
@@ -403,7 +406,7 @@
         CGRect assGVRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
         CGRect bestGV_assT = CGRectMake(assGVRect.origin.x - bestGVs_AssT.origin.x, assGVRect.origin.y - bestGVs_AssT.origin.y, assGVRect.size.width, assGVRect.size.height);
         if (bestGV_assT.size.width != bestGV_assT.size.height || bestGV_assT.size.width == 0 || bestGV_assT.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
-        
+        NSLog(@"aaaaa1 %ld %@ -> %@",obj.assIndex,Rect2Str(assGVRect),Rect2Str(bestGV_assT));
         //16B. 方案2、采用bestGV at protoT的位置，做absT的元素位置分布：此方案优点在于构建protoGT时，尺寸及位置可以更准确，缺点是类比这里本来就应该以assT为准，不关protoT的事，所以先采用方案1。
         //CGRect bestGV_protoT = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
         //NSLog(@"bestGV的Rect：atAss=%@ atProto=%@",Rect2Str(bestGV_assT),Rect2Str(bestGV_protoT));
@@ -423,7 +426,7 @@
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
     
     //32. 更新匹配度;
-    //TODO: 考虑下，此处abs是从ass抽象来的，那这里的匹配度，符合度，是不是应该直接=1。
+    //2025.05.xx: 此处abs是从ass抽象来的，那这里的匹配度，符合度，应该直接=1。
     CGFloat absMatchValue = 1;//sortValidItems.count == 0 ? 0 : [SMGUtils sumOfArr:sortValidItems convertBlock:^double(AIFeatureJvBuItem *obj) { return obj.matchValue; }] / sortValidItems.count;
     [jvBuModel.assT updateMatchValue:absT matchValue:absMatchValue];
     
@@ -434,11 +437,21 @@
     CGFloat absMatchDegree = 1;//sortValidItems.count == 0 ? 0 : [SMGUtils sumOfArr:sortValidItems convertBlock:^double(AIFeatureJvBuItem *obj) { return obj.matchDegree; }] / sortValidItems.count;
     [jvBuModel.assT updateMatchDegree:absT matchDegree:absMatchDegree];
     
+    //TODOTOMORROW20250601: absT.rects生成时正确，但可视化时又错误，用aaaaa日志调试下原因。
+    for (NSInteger i = 0; i < absT.count; i++) {
+        NSLog(@"abs aaaaa2 %ld %@",i,ARR_INDEX(absT.rects, i));
+    }
+    
+    NSArray *gvModels = [absT convert2GVModels:nil];
+    for (NSInteger i = 0; i < gvModels.count; i++) {
+        InputGroupValueModel *model = ARR_INDEX(gvModels, i);
+        NSLog(@"可视化 aaaaa3 %ld %@",i,Rect2Str(model.rect));
+    }
+    
     //41. debugLog
     NSLog(@"局部识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,absMatchValue,absMatchDegree);
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"assT%ld(GV%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count)];
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比absT%ld",absT.pId)];
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld类比后(abs%ld GV%ld)",jvBuModel.assT.pId,absT.count,jvBuModel.bestGVs.count)];
     }];
     if (Log4Ana || true) NSLog(@"\n局部特征类比结果(%@) ======================> \n局部Ass特征T%ld（GV数:%ld）%@\n%@局部Abs特征T%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),

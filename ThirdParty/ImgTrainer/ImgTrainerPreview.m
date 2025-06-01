@@ -62,6 +62,12 @@
  */
 -(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab {
     NSArray *gvModels = [tNode convert2GVModels:indexes];
+    
+    for (NSInteger i = 0; i < gvModels.count; i++) {
+        InputGroupValueModel *model = ARR_INDEX(gvModels, i);
+        NSLog(@"可视化 aaaaa4 %ld %@",i,Rect2Str(model.rect));
+    }
+    
     [self setData:tNode gvModels:gvModels lab:lab];
 }
 -(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab {
