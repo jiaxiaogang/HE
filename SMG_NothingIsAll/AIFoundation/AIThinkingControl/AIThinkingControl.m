@@ -247,7 +247,7 @@ static AIThinkingControl *_instance;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 局部识别特征：通过组码识别。
-                [TIUtils recognitionFeature_JvBu_V2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept];
+                [TIUtils recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -266,7 +266,7 @@ static AIThinkingControl *_instance;
 //单粒度层。
 -(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize {
     //23. 局部特征过滤和竞争部分。
-    [TIUtils recognitionFeature_JvBu_V2_Step2:jvBuModel dotSize:dotSize];
+    [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
     NSLog(@"第2步、局部特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -311,7 +311,7 @@ static AIThinkingControl *_instance;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    NSArray *zenTiModel = [TIUtils recognitionFeature_ZenTi_V2:protoGT];
+    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV2:protoGT];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。

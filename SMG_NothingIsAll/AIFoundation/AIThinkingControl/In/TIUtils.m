@@ -172,7 +172,7 @@
  *  MARK:--------------------特征识别--------------------
  *  @desc 识别抽象的局部特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
  */
-+(NSArray*) recognitionFeature_JvBu:(AIKVPointer*)protoFeature_p {
++(NSArray*) recognitionFeatureV1:(AIKVPointer*)protoFeature_p {
     //1. 数据准备
     if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"1");
     AIFeatureNode *protoFeature = [SMGUtils searchNode:protoFeature_p];
@@ -336,7 +336,7 @@
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  */
-+(void) recognitionFeature_JvBu_V2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
++(void) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
@@ -558,7 +558,7 @@
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
 }
 
-+(void) recognitionFeature_JvBu_V2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize {
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in resultModel.models) {
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
@@ -622,7 +622,7 @@
  *  MARK:--------------------特征识别--------------------
  *  @desc Step2 尽可能照顾特征的整体性，通过交层向下找似层结果（参考34135-TODO2）。
  */
-+(NSArray*) recognitionFeature_ZenTi:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
++(NSArray*) recognitionGroupFeatureV1:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
     //1. 数据准备
     AIFeatureNode *protoFeature = [SMGUtils searchNode:protoFeature_p];
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
@@ -721,7 +721,7 @@
         
         //45. 整体特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId) left:0 top:0];
+            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId) left:0 top:0];
         }];
     }
     
@@ -740,9 +740,12 @@
  *  @version
  *      2025.05.07: v2-支持自适应粒度。
  */
-+(NSArray*) recognitionFeature_ZenTi_V2:(AIGroupFeatureNode*)protoGT {
++(NSArray*) recognitionGroupFeatureV2:(AIGroupFeatureNode*)protoGT {
     //1. 数据准备
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
+    }];
     
     //11. 收集：每个absT分别向整体取conPorts。
     for (NSInteger i = 0; i < protoGT.count; i++) {
@@ -831,8 +834,11 @@
         //        [theApp.imgTrainerView setDataForFeature:item lab:STRFORMAT(@"GT.itemT%ld",item.pId)];
         //    }];
         //}
+        
+        //TODOTOMORROW20250603: 识别结果的元素数 和 gv数 普遍比较少，明天加训，或者调试下竞争机制，看是什么问题（是GT也需要支持健全度吗？）。
+        //整体特征识别结果:T3266{Mnist0 = 106;}    （局部特征数:1 assGV数:1）    匹配度:1.00    符合度:1.0    显著度:10.00
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"assGT%ld",assFeature.pId)];
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"识别GT%ld",assFeature.pId) left:0 top:0];
         }];
     }
     
@@ -935,9 +941,9 @@
         } else {
             subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{
                 //a. 通过组码做局部特征识别。
-                NSArray *jvBuResult = ARRTOOK([self recognitionFeature_JvBu:item_p]);
+                NSArray *jvBuResult = ARRTOOK([self recognitionFeatureV1:item_p]);
                 //b. 通过抽象特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-                NSArray *zenTiResult = [self recognitionFeature_ZenTi:item_p matchModels:jvBuResult];
+                NSArray *zenTiResult = [self recognitionGroupFeatureV1:item_p matchModels:jvBuResult];
                 return [SMGUtils collectArrA:jvBuResult arrB:zenTiResult];
             }];
         }
