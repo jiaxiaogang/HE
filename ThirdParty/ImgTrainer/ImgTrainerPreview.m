@@ -60,11 +60,19 @@
  *  MARK:--------------------特征可视化--------------------
  *  @param indexes 传值时，仅显示indexes中有的下标。
  */
--(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab {
+-(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top {
     NSArray *gvModels = [tNode convert2GVModels:indexes];
-    [self setData:tNode gvModels:gvModels lab:lab];
+    [self setData:tNode gvModels:gvModels lab:lab left:left top:top];
 }
--(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab {
+-(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top {
+    //0. top,left处理。
+    for (InputGroupValueModel *item in gvModels) {
+        CGRect newRect = item.rect;
+        newRect.origin.x += left;
+        newRect.origin.y += top;
+        item.rect = newRect;
+    }
+    
     //1. 数据准备。
     NSString *at = tNode.at;
     NSString *ds = tNode.ds;

@@ -14,7 +14,7 @@
 @property (strong, nonatomic) NSMutableDictionary *lightDic;
 @property (strong, nonatomic) NSMutableDictionary *hsbDic;
 
--(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab;
--(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab;
+-(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;
+-(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;
 
 @end

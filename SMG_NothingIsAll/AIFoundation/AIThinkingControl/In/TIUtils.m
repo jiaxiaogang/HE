@@ -720,9 +720,9 @@
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
         //45. 整体特征识别结果可视化（参考34176）。
-        //[SMGUtils runByMainQueue:^{
-        //    [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId)];
-        //}];
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId) left:0 top:0];
+        }];
     }
     
     //51. 转成AIMatchModel格式返回（识别后就用match_p,matchCount,matchValue这三个值）。

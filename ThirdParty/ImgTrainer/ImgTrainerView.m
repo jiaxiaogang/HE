@@ -183,19 +183,19 @@
  *  MARK:--------------------局部特征识别结果可视化（参考34176）--------------------
  */
 -(void) setDataForJvBuModelsV1:(NSArray*)jvBuModels protoT:(AIFeatureNode*)protoT {
-    [self addFeatureToPreview:protoT indexes:nil lab:STRFORMAT(@"protoT%ld:%@",protoT.pId,protoT.ds)];
+    [self addFeatureToPreview:protoT indexes:nil lab:STRFORMAT(@"protoT%ld:%@",protoT.pId,protoT.ds) left:0 top:0];
     for (AIMatchModel *model in jvBuModels) {
         //NSArray *collectProtoIndexs = model.indexDic.allValues;
-        [self addFeatureToPreview:(AIFeatureNode*)model.matchNode indexes:model.indexDic.allKeys lab:STRFORMAT(@"assT%ld:%@",model.matchNode.pId,model.matchNode.ds)];
+        [self addFeatureToPreview:(AIFeatureNode*)model.matchNode indexes:model.indexDic.allKeys lab:STRFORMAT(@"assT%ld:%@",model.matchNode.pId,model.matchNode.ds) left:0 top:0];
     }
     [self.previewTableView reloadData];
 }
 
--(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab {
+-(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top {
     NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
         return @(obj.assIndex);
     }];
-    [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab];
+    [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab left:left top:top];
     [self.previewTableView reloadData];
 }
 
@@ -205,7 +205,7 @@
         NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
             return @(obj.assIndex);
         }];
-        [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab];
+        [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab left:0 top:0];
     }
     [self.previewTableView reloadData];
 }
@@ -221,8 +221,8 @@
     [self.previewTableView reloadData];
 }
 
--(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab {
-    [self addFeatureToPreview:tNode indexes:nil lab:lab];
+-(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top {
+    [self addFeatureToPreview:tNode indexes:nil lab:lab left:left top:top];
     [self.previewTableView reloadData];
 }
 
@@ -246,12 +246,12 @@
 
 -(void) addFeatureToPreview:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab {
     ImgTrainerPreview *preview = [self getOrCreate:lab];
-    [preview setData:tNode gvModels:gvModels lab:lab];
+    [preview setData:tNode gvModels:gvModels lab:lab left:0 top:0];
 }
 
--(void) addFeatureToPreview:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab {
+-(void) addFeatureToPreview:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top {
     ImgTrainerPreview *preview = [self getOrCreate:lab];
-    [preview setData:tNode indexes:indexes lab:lab];
+    [preview setData:tNode indexes:indexes lab:lab left:left top:top];
 }
 
 -(void) addAlgToPreview:(AINodeBase*)algNode lab:(NSString*)lab{
@@ -259,7 +259,7 @@
     ImgTrainerPreview *preview = [self getOrCreate:lab];
     for (AIKVPointer *itemT_p in algNode.content_ps) {
         AIFeatureNode *itemT = [SMGUtils searchNode:itemT_p];
-        [preview setData:itemT indexes:nil lab:lab];
+        [preview setData:itemT indexes:nil lab:lab left:0 top:0];
     }
 }
 

@@ -22,12 +22,12 @@
 /**
  *  MARK:--------------------局部特征识别结果可视化（参考34176）--------------------
  */
--(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab;
+-(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;
 -(void) setDataForJvBuModelsV2:(NSArray*)jvBuModels lab:(NSString*)lab;//单特征识别结果数组，应该一个个元素显示，而不是一下把所有的显示到一个画布上。
 -(void) setDataForJvBuModelsV3:(NSArray*)jvBuModels lab:(NSString*)lab;//有BUG，可视化像一块块分裂着。
 -(void) setDataForAlgs:(NSArray*)models;
 
--(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab;
+-(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;
 -(void) setDataForAlg:(AINodeBase*)algNode lab:(NSString*)lab;
 
 @end

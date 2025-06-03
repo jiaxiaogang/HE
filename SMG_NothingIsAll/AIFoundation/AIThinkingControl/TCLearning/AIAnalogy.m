@@ -372,8 +372,17 @@
 
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
+    //1. log 4 begin
+    [jvBuModel run4BestGvsAtProtoTRect];
+    NSArray *assContentIndexes_Log = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+        return @(obj.assIndex);
+    }];
+    CGRect bestGVs_AssT_Log = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes_Log];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"%ld类比前(GV%ld ass%ld)%p",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count,jvBuModel)];
+        //jvBuModel.bestGVsAtProtoTRect
+        [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"%ld类比前(GV%ld ass%ld)%p",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count,jvBuModel)
+                                                left:jvBuModel.bestGVsAtProtoTRect.origin.x - bestGVs_AssT_Log.origin.x
+                                                 top:jvBuModel.bestGVsAtProtoTRect.origin.y - bestGVs_AssT_Log.origin.y];
     }];
     //11. 外类比有序进行 (记录jMax & 正序)
     jvBuModel.bestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
@@ -439,7 +448,9 @@
     //41. debugLog
     NSLog(@"局部识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,absMatchValue,absMatchDegree);
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld类比后(abs%ld GV%ld)%p",jvBuModel.assT.pId,absT.count,jvBuModel.bestGVs.count,jvBuModel)];
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld类比后(abs%ld GV%ld)%p",jvBuModel.assT.pId,absT.count,jvBuModel.bestGVs.count,jvBuModel)
+                                            left:jvBuModel.bestGVsAtProtoTRect.origin.x
+                                             top:jvBuModel.bestGVsAtProtoTRect.origin.y];
     }];
     if (Log4Ana || true) NSLog(@"\n局部特征类比结果(%@) ======================> \n局部Ass特征T%ld（GV数:%ld）%@\n%@局部Abs特征T%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
