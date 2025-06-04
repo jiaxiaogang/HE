@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 /**
- *  MARK:--------------------用于记录整体特征识别中，所有的整体特征--------------------
+ *  MARK:--------------------用于记录组特征识别中，所有的组特征--------------------
  */
 @interface AIFeatureZenTiModels : NSObject
 

@@ -115,7 +115,7 @@
         [self createItemLight:item.rect directionData:directionData diffData:diffData junData:junData ds:ds];
     }
     
-    //20. 局部特征边框可视化。
+    //20. 单特征边框可视化。
     if (PitIsGroupFeature(tNode.p)) {
         CGFloat dotWH = self.width / powf(3, VisionMaxLevel);
         for (NSInteger i = 0; i < tNode.count; i++) {

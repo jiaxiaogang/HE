@@ -99,7 +99,7 @@
  */
 +(NSArray*) getSubDots:(NSDictionary*)colorDic gvRect:(CGRect)gvRect;
 
-//把rcmdExcept中交/并>70%的当时识别过的gv_ps收集返回，用于局部特征识别时防重（参考35041-TODO3）。
+//把rcmdExcept中交/并>70%的当时识别过的gv_ps收集返回，用于单特征识别时防重（参考35041-TODO3）。
 +(NSArray*) getGVRectExceptGV_ps:(CGRect)newRect gvRectExcept:(NSDictionary*)gvRectExcept;
 
 //两个rect的区域匹配度（度 = 交 / 并）

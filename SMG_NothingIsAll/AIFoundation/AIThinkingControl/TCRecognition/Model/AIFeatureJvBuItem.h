@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 /**
- *  MARK:--------------------局部特征识别V2算法模型：三级--------------------
+ *  MARK:--------------------单特征识别V2算法模型：三级--------------------
  */
 @interface AIFeatureJvBuItem : NSObject
 

@@ -170,7 +170,7 @@
 
 /**
  *  MARK:--------------------特征识别--------------------
- *  @desc 识别抽象的局部特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
+ *  @desc 识别抽象的单特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
  */
 +(NSArray*) recognitionFeatureV1:(AIKVPointer*)protoFeature_p {
     //1. 数据准备
@@ -312,13 +312,13 @@
         if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"23");
         
         //52. debug
-        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"局部特征识别结果:T%ld%@\t 匹配条数:%ld/(proto%ld ass%ld)\t匹配度:%.2f\t符合度:%.1f",
+        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/(proto%ld ass%ld)\t匹配度:%.2f\t符合度:%.1f",
                                          matchModel.match_p.pointerId,CLEANSTR([assFeature getLogDesc:true]),matchModel.matchCount,protoFeature.count,assFeature.count,matchModel.matchValue,matchModel.matchDegree);
     }
     if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"24");
     PrintDebugCodeBlock_Key(@"rfs1");
     
-    //53. 局部特征识别结果可视化（参考34176）。
+    //53. 单特征识别结果可视化（参考34176）。
     //[SMGUtils runByMainQueue:^{
     //    [theApp.imgTrainerView setDataForJvBuModels:resultModels protoT:protoFeature];
     //}];
@@ -332,7 +332,7 @@
 }
 
 /**
- *  MARK:--------------------局部特征识别--------------------
+ *  MARK:--------------------单特征识别--------------------
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  */
@@ -527,7 +527,7 @@
                 lastAtAssRect = curAtAssRect;
                 
                 //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
-                //2025.05.12: 自适应粒度局部特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
+                //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
                 CGFloat scale = NUMTOOK(best.v3).floatValue;
                 CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
                 [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex]];
@@ -535,22 +535,22 @@
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
-            //44. 局部特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到局部特征最低标准）。
+            //44. 单特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到单特征最低标准）。
             if (model.bestGVs.count <= 4) continue;
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
             
-            //52. 有效局部特征条目后，才计为防重（关掉，如果一张图有多个3也得能识别）。
+            //52. 有效单特征条目后，才计为防重（关掉，如果一张图有多个3也得能识别）。
             //[excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
-            //53. 有效局部特征条目后，计为assRectExcept防重（参考35042-TODO4）。
+            //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
             [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
                 return @(obj.bestGVAtProtoTRect);
             }]];
             
-            //54. 有效局部特征条目后，该切入点beginRectExcept防重（参考35042-TODO4）。
+            //54. 有效单特征条目后，该切入点beginRectExcept防重（参考35042-TODO4）。
             [beginRectExcept addObject:@(protoRect)];
         }
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -605,7 +605,7 @@
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
         
         //52. debug
-        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"局部特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f",
+        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio);
         [SMGUtils runByMainQueue:^{
             //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"单T%ld(%ld/%ld)(%.1f)",model.assT.pId,model.bestGVs.count,model.assT.count,dotSize)];
@@ -615,7 +615,7 @@
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
-    }] protoLogDesc:nil prefix:@"局部特征"];
+    }] protoLogDesc:nil prefix:@"单特征"];
 }
 
 /**
@@ -651,7 +651,7 @@
         //[zenTiModel updateItem:protoFeature_p fromItemT:absT.p itemAtAssRect:rect];
     }
     
-    //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
+    //21. 计算：位置符合度: 根据每个组特征与单特征的rect来计算。
     [zenTiModel run4MatchDegree:protoFeature_p];
     
     //22. 计算：每个assT和protoT的综合匹配度。
@@ -709,19 +709,19 @@
         assFeature.zenTiModel = matchModel;
         
         //43. debug
-        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"整体特征识别结果:T%ld%@\t（局部特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
+        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
                                                            matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
                                                            matchModel.rectItems.count,assFeature.count,protoFeature.count,
                                                            matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.modelMatchConStrongRatio);
         
-        //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对整体特征没必要存rect，也没必要存抽具象关联。
+        //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
         //[AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
-        //45. 整体特征识别结果可视化（参考34176）。
+        //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId) left:0 top:0];
+            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"组特征识别T%ld",assFeature.pId) left:0 top:0];
         }];
     }
     
@@ -774,7 +774,7 @@
     //    NSLog(@"rectItem数:%ld assT数:%ld protoGT数:%ld",model.rectItems.count,assT.count,protoGT.count);
     //}
     
-    //21. 计算：位置符合度: 根据每个整体特征与局部特征的rect来计算。
+    //21. 计算：位置符合度: 根据每个组特征与单特征的rect来计算。
     [zenTiModel run4MatchDegree:protoGT.p];
     
     //22. 计算：每个assT和protoT的综合匹配度。
@@ -807,9 +807,9 @@
     
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (AIFeatureZenTiModel *matchModel in resultModels) {
-        AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.assT];
+        AIFeatureNode *assGT = [SMGUtils searchNode:matchModel.assT];
         //2025.05.13: 组特征识别需要refStrong做竞争。
-        [AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
+        [AINetUtils insertRefPorts_General:assGT.p content_ps:assGT.content_ps difStrong:1 header:assGT.header];
         //[protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
         //[protoFeature updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
         
@@ -817,17 +817,18 @@
         //assFeature.zenTiModel = matchModel;
         
         //43. debug
-        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"整体特征识别结果:T%ld%@\t（局部特征数:%ld assGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
-                                                           matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
-                                                           matchModel.rectItems.count,assFeature.count,
+        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"组特征识别结果:T%ld%@\t（匹配数:%ld/%ld GV数:%.0f）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
+                                                           matchModel.assT.pointerId,CLEANSTR([assGT getLogDesc:true]),
+                                                           matchModel.rectItems.count,assGT.count,
+                [SMGUtils sumOfArr:assGT.content_ps convertBlock:^double(id obj) { AIFeatureNode *itemT = [SMGUtils searchNode:obj]; return itemT.count; }],
                                                            matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.modelMatchConStrongRatio);
         
-        //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对整体特征没必要存rect，也没必要存抽具象关联。
+        //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
         //[AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
-        //45. 整体特征识别结果可视化（参考34176）。
+        //45. 组特征识别结果可视化（参考34176）。
         //for (AIKVPointer *item_p in assFeature.content_ps) {
         //    AIFeatureNode *item = [SMGUtils searchNode:item_p];
         //    [SMGUtils runByMainQueue:^{
@@ -835,17 +836,18 @@
         //    }];
         //}
         
-        //TODOTOMORROW20250603: 识别结果的元素数 和 gv数 普遍比较少，明天加训，或者调试下竞争机制，看是什么问题（是GT也需要支持健全度吗？）。
-        //整体特征识别结果:T3266{Mnist0 = 106;}    （局部特征数:1 assGV数:1）    匹配度:1.00    符合度:1.0    显著度:10.00
+        //TODOTOMORROW20250603: 仅对匹配上itemT进行可视化。
+        
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"识别GT%ld",assFeature.pId) left:0 top:0];
+            //[theApp.imgTrainerView setDataForFeature:assGT lab:STRFORMAT(@"识别GT%ld",assGT.pId) left:0 top:0];
+            [theApp.imgTrainerView setDataForZenTiModel:matchModel lab:STRFORMAT(@"识别GT%ld",assGT.pId)];
         }];
     }
     
     //46. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
         return obj.assT;
-    }] protoLogDesc:nil prefix:@"整体特征"];
+    }] protoLogDesc:nil prefix:@"组特征"];
     
     //51. 直接返回：zenTiModel在类比时还要用。
     return resultModels;
@@ -940,9 +942,9 @@
             }];
         } else {
             subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{
-                //a. 通过组码做局部特征识别。
+                //a. 通过组码做单特征识别。
                 NSArray *jvBuResult = ARRTOOK([self recognitionFeatureV1:item_p]);
-                //b. 通过抽象特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+                //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = [self recognitionGroupFeatureV1:item_p matchModels:jvBuResult];
                 return [SMGUtils collectArrA:jvBuResult arrB:zenTiResult];
             }];
@@ -1028,7 +1030,7 @@
     }
     
     //13. 似层交层分开进行竞争 (分开竞争是以前就一向如此的,因为同质竞争才公平) (为什么要保留交层: 参考31134-TODO1);
-    //2025.04.19: 改为用isJiao来判断交似层，避免很交层特征的却归到似层里，而原本整体特征却因为竞争力不如这些假的，反被顶掉。
+    //2025.04.19: 改为用isJiao来判断交似层，避免很交层特征的却归到似层里，而原本组特征却因为竞争力不如这些假的，反被顶掉。
     NSArray *validPSAlgs = [SMGUtils filterArr:validPAlgs checkValid:^BOOL(AIMatchAlgModel *item) {
         return !item.matchAlg.isJiao;
     }];

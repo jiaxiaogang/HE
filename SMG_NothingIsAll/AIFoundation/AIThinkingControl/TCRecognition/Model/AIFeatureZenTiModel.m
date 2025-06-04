@@ -157,7 +157,7 @@
         item.deltaYMatchValue = 1 - (deltaYSpan == 0 ? 0 : fabs(itemDeltaY) / deltaYSpan);
     }
     
-    //=============== step5: 该assT与protoT的这一块局部特征的“位置符合度” = 三个要素乘积（参考34136-TODO5）===============
+    //=============== step5: 该assT与protoT的这一块单特征的“位置符合度” = 三个要素乘积（参考34136-TODO5）===============
     for (AIFeatureZenTiItem_Rect *item in self.rectItems) {
         item.itemMatchDegree = item.scaleMatchValue * item.deltaXMatchValue * item.deltaYMatchValue;
     }
@@ -186,7 +186,7 @@
         item.itemMatchValue = [fromItemT getConMatchValue:self.assT] * [fromItemT getConMatchValue:protoT];
     }
     
-    //4. 求出整体特征：assT 与 protoT 的综合匹配度。
+    //4. 求出组特征：assT 与 protoT 的综合匹配度。
     self.modelMatchValue = self.rectItems.count == 0 ? 0 : [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
         return obj.itemMatchValue;
     }] / self.rectItems.count;
@@ -196,7 +196,7 @@
     //0. 存下protoT来，类比时要用下。
     self.protoT = protoT;
     
-    //4. 求出整体特征：assT 与 protoT 的综合匹配度。
+    //4. 求出组特征：assT 与 protoT 的综合匹配度。
     AIGroupFeatureNode *assGT = [SMGUtils searchNode:self.assT];
     self.modelMatchValue = assGT.count == 0 ? 0 : self.rectItems.count / (float)assGT.count;
 }

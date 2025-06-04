@@ -225,7 +225,7 @@ static AIThinkingControl *_instance;
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
         
-        //2025.05.20: 从粗到细，识别十条局部特征即可。
+        //2025.05.20: 从粗到细，识别十条单特征即可。
         //2025.05.20: BUG-protoGT经常不全：比如有时只识别了0的上半部分，没下半部分，因为这里达到限制条数中断导致的，先关掉，不然肯定有识别一半就中断的情况。
         //if (jvBuModel.models.count >= 10) break;
         
@@ -237,7 +237,7 @@ static AIThinkingControl *_instance;
             for (NSInteger startY = 0; startY < length; startY++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
-                //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在局部特征识别算法中实现防重的）。
+                //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在单特征识别算法中实现防重的）。
                 CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
                 
                 //14. 切出当前gv：九宫。
@@ -265,9 +265,9 @@ static AIThinkingControl *_instance;
 
 //单粒度层。
 -(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize {
-    //23. 局部特征过滤和竞争部分。
+    //23. 单特征过滤和竞争部分。
     [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
-    NSLog(@"第2步、局部特征竞争后条数:%ld",jvBuModel.models.count);
+    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //40. 这里先直接调用下类比，先测试下识别结果的类比。
@@ -310,7 +310,7 @@ static AIThinkingControl *_instance;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //51. 整体识别特征：通过抽象局部特征做整体特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+    //51. 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV2:protoGT];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     

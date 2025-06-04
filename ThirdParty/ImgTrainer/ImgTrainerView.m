@@ -180,7 +180,7 @@
 //MARK:===============================================================
 
 /**
- *  MARK:--------------------局部特征识别结果可视化（参考34176）--------------------
+ *  MARK:--------------------单特征识别结果可视化（参考34176）--------------------
  */
 -(void) setDataForJvBuModelsV1:(NSArray*)jvBuModels protoT:(AIFeatureNode*)protoT {
     [self addFeatureToPreview:protoT indexes:nil lab:STRFORMAT(@"protoT%ld:%@",protoT.pId,protoT.ds) left:0 top:0];
@@ -196,6 +196,15 @@
         return @(obj.assIndex);
     }];
     [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab left:left top:top];
+    [self.previewTableView reloadData];
+}
+
+-(void) setDataForZenTiModel:(AIFeatureZenTiModel*)zenTiModel lab:(NSString*)lab {
+    AIGroupFeatureNode *assGT = [SMGUtils searchNode:zenTiModel.assT];
+    NSArray *indexes = [SMGUtils convertArr:zenTiModel.rectItems convertBlock:^id(AIFeatureZenTiItem_Rect *obj) {
+        return @([assGT indexOfRect:obj.itemAtAssRect]);
+    }];
+    [self addFeatureToPreview:assGT indexes:indexes lab:lab left:0 top:0];
     [self.previewTableView reloadData];
 }
 
