@@ -741,6 +741,10 @@
  *      2025.05.07: v2-支持自适应粒度。
  */
 +(NSArray*) recognitionGroupFeatureV2:(AIGroupFeatureNode*)protoGT {
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
+    }];
+    
     //1. 数据准备
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     [SMGUtils runByMainQueue:^{
@@ -836,11 +840,9 @@
         //    }];
         //}
         
-        //TODOTOMORROW20250603: 仅对匹配上itemT进行可视化。
-        
         [SMGUtils runByMainQueue:^{
             //[theApp.imgTrainerView setDataForFeature:assGT lab:STRFORMAT(@"识别GT%ld",assGT.pId) left:0 top:0];
-            [theApp.imgTrainerView setDataForZenTiModel:matchModel lab:STRFORMAT(@"识别GT%ld",assGT.pId)];
+            [theApp.imgTrainerView setDataForZenTiModel:matchModel lab:STRFORMAT(@"识别GT%ld",assGT.pId)];//仅对匹配上itemT进行可视化。
         }];
     }
     

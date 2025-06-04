@@ -29,7 +29,7 @@
 
     //lab
     self.lab = [[UILabel alloc] initWithFrame:CGRectMake(0, 100, 100, 15)];
-    [self.lab setFont:[UIFont boldSystemFontOfSize:8]];
+    [self.lab setFont:[UIFont boldSystemFontOfSize:6]];
     [self.lab setBackgroundColor:UIColor.blueColor];
     [self.lab setTextColor:UIColor.whiteColor];
     [self.lab setTextAlignment:NSTextAlignmentCenter];

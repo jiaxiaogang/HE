@@ -191,6 +191,7 @@
     [self.previewTableView reloadData];
 }
 
+//仅对匹配上itemGV进行可视化。
 -(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top {
     NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
         return @(obj.assIndex);
@@ -199,6 +200,7 @@
     [self.previewTableView reloadData];
 }
 
+//仅对匹配上itemT进行可视化。
 -(void) setDataForZenTiModel:(AIFeatureZenTiModel*)zenTiModel lab:(NSString*)lab {
     AIGroupFeatureNode *assGT = [SMGUtils searchNode:zenTiModel.assT];
     NSArray *indexes = [SMGUtils convertArr:zenTiModel.rectItems convertBlock:^id(AIFeatureZenTiItem_Rect *obj) {
