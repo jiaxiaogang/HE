@@ -469,7 +469,7 @@
                 
                 //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
                 //NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
-                NSArray *scales = @[@(1)];
+                NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)];
                 MapModel *best = nil;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 for (NSNumber *item in scales) {
