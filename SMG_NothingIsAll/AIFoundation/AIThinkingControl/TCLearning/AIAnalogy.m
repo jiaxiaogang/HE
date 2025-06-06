@@ -584,7 +584,7 @@
     [AINetUtils updateConPortRect:absGT conT:assGT.p rect:newAbsAtAssRect];
     [AINetUtils updateConPortRect:absGT conT:protoGT.p rect:newAbsAtProtoRect];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"类比GT%ld->GT%ld",assGT.pId,absGT.pId) left:0 top:0];
+        //[theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"类比GT%ld->GT%ld",assGT.pId,absGT.pId) left:0 top:0];
     }];
     
     //51. debug

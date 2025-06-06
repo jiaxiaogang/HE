@@ -792,11 +792,13 @@
         return item.modelMatchDegree > 0 && item.modelMatchValue > 0;
     }];
     
+    //TODOTOMORROW20250606: 把竞争过滤关掉，测试识别结果中，有没有准确的（参考35045）。
+    
     //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
     //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
-    resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchValue * obj.modelMatchConStrongRatio;
-    }], 0, MAX(3, resultModels.count * 0.5));
+    //resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
+    //    return obj.modelMatchDegree * obj.modelMatchValue * obj.modelMatchConStrongRatio;
+    //}], 0, MAX(3, resultModels.count * 0.5));
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
@@ -804,10 +806,10 @@
     }];
     
     //34. 末尾淘汰20%被引用强度最低的。
-    //TODO: 应该可以去掉了，因为显著度已经做为竞争因子了，此处不再有什么意义（随后测下明确没用就删掉）。
-    resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
-        return obj.rectItems.count;
-    }], 0, MAX(resultModels.count * 0.9f, 3));
+    //2025.06.06: 去掉，因为显著度已经做为竞争因子了，此处不再有什么意义（随后测下明确没用就删掉）。
+    //resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
+    //    return obj.rectItems.count;
+    //}], 0, MAX(resultModels.count * 0.9f, 3));
     
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (AIFeatureZenTiModel *matchModel in resultModels) {
