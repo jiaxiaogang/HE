@@ -741,15 +741,8 @@
  *      2025.05.07: v2-支持自适应粒度。
  */
 +(NSArray*) recognitionGroupFeatureV2:(AIGroupFeatureNode*)protoGT {
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
-    }];
-    
     //1. 数据准备
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
-    }];
     
     //11. 收集：每个absT分别向整体取conPorts。
     for (NSInteger i = 0; i < protoGT.count; i++) {
@@ -843,6 +836,7 @@
         //}
         
         [SMGUtils runByMainQueue:^{
+            //TODOTOMORROW20250608: 所有gt全是由各个abs拼成的，但可视化时，却不能跨t树，生成时的protoDic已经没了，这里也只能继续看能不能以当前的protoDic为准计算可视化rect和色值。
             //[theApp.imgTrainerView setDataForFeature:assGT lab:STRFORMAT(@"识别GT%ld",assGT.pId) left:0 top:0];
             [theApp.imgTrainerView setDataForZenTiModel:matchModel lab:STRFORMAT(@"识别GT%ld",assGT.pId)];//仅对匹配上itemT进行可视化。
         }];

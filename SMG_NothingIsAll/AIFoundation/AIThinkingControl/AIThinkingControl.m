@@ -308,6 +308,10 @@ static AIThinkingControl *_instance;
     [SMGUtils runByMainQueue:^{
         //[theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"构建protoGT:%ld(%ld)",protoGT.pId,protoGT.count)];
     }];
+    [SMGUtils runByMainQueue:^{
+        //TODOTOMORROW20250608: 把protoGT可视化，改成由protoDic来取rect和色值。
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
+    }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //51. 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
