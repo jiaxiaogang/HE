@@ -256,7 +256,7 @@ static AIThinkingControl *_instance;
         
         //22. 下一层粒度（再/1.3倍）。
         NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
-        [self commitInputWithSplitV2_Single_DotSize:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
+        [self commitInputWithSplitV2_Single_DotSizeV2:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
         dotSize /= 1.3f;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -314,9 +314,32 @@ static AIThinkingControl *_instance;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    //51. 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV2:protoGT];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
+    for (AIFeatureZenTiModel *model in zenTiModel) {
+        [AIAnalogy analogyGroupFeatureV2:protoGT assModel:model];
+    }
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+}
+
+//单粒度层。
+-(void) commitInputWithSplitV2_Single_DotSizeV2:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
+    //23. 单特征过滤和竞争部分。
+    [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
+    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    
+    //40. 这里先直接调用下类比，先测试下识别结果的类比。
+    //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
+    //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
+    //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
+    for (AIFeatureJvBuModel *model in jvBuModel.models) {
+        model.absT = [AIAnalogy analogyFeatureV2:model];
+    }
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //============================= 整体特征 =============================
     
@@ -339,6 +362,7 @@ static AIThinkingControl *_instance;
     AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false];
     
     // 构建抽具象关联 & rect & matchValue & matchDegree。
+    // TODO: 2025.06.10：此处还有另一个旧有方案：从具象中选抽象，即以下构建抽具象关联的是assT而不是absT，优点是结构更简单，缺点是conPort.rect计算略麻烦些，要再写个方法，把bestGVs在proto的Rect转成assT在proto的Rect（先跑absT的，如果不行，再来看这个）。
     for (AIFeatureJvBuModel *jvBuItem in jvBuModel.models) {
         // 抽具象关联 & 存conPort.rect（参考34135-TODO1）。
         [AINetUtils relateGeneralAbs:jvBuItem.absT absConPorts:jvBuItem.absT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
@@ -354,17 +378,15 @@ static AIThinkingControl *_instance;
         [theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
     }];
     
-    
-    
-    //51. 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV2:protoGT];
+    // 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.models];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
+    // 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIFeatureZenTiModel *model in zenTiModel) {
-        [AIAnalogy analogyGroupFeatureV2:protoGT assModel:model];
+        AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
+        [AIAnalogy analogyGroupFeatureV1:protoT ass:assGT bigerMatchValue:0 zenTiModel:model];
     }
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
 }
 
 /**

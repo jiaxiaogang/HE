@@ -622,14 +622,16 @@
  *  MARK:--------------------特征识别--------------------
  *  @desc Step2 尽可能照顾特征的整体性，通过交层向下找似层结果（参考34135-TODO2）。
  */
-+(NSArray*) recognitionGroupFeatureV1:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
++(NSArray*) recognitionGroupFeatureV3:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
     //1. 数据准备
     AIFeatureNode *protoFeature = [SMGUtils searchNode:protoFeature_p];
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     
     //11. 收集：每个absT分别向整体取conPorts。
-    for (AIMatchModel *matchModel in matchModels) {
-        AIFeatureNode *absT = [SMGUtils searchNode:matchModel.match_p];
+    for (AIFeatureJvBuModel *matchModel in matchModels) {
+        
+        //TODOTOMORROW20250610: 这里使用absT，如果效果不好，可以改为assT，以前用的本来就是assT，只是现在protoT是由absT.gvs组成的而已。
+        AIFeatureNode *absT = matchModel.absT;
         NSArray *conPorts = [AINetUtils conPorts_All:absT];
         
         //12. 将每个conPort先收集到zenTiModel。
@@ -658,22 +660,7 @@
     [zenTiModel run4MatchValue:protoFeature_p];
     
     //23. 计算：每个model的显著度。
-    for (AIFeatureZenTiModel *model in zenTiModel.models) {
-        AIFeatureNode *assT = [SMGUtils searchNode:model.assT];
-        NSArray *absPorts = [AINetUtils absPorts_All:assT];
-        NSInteger allStrong = 0, validStrong = 0;
-        
-        //24. 显著度公式（参考34175-公式3）。
-        for (AIPort *absPort in absPorts) {
-            allStrong += absPort.strong.value;
-            if ([SMGUtils filterSingleFromArr:matchModels checkValid:^BOOL(AIMatchModel *itemAbsT) {
-                return [itemAbsT.match_p isEqual:absPort.target_p];
-            }]) {
-                validStrong += absPort.strong.value;
-            }
-        }
-        model.modelMatchConStrongRatio = allStrong > 0 ? validStrong / (float)allStrong : 0;
-    }
+    [zenTiModel run4StrongRatio];
     
     //31. 无效过滤器1、位置符合度=0排除掉。
     NSArray *resultModels = [SMGUtils filterArr:zenTiModel.models checkValid:^BOOL(AIFeatureZenTiModel *item) {
@@ -943,7 +930,7 @@
                 //a. 通过组码做单特征识别。
                 NSArray *jvBuResult = ARRTOOK([self recognitionFeatureV1:item_p]);
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-                NSArray *zenTiResult = [self recognitionGroupFeatureV1:item_p matchModels:jvBuResult];
+                NSArray *zenTiResult = [self recognitionGroupFeatureV3:item_p matchModels:jvBuResult];
                 return [SMGUtils collectArrA:jvBuResult arrB:zenTiResult];
             }];
         }

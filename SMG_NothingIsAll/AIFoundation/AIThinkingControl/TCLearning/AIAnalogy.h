@@ -40,6 +40,7 @@
 /**
  *  MARK:--------------------特征类比--------------------
  */
++(AIFeatureNode*) analogyGroupFeatureV1:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT bigerMatchValue:(CGFloat)bigerMatchValue zenTiModel:(AIFeatureZenTiModel*)zenTiModel;
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel;
 +(AIFeatureNode*) analogyGroupFeatureV2:(AIGroupFeatureNode*)protoGT assModel:(AIFeatureZenTiModel*)assModel;
 
