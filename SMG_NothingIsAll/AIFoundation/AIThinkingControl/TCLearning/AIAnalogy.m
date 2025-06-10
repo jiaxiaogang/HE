@@ -269,7 +269,7 @@
         //12. 借助absT来类比时，复用ZenTi的识别结果model数据，并且用完就清空，防止循环野指针（参考34139-TODO3）。
         AIFeatureZenTiModel *zenTiModel = assFeature.zenTiModel;
         assFeature.zenTiModel = nil;
-        return [self analogyGroupFeatureV1:protoFeature ass:assFeature bigerMatchValue:bigerMatchValue zenTiModel:zenTiModel];
+        return [self analogyGroupFeatureV1:protoFeature ass:assFeature zenTiModel:zenTiModel];
     }
     //21. 特征识别step1识别到的结果，复用indexDic进行类比。
     else if(assFeature.jvBuModel && [protoT_p isEqual:assFeature.jvBuModel.v2] ) {
@@ -456,12 +456,13 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyGroupFeatureV1:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT bigerMatchValue:(CGFloat)bigerMatchValue zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
++(AIFeatureNode*) analogyGroupFeatureV1:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
-        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchValue * obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchValue * zenTiModel.modelMatchDegree];
-    }];
+    //NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
+    //    return [TCLearningUtil noZeRenForPingJun:obj.itemMatchValue * obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchValue * zenTiModel.modelMatchDegree];
+    //}];
+    NSArray *sameItems = zenTiModel.rectItems;
     
     //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
     CGRect newAbsAtAssRect = CGRectNull;

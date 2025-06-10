@@ -326,26 +326,28 @@ static AIThinkingControl *_instance;
 }
 
 //单粒度层。
+/**
+ *  MARK:--------------------某粒度层识别单特征完毕--------------------
+ *  @version
+ *      2025.05.xx: 组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
+ *      2025.06.10: 整体特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
+ */
 -(void) commitInputWithSplitV2_Single_DotSizeV2:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
-    //23. 单特征过滤和竞争部分。
+    // 局部特征过滤和竞争部分。
     [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //40. 这里先直接调用下类比，先测试下识别结果的类比。
-    //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
-    //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
-    //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
+    // 局部特征类比
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         model.absT = [AIAnalogy analogyFeatureV2:model];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //============================= 整体特征 =============================
-    
     // 从protoColorDic实时计算：构建protoT所需的gvModels。
     NSArray *protoGVModels = [SMGUtils convertArr:jvBuModel.models convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuItem) {
         return [SMGUtils convertArr:jvBuItem.bestGVs convertBlock:^id(AIFeatureJvBuItem *item) {
+            
             // 切gv九宫 & 转3索引码 & 单码装箱 & 打包组码。
             NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:item.bestGVAtProtoTRect];
             if (!ARRISOK(subDots)) return nil;
@@ -357,8 +359,14 @@ static AIThinkingControl *_instance;
         }];
     }];
     
-    // gvModels排序 & 构建protoT。
+    // gvModels排序 & 防重。
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:protoGVModels];
+    sortGroupModels = [SMGUtils removeRepeat:sortGroupModels convertBlock:^id(InputGroupValueModel *obj) {
+        return @(obj.rect);
+    }];
+    if (!ARRISOK(sortGroupModels)) return;
+    
+    // 构建protoT
     AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false];
     
     // 构建抽具象关联 & rect & matchValue & matchDegree。
@@ -385,7 +393,7 @@ static AIThinkingControl *_instance;
     // 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIFeatureZenTiModel *model in zenTiModel) {
         AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
-        [AIAnalogy analogyGroupFeatureV1:protoT ass:assGT bigerMatchValue:0 zenTiModel:model];
+        [AIAnalogy analogyGroupFeatureV1:protoT ass:assGT zenTiModel:model];
     }
 }
 
