@@ -256,7 +256,7 @@ static AIThinkingControl *_instance;
         
         //22. 下一层粒度（再/1.3倍）。
         NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
-        [self commitInputWithSplitV2_Single_DotSize:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize];
+        [self commitInputWithSplitV2_Single_DotSize:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
         dotSize /= 1.3f;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -264,7 +264,7 @@ static AIThinkingControl *_instance;
 }
 
 //单粒度层。
--(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize {
+-(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
     //23. 单特征过滤和竞争部分。
     [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
@@ -277,16 +277,16 @@ static AIThinkingControl *_instance;
     NSMutableArray *groupTModels = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        AIFeatureNode *itemAbsT = [AIAnalogy analogyFeatureV2:model];
+        model.absT = [AIAnalogy analogyFeatureV2:model];
         
         //============== 此处有absTAtAssTRect，也有bestGVsAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
         //1. 计算abs在ass中的位置，以及ass在proto中的位置。
-        CGRect absT_AssT = CGRectNull;
-        if ([itemAbsT.p isEqual:model.assT.p]) {
-            absT_AssT = [AINetUtils convertAllOfFeatureContent2Rect:itemAbsT];
-        } else {
-            absT_AssT = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
-        }
+        //CGRect absT_AssT = CGRectNull;
+        //if ([itemAbsT.p isEqual:model.assT.p]) {
+        //    absT_AssT = [AINetUtils convertAllOfFeatureContent2Rect:itemAbsT];
+        //} else {
+        //    absT_AssT = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
+        //}
         
         //2. 计算abs在proto中的位置。
         //2025.05.27：修复protoGT可视化出界问题：重新分析absT at ProtoT（absT是由bestGVs生成的）所以直接就 = model.bestGVs at protoT）
@@ -296,7 +296,7 @@ static AIThinkingControl *_instance;
         CGRect absT_ProtoT = model.bestGVsAtProtoTRect;
         
         //3. 收集为InputGroupFeatureModel。
-        [groupTModels addObject:[InputGroupFeatureModel new:itemAbsT.p rect:absT_ProtoT]];
+        [groupTModels addObject:[InputGroupFeatureModel new:model.absT.p rect:absT_ProtoT]];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -313,6 +313,48 @@ static AIThinkingControl *_instance;
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    
+    
+    
+    
+    //============================= 整体特征 =============================
+    
+    // 从protoColorDic实时计算：构建protoT所需的gvModels。
+    NSArray *protoGVModels = [SMGUtils convertArr:jvBuModel.models convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuItem) {
+        return [SMGUtils convertArr:jvBuItem.bestGVs convertBlock:^id(AIFeatureJvBuItem *item) {
+            // 切gv九宫 & 转3索引码 & 单码装箱 & 打包组码。
+            NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:item.bestGVAtProtoTRect];
+            if (!ARRISOK(subDots)) return nil;
+            NSDictionary *protoGVIndexs = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+            NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndexs algsType:at];
+            item_ps = [SMGUtils sortPointers:item_ps];
+            AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
+            return [InputGroupValueModel new:groupValue.p rect:item.bestGVAtProtoTRect];
+        }];
+    }];
+    
+    // gvModels排序 & 构建protoT。
+    NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:protoGVModels];
+    AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    
+    // 构建抽具象关联 & rect & matchValue & matchDegree。
+    for (AIFeatureJvBuModel *jvBuItem in jvBuModel.models) {
+        // 抽具象关联 & 存conPort.rect（参考34135-TODO1）。
+        [AINetUtils relateGeneralAbs:jvBuItem.absT absConPorts:jvBuItem.absT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
+        [jvBuItem run4BestGvsAtProtoTRect];
+        [AINetUtils updateConPortRect:jvBuItem.absT conT:protoT.p rect:jvBuItem.bestGVsAtProtoTRect];
+        
+        // 存抽具象匹配度 & 符合度。
+        [jvBuItem run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
+        [protoT updateMatchValue:jvBuItem.absT matchValue:jvBuItem.matchValue];
+        [protoT updateMatchDegree:jvBuItem.absT matchDegree:jvBuItem.matchDegree];
+    }
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
+    }];
+    
+    
     
     //51. 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV2:protoGT];
