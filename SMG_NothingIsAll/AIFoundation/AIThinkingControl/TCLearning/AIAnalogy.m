@@ -459,10 +459,9 @@
 +(AIFeatureNode*) analogyGroupFeatureV1:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    //NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
-    //    return [TCLearningUtil noZeRenForPingJun:obj.itemMatchValue * obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchValue * zenTiModel.modelMatchDegree];
-    //}];
-    NSArray *sameItems = zenTiModel.rectItems;
+    NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
+        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchValue * obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchValue * zenTiModel.modelMatchDegree];
+    }];
     
     //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
     CGRect newAbsAtAssRect = CGRectNull;
@@ -474,6 +473,8 @@
     //20. 根据protoT和itemAbsT的映射来实现类比抽象（参考34164-方案2）。
     //2025.04.23: 修复收集到的absGVModels数竟然有达到1000的情况，改为通过protoT和itemAbsT的映射，收集protoT的gv元素做抽象。
     NSMutableArray *protoIndexes = [SMGUtils convertArr:sameItems convertItemArrBlock:^NSArray *(AIFeatureZenTiItem_Rect *item) {
+        
+        //TODOTOMORROW20250610: 看下能不能改用item.protoGTIndex，因为这里的itemAbsT.jvBuModel为nil。
         AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.fromItemT];
         MapModel *jvBuModel = itemAbsT.jvBuModel;
         if (!jvBuModel || ![protoT.p isEqual:jvBuModel.v2]) {
