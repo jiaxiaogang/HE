@@ -632,7 +632,7 @@
     //11. 收集：每个absT分别向整体取conPorts。
     for (AIFeatureJvBuModel *matchModel in matchModels) {
         
-        //TODOTOMORROW20250610: 这里使用absT，如果效果不好，可以改为assT，以前用的本来就是assT，只是现在protoT是由absT.gvs组成的而已。
+        //TODO: 20250610: 这里使用absT，如果效果不好，可以改为assT，以前用的本来就是assT，只是现在protoT是由absT.gvs组成的而已（但fromItemT_p也要看要不要改成assT_p）。
         AIFeatureNode *absT = matchModel.absT;
         NSArray *conPorts = [AINetUtils conPorts_All:absT];
         
@@ -767,10 +767,9 @@
         return item.modelMatchDegree > 0 && item.modelMatchValue > 0;
     }];
     
-    //TODOTOMORROW20250606: 把竞争过滤关掉，测试识别结果中，有没有准确的（参考35045）。
-    
     //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
     //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
+    //2025.06.06: 把竞争过滤关掉，测试识别结果中，有没有准确的（参考35045）。
     //resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
     //    return obj.modelMatchDegree * obj.modelMatchValue * obj.modelMatchConStrongRatio;
     //}], 0, MAX(3, resultModels.count * 0.5));
@@ -818,7 +817,7 @@
         //}
         
         [SMGUtils runByMainQueue:^{
-            //TODOTOMORROW20250608: 所有gt全是由各个abs拼成的，但可视化时，却不能跨t树，生成时的protoDic已经没了，这里也只能继续看能不能以当前的protoDic为准计算可视化rect和色值。
+            //2025.06.08: 注意：GT识别V2算法中，所有gt全是由各个abs拼成的，但可视化时，却不能跨t树，生成时的protoDic已经没了，这里也只能继续看能不能以当前的protoDic为准计算可视化rect和色值。
             //[theApp.imgTrainerView setDataForFeature:assGT lab:STRFORMAT(@"识别GT%ld",assGT.pId) left:0 top:0];
             [theApp.imgTrainerView setDataForZenTiModel:matchModel lab:STRFORMAT(@"识别GT%ld",assGT.pId)];//仅对匹配上itemT进行可视化。
         }];
