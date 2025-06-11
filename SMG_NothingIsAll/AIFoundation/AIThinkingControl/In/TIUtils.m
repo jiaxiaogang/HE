@@ -410,6 +410,8 @@
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
+            // 过滤掉GT，局部特征不识别整体结果。
+            if (!refPort.target_p.isJiao && refPort.target_p.isGT) continue;
             
             // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
             CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
@@ -577,7 +579,7 @@
     
     //53. 排序
     validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * obj.matchDegree * obj.matchAssProtoRatio;
+        return obj.matchValue * obj.matchDegree * obj.matchAssProtoRatio * obj.matchAssRatio;
     }];
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
@@ -605,9 +607,8 @@
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
         
         //52. debug
-        //TODOTOMORROW20250611: 有识别到整体特征的问题，单特征识别结果:T1580{}     匹配条数:365/ass647    匹配度:0.99    符合度:1.0    健全度:365.0。
-        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f",
-                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio);
+        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f\t匹配率:%.1f",
+                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio,model.matchAssRatio);
         [SMGUtils runByMainQueue:^{
             //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"单T%ld(%ld/%ld)(%.1f)",model.assT.pId,model.bestGVs.count,model.assT.count,dotSize)];
         }];

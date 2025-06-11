@@ -40,6 +40,9 @@
     //3. 此处没有protoT.count，所以健全度直接用assCount也是不影响竞争的。
     //2025.05.11: 修复健全度低问题，由总assT.count改成bestGVs.count，因为并不判断全含，所以由总数改成匹配到的数。
     self.matchAssProtoRatio = self.bestGVs.count;
+    
+    //4. 匹配率
+    self.matchAssRatio = self.bestGVs.count / (float)self.assT.count;
 }
 
 -(void) run4BestGvsAtProtoTRect {

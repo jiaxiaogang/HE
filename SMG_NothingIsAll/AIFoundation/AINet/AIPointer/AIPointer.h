@@ -20,6 +20,7 @@
 @property (assign, nonatomic) NSInteger pointerId;          //指针地址(Id)
 @property (strong, nonatomic) NSMutableDictionary *params;  //用于分区(在二分查巨量队列,params越细分,越有利性能)
 @property (assign, nonatomic) BOOL isJiao;                  //是否交层(默认false);
+@property (assign, nonatomic) BOOL isGT;                    //是否整体特征(默认false);
 -(NSString*) filePath;                                      //文件路径(可以是key,或者path,或者sql表和行号等)
 
 /**

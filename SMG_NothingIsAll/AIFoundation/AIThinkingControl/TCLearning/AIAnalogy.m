@@ -344,7 +344,7 @@
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:absGVModels];
     
     //31. 外类比构建
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[protoFeature,assFeature] at:protoFeature.p.algsType ds:protoFeature.p.dataSource isOut:protoFeature.p.isOut isJiao:true];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[protoFeature,assFeature] at:protoFeature.p.algsType ds:protoFeature.p.dataSource isOut:protoFeature.p.isOut isJiao:true isGT:false];
     [absT updateLogDescDic:protoFeature.logDesc];
     [absT updateLogDescDic:assFeature.logDesc];
     
@@ -430,7 +430,7 @@
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:absGVModels];
     
     //31. 外类比构建
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[jvBuModel.assT] at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[jvBuModel.assT] at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
     
     //32. 更新匹配度;
@@ -504,7 +504,7 @@
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:absGVModels];
     
     //33. 保留下来的生成为absT。
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[protoT,assT] at:protoT.p.algsType ds:protoT.p.dataSource isOut:protoT.p.isOut isJiao:true];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[protoT,assT] at:protoT.p.algsType ds:protoT.p.dataSource isOut:protoT.p.isOut isJiao:true isGT:true];
     
     //41. 更新logDesc。
     [absT updateLogDescDic:protoT.logDesc];

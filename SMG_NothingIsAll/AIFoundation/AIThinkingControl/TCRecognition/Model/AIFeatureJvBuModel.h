@@ -26,8 +26,10 @@
 @property (assign, nonatomic) CGFloat matchValue;
 //用bestGVs每一条gv求平均得出符合度。
 @property (assign, nonatomic) CGFloat matchDegree;
-//用bestGVs每一条gv求平均得出健全度。
+//用bestGVs条数得出健全度。
 @property (assign, nonatomic) CGFloat matchAssProtoRatio;
+//用bestGVs条数/assT总长度=得出匹配率。
+@property (assign, nonatomic) CGFloat matchAssRatio;
 
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;

@@ -367,7 +367,7 @@ static AIThinkingControl *_instance;
     if (!ARRISOK(sortGroupModels)) return;
     
     // 构建protoT
-    AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
     
     // 构建抽具象关联 & rect & matchValue & matchDegree。
     // TODO: 2025.06.10：此处还有另一个旧有方案：从具象中选抽象，即以下构建抽具象关联的是assT而不是absT，优点是结构更简单，缺点是conPort.rect计算略麻烦些，要再写个方法，把bestGVs在proto的Rect转成assT在proto的Rect（先跑absT的，如果不行，再来看这个）。
@@ -692,9 +692,9 @@ static AIThinkingControl *_instance;
     NSArray *bGroupModels = [theNet algModelConvert2PointersV2:algsModel.splitBColors at:algsType ds:@"bColors" levelNum:algsModel.levelNum];
     
     //3、构建具象特征。
-    AIFeatureNode *hFeature = [AIGeneralNodeCreater createFeatureNode:hGroupModels conNodes:nil at:algsType ds:@"hColors" isOut:false isJiao:false];
-    AIFeatureNode *sFeature = [AIGeneralNodeCreater createFeatureNode:sGroupModels conNodes:nil at:algsType ds:@"sColors" isOut:false isJiao:false];
-    AIFeatureNode *bFeature = [AIGeneralNodeCreater createFeatureNode:bGroupModels conNodes:nil at:algsType ds:@"bColors" isOut:false isJiao:false];
+    AIFeatureNode *hFeature = [AIGeneralNodeCreater createFeatureNode:hGroupModels conNodes:nil at:algsType ds:@"hColors" isOut:false isJiao:false isGT:false];
+    AIFeatureNode *sFeature = [AIGeneralNodeCreater createFeatureNode:sGroupModels conNodes:nil at:algsType ds:@"sColors" isOut:false isJiao:false isGT:false];
+    AIFeatureNode *bFeature = [AIGeneralNodeCreater createFeatureNode:bGroupModels conNodes:nil at:algsType ds:@"bColors" isOut:false isJiao:false isGT:false];
     [hFeature updateLogDescItem:logDesc];
     [sFeature updateLogDescItem:logDesc];
     [bFeature updateLogDescItem:logDesc];
