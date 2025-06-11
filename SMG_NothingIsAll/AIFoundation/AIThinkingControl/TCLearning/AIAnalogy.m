@@ -269,7 +269,7 @@
         //12. 借助absT来类比时，复用ZenTi的识别结果model数据，并且用完就清空，防止循环野指针（参考34139-TODO3）。
         AIFeatureZenTiModel *zenTiModel = assFeature.zenTiModel;
         assFeature.zenTiModel = nil;
-        return [self analogyGroupFeatureV1:protoFeature ass:assFeature zenTiModel:zenTiModel];
+        return [self analogyGroupFeatureV3:protoFeature ass:assFeature zenTiModel:zenTiModel];
     }
     //21. 特征识别step1识别到的结果，复用indexDic进行类比。
     else if(assFeature.jvBuModel && [protoT_p isEqual:assFeature.jvBuModel.v2] ) {
@@ -456,7 +456,7 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyGroupFeatureV1:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
++(AIFeatureNode*) analogyGroupFeatureV3:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
     NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
@@ -473,16 +473,14 @@
     //20. 根据protoT和itemAbsT的映射来实现类比抽象（参考34164-方案2）。
     //2025.04.23: 修复收集到的absGVModels数竟然有达到1000的情况，改为通过protoT和itemAbsT的映射，收集protoT的gv元素做抽象。
     NSMutableArray *protoIndexes = [SMGUtils convertArr:sameItems convertItemArrBlock:^NSArray *(AIFeatureZenTiItem_Rect *item) {
-        
-        //TODOTOMORROW20250610: 看下能不能改用item.protoGTIndex，因为这里的itemAbsT.jvBuModel为nil。
-        AIFeatureNode *itemAbsT = [SMGUtils searchNode:item.fromItemT];
-        MapModel *jvBuModel = itemAbsT.jvBuModel;
-        if (!jvBuModel || ![protoT.p isEqual:jvBuModel.v2]) {
-            ELog(@"Step2借助JvBuModel来找映射，找类比抽象gv元素，这里的jvBuModel都不为空才对，因为itemAbsT都是由单特征识别来的，如果为空查下原因。");
-            return nil;
-        }
-        NSDictionary *protoItemAbsTIndexDic = jvBuModel.v1;
-        return protoItemAbsTIndexDic.allValues;
+        //2025.06.11: 把旧有从jvBuModel.indexDic取protoIndexes，改成由protoT中jvBuItem.bestGVAtProtoTRect来取protoIndex。
+        return [SMGUtils convertArr:item.fromItemT.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+            NSInteger protoIndex = [protoT indexOfRect:obj.bestGVAtProtoTRect];
+            if (protoIndex < 0) {
+                ELog(@"此处取protoIndex错误，根据bestGVAtProtoTRect未取到有效的protoIndex值");
+            }
+            return @(protoIndex);
+        }];
     }];
     protoIndexes = [SMGUtils removeRepeat:protoIndexes];
     
@@ -561,7 +559,7 @@
     //2025.05.08: 举例-说白了：从乔峰抽象的胳膊腿特征必须是乔峰的，不能是别人的。
     //21. 取出每个itemAbsT中的gv，转换成newAbsT的元素：@[InputGroupValueModel]格式（参考3413a-示图1）。
     NSMutableArray *absTModels = [SMGUtils convertArr:sameItems convertBlock:^id(AIFeatureZenTiItem_Rect *zenTiItem) {
-        return [InputGroupFeatureModel new:zenTiItem.fromItemT rect:zenTiItem.itemAtAssRect];
+        return [InputGroupFeatureModel new:zenTiItem.fromItemT_p rect:zenTiItem.itemAtAssRect];
     }];
     
     //33. 构建：保留下来的生成为absT。

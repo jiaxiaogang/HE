@@ -20,13 +20,13 @@
 //MARK:===============================================================
 //MARK:                     < 收集数据组 >
 //MARK:===============================================================
--(void) updateRectItem:(AIKVPointer*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong protoGTIndex:(NSInteger)protoGTIndex {
+-(void) updateRectItem:(AIFeatureJvBuModel*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong protoGTIndex:(NSInteger)protoGTIndex {
     [self.rectItems addObject:[AIFeatureZenTiItem_Rect new:fromItemT itemAtAssRect:itemAtAssRect itemToAssStrong:itemToAssStrong protoGTIndex:protoGTIndex]];
 }
 
--(CGRect) getRectItem:(AIKVPointer*)fromItemT {
+-(CGRect) getRectItem:(AIKVPointer*)fromItemT_p {
     for (AIFeatureZenTiItem_Rect *item in self.rectItems) {
-        if ([item.fromItemT isEqual:fromItemT]) return item.rect;
+        if ([item.fromItemT_p isEqual:fromItemT_p]) return item.rect;
     }
     return CGRectNull;
 }
@@ -180,7 +180,7 @@
     
     //2. 别的assT则计算综合平均匹配度。
     for (AIFeatureZenTiItem_Rect *item in self.rectItems) {
-        AIFeatureNode *fromItemT = [SMGUtils searchNode:item.fromItemT];
+        AIFeatureNode *fromItemT = [SMGUtils searchNode:item.fromItemT_p];
         
         //3. assT与absT的匹配度 * assT与protoT的匹配度 = assT与protoT的匹配度。
         item.itemMatchValue = [fromItemT getConMatchValue:self.assT] * [fromItemT getConMatchValue:protoT];
@@ -218,7 +218,7 @@
 //返回 rectItem 在 conAssT 与 protoT 的缩放比例。
 -(CGFloat) scale4RectItemAtProto:(AIFeatureZenTiModel*)protoModel rectItem:(AIFeatureZenTiItem_Rect*)rectItem {
     //1. 取出abs在proto和ass中的范围。
-    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT];
+    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT_p];
     CGRect conAssRect = rectItem.rect;
     
     //2. 计算缩放scale。
@@ -228,7 +228,7 @@
 //返回 rectItem 在 conAssT 与 protoT 的deltaX偏移量。
 -(CGFloat) deltaX4RectItemAtProto:(AIFeatureZenTiModel*)protoModel rectItem:(AIFeatureZenTiItem_Rect*)rectItem {
     //1. 取出abs在proto和ass中的范围。
-    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT];
+    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT_p];
     
     //2. 计算result。
     return rectItem.rect.origin.x - protoRect.origin.x;
@@ -237,7 +237,7 @@
 //返回 rectItem 在 conAssT 与 protoT 的deltaY偏移量。
 -(CGFloat) deltaY4RectItemAtProto:(AIFeatureZenTiModel*)protoModel rectItem:(AIFeatureZenTiItem_Rect*)rectItem {
     //1. 取出abs在proto和ass中的范围。
-    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT];
+    CGRect protoRect = [protoModel getRectItem:rectItem.fromItemT_p];
     
     //2. 计算result。
     return rectItem.rect.origin.y - protoRect.origin.y;

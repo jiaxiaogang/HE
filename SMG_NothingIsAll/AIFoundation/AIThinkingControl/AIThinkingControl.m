@@ -393,7 +393,7 @@ static AIThinkingControl *_instance;
     // 取共同absT，借助absT进行类比（参考34139-TODO1）。
     for (AIFeatureZenTiModel *model in zenTiModel) {
         AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
-        [AIAnalogy analogyGroupFeatureV1:protoT ass:assGT zenTiModel:model];
+        [AIAnalogy analogyGroupFeatureV3:protoT ass:assGT zenTiModel:model];
     }
 }
 

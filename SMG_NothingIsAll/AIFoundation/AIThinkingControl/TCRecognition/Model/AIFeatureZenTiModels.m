@@ -27,7 +27,7 @@
     return newModel;
 }
 
--(void) updateItem:(AIPort*)assPort fromItemT:(AIKVPointer*)fromItemT protoGTIndex:(NSInteger)protoGTIndex {
+-(void) updateItem:(AIPort*)assPort fromItemT:(AIFeatureJvBuModel*)fromItemT protoGTIndex:(NSInteger)protoGTIndex {
     AIFeatureZenTiModel *model = [self getModelIfNullCreate:assPort.target_p];
     [model updateRectItem:fromItemT itemAtAssRect:assPort.rect itemToAssStrong:assPort.strong.value protoGTIndex:protoGTIndex];
 }

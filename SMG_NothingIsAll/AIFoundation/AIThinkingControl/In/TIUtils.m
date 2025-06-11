@@ -605,6 +605,7 @@
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
         
         //52. debug
+        //TODOTOMORROW20250611: 有识别到整体特征的问题，单特征识别结果:T1580{}     匹配条数:365/ass647    匹配度:0.99    符合度:1.0    健全度:365.0。
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio);
         [SMGUtils runByMainQueue:^{
@@ -644,7 +645,7 @@
             if (conPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）(v1版本没有protoGTIndex，在类比时也不会用，直接传-1）。
-            [zenTiModel updateItem:conPort fromItemT:absT.p protoGTIndex:-1];
+            [zenTiModel updateItem:conPort fromItemT:matchModel protoGTIndex:-1];
         }
         
         //16. protoFeature单独收集（step1结束时才会存rectDic中，此时还在matchModel.rect中）。

@@ -13,10 +13,11 @@
  */
 @interface AIFeatureZenTiItem_Rect : NSObject
 
-+(AIFeatureZenTiItem_Rect*) new:(AIKVPointer*)absT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong protoGTIndex:(NSInteger)protoGTIndex;
++(AIFeatureZenTiItem_Rect*) new:(AIFeatureJvBuModel*)fromItemT itemAtAssRect:(CGRect)itemAtAssRect itemToAssStrong:(NSInteger)itemToAssStrong protoGTIndex:(NSInteger)protoGTIndex;
 
 //absT.pId
-@property (strong, nonatomic) AIKVPointer *fromItemT;
+@property (strong, nonatomic) AIFeatureJvBuModel *fromItemT;
+-(AIKVPointer*) fromItemT_p;
 
 //一直存absAtConRect不变（表示当前itemAbsT在assT中的rect）。
 @property (assign, nonatomic) CGRect itemAtAssRect;

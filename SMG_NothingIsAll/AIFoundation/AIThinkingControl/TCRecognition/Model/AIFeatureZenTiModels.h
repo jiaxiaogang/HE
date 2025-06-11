@@ -16,7 +16,7 @@
 @property (strong, nonatomic) NSMutableArray *models;
 
 -(AIFeatureZenTiModel*) getModelIfNullCreate:(AIKVPointer*)assT;
--(void) updateItem:(AIPort*)assPort fromItemT:(AIKVPointer*)fromItemT protoGTIndex:(NSInteger)protoGTIndex;
+-(void) updateItem:(AIPort*)assPort fromItemT:(AIFeatureJvBuModel*)fromItemT protoGTIndex:(NSInteger)protoGTIndex;
 
 /**
  *  MARK:--------------------组特征rectItems重复问题：位置符合度竞争防重（参考35034）--------------------
