@@ -370,7 +370,7 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel {
++(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     
     //1. 类比前可视化
@@ -385,7 +385,7 @@
     //}];
     
     //11. 外类比有序进行 (记录jMax & 正序)
-    jvBuModel.bestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
+    NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
         //12. 当前有主责，直接剔除: GV类比: 进行共同点抽象 (参考29025-11);
         CGFloat curDegree = item.matchDegree;
         CGFloat curMatchValue = item.matchValue;
@@ -396,16 +396,13 @@
     }]];
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
-    NSArray *sortValidItems = [SMGUtils sortSmall2Big:jvBuModel.bestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
+    NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.assIndex;
     }];
     NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
         return @(obj.assIndex);
     }];
     CGRect bestGVs_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
-    
-    //43. 类比后，计算bestGVsAtProtoRect，因为类比时会定责淘汰无效gvs：然后留下有效的bestGVItems的总和，更新整个bestGvs at proto中的位置。
-    [jvBuModel run4BestGvsAtProtoTRect];
     
     //15. 转为List<InputGroupValueModel>模型。
     NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
@@ -430,23 +427,23 @@
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:absGVModels];
     
     //31. 外类比构建
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[jvBuModel.assT] at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[jvBuModel.assT,protoT] at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
     
     //32. 更新匹配度;
-    //2025.05.xx: 此处abs是从ass抽象来的，那这里的匹配度，符合度，应该直接=1。
-    CGFloat absMatchValue = 1;//sortValidItems.count == 0 ? 0 : [SMGUtils sumOfArr:sortValidItems convertBlock:^double(AIFeatureJvBuItem *obj) { return obj.matchValue; }] / sortValidItems.count;
-    [jvBuModel.assT updateMatchValue:absT matchValue:absMatchValue];
+    [jvBuModel.assT updateMatchValue:absT matchValue:1];
+    [protoT updateMatchValue:absT matchValue:jvBuModel.matchValue];
     
     //33. 存conPorts的rect（参考34135-TODO1）。
     [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
+    [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
     
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
-    CGFloat absMatchDegree = 1;//sortValidItems.count == 0 ? 0 : [SMGUtils sumOfArr:sortValidItems convertBlock:^double(AIFeatureJvBuItem *obj) { return obj.matchDegree; }] / sortValidItems.count;
-    [jvBuModel.assT updateMatchDegree:absT matchDegree:absMatchDegree];
+    [jvBuModel.assT updateMatchDegree:absT matchDegree:1];
+    [protoT updateMatchDegree:absT matchDegree:jvBuModel.matchDegree];
     
     //41. debugLog
-    NSLog(@"单特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,absMatchValue,absMatchDegree);
+    NSLog(@"单特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
     [SMGUtils runByMainQueue:^{
         //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld类比后(abs%ld GV%ld)%p",jvBuModel.assT.pId,absT.count,jvBuModel.bestGVs.count,jvBuModel) left:jvBuModel.bestGVsAtProtoTRect.origin.x top:jvBuModel.bestGVsAtProtoTRect.origin.y];
     }];

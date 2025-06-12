@@ -625,6 +625,68 @@
     }] protoLogDesc:nil prefix:@"单特征"];
 }
 
++(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds {
+    // 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
+    for (AIFeatureJvBuModel *model in resultModel.models) {
+        [model run4BestGvsAtProtoTRect];
+    }
+    
+    // 从protoColorDic实时计算：构建protoT所需的gvModels。
+    NSArray *protoGVModels = [SMGUtils convertArr:resultModel.models convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuItem) {
+        return [SMGUtils convertArr:jvBuItem.bestGVs convertBlock:^id(AIFeatureJvBuItem *item) {
+            
+            // 切gv九宫 & 转3索引码 & 单码装箱 & 打包组码。
+            NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:item.bestGVAtProtoTRect];
+            if (!ARRISOK(subDots)) return nil;
+            NSDictionary *protoGVIndexs = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+            NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndexs algsType:at];
+            item_ps = [SMGUtils sortPointers:item_ps];
+            AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
+            return [InputGroupValueModel new:groupValue.p rect:item.bestGVAtProtoTRect];
+        }];
+    }];
+    
+    // gvModels排序 & 防重。
+    NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:protoGVModels];
+    sortGroupModels = [SMGUtils removeRepeat:sortGroupModels convertBlock:^id(InputGroupValueModel *obj) {
+        return @(obj.rect);
+    }];
+    if (!ARRISOK(sortGroupModels)) return nil;
+    
+    // 构建protoT
+    AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
+    
+    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
+    for (AIFeatureJvBuModel *model in resultModel.models) {
+        
+        // 2025.06.10：旧方案：从具象中选抽象，protoT与assT构建抽具象关联，然后试下识别响应效率会不会更快。
+        // 把bestGVs在proto的Rect转成assT在proto的Rect。
+        //TODOTOMORROW20250612: 继续写这儿。
+        CGRect bestGvsAtAssTRect = [AINetUtils convertPartOfFeatureContent2Rect:model.assT contentIndexes:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return @(obj.assIndex);
+        }]];
+        
+        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
+        //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
+        //[protoFeature updateMatchValue:assFeature matchValue:matchModel.matchValue];
+        //[protoFeature updateMatchDegree:assFeature matchDegree:matchModel.matchDegree];
+        //[AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
+        //model.assT.jvBuModelV2 = model;
+        //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
+        //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
+        //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
+        
+        //52. debug
+        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f\t匹配率:%.1f",
+                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio,model.matchAssRatio);
+    }
+    
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
+    }];
+    return protoT;
+}
+
 /**
  *  MARK:--------------------特征识别--------------------
  *  @desc Step2 尽可能照顾特征的整体性，通过交层向下找似层结果（参考34135-TODO2）。
@@ -637,9 +699,8 @@
     //11. 收集：每个absT分别向整体取conPorts。
     for (AIFeatureJvBuModel *matchModel in matchModels) {
         
-        //TODO: 20250610: 这里使用absT，如果效果不好，可以改为assT，以前用的本来就是assT，只是现在protoT是由absT.gvs组成的而已（但fromItemT_p也要看要不要改成assT_p）。
-        AIFeatureNode *absT = matchModel.absT;
-        NSArray *conPorts = [AINetUtils conPorts_All:absT];
+        //20250610: abs改为assT，因为absT识别效果不太好，不知是否它的锅，但改成assT测下再说。
+        NSArray *conPorts = [AINetUtils conPorts_All:matchModel.assT];
         
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *conPort in conPorts) {

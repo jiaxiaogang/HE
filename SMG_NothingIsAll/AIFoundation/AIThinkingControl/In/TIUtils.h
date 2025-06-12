@@ -16,8 +16,11 @@
 //MARK:===============================================================
 
 +(NSArray*) recognitionGroupFeatureV3:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels;
+
 +(void) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept;
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize;
++(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds;
+
 +(NSArray*) recognitionGroupFeatureV2:(AIGroupFeatureNode*)protoGT;
 
 //MARK:===============================================================

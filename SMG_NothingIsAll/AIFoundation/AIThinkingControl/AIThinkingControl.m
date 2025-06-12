@@ -277,7 +277,7 @@ static AIThinkingControl *_instance;
     NSMutableArray *groupTModels = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        model.absT = [AIAnalogy analogyFeatureV2:model];
+        AIFeatureNode *absT = [AIAnalogy analogyFeatureV2:model protoT:nil];
         
         //============== 此处有absTAtAssTRect，也有bestGVsAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
         //1. 计算abs在ass中的位置，以及ass在proto中的位置。
@@ -296,7 +296,7 @@ static AIThinkingControl *_instance;
         CGRect absT_ProtoT = model.bestGVsAtProtoTRect;
         
         //3. 收集为InputGroupFeatureModel。
-        [groupTModels addObject:[InputGroupFeatureModel new:model.absT.p rect:absT_ProtoT]];
+        [groupTModels addObject:[InputGroupFeatureModel new:absT.p rect:absT_ProtoT]];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -334,55 +334,13 @@ static AIThinkingControl *_instance;
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step3:jvBuModel colorDic:colorDic at:at ds:ds];
+    
     // 局部特征类比
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
-        model.absT = [AIAnalogy analogyFeatureV2:model];
+        [AIAnalogy analogyFeatureV2:model protoT:protoT];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //TODOTOMORROW20250612: 直接把assT在protoT的位置算出来，然后加上抽具象关联，然后试下识别响应效率会不会更快。
-    
-    // 从protoColorDic实时计算：构建protoT所需的gvModels。
-    NSArray *protoGVModels = [SMGUtils convertArr:jvBuModel.models convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuItem) {
-        return [SMGUtils convertArr:jvBuItem.bestGVs convertBlock:^id(AIFeatureJvBuItem *item) {
-            
-            // 切gv九宫 & 转3索引码 & 单码装箱 & 打包组码。
-            NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:item.bestGVAtProtoTRect];
-            if (!ARRISOK(subDots)) return nil;
-            NSDictionary *protoGVIndexs = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-            NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndexs algsType:at];
-            item_ps = [SMGUtils sortPointers:item_ps];
-            AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
-            return [InputGroupValueModel new:groupValue.p rect:item.bestGVAtProtoTRect];
-        }];
-    }];
-    
-    // gvModels排序 & 防重。
-    NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:protoGVModels];
-    sortGroupModels = [SMGUtils removeRepeat:sortGroupModels convertBlock:^id(InputGroupValueModel *obj) {
-        return @(obj.rect);
-    }];
-    if (!ARRISOK(sortGroupModels)) return;
-    
-    // 构建protoT
-    AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
-    
-    // 构建抽具象关联 & rect & matchValue & matchDegree。
-    // TODO: 2025.06.10：此处还有另一个旧有方案：从具象中选抽象，即以下构建抽具象关联的是assT而不是absT，优点是结构更简单，缺点是conPort.rect计算略麻烦些，要再写个方法，把bestGVs在proto的Rect转成assT在proto的Rect（先跑absT的，如果不行，再来看这个）。
-    for (AIFeatureJvBuModel *jvBuItem in jvBuModel.models) {
-        // 抽具象关联 & 存conPort.rect（参考34135-TODO1）。
-        [AINetUtils relateGeneralAbs:jvBuItem.absT absConPorts:jvBuItem.absT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
-        [jvBuItem run4BestGvsAtProtoTRect];
-        [AINetUtils updateConPortRect:jvBuItem.absT conT:protoT.p rect:jvBuItem.bestGVsAtProtoTRect];
-        
-        // 存抽具象匹配度 & 符合度。
-        [jvBuItem run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
-        [protoT updateMatchValue:jvBuItem.absT matchValue:jvBuItem.matchValue];
-        [protoT updateMatchDegree:jvBuItem.absT matchDegree:jvBuItem.matchDegree];
-    }
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
-    }];
     
     // 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.models];
