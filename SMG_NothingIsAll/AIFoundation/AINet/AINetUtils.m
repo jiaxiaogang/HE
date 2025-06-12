@@ -1203,6 +1203,9 @@
  *  @desc 一般构建特征时，还没有存indexDic映射，所以在：1、构建后 2、并且设置indexDic映射后 3、再补上conPort.rect。
  */
 +(void) updateConPortRect:(AIFeatureNode*)absT conT:(AIKVPointer*)conT rect:(CGRect)rect {
+    // 2025.06.12：rect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
+    rect = CGRectMake((int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height);
+    
     AIPort *conPort = [self getConPort:absT con:conT];
     if (!conPort) return;
     [conPort.params setObject:@(rect) forKey:@"r"];

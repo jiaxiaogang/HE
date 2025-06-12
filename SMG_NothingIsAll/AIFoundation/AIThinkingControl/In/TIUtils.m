@@ -439,6 +439,9 @@
             
             //13. 把tMatchModel收集起来。
             AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT];
+            
+            // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
+            lastProtoRect = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -470,8 +473,10 @@
                 CGFloat anchorY = (CGRectGetMidY(lastProtoRect) + CGRectGetMidY(defaultCurProtoRect)) / 2;
                 
                 //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
+                //2025.06.12：调整成只有1测试先，现在废弃组特征后，刚开始测bug应该还比较多，单纯1都测不过来，加更多更难测修bug了。
                 //NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
-                NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)];
+                //NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)];
+                NSArray *scales = @[@(1)];
                 MapModel *best = nil;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 for (NSNumber *item in scales) {
