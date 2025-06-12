@@ -340,6 +340,8 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    //TODOTOMORROW20250612: 直接把assT在protoT的位置算出来，然后加上抽具象关联，然后试下识别响应效率会不会更快。
+    
     // 从protoColorDic实时计算：构建protoT所需的gvModels。
     NSArray *protoGVModels = [SMGUtils convertArr:jvBuModel.models convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuItem) {
         return [SMGUtils convertArr:jvBuItem.bestGVs convertBlock:^id(AIFeatureJvBuItem *item) {
