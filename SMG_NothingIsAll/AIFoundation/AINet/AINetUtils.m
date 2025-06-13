@@ -1229,4 +1229,21 @@
     }];
 }
 
+//已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
++(CGRect) getBAtA:(CGRect)atA atB:(CGRect)atB B:(CGRect)B {
+    // 先把atB这边的rect全缩放成和在A那边一样的大小。
+    CGFloat xScale = atA.size.width / atB.size.width;
+    CGFloat yScale = atA.size.height / atB.size.height;
+    atB.origin.x *= xScale;
+    atB.origin.y *= yScale;
+    B.size.width *= xScale;
+    B.size.height *= yScale;
+    
+    // 再根据atA中的位置，把B也平移到A中。
+    B.origin.x = atA.origin.x - atB.origin.x;
+    B.origin.y = atA.origin.y - atB.origin.y;
+    NSLog(@"getBAtA: %@",Rect2Str(B));
+    return B;
+}
+
 @end

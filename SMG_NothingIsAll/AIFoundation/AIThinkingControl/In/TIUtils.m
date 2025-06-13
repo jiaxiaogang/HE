@@ -599,26 +599,6 @@
     //60. 更新赋值回去。
     resultModel.models = [[NSMutableArray alloc] initWithArray:validModels];
     
-    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
-    for (AIFeatureJvBuModel *model in resultModel.models) {
-        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
-        //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
-        //[protoFeature updateMatchValue:assFeature matchValue:matchModel.matchValue];
-        //[protoFeature updateMatchDegree:assFeature matchDegree:matchModel.matchDegree];
-        //[AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
-        //model.assT.jvBuModelV2 = model;
-        //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
-        //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
-        //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
-        
-        //52. debug
-        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f\t匹配率:%.1f",
-                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio,model.matchAssRatio);
-        [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"单T%ld(%ld/%ld)(%.1f)",model.assT.pId,model.bestGVs.count,model.assT.count,dotSize)];
-        }];
-    }
-    
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
@@ -655,35 +635,38 @@
     
     // 构建protoT
     AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
+    }];
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in resultModel.models) {
         
         // 2025.06.10：旧方案：从具象中选抽象，protoT与assT构建抽具象关联，然后试下识别响应效率会不会更快。
         // 把bestGVs在proto的Rect转成assT在proto的Rect。
-        //TODOTOMORROW20250612: 继续写这儿。
-        CGRect bestGvsAtAssTRect = [AINetUtils convertPartOfFeatureContent2Rect:model.assT contentIndexes:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+        CGRect bestGVsAtAssTRect = [AINetUtils convertPartOfFeatureContent2Rect:model.assT contentIndexes:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
             return @(obj.assIndex);
         }]];
+        CGRect assTRect = [AINetUtils convertAllOfFeatureContent2Rect:model.assT];
+        CGRect ass_Proto = [AINetUtils getBAtA:model.bestGVsAtProtoTRect atB:bestGVsAtAssTRect B:assTRect];
+        [AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];
         
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
-        //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
-        //[protoFeature updateMatchValue:assFeature matchValue:matchModel.matchValue];
-        //[protoFeature updateMatchDegree:assFeature matchDegree:matchModel.matchDegree];
-        //[AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
+        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
+        [protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
+        [protoT updateMatchDegree:model.assT matchDegree:model.matchDegree * model.matchAssRatio];
+        [AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
         //model.assT.jvBuModelV2 = model;
         //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
         //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
-        //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rect];
         
         //52. debug
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f\t匹配率:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio,model.matchAssRatio);
+        [SMGUtils runByMainQueue:^{
+            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"单T%ld(%ld/%ld)(%.1f)",model.assT.pId,model.bestGVs.count,model.assT.count,dotSize)];
+        }];
     }
-    
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
-    }];
     return protoT;
 }
 

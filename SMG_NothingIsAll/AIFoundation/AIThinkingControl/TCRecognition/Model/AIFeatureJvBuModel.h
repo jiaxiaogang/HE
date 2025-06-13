@@ -34,6 +34,4 @@
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;
 
-//@property (strong, nonatomic) AIFeatureNode *absT;//在识别完成，并类比后，把类比的结果存在这里下。
-
 @end

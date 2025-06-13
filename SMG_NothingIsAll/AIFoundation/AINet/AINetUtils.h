@@ -352,4 +352,7 @@
 +(AIPort*) getConPort:(AINodeBase*)abs con:(AIKVPointer*)con;
 +(AIPort*) getRefPort:(AIKVPointer*)sub biger:(AIKVPointer*)biger refRect:(CGRect)refRect;
 
+//已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
++(CGRect) getBAtA:(CGRect)atA atB:(CGRect)atB B:(CGRect)B;
+
 @end

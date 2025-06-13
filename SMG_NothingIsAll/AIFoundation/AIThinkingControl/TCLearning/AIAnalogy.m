@@ -384,19 +384,20 @@
     //    [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"%ld类比前(GV%ld ass%ld)%p",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count,jvBuModel) left:jvBuModel.bestGVsAtProtoTRect.origin.x - bestGVs_AssT_Log.origin.x top:jvBuModel.bestGVsAtProtoTRect.origin.y - bestGVs_AssT_Log.origin.y];
     //}];
     
-    //11. 外类比有序进行 (记录jMax & 正序)
-    NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
-        //12. 当前有主责，直接剔除: GV类比: 进行共同点抽象 (参考29025-11);
-        CGFloat curDegree = item.matchDegree;
-        CGFloat curMatchValue = item.matchValue;
-        BOOL noZeRen = [TCLearningUtil noZeRenForPingJun:curMatchValue * curDegree bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree];
-        
-        //13. 当前码责任<50%时 (次要责任时,免责): 收集有效的映射：用于后面计算rect用。
-        return noZeRen;
-    }]];
+    // 剔除主责。
+    // 2025.06.13: 先关掉，其实局部特征识别时已经充分竞争了，此处不再另行剔除。
+    //NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
+    //    //12. 当前有主责，直接剔除: GV类比: 进行共同点抽象 (参考29025-11);
+    //    CGFloat curDegree = item.matchDegree;
+    //    CGFloat curMatchValue = item.matchValue;
+    //    BOOL noZeRen = [TCLearningUtil noZeRenForPingJun:curMatchValue * curDegree bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree];
+    //
+    //    //13. 当前码责任<50%时 (次要责任时,免责): 收集有效的映射：用于后面计算rect用。
+    //    return noZeRen;
+    //}]];
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
-    NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
+    NSArray *sortValidItems = [SMGUtils sortSmall2Big:jvBuModel.bestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.assIndex;
     }];
     NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
