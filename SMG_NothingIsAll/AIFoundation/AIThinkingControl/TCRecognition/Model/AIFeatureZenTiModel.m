@@ -162,6 +162,8 @@
         item.itemMatchDegree = item.scaleMatchValue * item.deltaXMatchValue * item.deltaYMatchValue;
     }
     
+    //TODOTOMORROW20250614: 测得此处modelMatchDegree经常NaN问题。
+    
     //=============== step6: 求当前assModel的综合位置符合度（参考34136-TODO6）===============
     self.modelMatchDegree = self.rectItems.count == 0 ? 0 : [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
         return obj.itemMatchDegree;
