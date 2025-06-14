@@ -255,8 +255,10 @@ static AIThinkingControl *_instance;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
         //22. 下一层粒度（再/1.3倍）。
-        NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
-        [self commitInputWithSplitV2_Single_DotSizeV2:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
+        if (ARRISOK(jvBuModel.models)) {
+            NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
+            [self commitInputWithSplitV2_Single_DotSizeV2:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
+        }
         dotSize /= 1.3f;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -306,7 +308,7 @@ static AIThinkingControl *_instance;
     [protoGT updateLogDescItem:logDesc];
     
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
+        //[theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -329,24 +331,23 @@ static AIThinkingControl *_instance;
  *      2025.06.10: 整体特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
  */
 -(void) commitInputWithSplitV2_Single_DotSizeV2:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
-    // 局部特征过滤和竞争部分。
+    // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
     [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
     AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step3:jvBuModel colorDic:colorDic at:at ds:ds];
     
-    // 局部特征类比
+    // 局部特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
         [AIAnalogy analogyFeatureV2:model protoT:protoT];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+    // 整体特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.models];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // 取共同absT，借助absT进行类比（参考34139-TODO1）。
+    // 整体特征类比：借助rectItems来类比。
     for (AIFeatureZenTiModel *model in zenTiModel) {
         AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
         [AIAnalogy analogyGroupFeatureV3:protoT ass:assGT zenTiModel:model];
