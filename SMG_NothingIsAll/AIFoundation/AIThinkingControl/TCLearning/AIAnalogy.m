@@ -373,6 +373,8 @@
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     
+    // 2025.06.14: 如果一致，即不必类比抽象，因为内容一致时：抽象就是assT本身。
+    if (jvBuModel.bestGVs.count >= jvBuModel.assT.count) return nil;
     //1. 类比前可视化
     //[jvBuModel run4BestGvsAtProtoTRect];
     //NSArray *assContentIndexes_Log = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
@@ -438,6 +440,12 @@
     //33. 存conPorts的rect（参考34135-TODO1）。
     [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
     [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
+    
+    AIPort *conPort1 = [AINetUtils getConPort:absT con:jvBuModel.assT.p];
+    AIPort *conPort2 = [AINetUtils getConPort:absT con:protoT.p];
+    if(conPort1.params.count == 0 || conPort2.params.count == 0) {
+        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa2");
+    }
     
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
     [jvBuModel.assT updateMatchDegree:absT matchDegree:1];

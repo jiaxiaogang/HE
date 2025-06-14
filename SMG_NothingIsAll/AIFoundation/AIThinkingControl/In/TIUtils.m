@@ -641,6 +641,7 @@
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in resultModel.models) {
+        [AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
         
         // 2025.06.10：旧方案：从具象中选抽象，protoT与assT构建抽具象关联，然后试下识别响应效率会不会更快。
         // 把bestGVs在proto的Rect转成assT在proto的Rect。
@@ -651,11 +652,16 @@
         CGRect ass_Proto = [AINetUtils getBAtA:model.bestGVsAtProtoTRect atB:bestGVsAtAssTRect B:assTRect];
         [AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];
         
+        
+        AIPort *conPort = [AINetUtils getConPort:model.assT con:protoT.p];
+        if(conPort.params.count == 0) {
+            NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa1");
+        }
+        
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         [protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
         [protoT updateMatchDegree:model.assT matchDegree:model.matchDegree * model.matchAssRatio];
-        [AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
         //model.assT.jvBuModelV2 = model;
         //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
         //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
@@ -687,6 +693,9 @@
         
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *conPort in conPorts) {
+            if (conPort.params.count == 0) {
+                NSLog(@"TODOTOMORROW20250614查下哪来的，");
+            }
             
             //13. protoFeature单独收集。
             //if ([conPort.target_p isEqual:protoFeature_p]) continue;
