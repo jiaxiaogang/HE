@@ -432,6 +432,7 @@
     //31. 外类比构建
     AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[jvBuModel.assT,protoT] at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
+    if ([absT.p isEqual:jvBuModel.assT.p] || [absT.p isEqual:protoT.p]) return nil;
     
     //32. 更新匹配度;
     [jvBuModel.assT updateMatchValue:absT matchValue:1];
@@ -443,9 +444,13 @@
     
     AIPort *conPort1 = [AINetUtils getConPort:absT con:jvBuModel.assT.p];
     AIPort *conPort2 = [AINetUtils getConPort:absT con:protoT.p];
-    if(conPort1.params.count == 0 || conPort2.params.count == 0) {
-        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa2");
+    if(conPort1.params.count == 0/* && ![absT.p isEqual:jvBuModel.assT.p]*/) {
+        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa2A");
     }
+    if(conPort2.params.count == 0/* && ![absT.p isEqual:protoT.p]*/) {
+        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa2B");
+    }
+    
     
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
     [jvBuModel.assT updateMatchDegree:absT matchDegree:1];

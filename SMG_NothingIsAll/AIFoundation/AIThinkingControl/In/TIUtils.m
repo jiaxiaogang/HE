@@ -658,7 +658,7 @@
         
         
         AIPort *conPort = [AINetUtils getConPort:model.assT con:protoT.p];
-        if(conPort.params.count == 0) {
+        if(conPort.params.count == 0/* && ![model.assT.p isEqual:protoT.p]*/) {
             NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa1");
         }
         

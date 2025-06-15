@@ -468,6 +468,9 @@
         for (AINodeBase *conNode in conNodes) {
             //1. con与abs必须不同;
             if ([absNode isEqual:conNode]) continue;
+            if (absNode.pId == conNode.pId) {
+                NSLog(@"aaaa6");
+            }
             
             //2. 计算disStrong (默认为1 & 当新节点且不是SP时从具象取maxStrong);
             AnalogyType type = absNode.pointer.type;//DS2ATType(absNode.pit.ds);
@@ -481,25 +484,31 @@
             [AINetUtils insertPointer_Hd:conNode.pointer toPorts:absConPorts findHeader:conNode.getHeaderNotNull difStrong:difStrong findParams:nil];//抽具象不需要params
             //4. hd_存储
             [SMGUtils insertObject:conNode pointer:conNode.pointer fileName:kFNNode time:cRTNode(conNode.pointer)];
+            
+            
+            
+            
+            //调试特征.conPort.rect为nil的问题。
+            if (ISOK(absNode, AIFeatureNode.class)) {
+                AIPort *conPort = [AINetUtils getConPort:absNode con:conNode.p];
+                if(!conPort) {
+                    NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa5");
+                }
+                
+                //NSLog(@"关联时%p-%p",absNode,conT);
+                [SMGUtils runAfter:1 block:^{
+                    AIPort *conPort = [AINetUtils getConPort:absNode con:conNode.p];
+                    //NSLog(@"关联后1秒%p-%p : %@",absNode,conT,Rect2Str(conPort.rect));
+                    if(conPort.params.count == 0/* && ![absNode.p isEqual:conT.p]*/) {
+                        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa3");
+                    }
+                }];
+                //NSLog(@"关联完%p-%p",absNode,conT);
+            }
         }
         
         //7. 抽象节点的 关联&存储
         [SMGUtils insertNode:absNode];
-        
-        //调试特征.conPort.rect为nil的问题。
-        if (ISOK(absNode, AIFeatureNode.class)) {
-            AIFeatureNode *conT = ARR_INDEX(conNodes, 0);
-            if (!conT) return;
-            NSLog(@"关联时%p-%p",absNode,conT);
-            [SMGUtils runAfter:3 block:^{
-                AIPort *conPort = [AINetUtils getConPort:absNode con:conT.p];
-                NSLog(@"关联后1秒%p-%p : %@",absNode,conT,Rect2Str(conPort.rect));
-                if(conPort.params.count == 0) {
-                    NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa3");
-                }
-            }];
-            NSLog(@"关联完%p-%p",absNode,conT);
-        }
     }
 }
 
