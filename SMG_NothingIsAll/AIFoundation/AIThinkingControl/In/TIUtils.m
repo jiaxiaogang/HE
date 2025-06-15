@@ -612,6 +612,10 @@
     }
     
     // 从protoColorDic实时计算：构建protoT所需的gvModels。
+    // 说明：这里生成protoT有三种方案：
+    //      1、用单特征数组嵌套而成。（缺点：结构会复杂，毕竟有嵌套。优点：数据量小）。
+    //      2、用单特征的gvs求并集而成。（缺点：数据量会大。状态：目前在用）。
+    //      3、直接用固定粒度的gvs生成。（缺点：现在类比时要用gvs求交的rect，此方案无法支持）。
     NSArray *protoGVModels = [SMGUtils convertArr:resultModel.models convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuItem) {
         return [SMGUtils convertArr:jvBuItem.bestGVs convertBlock:^id(AIFeatureJvBuItem *item) {
             

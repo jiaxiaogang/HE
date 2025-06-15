@@ -485,6 +485,21 @@
         
         //7. 抽象节点的 关联&存储
         [SMGUtils insertNode:absNode];
+        
+        //调试特征.conPort.rect为nil的问题。
+        if (ISOK(absNode, AIFeatureNode.class)) {
+            AIFeatureNode *conT = ARR_INDEX(conNodes, 0);
+            if (!conT) return;
+            NSLog(@"关联时%p-%p",absNode,conT);
+            [SMGUtils runAfter:3 block:^{
+                AIPort *conPort = [AINetUtils getConPort:absNode con:conT.p];
+                NSLog(@"关联后1秒%p-%p : %@",absNode,conT,Rect2Str(conPort.rect));
+                if(conPort.params.count == 0) {
+                    NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa3");
+                }
+            }];
+            NSLog(@"关联完%p-%p",absNode,conT);
+        }
     }
 }
 

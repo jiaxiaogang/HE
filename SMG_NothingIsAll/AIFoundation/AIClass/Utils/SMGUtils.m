@@ -1194,6 +1194,10 @@
     dispatch_async(dispatch_get_main_queue(), block);
 }
 
++(void) runAfter:(CGFloat)deltaTime block:(dispatch_block_t)block {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(deltaTime * NSEC_PER_SEC)), dispatch_get_current_queue(), block);
+}
+
 //从mDic中找mArr找到返回，没找到则新建。
 +(NSArray*) findOrCreateArr:(NSMutableDictionary*)fromDic key:(id)key {
     NSMutableArray *find = [fromDic objectForKey:key];
