@@ -485,8 +485,12 @@
             //4. hd_存储
             [SMGUtils insertObject:conNode pointer:conNode.pointer fileName:kFNNode time:cRTNode(conNode.pointer)];
             
-            
-            
+   
+            // 60 [09:20:46:917 TI        AINetUtils.m 502] 关联时abs:1093 con:1073 有关联 RectIsNil
+            //184 [09:20:50:058 TI        AINetUtils.m 504] 关联后1秒abs:1093 con:1073 有关联 <x0 y9 w27 h9>
+            //231 [09:20:54:676 TI        AINetUtils.m 502] 关联时abs:1093 con:1073 有关联 <x0 y9 w27 h9>
+            //239 [09:20:54:679 TI           TIUtils.m 701] TODOTOMORROW20250614查下哪来的，abs:1093 con:1073
+            //分析：第一次关联时，为nil，是可以理解的，但为什么第二次时，还会取到空呢？是哪里又把这个清了吗？还得继续查。。。
             
             //调试特征.conPort.rect为nil的问题。
             if (ISOK(absNode, AIFeatureNode.class)) {
@@ -494,16 +498,14 @@
                 if(!conPort) {
                     NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa5");
                 }
-                
-                //NSLog(@"关联时%p-%p",absNode,conT);
+                NSLog(@"关联时abs:%ld con:%ld %@关联 %@",absNode.pId,conNode.pId,conPort?@"有":@"未",Rect2Str(conPort.rect));
                 [SMGUtils runAfter:1 block:^{
-                    AIPort *conPort = [AINetUtils getConPort:absNode con:conNode.p];
-                    //NSLog(@"关联后1秒%p-%p : %@",absNode,conT,Rect2Str(conPort.rect));
+                    NSLog(@"关联后1秒abs:%ld con:%ld %@关联 %@",absNode.pId,conNode.pId,conPort?@"有":@"未",Rect2Str(conPort.rect));
                     if(conPort.params.count == 0/* && ![absNode.p isEqual:conT.p]*/) {
                         NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa3");
                     }
                 }];
-                //NSLog(@"关联完%p-%p",absNode,conT);
+                //NSLog(@"关联完abs:%ld con:%ld %@关联",absNode.pId,conNode.pId,conPort?@"有":@"未");
             }
         }
         

@@ -698,7 +698,8 @@
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *conPort in conPorts) {
             if (conPort.params.count == 0) {
-                NSLog(@"TODOTOMORROW20250614查下哪来的，");
+                NSLog(@"TODOTOMORROW20250614查下哪来的，abs:%ld con:%ld",matchModel.assT.pId,conPort.target_p.pointerId);
+                NSLog(@"");
             }
             
             //13. protoFeature单独收集。
