@@ -698,7 +698,27 @@
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *conPort in conPorts) {
             if (conPort.params.count == 0) {
-                NSLog(@"TODOTOMORROW20250614查下哪来的，abs:%ld con:%ld",matchModel.assT.pId,conPort.target_p.pointerId);
+                NSLog(@"TODOTOMORROW20250614查下哪来的，abs:%ld con:%ld %@",matchModel.assT.pId,conPort.target_p.pointerId,Rect2Str(conPort.rect));
+                
+                //239 [09:26:12:767 TI           TIUtils.m 701] TODOTOMORROW20250614查下哪来的，abs:1254 con:1234 <xinf yinf w0 h0>
+                //240 [09:26:12:767 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1300 <x0 y3 w27 h9>
+                //241 [09:26:12:768 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1234 <x0 y9 w27 h9>
+                //242 [09:26:12:768 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1300 <x0 y3 w27 h9>
+                //243 [09:26:12:768 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1266 <x0 y0 w27 h9>
+                //244 [09:26:12:769 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1265 <x0 y16 w21 h7>
+                //245 [09:26:12:770 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1253 <x0 y9 w27 h9>
+                //246 [09:26:12:770 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1234 <xinf yinf w0 h0>
+                //分析：查到原因了，这里有重复了，后面：查下为什么会重复。
+                
+                
+                
+                
+                
+                
+                
+                for (AIPort *conPort2 in conPorts) {
+                    NSLog(@"item TODOTOMORROW20250614查下哪来的，abs:%ld con:%ld %@",matchModel.assT.pId,conPort2.target_p.pointerId,Rect2Str(conPort2.rect));
+                }
                 NSLog(@"");
             }
             
