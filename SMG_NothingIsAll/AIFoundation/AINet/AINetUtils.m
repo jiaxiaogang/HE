@@ -373,6 +373,13 @@
             return [SMGUtils comparePortA:findPort portB:checkPort];
         } startIndex:0 endIndex:ports.count - 1 success:^(NSInteger index) {
             NSLog(@"警告!!! bug:在第二序列的ports中发现了两次port目标___pointerId为:%ld",(long)findPort.target_p.pointerId);
+            
+            //TODOTOMORROW20250617: 这里有时会报重复告警，查下原因。
+            NSArray *errorPorts = [SMGUtils filterArr:ports checkValid:^BOOL(AIPort *item) {
+                return [item.target_p isEqual:findPort.target_p];
+            }];
+            NSLog(@"");
+            
         } failure:^(NSInteger index) {
             if (ARR_INDEXISOK(ports, index)) {
                 [ports insertObject:findPort atIndex:index];
@@ -478,13 +485,9 @@
                 difStrong = [self getConMaxStrong:conNode];
             }
             
-            //TODOTOMORROW20250617: 这里params传了空，如果已经有rect了，这可能就找不到，无法防重了。
-            
+            // 取出旧有conPort.params，用于具象指向防重。
             AIPort *conPort = [AINetUtils getConPort:absNode con:conNode.p];
             NSDictionary *findParams = conPort ? conPort.params : nil;
-            NSLog(@"关联前1abs:%ld con:%ld %@关联 %ld",absNode.pId,conNode.pId,conPort?@"有":@"未",[SMGUtils filterArr:absConPorts checkValid:^BOOL(AIPort *item) {
-                return [item.target_p isEqual:conNode.p];
-            }].count);
             
             //2. hd_具象节点插"抽象端口";
             [AINetUtils insertPointer_Hd:absNode.pointer toPorts:conNode.absPorts findHeader:absNode.getHeaderNotNull difStrong:difStrong findParams:nil];//抽具象不需要params
@@ -492,9 +495,6 @@
             [AINetUtils insertPointer_Hd:conNode.pointer toPorts:absConPorts findHeader:conNode.getHeaderNotNull difStrong:difStrong findParams:findParams];//具象需要rect
             //4. hd_存储
             [SMGUtils insertObject:conNode pointer:conNode.pointer fileName:kFNNode time:cRTNode(conNode.pointer)];
-            NSLog(@"关联前2abs:%ld con:%ld %@关联 %ld",absNode.pId,conNode.pId,conPort?@"有":@"未",[SMGUtils filterArr:absConPorts checkValid:^BOOL(AIPort *item) {
-                return [item.target_p isEqual:conNode.p];
-            }].count);
             
             if ([SMGUtils filterArr:conNode.absPorts checkValid:^BOOL(AIPort *item) {
                 return [item.target_p isEqual:absNode.p];
@@ -502,28 +502,6 @@
                 return [item.target_p isEqual:conNode.p];
             }].count > 1) {
                 ELog(@"查下conPorts或absPorts有重复的，抽具象关联不该有重复");
-            }
-   
-            // 60 [09:20:46:917 TI        AINetUtils.m 502] 关联时abs:1093 con:1073 有关联 RectIsNil
-            //184 [09:20:50:058 TI        AINetUtils.m 504] 关联后1秒abs:1093 con:1073 有关联 <x0 y9 w27 h9>
-            //231 [09:20:54:676 TI        AINetUtils.m 502] 关联时abs:1093 con:1073 有关联 <x0 y9 w27 h9>
-            //239 [09:20:54:679 TI           TIUtils.m 701] TODOTOMORROW20250614查下哪来的，abs:1093 con:1073
-            //分析：第一次关联时，为nil，是可以理解的，但为什么第二次时，还会取到空呢？是哪里又把这个清了吗？还得继续查。。。
-            
-            //调试特征.conPort.rect为nil的问题。
-            if (ISOK(absNode, AIFeatureNode.class)) {
-                AIPort *conPort = [AINetUtils getConPort:absNode con:conNode.p];
-                if(!conPort) {
-                    NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa5");
-                }
-                NSLog(@"关联时abs:%ld con:%ld %@关联 %@",absNode.pId,conNode.pId,conPort?@"有":@"未",Rect2Str(conPort.rect));
-                [SMGUtils runAfter:1 block:^{
-                    NSLog(@"关联后1秒abs:%ld con:%ld %@关联 %@",absNode.pId,conNode.pId,conPort?@"有":@"未",Rect2Str(conPort.rect));
-                    if(conPort.params.count == 0/* && ![absNode.p isEqual:conT.p]*/) {
-                        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa3");
-                    }
-                }];
-                //NSLog(@"关联完abs:%ld con:%ld %@关联",absNode.pId,conNode.pId,conPort?@"有":@"未");
             }
         }
         

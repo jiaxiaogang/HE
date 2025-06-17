@@ -656,12 +656,6 @@
         CGRect ass_Proto = [AINetUtils getBAtA:model.bestGVsAtProtoTRect atB:bestGVsAtAssTRect B:assTRect];
         [AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];
         
-        
-        AIPort *conPort = [AINetUtils getConPort:model.assT con:protoT.p];
-        if(conPort.params.count == 0/* && ![model.assT.p isEqual:protoT.p]*/) {
-            NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa1");
-        }
-        
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         [protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
@@ -697,31 +691,6 @@
         
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *conPort in conPorts) {
-            if (conPort.params.count == 0) {
-                NSLog(@"TODOTOMORROW20250614查下哪来的，abs:%ld con:%ld %@",matchModel.assT.pId,conPort.target_p.pointerId,Rect2Str(conPort.rect));
-                
-                //239 [09:26:12:767 TI           TIUtils.m 701] TODOTOMORROW20250614查下哪来的，abs:1254 con:1234 <xinf yinf w0 h0>
-                //240 [09:26:12:767 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1300 <x0 y3 w27 h9>
-                //241 [09:26:12:768 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1234 <x0 y9 w27 h9>
-                //242 [09:26:12:768 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1300 <x0 y3 w27 h9>
-                //243 [09:26:12:768 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1266 <x0 y0 w27 h9>
-                //244 [09:26:12:769 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1265 <x0 y16 w21 h7>
-                //245 [09:26:12:770 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1253 <x0 y9 w27 h9>
-                //246 [09:26:12:770 TI           TIUtils.m 705] item TODOTOMORROW20250614查下哪来的，abs:1254 con:1234 <xinf yinf w0 h0>
-                //分析：查到原因了，这里有重复了，后面：查下为什么会重复。
-                
-                
-                
-                
-                
-                
-                
-                for (AIPort *conPort2 in conPorts) {
-                    NSLog(@"item TODOTOMORROW20250614查下哪来的，abs:%ld con:%ld %@",matchModel.assT.pId,conPort2.target_p.pointerId,Rect2Str(conPort2.rect));
-                }
-                NSLog(@"");
-            }
-            
             //13. protoFeature单独收集。
             //if ([conPort.target_p isEqual:protoFeature_p]) continue;
             

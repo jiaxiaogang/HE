@@ -442,16 +442,6 @@
     [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
     [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
     
-    AIPort *conPort1 = [AINetUtils getConPort:absT con:jvBuModel.assT.p];
-    AIPort *conPort2 = [AINetUtils getConPort:absT con:protoT.p];
-    if(conPort1.params.count == 0/* && ![absT.p isEqual:jvBuModel.assT.p]*/) {
-        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa2A");
-    }
-    if(conPort2.params.count == 0/* && ![absT.p isEqual:protoT.p]*/) {
-        NSLog(@"TODOTOMORROW20250614: 看下conPort.rect有值 aaaa2B");
-    }
-    
-    
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
     [jvBuModel.assT updateMatchDegree:absT matchDegree:1];
     [protoT updateMatchDegree:absT matchDegree:jvBuModel.matchDegree];
