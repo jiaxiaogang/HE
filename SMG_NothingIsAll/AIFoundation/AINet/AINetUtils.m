@@ -478,13 +478,31 @@
                 difStrong = [self getConMaxStrong:conNode];
             }
             
+            //TODOTOMORROW20250617: 这里params传了空，如果已经有rect了，这可能就找不到，无法防重了。
+            
+            AIPort *conPort = [AINetUtils getConPort:absNode con:conNode.p];
+            NSDictionary *findParams = conPort ? conPort.params : nil;
+            NSLog(@"关联前1abs:%ld con:%ld %@关联 %ld",absNode.pId,conNode.pId,conPort?@"有":@"未",[SMGUtils filterArr:absConPorts checkValid:^BOOL(AIPort *item) {
+                return [item.target_p isEqual:conNode.p];
+            }].count);
+            
             //2. hd_具象节点插"抽象端口";
             [AINetUtils insertPointer_Hd:absNode.pointer toPorts:conNode.absPorts findHeader:absNode.getHeaderNotNull difStrong:difStrong findParams:nil];//抽具象不需要params
             //3. hd_抽象节点插"具象端口";
-            [AINetUtils insertPointer_Hd:conNode.pointer toPorts:absConPorts findHeader:conNode.getHeaderNotNull difStrong:difStrong findParams:nil];//抽具象不需要params
+            [AINetUtils insertPointer_Hd:conNode.pointer toPorts:absConPorts findHeader:conNode.getHeaderNotNull difStrong:difStrong findParams:findParams];//具象需要rect
             //4. hd_存储
             [SMGUtils insertObject:conNode pointer:conNode.pointer fileName:kFNNode time:cRTNode(conNode.pointer)];
+            NSLog(@"关联前2abs:%ld con:%ld %@关联 %ld",absNode.pId,conNode.pId,conPort?@"有":@"未",[SMGUtils filterArr:absConPorts checkValid:^BOOL(AIPort *item) {
+                return [item.target_p isEqual:conNode.p];
+            }].count);
             
+            if ([SMGUtils filterArr:conNode.absPorts checkValid:^BOOL(AIPort *item) {
+                return [item.target_p isEqual:absNode.p];
+            }].count > 1 || [SMGUtils filterArr:absConPorts checkValid:^BOOL(AIPort *item) {
+                return [item.target_p isEqual:conNode.p];
+            }].count > 1) {
+                ELog(@"查下conPorts或absPorts有重复的，抽具象关联不该有重复");
+            }
    
             // 60 [09:20:46:917 TI        AINetUtils.m 502] 关联时abs:1093 con:1073 有关联 RectIsNil
             //184 [09:20:50:058 TI        AINetUtils.m 504] 关联后1秒abs:1093 con:1073 有关联 <x0 y9 w27 h9>
