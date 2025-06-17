@@ -537,6 +537,9 @@
                 //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
                 CGFloat scale = NUMTOOK(best.v3).floatValue;
                 CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
+                
+                // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
+                lastProtoRect = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
                 [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex]];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
@@ -626,6 +629,13 @@
             NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndexs algsType:at];
             item_ps = [SMGUtils sortPointers:item_ps];
             AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
+            
+            //TODOTOMORROW20250617: 查小数rects。
+            double yv = 1.0;//余1.0，余完后，得到的是整数部分值。
+            if(modf(item.bestGVAtProtoTRect.origin.x, &yv) > 0.1f) {
+                NSLog(@"");
+            }
+            
             return [InputGroupValueModel new:groupValue.p rect:item.bestGVAtProtoTRect];
         }];
     }];

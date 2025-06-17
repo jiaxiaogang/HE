@@ -53,6 +53,15 @@
         //5. 单独存level,x,y值。
         newNode.rects = rects;
         
+        //TODOTOMORROW20250617: 查小数rects。
+        if ([SMGUtils filterSingleFromArr:rects checkValid:^BOOL(NSValue *item) {
+            CGRect r = item.CGRectValue;
+            double yv = 1.0;//余1.0，余完后，得到的是整数部分值。
+            return modf(r.origin.x, &yv) > 0.1f;
+        }]) {
+            NSLog(@"");
+        }
+        
         //6. 是否交层,特征无法用长度来判断（类比时为交层，别的识别和proto构建全是似层）。
         newNode.pointer.isJiao = isJiao;
         newNode.pointer.isGT = isGT;
@@ -100,6 +109,15 @@
         
         //5. 单独存level,x,y值。
         newNode.rects = rects;
+        
+        //TODOTOMORROW20250617: 查小数rects。
+        if ([SMGUtils filterSingleFromArr:rects checkValid:^BOOL(NSValue *item) {
+            CGRect r = item.CGRectValue;
+            double yv = 1.0;//余1.0，余完后，得到的是整数部分值。
+            return modf(r.origin.x, &yv) > 0.1f;
+        }]) {
+            NSLog(@"");
+        }
         
         //6. 是否交层,特征无法用长度来判断（类比时为交层，别的识别和proto构建全是似层）。
         newNode.pointer.isJiao = isJiao;
