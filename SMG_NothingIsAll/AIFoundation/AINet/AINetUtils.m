@@ -248,6 +248,9 @@
                 if (PitIsFeature(biger_p) || PitIsGroupFeature(biger_p)) {
                     AIFeatureNode *feature = [SMGUtils searchNode:biger_p];
                     findParams = @{@"r":ARR_INDEX(feature.rects, i)};
+                    
+                    //TODOTOMORROW20250617: 测得这里的feature.rects中有小数的问题，查下哪来的。
+                    
                 }
                 [AINetUtils insertPointer_Hd:biger_p toPorts:item.refPorts findHeader:header difStrong:difStrong findParams:findParams];
                 [SMGUtils insertNode:item];
