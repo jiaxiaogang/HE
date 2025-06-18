@@ -629,13 +629,6 @@
             NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndexs algsType:at];
             item_ps = [SMGUtils sortPointers:item_ps];
             AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
-            
-            //TODOTOMORROW20250617: 查小数rects。
-            double yv = 1.0;//余1.0，余完后，得到的是整数部分值。
-            if(modf(item.bestGVAtProtoTRect.origin.x, &yv) > 0.1f) {
-                NSLog(@"");
-            }
-            
             return [InputGroupValueModel new:groupValue.p rect:item.bestGVAtProtoTRect];
         }];
     }];
@@ -775,6 +768,12 @@
             [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"整体特征识别T%ld",assFeature.pId) left:0 top:0];
         }];
     }
+    
+    //61. debugLog
+    [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
+        return obj.assT;
+    }] protoLogDesc:nil prefix:@"组特征"];
+    
     return resultModels;
 }
 

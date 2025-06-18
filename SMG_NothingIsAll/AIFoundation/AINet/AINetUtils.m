@@ -248,9 +248,6 @@
                 if (PitIsFeature(biger_p) || PitIsGroupFeature(biger_p)) {
                     AIFeatureNode *feature = [SMGUtils searchNode:biger_p];
                     findParams = @{@"r":ARR_INDEX(feature.rects, i)};
-                    
-                    //TODOTOMORROW20250617: 测得这里的feature.rects中有小数的问题，查下哪来的。
-                    
                 }
                 [AINetUtils insertPointer_Hd:biger_p toPorts:item.refPorts findHeader:header difStrong:difStrong findParams:findParams];
                 [SMGUtils insertNode:item];
@@ -375,14 +372,8 @@
             AIPort *checkPort = ARR_INDEX(ports, checkIndex);
             return [SMGUtils comparePortA:findPort portB:checkPort];
         } startIndex:0 endIndex:ports.count - 1 success:^(NSInteger index) {
+            //NSArray *errorPorts = [SMGUtils filterArr:ports checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:findPort.target_p]; }];//复现此处警告时，打开该调试日志。
             NSLog(@"警告!!! bug:在第二序列的ports中发现了两次port目标___pointerId为:%ld",(long)findPort.target_p.pointerId);
-            
-            //TODOTOMORROW20250617: 这里有时会报重复告警，查下原因。
-            NSArray *errorPorts = [SMGUtils filterArr:ports checkValid:^BOOL(AIPort *item) {
-                return [item.target_p isEqual:findPort.target_p];
-            }];
-            NSLog(@"");
-            
         } failure:^(NSInteger index) {
             if (ARR_INDEXISOK(ports, index)) {
                 [ports insertObject:findPort atIndex:index];
@@ -478,9 +469,6 @@
         for (AINodeBase *conNode in conNodes) {
             //1. con与abs必须不同;
             if ([absNode isEqual:conNode]) continue;
-            if (absNode.pId == conNode.pId) {
-                NSLog(@"aaaa6");
-            }
             
             //2. 计算disStrong (默认为1 & 当新节点且不是SP时从具象取maxStrong);
             AnalogyType type = absNode.pointer.type;//DS2ATType(absNode.pit.ds);
