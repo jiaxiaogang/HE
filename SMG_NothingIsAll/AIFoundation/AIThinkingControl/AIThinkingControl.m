@@ -327,8 +327,8 @@ static AIThinkingControl *_instance;
 /**
  *  MARK:--------------------某粒度层识别单特征完毕--------------------
  *  @version
- *      2025.05.xx: 组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
- *      2025.06.10: 整体特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
+ *      2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
+ *      2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
  */
 -(void) commitInputWithSplitV2_Single_DotSizeV2:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
     // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
@@ -343,11 +343,11 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // 整体特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+    // 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.models];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // 整体特征类比：借助rectItems来类比。
+    // 组特征类比：借助rectItems来类比。
     for (AIFeatureZenTiModel *model in zenTiModel) {
         AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
         [AIAnalogy analogyGroupFeatureV3:protoT ass:assGT zenTiModel:model];
