@@ -211,6 +211,11 @@
     self.modelMatchConStrongRatio = assT.count > 0 ? validStrong / (float)assT.count : 0;
 }
 
+-(void) run4MatchRatio {
+    AIFeatureNode *assT = [SMGUtils searchNode:self.assT];
+    self.matchRatio = assT.count > 0 ? self.rectItems.count / (float)assT.count : 0;
+}
+
 //MARK:===============================================================
 //MARK:                     < PrivateMethod >
 //MARK:===============================================================

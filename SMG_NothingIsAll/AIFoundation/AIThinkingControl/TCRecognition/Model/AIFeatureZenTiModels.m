@@ -81,4 +81,11 @@
     }
 }
 
+-(void) run4MatchRatio {
+    // 计算健全度
+    for (AIFeatureZenTiModel *model in self.models) {
+        [model run4MatchRatio];
+    }
+}
+
 @end

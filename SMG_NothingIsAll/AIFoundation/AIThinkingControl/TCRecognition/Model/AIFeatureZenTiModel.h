@@ -66,4 +66,10 @@
 @property (assign, nonatomic) CGFloat modelMatchConStrongRatio;  //显著度：被抽象强度程度（越高越好，因为它是更显著的特征）(参考34175-公式3）。
 -(void) run4StrongRatio;
 
+//MARK:===============================================================
+//MARK:                     < 计算健全度 >
+//MARK:===============================================================
+@property (assign, nonatomic) CGFloat matchRatio;//健全度
+-(void) run4MatchRatio;
+
 @end
