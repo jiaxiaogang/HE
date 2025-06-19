@@ -205,6 +205,11 @@
         return STRFORMAT(@"%@_%.2f",obj.v1,value);
     }]);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    
+    //TODOTOMORROW20250619: 训练到10张手写0时，测得此处GV识别结果为0条。。。
+    
+    
     //4. 组码识别
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
