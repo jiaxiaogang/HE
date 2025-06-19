@@ -423,6 +423,11 @@
         return model.matchValue > 0;
     }];
     
+    //TODOTOMORROW20250619: BUG-在训练多张手写0后，发现有一些越来越趋向于纯色无意义的局部特征。
+    //说明：有时局部特征的9条gv全是纯黑，这种识别不仅不是显著特征，反而是无意义的边角料。
+    //分析：全黑很容易匹配到（因为step1自举没管这一条gv的信息量，而是只要一致，就能匹配上，并且在step2竞争中还更有优势）。
+    
+    
     //53. 排序
     validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         return obj.matchValue * obj.matchDegree * obj.matchAssProtoRatio * obj.matchAssRatio;
