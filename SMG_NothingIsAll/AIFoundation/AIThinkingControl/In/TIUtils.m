@@ -175,6 +175,9 @@
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  */
 +(void) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
+    // 数据准备
+    NSNumber *beginDiffValue = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
+    
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
@@ -280,7 +283,7 @@
             
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
             lastProtoRect = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
-            [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex]];
+            [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffValue.floatValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //21. 自举：每个assT一条条自举自身的gv。
@@ -336,6 +339,7 @@
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     if (!ARRISOK(subDots)) continue;
                     NSDictionary *protoGVIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+                    NSNumber *diffValue = [protoGVIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
                     
                     //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
@@ -352,7 +356,7 @@
                     
                     //35. 保留最匹配的一条。
                     if (!best || NUMTOOK(best.v1).floatValue < curGMatchValue) {
-                        best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale)];
+                        best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale) v4:diffValue];
                     }
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 }
@@ -375,10 +379,11 @@
                 //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
                 CGFloat scale = NUMTOOK(best.v3).floatValue;
                 CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
+                CGFloat diffValue = NUMTOOK(best.v4).floatValue;
                 
                 // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
                 lastProtoRect = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
-                [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex]];
+                [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue]];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -423,14 +428,10 @@
         return model.matchValue > 0;
     }];
     
-    //TODOTOMORROW20250619: BUG-在训练多张手写0后，发现有一些越来越趋向于纯色无意义的局部特征。
-    //说明：有时局部特征的9条gv全是纯黑，这种识别不仅不是显著特征，反而是无意义的边角料。
-    //分析：全黑很容易匹配到（因为step1自举没管这一条gv的信息量，而是只要一致，就能匹配上，并且在step2竞争中还更有优势）。
-    
-    
     //53. 排序
+    //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * obj.matchDegree * obj.matchAssProtoRatio * obj.matchAssRatio;
+        return obj.matchValue * obj.matchDegree * obj.matchAssProtoRatio * obj.matchAssRatio * obj.matchDiffValue;
     }];
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。

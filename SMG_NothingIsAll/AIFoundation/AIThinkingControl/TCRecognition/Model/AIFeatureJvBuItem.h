@@ -13,7 +13,7 @@
  */
 @interface AIFeatureJvBuItem : NSObject
 
-+(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree assIndex:(NSInteger)assIndex;
++(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree assIndex:(NSInteger)assIndex diffValue:(CGFloat)diffValue;
 
 //记录当前gv是assT的哪个下标。
 @property (assign, nonatomic) NSInteger assIndex;
@@ -23,5 +23,7 @@
 @property (assign, nonatomic) CGFloat matchValue;
 //每个bestGV的符合度。
 @property (assign, nonatomic) CGFloat matchDegree;
+//GV信息量（用diff来表示）
+@property (assign, nonatomic) CGFloat diffValue;
 
 @end
