@@ -283,12 +283,7 @@
             AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT];
             
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
-            CGRect lastProtoRectBak = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
-            if (lastProtoRectBak.size.width == 0) {
-                NSLog(@"");
-            }
-            lastProtoRect = lastProtoRectBak;
-            
+            lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffValue.floatValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -301,21 +296,6 @@
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
                 CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
-                
-                
-                
-                
-                //TODOTOMORROW20250619: 训练到10张手写0时，测得此处GV识别结果为0条。。。
-                //1、经查有时gMatchModels为0条。
-                //2、再追查发现单码data就有NaN的情况。
-                //3、再追查，发现getSubDots中的平均值=NaN（因为checkCurProtoRect取值范围为0）。
-                //4、再追查，发现此处lastProtoRect有时width=0.8，强转Int后，变成了0。
-                if (lastProtoRect.size.width == 0) {
-                    NSLog(@"");
-                }
-                
-                
-                
                 
                 //22. 根据比例估算下一条protoGV的取值范围。
                 //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
@@ -351,6 +331,13 @@
                                                           defaultCurProtoRect.size.width * scale,
                                                           defaultCurProtoRect.size.height * scale);
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:138677 均耗:0.05 = 总耗:6847 读:0 写:0
+                    
+                    // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
+                    // 2025.06.20：更提前转成int，因为在getSubDots的时候，就需要是正确的int值了。
+                    checkCurProtoRect = CGRectMake((int)(checkCurProtoRect.origin.x+0.5f), (int)(checkCurProtoRect.origin.y+0.5f), (int)(checkCurProtoRect.size.width+0.5f), (int)(checkCurProtoRect.size.height+0.5f));
+                    
+                    // 2025.06.20：如果到proto切范围为空，则直接跳过，判定为该itemGV未匹配到。
+                    if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) continue;
                     
                     //33. 切出当前gv：九宫。
                     //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
@@ -401,14 +388,6 @@
                 CGFloat scale = NUMTOOK(best.v3).floatValue;
                 CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
                 CGFloat diffValue = NUMTOOK(best.v4).floatValue;
-                
-                // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
-                CGRect lastProtoRectBak = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
-                if (lastProtoRectBak.size.width == 0) {
-                    NSLog(@"");
-                }
-                lastProtoRect = lastProtoRectBak;
-                
                 [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue]];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
