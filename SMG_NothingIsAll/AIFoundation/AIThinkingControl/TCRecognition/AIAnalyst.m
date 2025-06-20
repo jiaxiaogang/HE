@@ -48,11 +48,11 @@
     
     //2. 循环时: 计算出nearV相近度 (参考28174-todo2);
     if (vInfo.loop) {
-        return 1 - delta / (vInfo.span / 2);
+        return MAX(0, 1 - delta / (vInfo.span / 2));
     }
     
     //3. 线性时: 计算出nearV相近度 (参考25082-公式1);
-    return 1 - delta / vInfo.span;
+    return MAX(0, 1 - delta / vInfo.span);
 }
 
 /**

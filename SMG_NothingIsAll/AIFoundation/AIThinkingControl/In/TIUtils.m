@@ -60,7 +60,7 @@
         //2024.04.27: BUG_这里有nearV为0的,导致后面可能激活一些完全不准确的结果 (修复: 加上末尾淘汰: 相似度为0的就不收集了先,看下应该也不影响别的什么);
         double nearData = [NUMTOOK([AINetIndex getData:near_p fromDataDic:cacheDataDic]) doubleValue];
         CGFloat matchValue = [AIAnalyst compareCansetValue:nearData protoV:protoData at:near_p.algsType ds:near_p.dataSource isOut:near_p.isOut vInfo:vInfo];
-        if (matchValue == 0) return nil;//把相近度为0的过滤掉。
+        if (matchValue <= 0) return nil;//把相近度为0的过滤掉。
         
         //6. 构建model
         AIMatchModel *model = [[AIMatchModel alloc] init];
@@ -206,10 +206,6 @@
     }]);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    
-    //TODOTOMORROW20250619: 训练到10张手写0时，测得此处GV识别结果为0条。。。
-    
-    
     //4. 组码识别
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
@@ -287,7 +283,12 @@
             AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT];
             
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
-            lastProtoRect = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
+            CGRect lastProtoRectBak = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
+            if (lastProtoRectBak.size.width == 0) {
+                NSLog(@"");
+            }
+            lastProtoRect = lastProtoRectBak;
+            
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffValue.floatValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -300,6 +301,21 @@
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
                 CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
+                
+                
+                
+                
+                //TODOTOMORROW20250619: 训练到10张手写0时，测得此处GV识别结果为0条。。。
+                //1、经查有时gMatchModels为0条。
+                //2、再追查发现单码data就有NaN的情况。
+                //3、再追查，发现getSubDots中的平均值=NaN（因为checkCurProtoRect取值范围为0）。
+                //4、再追查，发现此处lastProtoRect有时width=0.8，强转Int后，变成了0。
+                if (lastProtoRect.size.width == 0) {
+                    NSLog(@"");
+                }
+                
+                
+                
                 
                 //22. 根据比例估算下一条protoGV的取值范围。
                 //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
@@ -387,7 +403,12 @@
                 CGFloat diffValue = NUMTOOK(best.v4).floatValue;
                 
                 // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
-                lastProtoRect = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
+                CGRect lastProtoRectBak = CGRectMake((int)lastProtoRect.origin.x, (int)lastProtoRect.origin.y, (int)lastProtoRect.size.width, (int)lastProtoRect.size.height);
+                if (lastProtoRectBak.size.width == 0) {
+                    NSLog(@"");
+                }
+                lastProtoRect = lastProtoRectBak;
+                
                 [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue]];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
