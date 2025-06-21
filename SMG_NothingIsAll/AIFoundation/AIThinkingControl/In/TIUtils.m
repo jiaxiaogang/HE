@@ -492,7 +492,7 @@
     // 构建protoT
     AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
+        //[theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
     }];
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
@@ -520,7 +520,7 @@
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f\t匹配率:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio,model.matchAssRatio);
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"单T%ld(%ld/%ld)",model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"识别单T%ld(%ld/%ld)",model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
     }
     return protoT;
@@ -614,7 +614,7 @@
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"组特征识别T%ld",assFeature.pId) left:0 top:0];
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"识别组T%ld",assFeature.pId) left:0 top:0];
         }];
     }
     
