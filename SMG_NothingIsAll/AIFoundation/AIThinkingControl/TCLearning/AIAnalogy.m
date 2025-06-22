@@ -525,74 +525,14 @@
     [AINetUtils updateConPortRect:absT conT:assT.p rect:newAbsAtAssRect];
     
     //51. debug
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比GT%ld->GT%ld",assT.pId,absT.pId) left:0 top:0];
+    }];
     if (Log4Ana || true) NSLog(@"\n组特征类比结果(%@) ======================> \n整体Proto特征T%ld（单特征数:%ld GV数:%ld）%@\n%@Ass组特征T%ld（单特征数:%ld GV数:%ld）%@\n%@Abs组特征T%ld（单特征数:%ld GV数:%ld）：%@\n%@",protoT.p.dataSource,
                                protoT.pId,sameItems.count,protoT.count,CLEANSTR([protoT getLogDesc:false]),FeatureDesc(protoT.p,1),
                                assT.pId,sameItems.count,assT.count,CLEANSTR([assT getLogDesc:false]),FeatureDesc(assT.p,1),
                                absT.pId,sameItems.count,absGVModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
     return absT;
-}
-
-+(AIFeatureNode*) analogyGroupFeatureV2:(AIGroupFeatureNode*)protoGT assModel:(AIFeatureZenTiModel*)assModel {
-    AIGroupFeatureNode *assGT = [SMGUtils searchNode:assModel.assT];
-    //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
-    //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    NSArray *sameItems = [SMGUtils filterArr:assModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
-        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree bigerMatchValue:assModel.modelMatchDegree];
-    }];
-    if (!ARRISOK(sameItems)) return nil;
-    
-    //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
-    CGRect newAbsAtAssRect = CGRectNull;
-    for (AIFeatureZenTiItem_Rect *item in sameItems) {
-        //取并每个itemAbsT在assT的范围。
-        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.itemAtAssRect);
-    }
-    
-    //12. 取newAbs在protoT的rect，可以用单特征识别结果中的itemAbsTAtProtoRect来求并集（目前不需要，因为没有protoT，也用不着这个AtProtoTRect）。
-    NSArray *protoGTIndexes = [SMGUtils convertArr:sameItems convertBlock:^id(AIFeatureZenTiItem_Rect *obj) {
-        return @(obj.protoGTIndex);
-    }];
-    CGRect newAbsAtProtoRect = [AINetUtils convertPartOfFeatureContent2Rect:protoGT contentIndexes:protoGTIndexes];
-    
-    //20. 根据protoT和itemAbsT的映射来实现类比抽象（参考34164-方案2）。
-    //2025.05.08: 注意-我们无法从protoT来抽象gvs了，也没法从组特征assT来抽象gvs（因为它与itemAbsT没有映射，我们无法对应到该取哪个下标）。
-    //2025.05.08: 说明-所以我们只能从itemAbsT中取gvs，那么这里就有一个要求：itemAbsT中的元素必须来自自身具象，不允许抽象t时，gv有变化，不然每个itemAbsT中的对应gv不同，会重复收集。
-    //2025.05.08: 举例-说白了：从乔峰抽象的胳膊腿特征必须是乔峰的，不能是别人的。
-    //21. 取出每个itemAbsT中的gv，转换成newAbsT的元素：@[InputGroupValueModel]格式（参考3413a-示图1）。
-    NSMutableArray *absTModels = [SMGUtils convertArr:sameItems convertBlock:^id(AIFeatureZenTiItem_Rect *zenTiItem) {
-        return [InputGroupFeatureModel new:zenTiItem.fromItemT_p rect:zenTiItem.itemAtAssRect];
-    }];
-    
-    //33. 构建：保留下来的生成为absT。
-    AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:absTModels conNodes:@[protoGT,assGT] at:assGT.at ds:assGT.ds isOut:assGT.isOut isJiao:true];
-    
-    //41. 更新logDesc。
-    [absGT updateLogDescDic:assGT.logDesc];
-    [absGT updateLogDescDic:protoGT.logDesc];
-    
-    //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。
-    //42. 记录匹配度：根据每个匹配itemAbsT，来计算平均匹配度。
-    [assGT updateMatchValue:absGT matchValue:1];//此处abs是从ass抽象来的，那这里的匹配度直接=1。
-    [protoGT updateMatchValue:absGT matchValue:1];//此处protoGT是从sameItems这些单特征构建成的，所以匹配也直接=1。
-    
-    //43. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
-    [assGT updateMatchDegree:absGT matchDegree:1];
-    [protoGT updateMatchDegree:absGT matchDegree:[SMGUtils sumOfArr:sameItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
-        return obj.itemMatchDegree;
-    }] / sameItems.count];
-    
-    //44. 记录整体absT.conPort到protoT和assT的rect。
-    [AINetUtils updateConPortRect:absGT conT:assGT.p rect:newAbsAtAssRect];
-    [AINetUtils updateConPortRect:absGT conT:protoGT.p rect:newAbsAtProtoRect];
-    [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"类比GT%ld->GT%ld",assGT.pId,absGT.pId) left:0 top:0];
-    }];
-    
-    //51. debug
-    if (Log4Ana || true) NSLog(@"\n组特征类比结果(%@) ======================> \nAss组特征T%ld（单特征数:%ld GV数:%ld）%@\n%@Abs组特征T%ld（单特征数:%ld GV数:%ld）：%@\n%@",assGT.ds,
-                               assGT.pId,sameItems.count,assGT.count,CLEANSTR([assGT getLogDesc:false]),FeatureDesc(assGT.p,1),
-                               absGT.pId,sameItems.count,absTModels.count,CLEANSTR([absGT getLogDesc:false]),FeatureDesc(absGT.p,1));
-    return absGT;
 }
 
 /**

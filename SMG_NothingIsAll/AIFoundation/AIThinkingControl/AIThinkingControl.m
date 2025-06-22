@@ -266,64 +266,6 @@ static AIThinkingControl *_instance;
 }
 
 //单粒度层。
--(void) commitInputWithSplitV2_Single_DotSize:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
-    //23. 单特征过滤和竞争部分。
-    [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
-    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //40. 这里先直接调用下类比，先测试下识别结果的类比。
-    //TODO: 2025.04.19: 必须是当前protoT识别时的zenTiModel才行，如果是往期zenTiModel不能用，会导致类比找protoT对应不上，导致取rect为Null的BUG（现在把jvBuModel和zenTiModel直接传过去的话，这个对应不上的问题应该不存在）。
-    //41. 局部冷启 或 整体识别：分别进行类比（依据不同）（参考34139-TODO1）。
-    //42. 特征识别step1识别到的结果，复用jvBuModel进行类比。
-    NSMutableArray *groupTModels = [NSMutableArray new];
-    for (AIFeatureJvBuModel *model in jvBuModel.models) {
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        AIFeatureNode *absT = [AIAnalogy analogyFeatureV2:model protoT:nil];
-        
-        //============== 此处有absTAtAssTRect，也有bestGVsAtProtoTRect，根据这两个可以算出absTAtProtoTRect，用于构建组特征用 ==============
-        //1. 计算abs在ass中的位置，以及ass在proto中的位置。
-        //CGRect absT_AssT = CGRectNull;
-        //if ([itemAbsT.p isEqual:model.assT.p]) {
-        //    absT_AssT = [AINetUtils convertAllOfFeatureContent2Rect:itemAbsT];
-        //} else {
-        //    absT_AssT = [AINetUtils getConPort:itemAbsT con:model.assT.p].rect;
-        //}
-        
-        //2. 计算abs在proto中的位置。
-        //2025.05.27：修复protoGT可视化出界问题：重新分析absT at ProtoT（absT是由bestGVs生成的）所以直接就 = model.bestGVs at protoT）
-        //  A、assT at protoT（没有，识别后只有bestGVsAtProto，没有assT at protoT）。
-        //  B、bestGVs at protoT（有，即本次所需，在model中直接就存着字段）。
-        //  C、bestGVs at assT（有，即conPort中有存着absT at assT)。
-        CGRect absT_ProtoT = model.bestGVsAtProtoTRect;
-        
-        //3. 收集为InputGroupFeatureModel。
-        [groupTModels addObject:[InputGroupFeatureModel new:absT.p rect:absT_ProtoT]];
-    }
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //4. 构建protoGT组特征。
-    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:groupTModels conNodes:nil at:at ds:ds isOut:false isJiao:true];
-    if (!protoGT) return;
-    [protoGT updateLogDescItem:logDesc];
-    
-    [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
-    }];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //51. 整体识别特征：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV2:protoGT];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //43. 取共同absT，借助absT进行类比（参考34139-TODO1）。
-    for (AIFeatureZenTiModel *model in zenTiModel) {
-        [AIAnalogy analogyGroupFeatureV2:protoGT assModel:model];
-    }
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-}
-
-//单粒度层。
 /**
  *  MARK:--------------------某粒度层识别单特征完毕--------------------
  *  @version
