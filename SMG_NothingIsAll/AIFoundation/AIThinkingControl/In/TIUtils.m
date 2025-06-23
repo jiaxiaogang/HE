@@ -618,6 +618,10 @@
         }];
     }
     
+    //TODOTOMORROW20250623: 以识别2和3为例跑训练：（其实用几张0也能复现，因为识别到0时，却没有打出总结日志）。
+    //  一是组特征经常是()空的没有logDesc吗。
+    //  二是向上一级所有dotSize识别完后应该有个更全面的总结。
+    
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
         return obj.assT;
