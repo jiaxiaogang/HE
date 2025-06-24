@@ -277,7 +277,7 @@ static AIThinkingControl *_instance;
     [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step3:jvBuModel colorDic:colorDic at:at ds:ds];
+    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step3:jvBuModel colorDic:colorDic at:at ds:ds logDesc:logDesc];
     
     // 局部特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.models) {

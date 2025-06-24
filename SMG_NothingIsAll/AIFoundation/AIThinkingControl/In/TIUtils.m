@@ -457,7 +457,7 @@
     }] protoLogDesc:nil prefix:@"单特征"];
 }
 
-+(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds {
++(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
     for (AIFeatureJvBuModel *model in resultModel.models) {
         [model run4BestGvsAtProtoTRect];
@@ -491,13 +491,14 @@
     
     // 构建protoT
     AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
+    [protoT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{
         //[theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
     }];
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in resultModel.models) {
-        [protoT updateLogDescDic:model.assT.logDesc rate:model.matchValue * model.matchDegree * model.matchAssRatio];
+        //[protoT updateLogDescDic:model.assT.logDesc rate:model.matchValue * model.matchDegree * model.matchAssRatio];
         [AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
         
         // 2025.06.10：旧方案：从具象中选抽象，protoT与assT构建抽具象关联，然后试下识别响应效率会不会更快。
@@ -599,6 +600,9 @@
         [protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
         [protoFeature updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
         
+        // 从protoT更新logDesc到assGT。
+        [assFeature updateLogDescDic:protoFeature.logDesc rate:matchModel.modelMatchValue * matchModel.modelMatchDegree];
+        
         //42. 存下来zenTiModel用于类比时用一下（参考34139-TODO3）。
         //assFeature.zenTiModel = matchModel;
         
@@ -612,6 +616,16 @@
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
         //[AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
+        
+        //TODOTOMORROW20250624: 交替跑0六个1八个后，还会把1识别成组特征0，查下它的位置符合度，应该很低了才对，是怎么识别到它的？
+        //组特征识别结果:T1504{Mnist0 = 85.73;}    （单特征数:8 assGV数:137 protoGV数:247）    匹配度:0.81    符合度:1.0    显著度:0.07
+        //组特征识别结果:T1360{Mnist0 = 60.77;}    （单特征数:10 assGV数:77 protoGV数:247）    匹配度:0.48    符合度:0.4    显著度:0.13
+        //组特征识别结果:T1207{Mnist0 = 45.07;}    （单特征数:3 assGV数:21 protoGV数:247）    匹配度:0.10    符合度:0.6    显著度:0.38
+        //组特征识别结果:T1235{Mnist0 = 47.57;}    （单特征数:3 assGV数:53 protoGV数:247）    匹配度:0.78    符合度:1.0    显著度:0.06
+        //组特征识别结果:T1496{Mnist0 = 86.54;}    （单特征数:6 assGV数:143 protoGV数:247）    匹配度:0.92    符合度:1.0    显著度:0.05
+        //组特征识别结果:T1470{Mnist0 = 59.07;}    （单特征数:5 assGV数:125 protoGV数:247）    匹配度:0.66    符合度:1.0    显著度:0.05
+        //组特征识别结果:T1489{Mnist0 = 83.64;}    （单特征数:5 assGV数:135 protoGV数:247）    匹配度:0.87    符合度:1.0    显著度:0.04
+        //组特征识别结果总结：(Mnist0=1.00 )
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{

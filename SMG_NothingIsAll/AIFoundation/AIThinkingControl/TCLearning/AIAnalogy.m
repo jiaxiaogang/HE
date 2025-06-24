@@ -432,6 +432,7 @@
     //31. 外类比构建
     AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[jvBuModel.assT,protoT] at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
+    [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
     if ([absT.p isEqual:jvBuModel.assT.p] || [absT.p isEqual:protoT.p]) return nil;
     
     //32. 更新匹配度;
@@ -526,7 +527,7 @@
     
     //51. debug
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比GT%ld->GT%ld",assT.pId,absT.pId) left:0 top:0];
+        //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比GT%ld->GT%ld",assT.pId,absT.pId) left:0 top:0];
     }];
     if (Log4Ana || true) NSLog(@"\n组特征类比结果(%@) ======================> \n整体Proto特征T%ld（单特征数:%ld GV数:%ld）%@\n%@Ass组特征T%ld（单特征数:%ld GV数:%ld）%@\n%@Abs组特征T%ld（单特征数:%ld GV数:%ld）：%@\n%@",protoT.p.dataSource,
                                protoT.pId,sameItems.count,protoT.count,CLEANSTR([protoT getLogDesc:false]),FeatureDesc(protoT.p,1),
