@@ -97,10 +97,13 @@
 //logDesc仅存用于打日志。
 @property (strong, nonatomic) NSMutableDictionary *logDesc;
 -(void) updateLogDescItem:(NSString*)newItem;
+-(void) updateLogDescItem:(NSString*)newItem rate:(CGFloat)rate;
 -(void) updateLogDescDic:(NSDictionary*)newDic;
+-(void) updateLogDescDic:(NSDictionary*)newDic rate:(CGFloat)rate;
 
 //简：<0=8,1=9> 全：<0_1=8,1_9=3,0_17=3>
 -(NSDictionary*) getLogDesc:(BOOL)simple;
+-(NSDictionary*) getLogDesc_Number:(BOOL)simple;
 
 //取全下标
 -(NSArray*) indexes;

@@ -509,7 +509,7 @@
     
     //41. 更新logDesc。
     [absT updateLogDescDic:protoT.logDesc];
-    [absT updateLogDescDic:assT.logDesc];
+    [absT updateLogDescDic:assT.logDesc rate:zenTiModel.modelMatchValue * zenTiModel.modelMatchDegree * zenTiModel.matchRatio];
     
     //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。
     //42. 记录匹配度：根据每个匹配itemAbsT，来计算平均匹配度。

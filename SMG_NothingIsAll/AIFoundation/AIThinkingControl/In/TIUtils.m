@@ -497,6 +497,7 @@
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in resultModel.models) {
+        [protoT updateLogDescDic:model.assT.logDesc rate:model.matchValue * model.matchDegree * model.matchAssRatio];
         [AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
         
         // 2025.06.10：旧方案：从具象中选抽象，protoT与assT构建抽具象关联，然后试下识别响应效率会不会更快。
@@ -1438,23 +1439,23 @@
     NSMutableDictionary *allLogDic = [NSMutableDictionary new];
     for (AIKVPointer *ass_p in ass_ps) {
         AINodeBase *assNode = [SMGUtils searchNode:ass_p];
-        NSDictionary *itemLogDic = [assNode getLogDesc:true];
+        NSDictionary *itemLogDic = [assNode getLogDesc_Number:true];
         for (NSString *key in itemLogDic.allKeys) {
-            NSInteger oldCount = NUMTOOK([allLogDic objectForKey:key]).integerValue;
-            NSInteger newCount = NUMTOOK([itemLogDic objectForKey:key]).integerValue;
+            CGFloat oldCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
+            CGFloat newCount = NUMTOOK([itemLogDic objectForKey:key]).floatValue;
             [allLogDic setObject:@(oldCount + newCount) forKey:key];
         }
     }
-    NSInteger sum = [SMGUtils sumOfArr:allLogDic.allValues convertBlock:^double(NSNumber *obj) {
-        return obj.integerValue;
+    CGFloat sum = [SMGUtils sumOfArr:allLogDic.allValues convertBlock:^double(NSNumber *obj) {
+        return obj.floatValue;
     }];
     NSArray *allLogKeys = [SMGUtils sortBig2Small:allLogDic.allKeys compareBlock:^double(NSString *key) {
-        NSInteger itemCount = NUMTOOK([allLogDic objectForKey:key]).integerValue;
-        return itemCount / (float)sum;
+        CGFloat itemCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
+        return itemCount / sum;
     }];
     NSLog(@"%@%@识别结果总结：%@",protoLogDesc?protoLogDesc:@"",prefix,CLEANSTR([SMGUtils convertArr:allLogKeys convertBlock:^id(NSString *key) {
-        NSInteger itemCount = NUMTOOK([allLogDic objectForKey:key]).integerValue;
-        return STRFORMAT(@"%@=%.2f ",key,itemCount / (float)sum);
+        CGFloat itemCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
+        return STRFORMAT(@"%@=%.2f ",key,itemCount / sum);
     }]));
 }
 
