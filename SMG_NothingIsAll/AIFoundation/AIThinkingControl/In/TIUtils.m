@@ -607,10 +607,10 @@
         //assFeature.zenTiModel = matchModel;
         
         //43. debug
-        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f",
+        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f\t健全度:%.2f",
                                                            matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
                                                            matchModel.rectItems.count,assFeature.count,protoFeature.count,
-                                                           matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.modelMatchConStrongRatio);
+                                                           matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.modelMatchConStrongRatio,matchModel.matchRatio);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
@@ -618,18 +618,29 @@
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
         //TODOTOMORROW20250624: 交替跑0六个1八个后，还会把1识别成组特征0，查下它的位置符合度，应该很低了才对，是怎么识别到它的？
-        //组特征识别结果:T1504{Mnist0 = 85.73;}    （单特征数:8 assGV数:137 protoGV数:247）    匹配度:0.81    符合度:1.0    显著度:0.07
-        //组特征识别结果:T1360{Mnist0 = 60.77;}    （单特征数:10 assGV数:77 protoGV数:247）    匹配度:0.48    符合度:0.4    显著度:0.13
-        //组特征识别结果:T1207{Mnist0 = 45.07;}    （单特征数:3 assGV数:21 protoGV数:247）    匹配度:0.10    符合度:0.6    显著度:0.38
-        //组特征识别结果:T1235{Mnist0 = 47.57;}    （单特征数:3 assGV数:53 protoGV数:247）    匹配度:0.78    符合度:1.0    显著度:0.06
-        //组特征识别结果:T1496{Mnist0 = 86.54;}    （单特征数:6 assGV数:143 protoGV数:247）    匹配度:0.92    符合度:1.0    显著度:0.05
-        //组特征识别结果:T1470{Mnist0 = 59.07;}    （单特征数:5 assGV数:125 protoGV数:247）    匹配度:0.66    符合度:1.0    显著度:0.05
-        //组特征识别结果:T1489{Mnist0 = 83.64;}    （单特征数:5 assGV数:135 protoGV数:247）    匹配度:0.87    符合度:1.0    显著度:0.04
-        //组特征识别结果总结：(Mnist0=1.00 )
+        //组特征识别结果:T1342{Mnist1 = 15.68;Mnist0 = 17.47;}    （单特征数:9 assGV数:10 protoGV数:14）    匹配度:0.51    符合度:1.0    显著度:1.40    健全度:0.90
+        //组特征识别结果:T1406{Mnist1 = 27.43;Mnist0 = 17.83;}    （单特征数:10 assGV数:14 protoGV数:14）    匹配度:0.58    符合度:1.0    显著度:0.79    健全度:0.71
+        //组特征识别结果:T1351{Mnist1 = 3.91;Mnist0 = 4.50;}    （单特征数:7 assGV数:32 protoGV数:14）    匹配度:0.51    符合度:1.0    显著度:0.38    健全度:0.22
+        //组特征识别结果:T1267{Mnist1 = 1.90;Mnist0 = 8.55;}    （单特征数:4 assGV数:15 protoGV数:14）    匹配度:0.44    符合度:1.0    显著度:0.33    健全度:0.27
+        //组特征识别结果:T1277{Mnist1 = 2.96;Mnist0 = 4.33;}    （单特征数:7 assGV数:26 protoGV数:14）    匹配度:0.53    符合度:1.0    显著度:0.27    健全度:0.27
+        //组特征识别结果:T1232{Mnist1 = 8.57;Mnist0 = 2.92;}    （单特征数:2 assGV数:10 protoGV数:14）    匹配度:0.43    符合度:1.0    显著度:0.20    健全度:0.20
+        //组特征识别结果:T1254{Mnist1 = 4.43;Mnist0 = 2.01;}    （单特征数:3 assGV数:16 protoGV数:14）    匹配度:0.20    符合度:1.0    显著度:0.19    健全度:0.19
+        //组特征识别结果:T1202{Mnist1 = 6.49;Mnist0 = 0.31;}    （单特征数:1 assGV数:14 protoGV数:14）    匹配度:0.71    符合度:1.0    显著度:0.07    健全度:0.07
+        //组特征识别结果总结：(Mnist1=0.55 ,Mnist0=0.45 )
+        
+        //组特征识别结果:T815{Mnist1 = 1.05;Mnist0 = 6.67;}    （单特征数:5 assGV数:15 protoGV数:97）    匹配度:0.43    符合度:1.0    显著度:0.47    健全度:0.33
+        //分析：看起来健全度都不高，因为健全度表示它更全面的匹配。
+        //疑问：从白纸中自举白线是不是肯定能成功？（不会，因为白线的边缘在白纸中是匹配不到的）。
+        //原则：识别时还是一切以准为重。
+        
+        //方案1、调整每步的竞争参数，使更准确的结果可在竞争中更快浮现出来。
+        //      TODO1: 去掉显著度试下？不能只识别旧的，新的准确也要有更多机会。
+        //方案2、加训？一步步抽象出更加健全的结果？
+        //      TODO1:
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"识别组T%ld",assFeature.pId) left:0 top:0];
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld-识别组T%ld",[resultModels indexOfObject:matchModel]+1,assFeature.pId) left:0 top:0];
         }];
     }
     
