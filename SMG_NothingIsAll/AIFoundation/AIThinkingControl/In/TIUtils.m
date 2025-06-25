@@ -570,7 +570,7 @@
     [zenTiModel run4MatchValue:protoFeature_p];
     
     //23. 计算：每个model的显著度。
-    [zenTiModel run4StrongRatio];
+    //[zenTiModel run4StrongRatio];
     
     //24. 计算：健全度
     [zenTiModel run4MatchRatio];
@@ -583,8 +583,9 @@
     //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
     //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
     //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
+    //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
     resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchValue * obj.modelMatchConStrongRatio * obj.matchRatio;
+        return obj.modelMatchDegree * obj.modelMatchValue * obj.matchRatio;
     }], 0, resultModels.count * 0.5);
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -607,10 +608,10 @@
         //assFeature.zenTiModel = matchModel;
         
         //43. debug
-        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t显著度:%.2f\t健全度:%.2f",
+        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t健全度:%.2f",
                                                            matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
                                                            matchModel.rectItems.count,assFeature.count,protoFeature.count,
-                                                           matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.modelMatchConStrongRatio,matchModel.matchRatio);
+                                                           matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.matchRatio);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
@@ -635,6 +636,7 @@
         
         //方案1、调整每步的竞争参数，使更准确的结果可在竞争中更快浮现出来。
         //      TODO1: 去掉显著度试下？不能只识别旧的，新的准确也要有更多机会。
+        //      结果：去掉后，健全度还是偏低，训练到5个0,4个1时，1有识别成0的情况，并且组特征识别结果的健全度普遍才0.1左右。明天继续分析下，为什么健全度这么低，高的哪去了。
         //方案2、加训？一步步抽象出更加健全的结果？
         //      TODO1:
         
