@@ -252,6 +252,7 @@
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
+            [decoratorJvBuModel updateLogDic:1 assPId:refPort.target_p.pointerId];
             // 过滤掉GT，局部特征不识别整体结果。
             if (!refPort.target_p.isJiao && refPort.target_p.isGT) continue;
             
@@ -419,6 +420,7 @@
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize {
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in resultModel.models) {
+        [resultModel updateLogDic:2 assPId:model.assT.pId];
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
     
@@ -460,6 +462,7 @@
 +(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
     for (AIFeatureJvBuModel *model in resultModel.models) {
+        [resultModel updateLogDic:3 assPId:model.assT.pId];
         [model run4BestGvsAtProtoTRect];
     }
     

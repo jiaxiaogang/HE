@@ -260,6 +260,7 @@ static AIThinkingControl *_instance;
             [self commitInputWithSplitV2_Single_DotSizeV2:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
         }
         dotSize /= 1.3f;
+        [jvBuModel printLogDic];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
