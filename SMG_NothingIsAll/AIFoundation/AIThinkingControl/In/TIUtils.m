@@ -252,7 +252,7 @@
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
-            [decoratorJvBuModel updateLogDic:1 assPId:refPort.target_p.pointerId];
+            [decoratorJvBuModel updateLogDic:1001 assPId:refPort.target_p.pointerId];
             // 过滤掉GT，局部特征不识别整体结果。
             if (!refPort.target_p.isJiao && refPort.target_p.isGT) continue;
             
@@ -287,6 +287,7 @@
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffValue.floatValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+            [decoratorJvBuModel updateLogDic:1002 assPId:refPort.target_p.pointerId];
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < assT.count; i++) {
@@ -395,10 +396,12 @@
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //44. 单特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到单特征最低标准）。
+            [decoratorJvBuModel updateLogDic:1003 assPId:model.assT.pId];
             if (model.bestGVs.count <= 4) continue;
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
+            [decoratorJvBuModel updateLogDic:1004 assPId:model.assT.pId];
             
             //52. 有效单特征条目后，才计为防重（关掉，如果一张图有多个3也得能识别）。
             //[excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
@@ -420,7 +423,7 @@
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize {
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in resultModel.models) {
-        [resultModel updateLogDic:2 assPId:model.assT.pId];
+        [resultModel updateLogDic:2000 assPId:model.assT.pId];
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
     
@@ -462,7 +465,7 @@
 +(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
     for (AIFeatureJvBuModel *model in resultModel.models) {
-        [resultModel updateLogDic:3 assPId:model.assT.pId];
+        [resultModel updateLogDic:3000 assPId:model.assT.pId];
         [model run4BestGvsAtProtoTRect];
     }
     
@@ -650,6 +653,38 @@
         //      解答：这两个好说，我们边训练边可视化单特征识别结果，观察日志变化，有没有浮现，有没有越来越准，都是可以的。
         //      调试：发现确实可以越来越准确匹配率健全度等都变高了，但也发现了新线索：
         //      线索：随着训练往后期，发现”单特征识别结果“总是一些最近的特征，健全度都是上百条的，可见旧的有根底的没浮现出来。
+
+        
+        //经查：如下日志，看起来更新的节点在第1001步时，占比就多，最后3000步时，竞争结果中占比也自然多。
+        //aaaa1001 (0 = 35,100 = 805,200 = 1995,300 = 2443,400 = 840)
+        //aaaa1002 (0 = 28,100 = 294,200 = 441,300 = 1057)
+        //aaaa1003 (0 = 28,100 = 294,200 = 441,300 = 1057)
+        //aaaa1004 (0 = 4,100 = 10,200 = 11,300 = 34)
+        //aaaa2000 (0 = 4,100 = 10,200 = 11,300 = 34)
+        //aaaa3000 (0 = 1,100 = 2,200 = 3,300 = 14)
+        
+        //aaaa1001 (0 = 30,100 = 690,200 = 1710,300 = 2094,400 = 384)
+        //aaaa1002 (100 = 36,200 = 216,300 = 126,400 = 84)
+        //aaaa1003 (100 = 36,200 = 216,300 = 126,400 = 84)
+        //aaaa1004 (100 = 4,200 = 34,300 = 20,400 = 10)
+        //aaaa2000 (100 = 4,200 = 34,300 = 20,400 = 10)
+        //aaaa3000 (200 = 10,300 = 5,400 = 5)
+        
+        //aaaa1001 (0 = 30,100 = 690,200 = 1710,300 = 2094,400 = 5646,500 = 2832)
+        //aaaa1002 (100 = 36,200 = 216,300 = 126,400 = 390,500 = 66)
+        //aaaa1003 (100 = 36,200 = 216,300 = 126,400 = 390,500 = 66)
+        //aaaa1004 (200 = 31,300 = 20,400 = 52,500 = 11)
+        //aaaa2000 (200 = 31,300 = 20,400 = 52,500 = 11)
+        //aaaa3000 (300 = 1,400 = 15,500 = 4)
+        
+        //aaaa1001 (0 = 5,100 = 115,200 = 285,300 = 349,400 = 941,500 = 500)
+        //aaaa1002 (0 = 4,100 = 42,200 = 63,300 = 151,400 = 479,500 = 332)
+        //aaaa1003 (0 = 4,100 = 42,200 = 63,300 = 151,400 = 479,500 = 332)
+        //aaaa1004 (0 = 2,100 = 3,200 = 8,300 = 22,400 = 173,500 = 130)
+        //aaaa2000 (0 = 2,100 = 3,200 = 8,300 = 22,400 = 173,500 = 130)
+        //aaaa3000 (300 = 3,400 = 13,500 = 4)
+        
+        
         //  第二步：组特征识别：
         //      日志、
         
@@ -658,10 +693,6 @@
             [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld-识别组T%ld",[resultModels indexOfObject:matchModel]+1,assFeature.pId) left:0 top:0];
         }];
     }
-    
-    //TODOTOMORROW20250623: 以识别2和3为例跑训练：（其实用几张0也能复现，因为识别到0时，却没有打出总结日志）。
-    //  一是组特征经常是()空的没有logDesc吗。
-    //  二是向上一级所有dotSize识别完后应该有个更全面的总结。
     
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {

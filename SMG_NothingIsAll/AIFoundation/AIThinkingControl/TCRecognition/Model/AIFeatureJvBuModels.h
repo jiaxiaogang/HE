@@ -25,9 +25,7 @@
 //存识别结果：List<AIFeatureJvBuModel>
 @property (strong, nonatomic) NSMutableArray *models;
 
-@property (strong, nonatomic) NSMutableDictionary *logDic1;
-@property (strong, nonatomic) NSMutableDictionary *logDic2;
-@property (strong, nonatomic) NSMutableDictionary *logDic3;
+@property (strong, nonatomic) NSMutableDictionary *logDics;
 -(void) updateLogDic:(NSInteger)stepX assPId:(NSInteger)assPId;
 -(void) printLogDic;
 

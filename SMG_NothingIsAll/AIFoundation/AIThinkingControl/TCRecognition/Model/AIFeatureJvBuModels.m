@@ -22,18 +22,30 @@
 }
 
 -(void) updateLogDic:(NSInteger)stepX assPId:(NSInteger)assPId {
-    if (!self.logDic1) self.logDic1 = [NSMutableDictionary new];
-    if (!self.logDic2) self.logDic2 = [NSMutableDictionary new];
-    if (!self.logDic3) self.logDic3 = [NSMutableDictionary new];
-    NSMutableDictionary *logDic = stepX == 1 ? self.logDic1 : stepX == 2 ? self.logDic2 : stepX == 3 ? self.logDic3 : [NSMutableDictionary new];
-    NSNumber *old = [logDic objectForKey:@((assPId / 100) * 100)];
-    [logDic setObject:@(NUMTOOK(old).integerValue + 1) forKey:@((assPId / 100) * 100)];
+    if (!self.logDics) self.logDics = [NSMutableDictionary new];
+    NSMutableDictionary *itemDic = [self.logDics objectForKey:@(stepX)];
+    if (!itemDic) {
+        itemDic = [NSMutableDictionary new];
+        [self.logDics setObject:itemDic forKey:@(stepX)];
+    }
+    NSNumber *old = [itemDic objectForKey:@((assPId / 100) * 100)];
+    [itemDic setObject:@(NUMTOOK(old).integerValue + 1) forKey:@((assPId / 100) * 100)];
 }
 
 -(void) printLogDic {
-    if (self.logDic1.count > 0) NSLog(@"aaaa1 %@",CLEANSTR(self.logDic1));
-    if (self.logDic2.count > 0) NSLog(@"aaaa2 %@",CLEANSTR(self.logDic2));
-    if (self.logDic3.count > 0) NSLog(@"aaaa3 %@",CLEANSTR(self.logDic3));
+    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.logDics.allKeys compareBlock:^double(NSNumber *obj) {
+        return obj.integerValue;
+    }];
+    for (NSNumber *key in sortKeys) {
+        NSMutableDictionary *value = [self.logDics objectForKey:key];
+        NSArray *itemLog = [SMGUtils convertArr:[SMGUtils sortSmall2Big:value.allKeys compareBlock:^double(NSNumber *obj) {
+            return obj.integerValue;
+        }] convertBlock:^id(NSNumber *itemKey) {
+            NSNumber *itemValue = [value objectForKey:itemKey];
+            return STRFORMAT(@"%ld = %ld",itemKey.integerValue,itemValue.integerValue);
+        }];
+        NSLog(@"aaaa%ld %@",key.integerValue,CLEANSTR(itemLog));
+    }
 }
 
 @end
