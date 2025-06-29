@@ -241,6 +241,8 @@
         return @[protoK,dataDic];
     }];
     
+    [decoratorJvBuModel updateLogDic:101 assPId:100];
+    
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
@@ -250,8 +252,10 @@
         //refPorts = ARR_SUB(refPorts, 0, 3);
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
+        [decoratorJvBuModel updateLogDic:102 assPId:100];
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
+            [decoratorJvBuModel updateLogDic:103 assPId:100];
             [decoratorJvBuModel updateLogDic:1001 assPId:refPort.target_p.pointerId];
             // 过滤掉GT，局部特征不识别整体结果。
             if (!refPort.target_p.isJiao && refPort.target_p.isGT) continue;
@@ -298,6 +302,7 @@
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
                 CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
+                [decoratorJvBuModel updateLogDic:104 assPId:100];
                 
                 //22. 根据比例估算下一条protoGV的取值范围。
                 //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
@@ -326,6 +331,7 @@
                 for (NSNumber *item in scales) {
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     CGFloat scale = item.floatValue;
+                    [decoratorJvBuModel updateLogDic:105 assPId:100];
                     //32. 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
                     //x = anchorX + (CGRectGetMidX(curProtoRect) - anchorX) * scale - curProtoRect.size.width * scale * 0.5;
                     CGRect checkCurProtoRect = CGRectMake((1 - scale) * anchorX + defaultCurProtoRect.origin.x * scale,
@@ -355,6 +361,7 @@
                     //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
                     CGFloat curGMatchValue = 1;
                     for (AIKVPointer *assV in curAssGV.content_ps) {
+                        [decoratorJvBuModel updateLogDic:106 assPId:100];
                         CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
                         NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
                         double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
@@ -684,6 +691,47 @@
         //aaaa1004 (0 = 2,100 = 3,200 = 8,300 = 22,400 = 173,500 = 130)
         //aaaa2000 (0 = 2,100 = 3,200 = 8,300 = 22,400 = 173,500 = 130)
         //aaaa3000 (300 = 3,400 = 13,500 = 4)
+        
+        //分析2、如下日志：训练到第十轮时，ref越来越多，自举的越来越多，看来refPorts竞争力不够？后面继续分析下解决方案。
+        /////////第3张训练日志
+        //206 [23:08:04:455 TI AIFeatureJvBuMode..  47] aaaa101 (100 = 51)
+        //207 [23:08:04:456 TI AIFeatureJvBuMode..  47] aaaa102 (100 = 255)
+        //208 [23:08:04:456 TI AIFeatureJvBuMode..  47] aaaa103 (100 = 1032)
+        //209 [23:08:04:456 TI AIFeatureJvBuMode..  47] aaaa104 (100 = 130)
+        //210 [23:08:04:457 TI AIFeatureJvBuMode..  47] aaaa105 (100 = 130)
+        //211 [23:08:04:457 TI AIFeatureJvBuMode..  47] aaaa106 (100 = 342)
+        //
+        //218 [23:08:05:185 TI AIFeatureJvBuMode..  47] aaaa101 (100 = 256)
+        //219 [23:08:05:185 TI AIFeatureJvBuMode..  47] aaaa102 (100 = 1278)
+        //220 [23:08:05:186 TI AIFeatureJvBuMode..  47] aaaa103 (100 = 7000)
+        //
+        //268 [23:08:05:469 TI AIFeatureJvBuMode..  47] aaaa101 (100 = 37)
+        //269 [23:08:05:470 TI AIFeatureJvBuMode..  47] aaaa102 (100 = 185)
+        //270 [23:08:05:470 TI AIFeatureJvBuMode..  47] aaaa103 (100 = 1073)
+        //271 [23:08:05:471 TI AIFeatureJvBuMode..  47] aaaa104 (100 = 440)
+        //272 [23:08:05:471 TI AIFeatureJvBuMode..  47] aaaa105 (100 = 440)
+        //273 [23:08:05:471 TI AIFeatureJvBuMode..  47] aaaa106 (100 = 906)
+
+        
+        /////////第10张训练日志
+        //3673 [23:02:13:507 TI AIFeatureJvBuMode..  47] aaaa101 (100 = 6)
+        //3674 [23:02:13:507 TI AIFeatureJvBuMode..  47] aaaa102 (100 = 72)
+        //3675 [23:02:13:508 TI AIFeatureJvBuMode..  47] aaaa103 (100 = 13002)
+        //3676 [23:02:13:508 TI AIFeatureJvBuMode..  47] aaaa104 (100 = 2519)
+        //3677 [23:02:13:508 TI AIFeatureJvBuMode..  47] aaaa105 (100 = 2519)
+        //3678 [23:02:13:509 TI AIFeatureJvBuMode..  47] aaaa106 (100 = 5358)
+        //
+        //3685 [23:02:15:301 TI AIFeatureJvBuMode..  47] aaaa101 (100 = 256)
+        //3686 [23:02:15:302 TI AIFeatureJvBuMode..  47] aaaa102 (100 = 3040)
+        //3687 [23:02:15:302 TI AIFeatureJvBuMode..  47] aaaa103 (100 = 505702)
+        //
+        //3802 [23:02:21:212 TI AIFeatureJvBuMode..  47] aaaa101 (100 = 1)
+        //3803 [23:02:21:212 TI AIFeatureJvBuMode..  47] aaaa102 (100 = 12)
+        //3804 [23:02:21:212 TI AIFeatureJvBuMode..  47] aaaa103 (100 = 2195)
+        //3805 [23:02:21:213 TI AIFeatureJvBuMode..  47] aaaa104 (100 = 5408)
+        //3806 [23:02:21:213 TI AIFeatureJvBuMode..  47] aaaa105 (100 = 5408)
+        //3807 [23:02:21:213 TI AIFeatureJvBuMode..  47] aaaa106 (100 = 14412)
+
         
         
         //  第二步：组特征识别：
