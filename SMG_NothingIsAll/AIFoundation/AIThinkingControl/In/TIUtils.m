@@ -241,15 +241,15 @@
         return @[protoK,dataDic];
     }];
     
-    [decoratorJvBuModel updateLogDic:101 assPId:100];
-    
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
-        //NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.target_p.pointerId); }]));
-        //refPorts = ARR_SUB(refPorts, 0, 3);
+        
+        //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
+        //NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
+        refPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.3f, 5), 20));
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         [decoratorJvBuModel updateLogDic:102 assPId:100];
