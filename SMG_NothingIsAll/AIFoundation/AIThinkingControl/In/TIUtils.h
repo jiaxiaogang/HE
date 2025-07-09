@@ -21,8 +21,6 @@
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize;
 +(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc;
 
-+(NSArray*) recognitionGroupFeatureV2:(AIGroupFeatureNode*)protoGT;
-
 //MARK:===============================================================
 //MARK:                     < 概念识别 >
 //MARK:===============================================================

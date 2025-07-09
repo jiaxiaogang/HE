@@ -45,6 +45,7 @@
 #import "MathUtils.h"
 #import "XGDebug.h"
 #import "TCDebug.h"
+#import "GroupDebug.h"
 #import "TVUtil_Short.h"
 #import "TVUtil.h"
 #import "HeLogUtil.h"

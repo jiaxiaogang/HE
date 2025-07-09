@@ -252,11 +252,11 @@
         refPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.3f, 5), 20));
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
-        [decoratorJvBuModel updateLogDic:102 assPId:100];
+        [decoratorJvBuModel.debug updateLogDic:102 assPId:100];
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
-            [decoratorJvBuModel updateLogDic:103 assPId:100];
-            [decoratorJvBuModel updateLogDic:1001 assPId:refPort.target_p.pointerId];
+            [decoratorJvBuModel.debug updateLogDic:103 assPId:100];
+            [decoratorJvBuModel.debug updateLogDic:1001 assPId:refPort.target_p.pointerId];
             // 过滤掉GT，局部特征不识别整体结果。
             if (!refPort.target_p.isJiao && refPort.target_p.isGT) continue;
             
@@ -291,7 +291,7 @@
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffValue.floatValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-            [decoratorJvBuModel updateLogDic:1002 assPId:refPort.target_p.pointerId];
+            [decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < assT.count; i++) {
@@ -302,7 +302,7 @@
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
                 CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
-                [decoratorJvBuModel updateLogDic:104 assPId:100];
+                [decoratorJvBuModel.debug updateLogDic:104 assPId:100];
                 
                 //22. 根据比例估算下一条protoGV的取值范围。
                 //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
@@ -331,7 +331,7 @@
                 for (NSNumber *item in scales) {
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     CGFloat scale = item.floatValue;
-                    [decoratorJvBuModel updateLogDic:105 assPId:100];
+                    [decoratorJvBuModel.debug updateLogDic:105 assPId:100];
                     //32. 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
                     //x = anchorX + (CGRectGetMidX(curProtoRect) - anchorX) * scale - curProtoRect.size.width * scale * 0.5;
                     CGRect checkCurProtoRect = CGRectMake((1 - scale) * anchorX + defaultCurProtoRect.origin.x * scale,
@@ -361,7 +361,7 @@
                     //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
                     CGFloat curGMatchValue = 1;
                     for (AIKVPointer *assV in curAssGV.content_ps) {
-                        [decoratorJvBuModel updateLogDic:106 assPId:100];
+                        [decoratorJvBuModel.debug updateLogDic:106 assPId:100];
                         CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
                         NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
                         double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
@@ -403,12 +403,12 @@
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //44. 单特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到单特征最低标准）。
-            [decoratorJvBuModel updateLogDic:1003 assPId:model.assT.pId];
+            [decoratorJvBuModel.debug updateLogDic:1003 assPId:model.assT.pId];
             if (model.bestGVs.count <= 4) continue;
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [resultModel.models addObject:model];
-            [decoratorJvBuModel updateLogDic:1004 assPId:model.assT.pId];
+            [decoratorJvBuModel.debug updateLogDic:1004 assPId:model.assT.pId];
             
             //52. 有效单特征条目后，才计为防重（关掉，如果一张图有多个3也得能识别）。
             //[excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
@@ -430,7 +430,7 @@
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize {
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in resultModel.models) {
-        [resultModel updateLogDic:2000 assPId:model.assT.pId];
+        [resultModel.debug updateLogDic:2000 assPId:model.assT.pId];
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
     
@@ -472,7 +472,7 @@
 +(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
     for (AIFeatureJvBuModel *model in resultModel.models) {
-        [resultModel updateLogDic:3000 assPId:model.assT.pId];
+        [resultModel.debug updateLogDic:3000 assPId:model.assT.pId];
         [model run4BestGvsAtProtoTRect];
     }
     

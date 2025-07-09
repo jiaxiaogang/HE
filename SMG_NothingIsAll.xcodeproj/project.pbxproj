@@ -80,6 +80,7 @@
 		0843AADF281419C2002B9AA9 /* XGDebugModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0843AADE281419C2002B9AA9 /* XGDebugModel.m */; };
 		0843AAE228142A49002B9AA9 /* XGDebugTV.m in Sources */ = {isa = PBXBuildFile; fileRef = 0843AAE128142A49002B9AA9 /* XGDebugTV.m */; };
 		0843AAE5281436EF002B9AA9 /* XGLabCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 0843AAE4281436EF002B9AA9 /* XGLabCell.m */; };
+		08457E322E1DE77100E3C39A /* GroupDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 08457E312E1DE77100E3C39A /* GroupDebug.m */; };
 		0846125329AA20C400661CC7 /* AIFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0846125229AA20C400661CC7 /* AIFilter.m */; };
 		08497A9921C32E17009E7D69 /* AIAlgNodeManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 08497A9821C32E17009E7D69 /* AIAlgNodeManager.m */; };
 		084B4B0824433AA900FB3670 /* ShortMatchManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 084B4B0724433AA900FB3670 /* ShortMatchManager.m */; };
@@ -392,6 +393,8 @@
 		0843AAE128142A49002B9AA9 /* XGDebugTV.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = XGDebugTV.m; sourceTree = "<group>"; };
 		0843AAE3281436EF002B9AA9 /* XGLabCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XGLabCell.h; sourceTree = "<group>"; };
 		0843AAE4281436EF002B9AA9 /* XGLabCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = XGLabCell.m; sourceTree = "<group>"; };
+		08457E302E1DE77100E3C39A /* GroupDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GroupDebug.h; sourceTree = "<group>"; };
+		08457E312E1DE77100E3C39A /* GroupDebug.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GroupDebug.m; sourceTree = "<group>"; };
 		0846125129AA20C400661CC7 /* AIFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIFilter.h; sourceTree = "<group>"; };
 		0846125229AA20C400661CC7 /* AIFilter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIFilter.m; sourceTree = "<group>"; };
 		08497A9721C32E17009E7D69 /* AIAlgNodeManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIAlgNodeManager.h; sourceTree = "<group>"; };
@@ -1113,6 +1116,15 @@
 				0808D33F22B6F73D00D383BA /* NVLineView.m */,
 			);
 			path = View;
+			sourceTree = "<group>";
+		};
+		08457E2F2E1DE75D00E3C39A /* GroupDebug */ = {
+			isa = PBXGroup;
+			children = (
+				08457E302E1DE77100E3C39A /* GroupDebug.h */,
+				08457E312E1DE77100E3C39A /* GroupDebug.m */,
+			);
+			path = GroupDebug;
 			sourceTree = "<group>";
 		};
 		08497A9021C3228E009E7D69 /* AIAlgNodeManager */ = {
@@ -1930,6 +1942,7 @@
 		88BC09D320B4EAA70006ABEF /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				08457E2F2E1DE75D00E3C39A /* GroupDebug */,
 				080DF69A2DBB0C51000EC837 /* ImgTrainer */,
 				0881DC1828B794B000408986 /* XGConfig */,
 				08E084A828B128900070B7F7 /* TCDebug */,
@@ -2251,6 +2264,7 @@
 				8822852020F58BDA009884DC /* AINetDirectionReference.m in Sources */,
 				084DF15A2DCF2271001FC42B /* DDic.m in Sources */,
 				081BD08825B94F1B003C3038 /* ReasonDemandModel.m in Sources */,
+				08457E322E1DE77100E3C39A /* GroupDebug.m in Sources */,
 				08F738071F7C714F005EAD56 /* AISqlPointer.m in Sources */,
 				0886889E26479A7F00B7C75D /* AINoRepeatRun.m in Sources */,
 				08AF454A1E97D0B500377887 /* main.m in Sources */,
