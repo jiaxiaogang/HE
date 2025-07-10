@@ -447,7 +447,7 @@
     //53. 排序
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * obj.matchDegree * obj.matchAssProtoRatio * obj.matchAssRatio * obj.matchDiffValue;
+        return obj.matchValue * /*obj.matchDegree * obj.matchAssProtoRatio **/ obj.matchAssRatio * obj.matchDiffValue;
     }];
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
@@ -530,9 +530,9 @@
         //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
         //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
         
-        //52. debug
-        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t符合度:%.1f\t健全度:%.1f\t匹配率:%.1f",
-                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchDegree,model.matchAssProtoRatio,model.matchAssRatio);
+        //52. debug (\t符合度:%.1f\t健全度:%.1f)
+        if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色差:%.1f",
+                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue);
         [SMGUtils runByMainQueue:^{
             //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"识别单T%ld(%ld/%ld)",model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
@@ -540,6 +540,7 @@
         //TODOTOMORROW20250710: 调试单特征识别竞争浮现。
         //分析1、如下日志中，匹配度并没有随着训练提升。
         //疑点：难道是准确的没有激活机会吗？
+        //调试记录：经查，看起来没一个准的，准的没激活机会吗？调试一下准确的单特征的strong变化过程。
         //============ 0-2 ============
         //18 [08:15:46:855 TI           TIUtils.m1511] 单特征识别结果总结：(Mnist0=1.00 )
         //21 [08:15:46:892 TI           TIUtils.m 535] 单特征识别结果:T232{Mnist0 = 1.00;}     匹配条数:5/ass45    匹配度:0.38    符合度:1.0    健全度:5.0    匹配率:0.1
