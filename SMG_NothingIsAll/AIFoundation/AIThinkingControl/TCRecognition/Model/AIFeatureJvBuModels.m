@@ -13,7 +13,6 @@
 +(id) new:(NSInteger)hash {
     AIFeatureJvBuModels *result = [AIFeatureJvBuModels new];
     result.protoTHash = hash;
-    result.debug = [GroupDebug new];
     return result;
 }
 
