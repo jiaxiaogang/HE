@@ -176,7 +176,7 @@
  */
 +(void) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
     // 数据准备
-    NSNumber *beginDiffValue = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
+    NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
     
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
@@ -288,7 +288,13 @@
             
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
-            [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffValue.floatValue]];
+            
+            // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
+            AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:ARR_INDEX(assT.content_ps, beginAssIndex) tDS:ds];
+            CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
+            
+            // 收集首条bestGV
+            [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
             
@@ -354,11 +360,10 @@
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     if (!ARRISOK(subDots)) continue;
                     NSDictionary *protoGVIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-                    NSNumber *diffValue = [protoGVIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
                     
                     //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
-                    CGFloat curGMatchValue = 1;
+                    CGFloat curGMatchValue = 1, curDiffMatchValue = 0;
                     for (AIKVPointer *assV in curAssGV.content_ps) {
                         //[decoratorJvBuModel.debug updateLogDic:106 assPId:100];
                         CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
@@ -367,12 +372,15 @@
                         AIValueInfo *vInfo = [vInfoCache objectForKey:assV.dataSource];
                         CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
                         curGMatchValue *= vMatchValue;
+                        
+                        // 记录diff匹配度。
+                        if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
                     }
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     
                     //35. 保留最匹配的一条。
                     if (!best || NUMTOOK(best.v1).floatValue < curGMatchValue) {
-                        best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale) v4:diffValue];
+                        best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale) v4:@(curDiffMatchValue)];
                     }
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 }

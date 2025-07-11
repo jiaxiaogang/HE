@@ -1259,4 +1259,23 @@
     return B;
 }
 
+/**
+ *  MARK:--------------------取组码的diff值--------------------
+ *  @param tDS : 当前单特征的ds
+ */
++(AIKVPointer*) getDiffV:(AIKVPointer*)gv_p tDS:(NSString*)tDS {
+    AIGroupValueNode *gv = [SMGUtils searchNode:gv_p];
+    return [SMGUtils filterSingleFromArr:gv.content_ps checkValid:^BOOL(AIKVPointer *item) {
+        return [item.dataSource isEqual:STRFORMAT(@"%@_diff",tDS)];
+    }];
+}
+
+/**
+ *  MARK:--------------------根据protoDiff值和assDiff值，计算其匹配度--------------------
+ */
++(CGFloat) diffMatchValue:(CGFloat)protoDiffData assDiffV:(AIKVPointer*)assDiffV vInfo:(AIValueInfo*)vInfo {
+    double assDiffData = [NUMTOOK([AINetIndex getData:assDiffV]) doubleValue];
+    return [AIAnalyst compareCansetValue:assDiffData protoV:protoDiffData at:assDiffV.algsType ds:assDiffV.dataSource isOut:assDiffV.isOut vInfo:vInfo];
+}
+
 @end
