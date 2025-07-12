@@ -44,7 +44,7 @@
     //4. 匹配率
     self.matchAssRatio = self.bestGVs.count / (float)self.assT.count;
     
-    //5. 信息量
+    //5. 色似度
     self.matchDiffValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.diffValue;
     }] / self.bestGVs.count;

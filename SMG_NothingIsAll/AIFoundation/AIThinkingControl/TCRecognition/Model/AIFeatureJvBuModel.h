@@ -30,7 +30,7 @@
 @property (assign, nonatomic) CGFloat matchAssProtoRatio;
 //用bestGVs条数/assT总长度=得出匹配率。
 @property (assign, nonatomic) CGFloat matchAssRatio;
-//用bestGVs每一条diff求平均得出整个信息量（避免越来越趋向于识别出纯色无意义的特征结果，有时单T识别结果是全是纯黑的gvs）。
+//色似度：信息量-用bestGVs每一条diff求平均得出整个信息量（避免越来越趋向于识别出纯色无意义的特征结果，有时单T识别结果是全是纯黑的gvs）。
 @property (assign, nonatomic) CGFloat matchDiffValue;
 
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
