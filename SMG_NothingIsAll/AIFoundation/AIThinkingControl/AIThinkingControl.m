@@ -215,6 +215,8 @@ static AIThinkingControl *_instance;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     DDic *excepts = [DDic new];
+    NSMutableArray *allSTResult4Log = [NSMutableArray new];
+    NSMutableArray *allGTResult4Log = [NSMutableArray new];
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
@@ -258,11 +260,19 @@ static AIThinkingControl *_instance;
         //22. 下一层粒度（再/1.3倍）。
         if (ARRISOK(jvBuModel.models)) {
             NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
-            [self commitInputWithSplitV2_Single_DotSizeV2:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
+            NSArray *zenTiModels = [self commitInputWithSplitV2_Single_DotSizeV2:at ds:ds logDesc:logDesc jvBuModel:jvBuModel dotSize:dotSize colorDic:colorDic];
+            [allGTResult4Log addObjectsFromArray:zenTiModels];
         }
         dotSize /= 1.3f;
         //[jvBuModel.debug printLogDic];
+        [allSTResult4Log addObjectsFromArray:jvBuModel.models];
     }
+    [TIUtils printLogDescRate:[SMGUtils convertArr:allSTResult4Log convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT.p;
+    }] protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc)];
+    [TIUtils printLogDescRate:[SMGUtils convertArr:allGTResult4Log convertBlock:^id(AIFeatureZenTiModel *obj) {
+        return obj.assT;
+    }] protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc)];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
@@ -274,7 +284,7 @@ static AIThinkingControl *_instance;
  *      2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
  *      2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
  */
--(void) commitInputWithSplitV2_Single_DotSizeV2:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
+-(NSArray*) commitInputWithSplitV2_Single_DotSizeV2:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel dotSize:(CGFloat)dotSize colorDic:(NSDictionary*)colorDic {
     // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
     [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
@@ -296,6 +306,7 @@ static AIThinkingControl *_instance;
         AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
         [AIAnalogy analogyGroupFeatureV3:protoT ass:assGT zenTiModel:model];
     }
+    return zenTiModel;
 }
 
 /**
