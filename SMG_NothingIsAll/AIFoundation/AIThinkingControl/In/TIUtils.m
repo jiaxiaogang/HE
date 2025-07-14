@@ -469,11 +469,6 @@
     
     //60. 更新赋值回去。
     resultModel.models = [[NSMutableArray alloc] initWithArray:validModels];
-    
-    //61. debugLog
-    [TIUtils printLogDescRate:[SMGUtils convertArr:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT.p;
-    }] protoLogDesc:nil prefix:@"item粒度层 单特征"];
 }
 
 +(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
@@ -542,9 +537,14 @@
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue);
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"识别单T%ld(%ld/%ld)",model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[resultModel.models indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
     }
+    
+    //61. debugLog
+    [TIUtils printLogDescRate:[SMGUtils convertArr:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT.p;
+    }] protoLogDesc:nil prefix:@"item粒度层 单特征"];
     return protoT;
 }
 
@@ -679,7 +679,7 @@
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld-识别组T%ld",[resultModels indexOfObject:matchModel]+1,assFeature.pId) left:0 top:0];
+            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld-识别组T%ld",[resultModels indexOfObject:matchModel]+1,assFeature.pId) left:0 top:0];
         }];
     }
     

@@ -29,10 +29,11 @@
 
     //lab
     self.lab = [[UILabel alloc] initWithFrame:CGRectMake(0, 100, 100, 15)];
-    [self.lab setFont:[UIFont boldSystemFontOfSize:6]];
     [self.lab setBackgroundColor:UIColor.blueColor];
     [self.lab setTextColor:UIColor.whiteColor];
     [self.lab setTextAlignment:NSTextAlignmentCenter];
+    [self.lab setAdjustsFontSizeToFitWidth:true]; // 改为自适应宽度，避免6号字太小看不清
+    self.lab.minimumScaleFactor = 0.5f; // 设置最小缩放比例，避免字体过小看不清
     [self addSubview:self.lab];
     
     //透明图层
