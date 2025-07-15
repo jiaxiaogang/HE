@@ -471,7 +471,7 @@
     resultModel.models = [[NSMutableArray alloc] initWithArray:validModels];
 }
 
-+(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
++(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc dotSize:(CGFloat)dotSize {
     // 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
     for (AIFeatureJvBuModel *model in resultModel.models) {
         //[resultModel.debug updateLogDic:3000 assPId:model.assT.pId];
@@ -544,7 +544,7 @@
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
-    }] protoLogDesc:nil prefix:@"item粒度层 单特征"];
+    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 单特征",dotSize)];
     return protoT;
 }
 
@@ -554,7 +554,7 @@
  *  @version
  *      2025.05.07: v2-支持自适应粒度。
  */
-+(NSArray*) recognitionGroupFeatureV3:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
++(NSArray*) recognitionGroupFeatureV3:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels dotSize:(CGFloat)dotSize {
     //1. 数据准备
     AIFeatureNode *protoFeature = [SMGUtils searchNode:protoFeature_p];
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
@@ -686,7 +686,7 @@
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
         return obj.assT;
-    }] protoLogDesc:nil prefix:@"item粒度层 组特征"];
+    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 组特征",dotSize)];
     return resultModels;
 }
 
@@ -785,7 +785,7 @@
                 [self recognitionFeatureV2_Step2:jvBuModel dotSize:1];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-                NSArray *zenTiResult = [self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.models];
+                NSArray *zenTiResult = [self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.models dotSize:1];
                 return [SMGUtils collectArrA:jvBuModel.models arrB:zenTiResult];
             }];
         }

@@ -289,7 +289,7 @@ static AIThinkingControl *_instance;
     [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step3:jvBuModel colorDic:colorDic at:at ds:ds logDesc:logDesc];
+    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step3:jvBuModel colorDic:colorDic at:at ds:ds logDesc:logDesc dotSize:dotSize];
     
     // 局部特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.models) {
@@ -298,7 +298,7 @@ static AIThinkingControl *_instance;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.models];
+    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.models dotSize:dotSize];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 组特征类比：借助rectItems来类比。
