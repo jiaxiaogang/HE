@@ -458,14 +458,60 @@
         return obj.matchValue * /*obj.matchDegree * obj.matchAssProtoRatio **/ obj.matchAssRatio * obj.matchDiffValue;
     }];
     
+    for (AIFeatureJvBuModel *model in validModels) {
+        NSLog(@"单特征淘汰前:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@",
+                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]));
+    }
+    NSLog(@"");
+    //TODOTOMORROW20250717: 调整竞争因子参数。
+    //1. 色似度都太低了。
+    //2. 匹配度也太低了。
+    //3. 感觉当前算法，并没有把准确的搞出来，得查下是不是step1的时候过滤太狠了，过滤掉了
+    //思路1：如果我训练了0三张，返过来再跑第1张，能不能成功识别到？
+    //思路2：先把与固定粒度一样的那个粒度跑一下试下？
+    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
+    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.63 = 0.17 {Mnist0 = 2.76;}
+    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.63 = 0.16 {Mnist0 = 2.76;}
+    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
+    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
+    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.24    匹配率:1.0    色似度:0.60 = 0.14 {Mnist0 = 2.76;}
+    //单特征淘汰前:T1253     匹配条数:5/ass23    匹配度:0.56    匹配率:0.2    色似度:0.80 = 0.10 {Mnist1 = 1.00;}
+    //单特征淘汰前:T1218     匹配条数:5/ass36    匹配度:0.53    匹配率:0.1    色似度:0.73 = 0.05 {Mnist0 = 1.00;}
+    //单特征淘汰前:T1189     匹配条数:7/ass45    匹配度:0.25    匹配率:0.2    色似度:0.62 = 0.02 {Mnist0 = 1.00;}
+    //单特征淘汰前:T1189     匹配条数:7/ass45    匹配度:0.25    匹配率:0.2    色似度:0.62 = 0.02 {Mnist0 = 1.00;}
+    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.27    匹配率:0.1    色似度:0.67 = 0.02 {Mnist0 = 1.00;}
+    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.27    匹配率:0.1    色似度:0.63 = 0.02 {Mnist0 = 1.00;}
+    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.25    匹配率:0.1    色似度:0.63 = 0.02 {Mnist0 = 1.00;}
+    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.24    匹配率:0.1    色似度:0.60 = 0.02 {Mnist0 = 1.00;}
+    //
+    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
+    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.63 = 0.17 {Mnist0 = 2.76;}
+    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.63 = 0.16 {Mnist0 = 2.76;}
+    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
+    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
+    //
+    //单特征防重后:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
+    
+    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
+    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.3f, 5), 20));
+    
+    for (AIFeatureJvBuModel *model in validModels) {
+        NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@",
+                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]));
+    }
+    NSLog(@"");
+    
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
     validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
     }];
     
-    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
-    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.5f, 10), 20));
+    for (AIFeatureJvBuModel *model in validModels) {
+        NSLog(@"单特征防重后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@",
+                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]));
+    }
+    NSLog(@"");
     
     //60. 更新赋值回去。
     resultModel.models = [[NSMutableArray alloc] initWithArray:validModels];

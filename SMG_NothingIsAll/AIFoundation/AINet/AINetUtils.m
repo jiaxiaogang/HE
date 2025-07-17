@@ -1255,7 +1255,7 @@
     // 再根据atA中的位置，把B也平移到A中。
     B.origin.x = atA.origin.x - atB.origin.x;
     B.origin.y = atA.origin.y - atB.origin.y;
-    NSLog(@"getBAtA: %@",Rect2Str(B));
+    // NSLog(@"getBAtA: %@",Rect2Str(B));
     return B;
 }
 
