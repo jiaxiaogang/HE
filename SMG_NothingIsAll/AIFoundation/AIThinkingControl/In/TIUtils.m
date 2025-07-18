@@ -459,16 +459,17 @@
     }];
     
     for (AIFeatureJvBuModel *model in validModels) {
-        NSLog(@"单特征淘汰前:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@",
-                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]));
+        NSLog(@"单特征淘汰前:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f",
+                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue);
     }
     NSLog(@"");
     //TODOTOMORROW20250717: 调整竞争因子参数。
     //1. 色似度都太低了。
     //2. 匹配度也太低了。
-    //3. 感觉当前算法，并没有把准确的搞出来，得查下是不是step1的时候过滤太狠了，过滤掉了
+    //3. 感觉当前算法，并没有把准确的搞出来，得查下是不是step1的时候过滤太狠了，过滤掉了（加训几张后竞争值有明显更高的浮现了，没啥问题）。
     //思路1：如果我训练了0三张，返过来再跑第1张，能不能成功识别到？
-    //思路2：先把与固定粒度一样的那个粒度跑一下试下？
+    //思路2：先把与固定粒度一样的那个粒度跑一下试下？（没有固定的粒度，只有更接近的比例）
+    //思路3：用一模一样的手写0，多次跑试下，这样很方便观察识别过程中有什么细节问题。
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.63 = 0.17 {Mnist0 = 2.76;}
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.63 = 0.16 {Mnist0 = 2.76;}
@@ -497,8 +498,8 @@
     validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.3f, 5), 20));
     
     for (AIFeatureJvBuModel *model in validModels) {
-        NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@",
-                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]));
+        NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f",
+                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue);
     }
     NSLog(@"");
     
@@ -508,8 +509,8 @@
     }];
     
     for (AIFeatureJvBuModel *model in validModels) {
-        NSLog(@"单特征防重后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@",
-                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]));
+        NSLog(@"单特征防重后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f",
+                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue);
     }
     NSLog(@"");
     

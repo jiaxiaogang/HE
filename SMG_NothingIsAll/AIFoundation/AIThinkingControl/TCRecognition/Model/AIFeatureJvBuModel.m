@@ -48,6 +48,12 @@
     self.matchDiffValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.diffValue;
     }] / self.bestGVs.count;
+    
+    //6. 视角匹配度。
+    self.matchRectValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
+        NSValue *assRect = ARR_INDEX(self.assT.rects, obj.assIndex);
+        return obj.bestGVAtProtoTRect.size.width / assRect.CGRectValue.size.width;
+    }] / self.bestGVs.count;
 }
 
 -(void) run4BestGvsAtProtoTRect {
