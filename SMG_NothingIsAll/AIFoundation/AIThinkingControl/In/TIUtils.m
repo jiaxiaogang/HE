@@ -470,6 +470,7 @@
     //思路1：如果我训练了0三张，返过来再跑第1张，能不能成功识别到？
     //思路2：先把与固定粒度一样的那个粒度跑一下试下？（没有固定的粒度，只有更接近的比例）
     //思路3：用一模一样的手写0，多次跑试下，这样很方便观察识别过程中有什么细节问题。
+    //思路4：把单特征的综合竞争值，也计算到组特征识别竞争里。
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.63 = 0.17 {Mnist0 = 2.76;}
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.63 = 0.16 {Mnist0 = 2.76;}
@@ -495,7 +496,8 @@
     
     //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
     //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.3f, 5), 20));
+    //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.3f, 20), 40));
     
     for (AIFeatureJvBuModel *model in validModels) {
         NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f",
@@ -642,6 +644,9 @@
     //24. 计算：健全度
     [zenTiModel run4MatchRatio];
     
+    //25. 计算：综合单特征竞争分。
+    [zenTiModel run4ModelZonHeMatchByJvBu];
+    
     //31. 无效过滤器1、位置符合度=0排除掉。
     NSArray *resultModels = [SMGUtils filterArr:zenTiModel.models checkValid:^BOOL(AIFeatureZenTiModel *item) {
         return item.modelMatchDegree > 0 && item.modelMatchValue > 0;
@@ -652,7 +657,7 @@
     //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
     //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
     resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchValue * obj.matchRatio;
+        return obj.modelMatchDegree * obj.modelMatchValue * obj.matchRatio * obj.modelZonHeMatchByJvBu;
     }], 0, resultModels.count * 0.5);
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。

@@ -216,6 +216,14 @@
     self.matchRatio = assT.count > 0 ? self.rectItems.count / (float)assT.count : 0;
 }
 
+-(void) run4ModelZonHeMatchByJvBu {
+    //4. 求出单特征综合竞争分。
+    self.modelZonHeMatchByJvBu = self.rectItems.count > 0 ? [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *item) {
+        return item.fromItemT.matchValue * item.fromItemT.matchAssRatio * item.fromItemT.matchDiffValue;
+    }] : 0;
+}
+
+
 //MARK:===============================================================
 //MARK:                     < PrivateMethod >
 //MARK:===============================================================

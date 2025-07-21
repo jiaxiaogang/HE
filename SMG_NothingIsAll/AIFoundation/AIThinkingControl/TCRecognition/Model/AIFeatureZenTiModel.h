@@ -72,4 +72,10 @@
 @property (assign, nonatomic) CGFloat matchRatio;//健全度
 -(void) run4MatchRatio;
 
+//MARK:===============================================================
+//MARK:                     < 单特征综合竞争分 >
+//MARK:===============================================================
+@property (assign, nonatomic) CGFloat modelZonHeMatchByJvBu;//单特征综合竞争分。
+-(void) run4ModelZonHeMatchByJvBu;
+
 @end

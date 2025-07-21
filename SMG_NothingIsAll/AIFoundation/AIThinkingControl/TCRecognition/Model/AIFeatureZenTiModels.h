@@ -35,5 +35,6 @@
 -(void) run4MatchValueV2:(AIKVPointer*)protoT;
 -(void) run4StrongRatio;
 -(void) run4MatchRatio;
+-(void) run4ModelZonHeMatchByJvBu;
 
 @end
