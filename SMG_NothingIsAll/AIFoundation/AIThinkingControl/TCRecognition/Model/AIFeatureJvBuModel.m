@@ -63,4 +63,8 @@
     }
 }
 
+-(CGFloat) getZonHeMatch {
+    return self.matchValue * self.matchAssRatio * self.matchDiffValue;
+}
+
 @end

@@ -455,7 +455,8 @@
     //53. 排序
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * /*obj.matchDegree * obj.matchAssProtoRatio **/ obj.matchAssRatio * obj.matchDiffValue;
+        //return obj.matchValue * /*obj.matchDegree * obj.matchAssProtoRatio **/ obj.matchAssRatio * obj.matchDiffValue;
+        return obj.getZonHeMatch;
     }];
     
     for (AIFeatureJvBuModel *model in validModels) {
