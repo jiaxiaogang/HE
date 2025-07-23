@@ -472,6 +472,7 @@
     //思路2：先把与固定粒度一样的那个粒度跑一下试下？（没有固定的粒度，只有更接近的比例）
     //思路3：用一模一样的手写0，多次跑试下，这样很方便观察识别过程中有什么细节问题。
     //思路4：把单特征的综合竞争值，也计算到组特征识别竞争里。
+    //
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.63 = 0.17 {Mnist0 = 2.76;}
     //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.63 = 0.16 {Mnist0 = 2.76;}
@@ -501,21 +502,17 @@
     validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.3f, 20), 40));
     
     for (AIFeatureJvBuModel *model in validModels) {
-        NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f",
-                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue);
+        [model run4BestGvsAtProtoTRect];
+        NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f %@",
+                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue,Rect2Str(model.bestGVsAtProtoTRect));
     }
     NSLog(@"");
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
-    validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT.p;
-    }];
-    
-    for (AIFeatureJvBuModel *model in validModels) {
-        NSLog(@"单特征防重后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f",
-                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue);
-    }
-    NSLog(@"");
+    //2025.07.23: 单特征不该防重，在一个手写8上面，有四处右下线，但防重后就只剩一个了，导致单特征识别结果不全面（实测过，很多单特征识别结果中同一个单特征，它们的rect其实也都是不一样的）。
+    //validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) {
+    //    return obj.assT.p;
+    //}];
     
     //60. 更新赋值回去。
     resultModel.models = [[NSMutableArray alloc] initWithArray:validModels];
@@ -657,6 +654,7 @@
     //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
     //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
     //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
+    //2025.07.23: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
     resultModels = ARR_SUB([SMGUtils sortBig2Small:resultModels compareBlock:^double(AIFeatureZenTiModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchValue * obj.matchRatio * obj.modelZonHeMatchByJvBu;
     }], 0, resultModels.count * 0.5);
