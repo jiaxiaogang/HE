@@ -218,9 +218,9 @@
 
 -(void) run4ModelZonHeMatchByJvBu {
     //4. 求出单特征综合竞争分。
-    self.modelZonHeMatchByJvBu = self.rectItems.count > 0 ? [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *item) {
+    self.modelZonHeMatchByJvBu = self.rectItems.count == 0 ? 0 : [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *item) {
         return item.fromItemT.getZonHeMatch;
-    }] : 0;
+    }] / (float)self.rectItems.count;
 }
 
 
