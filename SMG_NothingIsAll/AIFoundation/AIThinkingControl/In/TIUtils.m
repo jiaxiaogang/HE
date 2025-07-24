@@ -434,7 +434,7 @@
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
 }
 
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel dotSize:(CGFloat)dotSize {
++(AIFeatureNode*) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc dotSize:(CGFloat)dotSize {
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in resultModel.models) {
         //[resultModel.debug updateLogDic:2000 assPId:model.assT.pId];
@@ -459,11 +459,11 @@
         return obj.getZonHeMatch;
     }];
     
-    for (AIFeatureJvBuModel *model in validModels) {
-        NSLog(@"单特征淘汰前:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f",
-                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue);
-    }
-    NSLog(@"");
+    //for (AIFeatureJvBuModel *model in validModels) {
+    //    NSLog(@"单特征淘汰前:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f %@",
+    //                                     model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue,Rect2Str(model.bestGVsAtProtoTRect));
+    //}
+    //NSLog(@"");
     //TODOTOMORROW20250717: 识别不准确问题（会把手写0识别成1）：
     //思路0：调整竞争因子参数：
     //  1、调试：经测，色似度都太低了 & 匹配度也太低了
@@ -502,14 +502,14 @@
     //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
     //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
     //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.3f, 20), 40));
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.models.count * 0.8f, 20), 100));
     
-    for (AIFeatureJvBuModel *model in validModels) {
-        [model run4BestGvsAtProtoTRect];
-        NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f %@",
-                                         model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue,Rect2Str(model.bestGVsAtProtoTRect));
-    }
-    NSLog(@"");
+    //for (AIFeatureJvBuModel *model in validModels) {
+    //    [model run4BestGvsAtProtoTRect];
+    //    NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f %@",
+    //                                     model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue,Rect2Str(model.bestGVsAtProtoTRect));
+    //}
+    //NSLog(@"");
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
     //2025.07.23: 单特征不该防重，在一个手写8上面，有四处右下线，但防重后就只剩一个了，导致单特征识别结果不全面（实测过，很多单特征识别结果中同一个单特征，它们的rect其实也都是不一样的）。
@@ -519,14 +519,6 @@
     
     //60. 更新赋值回去。
     resultModel.models = [[NSMutableArray alloc] initWithArray:validModels];
-}
-
-+(AIFeatureNode*) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc dotSize:(CGFloat)dotSize {
-    // 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
-    for (AIFeatureJvBuModel *model in resultModel.models) {
-        //[resultModel.debug updateLogDic:3000 assPId:model.assT.pId];
-        [model run4BestGvsAtProtoTRect];
-    }
     
     // 从protoColorDic实时计算：构建protoT所需的gvModels。
     // 说明：这里生成protoT有三种方案：
@@ -587,7 +579,7 @@
         if (Log4RecogDesc || resultModel.models.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue);
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[resultModel.models indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[resultModel.models indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
     }
     
@@ -682,7 +674,7 @@
         //assFeature.zenTiModel = matchModel;
         
         //43. debug
-        if (Log4RecogDesc || resultModels.count > 0) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t健全度:%.2f\t局部综合匹配度:%.2f",
+        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t健全度:%.2f\t局部综合匹配度:%.2f",
                                                            matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
                                                            matchModel.rectItems.count,assFeature.count,protoFeature.count,
                                                            matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.matchRatio,matchModel.modelZonHeMatchByJvBu);
@@ -733,7 +725,7 @@
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld-识别组T%ld",[resultModels indexOfObject:matchModel]+1,assFeature.pId) left:0 top:0];
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld-识别组T%ld",[resultModels indexOfObject:matchModel]+1,assFeature.pId) left:0 top:0];
         }];
     }
     
@@ -836,7 +828,7 @@
                 //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
                 //a. 通过组码做单特征识别。
                 AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel dotSize:1];
+                [self recognitionFeatureV2_Step2:jvBuModel colorDic:nil at:nil ds:nil logDesc:nil dotSize:1];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = [self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.models dotSize:1];

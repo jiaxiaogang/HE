@@ -268,13 +268,11 @@ static AIThinkingControl *_instance;
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
     // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
-    [TIUtils recognitionFeatureV2_Step2:jvBuModel dotSize:dotSize];
-    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
     // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
     // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
-    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step3:jvBuModel colorDic:colorDic at:at ds:ds logDesc:logDesc dotSize:dotSize];
+    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step2:jvBuModel colorDic:colorDic at:at ds:ds logDesc:logDesc dotSize:dotSize];
+    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 局部特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.models) {

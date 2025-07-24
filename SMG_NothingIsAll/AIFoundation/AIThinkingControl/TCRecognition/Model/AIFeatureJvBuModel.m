@@ -54,6 +54,9 @@
         NSValue *assRect = ARR_INDEX(self.assT.rects, obj.assIndex);
         return obj.bestGVAtProtoTRect.size.width / assRect.CGRectValue.size.width;
     }] / self.bestGVs.count;
+    
+    //7. 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
+    [self run4BestGvsAtProtoTRect];
 }
 
 -(void) run4BestGvsAtProtoTRect {
