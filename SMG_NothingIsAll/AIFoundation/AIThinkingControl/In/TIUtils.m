@@ -256,8 +256,9 @@
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
             //[decoratorJvBuModel.debug updateLogDic:1001 assPId:refPort.target_p.pointerId];
-            // 过滤掉GT，局部特征不识别整体结果。
-            if (!refPort.target_p.isJiao && refPort.target_p.isGT) continue;
+            //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
+            //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
+            if (refPort.target_p.isGT) continue;
             
             // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
             CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
