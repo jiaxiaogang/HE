@@ -675,10 +675,12 @@
         //assFeature.zenTiModel = matchModel;
         
         //43. debug
-        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t健全度:%.2f\t局部综合匹配度:%.2f",
-                                                           matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
-                                                           matchModel.rectItems.count,assFeature.count,protoFeature.count,
-                                                           matchModel.modelMatchValue,matchModel.modelMatchDegree,matchModel.matchRatio,matchModel.modelZonHeMatchByJvBu);
+        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t健全度:%.2f(%ld/%ld)\t局部综合匹配度:%.2f",
+                                         matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
+                                         matchModel.rectItems.count,assFeature.count,protoFeature.count,
+                                         matchModel.modelMatchValue,matchModel.modelMatchDegree,
+                                         matchModel.matchRatio,matchModel.rectItems.count,assFeature.count,
+                                         matchModel.modelZonHeMatchByJvBu);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
