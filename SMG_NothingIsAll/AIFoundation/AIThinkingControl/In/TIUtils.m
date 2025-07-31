@@ -303,109 +303,9 @@
             for (NSInteger i = 1; i < assT.count; i++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
-                AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
-                AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
-                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
-                CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
-                //[decoratorJvBuModel.debug updateLogDic:104 assPId:100];
-                
-                //22. 根据比例估算下一条protoGV的取值范围。
-                //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
-                CGFloat wRate = lastProtoRect.size.width / lastAtAssRect.size.width;            //ass&proto缩放量（如lastP宽6，lastA宽9，则比例为2/3）
-                CGFloat hRate = lastProtoRect.size.height / lastAtAssRect.size.height;          //ass&proto缩放量
-                CGFloat assDeltaX = curAtAssRect.origin.x - lastAtAssRect.origin.x;             //ass平移量（如lastA.x=9，curA.x=0，则平移为-9）
-                CGFloat assDeltaY = curAtAssRect.origin.y - lastAtAssRect.origin.y;             //ass平移量
-                CGFloat protoDeltaX = assDeltaX * wRate;                                        //proto平移量（如ass平移=-9，则proto平移=-9*2/3=-6）
-                CGFloat protoDeltaY = assDeltaY * hRate;                                        //proto平移量
-                CGRect defaultCurProtoRect = CGRectMake(lastProtoRect.origin.x + protoDeltaX,   //如lastP.x=0，平移-6后，得curP.x=-6。
-                                                        lastProtoRect.origin.y + protoDeltaY,
-                                                        curAtAssRect.size.width * wRate,        //如curA宽27，比例为2/3，得curP宽18。
-                                                        curAtAssRect.size.height * hRate);
-                
-                //23. 找出锚点。
-                CGFloat anchorX = (CGRectGetMidX(lastProtoRect) + CGRectGetMidX(defaultCurProtoRect)) / 2;
-                CGFloat anchorY = (CGRectGetMidY(lastProtoRect) + CGRectGetMidY(defaultCurProtoRect)) / 2;
-                
-                //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
-                //2025.06.12：调整成只有1测试先，现在废弃组特征后，刚开始测bug应该还比较多，单纯1都测不过来，加更多更难测修bug了。
-                //NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
-                //NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)];
-                NSArray *scales = @[@(1)];
-                MapModel *best = nil;
-                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                for (NSNumber *item in scales) {
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                    CGFloat scale = item.floatValue;
-                    //[decoratorJvBuModel.debug updateLogDic:105 assPId:100];
-                    //32. 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
-                    //x = anchorX + (CGRectGetMidX(curProtoRect) - anchorX) * scale - curProtoRect.size.width * scale * 0.5;
-                    CGRect checkCurProtoRect = CGRectMake((1 - scale) * anchorX + defaultCurProtoRect.origin.x * scale,
-                                                          (1 - scale) * anchorY + defaultCurProtoRect.origin.y * scale,
-                                                          defaultCurProtoRect.size.width * scale,
-                                                          defaultCurProtoRect.size.height * scale);
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:138677 均耗:0.05 = 总耗:6847 读:0 写:0
-                    
-                    // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
-                    // 2025.06.20：更提前转成int，因为在getSubDots的时候，就需要是正确的int值了。
-                    checkCurProtoRect = CGRectMake((int)(checkCurProtoRect.origin.x+0.5f), (int)(checkCurProtoRect.origin.y+0.5f), (int)(checkCurProtoRect.size.width+0.5f), (int)(checkCurProtoRect.size.height+0.5f));
-                    
-                    // 2025.06.20：如果到proto切范围为空，则直接跳过，判定为该itemGV未匹配到。
-                    if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) continue;
-                    
-                    //33. 切出当前gv：九宫。
-                    //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
-                    //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
-                    //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
-                    NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:checkCurProtoRect];
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                    if (!ARRISOK(subDots)) continue;
-                    NSDictionary *protoGVIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
-                    
-                    //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
-                    CGFloat curGMatchValue = 1, curDiffMatchValue = 0;
-                    for (AIKVPointer *assV in curAssGV.content_ps) {
-                        //[decoratorJvBuModel.debug updateLogDic:106 assPId:100];
-                        CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
-                        NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
-                        double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
-                        AIValueInfo *vInfo = [vInfoCache objectForKey:assV.dataSource];
-                        CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
-                        curGMatchValue *= vMatchValue;
-                        
-                        // 记录diff匹配度。
-                        if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
-                    }
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                    
-                    //35. 保留最匹配的一条。
-                    if (!best || NUMTOOK(best.v1).floatValue < curGMatchValue) {
-                        best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale) v4:@(curDiffMatchValue)];
-                    }
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                }
-                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                //41. 有中断匹配不上的gv，直接计为自举审核失败。
-                //2025.05.10: 这里要注意冷启，如果有条中断立马就停，那像虚线画的图就没法识别到了，还是先去掉>0.1的判断。
-                //2025.05.10: gv太多了，如果中断还继续，性能极大浪费，也会导致真正后来者准确时，却失去自举的机会（虚线画的图也是在宏观一级层面识别它，而非虚线层面）。
-                //1. 即输入和谁都不完全相似时
-                //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
-                //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
-                if (!best) break;
-                CGFloat gMatchValue = NUMTOOK(best.v1).floatValue;
-                if (gMatchValue < 0.1f) break;
-                
-                //42. 把best的情况记下来，继续下一个gv。
-                lastProtoRect = VALTOOK(best.v2).CGRectValue;
-                lastAtAssRect = curAtAssRect;
-                
-                //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
-                //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
-                CGFloat scale = NUMTOOK(best.v3).floatValue;
-                CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
-                CGFloat diffValue = NUMTOOK(best.v4).floatValue;
-                [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue]];
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+                if (!bestItem) break;
+                [model.bestGVs addObject:bestItem];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -615,6 +515,17 @@
             
             //13. 只要似层结果（参考34135-TODO6）。
             if (conPort.target_p.isJiao) continue;
+            
+            //2025.07.31: 只要组特征结果。
+            if (!conPort.target_p.isGT) continue;
+            
+            //14. 取出组特征。
+            AIFeatureNode *assT = [SMGUtils searchNode:conPort.target_p];
+            
+            //15. 根据单特征做为组特征切入点，计算切入点的rect等。
+            
+            //16. 计算组特征别的元素的自举数据。
+            
             
             //14. 收集原始item数据（参考34136）(v1版本没有protoGTIndex，在类比时也不会用，直接传-1）。
             [zenTiModel updateItem:conPort fromItemT:matchModel protoGTIndex:-1];
@@ -1565,6 +1476,121 @@
         CGFloat itemCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
         return STRFORMAT(@"%@=%.2f ",key,itemCount / sum);
     }]));
+}
+
++(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
+                          assT:(AIFeatureNode*)assT
+                 lastProtoRect:(CGRect)lastProtoRect
+                 lastAtAssRect:(CGRect)lastAtAssRect
+                 protoColorDic:(NSDictionary*)protoColorDic
+                            ds:(NSString*)ds
+                  dataDicCache:(NSDictionary*)dataDicCache
+                    vInfoCache:(NSDictionary*)vInfoCache {
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
+    AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
+    CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
+    //[decoratorJvBuModel.debug updateLogDic:104 assPId:100];
+    
+    //22. 根据比例估算下一条protoGV的取值范围。
+    //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
+    CGFloat wRate = lastProtoRect.size.width / lastAtAssRect.size.width;            //ass&proto缩放量（如lastP宽6，lastA宽9，则比例为2/3）
+    CGFloat hRate = lastProtoRect.size.height / lastAtAssRect.size.height;          //ass&proto缩放量
+    CGFloat assDeltaX = curAtAssRect.origin.x - lastAtAssRect.origin.x;             //ass平移量（如lastA.x=9，curA.x=0，则平移为-9）
+    CGFloat assDeltaY = curAtAssRect.origin.y - lastAtAssRect.origin.y;             //ass平移量
+    CGFloat protoDeltaX = assDeltaX * wRate;                                        //proto平移量（如ass平移=-9，则proto平移=-9*2/3=-6）
+    CGFloat protoDeltaY = assDeltaY * hRate;                                        //proto平移量
+    CGRect defaultCurProtoRect = CGRectMake(lastProtoRect.origin.x + protoDeltaX,   //如lastP.x=0，平移-6后，得curP.x=-6。
+                                            lastProtoRect.origin.y + protoDeltaY,
+                                            curAtAssRect.size.width * wRate,        //如curA宽27，比例为2/3，得curP宽18。
+                                            curAtAssRect.size.height * hRate);
+    
+    //23. 找出锚点。
+    CGFloat anchorX = (CGRectGetMidX(lastProtoRect) + CGRectGetMidX(defaultCurProtoRect)) / 2;
+    CGFloat anchorY = (CGRectGetMidY(lastProtoRect) + CGRectGetMidY(defaultCurProtoRect)) / 2;
+    
+    //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
+    //2025.06.12：调整成只有1测试先，现在废弃组特征后，刚开始测bug应该还比较多，单纯1都测不过来，加更多更难测修bug了。
+    //NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
+    //NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)];
+    NSArray *scales = @[@(1)];
+    MapModel *best = nil;
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    for (NSNumber *item in scales) {
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        CGFloat scale = item.floatValue;
+        //[decoratorJvBuModel.debug updateLogDic:105 assPId:100];
+        //32. 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
+        //x = anchorX + (CGRectGetMidX(curProtoRect) - anchorX) * scale - curProtoRect.size.width * scale * 0.5;
+        CGRect checkCurProtoRect = CGRectMake((1 - scale) * anchorX + defaultCurProtoRect.origin.x * scale,
+                                              (1 - scale) * anchorY + defaultCurProtoRect.origin.y * scale,
+                                              defaultCurProtoRect.size.width * scale,
+                                              defaultCurProtoRect.size.height * scale);
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:138677 均耗:0.05 = 总耗:6847 读:0 写:0
+        
+        // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
+        // 2025.06.20：更提前转成int，因为在getSubDots的时候，就需要是正确的int值了。
+        checkCurProtoRect = CGRectMake((int)(checkCurProtoRect.origin.x+0.5f), (int)(checkCurProtoRect.origin.y+0.5f), (int)(checkCurProtoRect.size.width+0.5f), (int)(checkCurProtoRect.size.height+0.5f));
+        
+        // 2025.06.20：如果到proto切范围为空，则直接跳过，判定为该itemGV未匹配到。
+        if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) continue;
+        
+        //33. 切出当前gv：九宫。
+        //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
+        //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
+        //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
+        NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:checkCurProtoRect];
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        if (!ARRISOK(subDots)) continue;
+        NSDictionary *protoGVIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
+        
+        //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
+        CGFloat curGMatchValue = 1, curDiffMatchValue = 0;
+        for (AIKVPointer *assV in curAssGV.content_ps) {
+            //[decoratorJvBuModel.debug updateLogDic:106 assPId:100];
+            CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
+            NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
+            double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
+            AIValueInfo *vInfo = [vInfoCache objectForKey:assV.dataSource];
+            CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
+            curGMatchValue *= vMatchValue;
+            
+            // 记录diff匹配度。
+            if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
+        }
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        
+        //35. 保留最匹配的一条。
+        if (!best || NUMTOOK(best.v1).floatValue < curGMatchValue) {
+            best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale) v4:@(curDiffMatchValue)];
+        }
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    }
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    //41. 有中断匹配不上的gv，直接计为自举审核失败。
+    //2025.05.10: 这里要注意冷启，如果有条中断立马就停，那像虚线画的图就没法识别到了，还是先去掉>0.1的判断。
+    //2025.05.10: gv太多了，如果中断还继续，性能极大浪费，也会导致真正后来者准确时，却失去自举的机会（虚线画的图也是在宏观一级层面识别它，而非虚线层面）。
+    //1. 即输入和谁都不完全相似时
+    //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
+    //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
+    if (!best) return nil;
+    CGFloat gMatchValue = NUMTOOK(best.v1).floatValue;
+    if (gMatchValue < 0.1f) return nil;
+    
+    //42. 把best的情况记下来，继续下一个gv。
+    lastProtoRect = VALTOOK(best.v2).CGRectValue;
+    lastAtAssRect = curAtAssRect;
+    
+    //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
+    //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
+    CGFloat scale = NUMTOOK(best.v3).floatValue;
+    CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
+    CGFloat diffValue = NUMTOOK(best.v4).floatValue;
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
 }
 
 @end
