@@ -16,9 +16,14 @@
     return result;
 }
 
--(NSMutableArray *)models {
-    if (!_models) _models = [NSMutableArray new];
-    return _models;
+-(NSMutableArray *)stModels {
+    if (!_stModels) _stModels = [NSMutableArray new];
+    return _stModels;
+}
+
+-(NSMutableArray *)gtModels {
+    if (!_gtModels) _gtModels = [NSMutableArray new];
+    return _gtModels;
 }
 
 @end

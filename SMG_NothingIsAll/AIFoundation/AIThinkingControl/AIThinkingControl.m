@@ -260,28 +260,28 @@ static AIThinkingControl *_instance;
     }
     
     //31. 单特征识别无结果则跳过。
-    if (!ARRISOK(jvBuModel.models)) {
+    if (!ARRISOK(jvBuModel.stModels)) {
         NSLog(@"第1步、所有粒度层单特征识别总结果为0条。");
         return;
     }
-    NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.models.count);
+    NSLog(@"第1步、当前dotSize:%.2f 识别结束时条数:%ld",dotSize,jvBuModel.stModels.count);
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
     // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
     // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
     // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
     AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step2:jvBuModel colorDic:colorDic at:at ds:ds logDesc:logDesc dotSize:dotSize];
-    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.models.count);
+    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 局部特征类比：借助bestGVs来类比。
-    for (AIFeatureJvBuModel *model in jvBuModel.models) {
+    for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
         [AIAnalogy analogyFeatureV2:model protoT:protoT];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.models dotSize:dotSize];
+    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.stModels dotSize:dotSize];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 组特征类比：借助rectItems来类比。
@@ -291,7 +291,7 @@ static AIThinkingControl *_instance;
     }
     
     // debug
-    [TIUtils printLogDescRate:[SMGUtils convertArr:jvBuModel.models convertBlock:^id(AIFeatureJvBuModel *obj) {
+    [TIUtils printLogDescRate:[SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
     }] protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc)];
     [TIUtils printLogDescRate:[SMGUtils convertArr:zenTiModel convertBlock:^id(AIFeatureZenTiModel *obj) {

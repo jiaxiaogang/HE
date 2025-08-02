@@ -23,7 +23,8 @@
 @property (assign, nonatomic) NSInteger protoTHash;
 
 //存识别结果：List<AIFeatureJvBuModel>
-@property (strong, nonatomic) NSMutableArray *models;
+@property (strong, nonatomic) NSMutableArray *stModels;
+@property (strong, nonatomic) NSMutableArray *gtModels;
 
 @property (strong, nonatomic) GroupDebug *debug;
 
