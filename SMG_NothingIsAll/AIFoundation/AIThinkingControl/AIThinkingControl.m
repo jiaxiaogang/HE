@@ -246,8 +246,11 @@ static AIThinkingControl *_instance;
                 NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
-                //21. 局部识别特征：通过组码识别。
+                //21. 单特征识别：通过组码识别。
                 [TIUtils recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept];
+                
+                //22. 组特征识别：通过单特征识别。
+                [TIUtils recognitionGroupFeatureV4:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -280,22 +283,27 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.stModels dotSize:dotSize];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    // TODOTOMORROW20250803: 先仅仅识别组特征，不类比，不识别交集组特征，等测试通过后，再加上protoGT，GT类比等这些。
     
-    // 组特征类比：借助rectItems来类比。
-    for (AIFeatureZenTiModel *model in zenTiModel) {
-        AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
-        [AIAnalogy analogyGroupFeatureV3:protoT ass:assGT zenTiModel:model];
-    }
+    //// 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
+    //NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.stModels dotSize:dotSize];
+    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    //
+    //// 组特征类比：借助rectItems来类比。
+    //for (AIFeatureZenTiModel *model in zenTiModel) {
+    //    AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
+    //    [AIAnalogy analogyGroupFeatureV3:protoT ass:assGT zenTiModel:model];
+    //}
+    //[TIUtils printLogDescRate:[SMGUtils convertArr:zenTiModel convertBlock:^id(AIFeatureZenTiModel *obj) {
+    //    return obj.assT;
+    //}] protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc)];
     
     // debug
     [TIUtils printLogDescRate:[SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
     }] protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc)];
-    [TIUtils printLogDescRate:[SMGUtils convertArr:zenTiModel convertBlock:^id(AIFeatureZenTiModel *obj) {
-        return obj.assT;
+    [TIUtils printLogDescRate:[SMGUtils convertArr:jvBuModel.gtModels convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT.p;
     }] protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc)];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);

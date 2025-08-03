@@ -533,17 +533,6 @@
             //2025.07.31: 只要组特征结果。
             if (!conPort.target_p.isGT) continue;
             
-            //14. 取出组特征。
-            AIFeatureNode *assT = [SMGUtils searchNode:conPort.target_p];
-            
-            //15. 根据单特征做为组特征切入点，计算切入点的rect等。
-            //AIKVPointer *begin_p = ARR_INDEX(matchModel.assT.content_ps, 0);
-            //NSValue *beginRectValue = ARR_INDEX(matchModel.assT.rects, 0);
-            //CGRect beginAtAbsRect = beginRectValue.CGRectValue;
-            //matchModel.bestGVsAtProtoTRect
-            //16. 计算组特征别的元素的自举数据（可复用单特征自举识别算法）。
-            
-            
             //14. 收集原始item数据（参考34136）(v1版本没有protoGTIndex，在类比时也不会用，直接传-1）。
             [zenTiModel updateItem:conPort fromItemT:matchModel protoGTIndex:-1];
         }
@@ -670,7 +659,7 @@
 /**
  *  MARK:--------------------组特征自举识别算法（参考35061-TODO1）--------------------
  */
-+(void) recognitionGroupFeatureV4:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
++(void) recognitionGroupFeatureV4:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize {
     
     //1. 收集：每个absT分别向整体取conPorts。
     NSMutableArray *validConPortGTs = [NSMutableArray new];
@@ -690,6 +679,46 @@
     } itemSuccess:^(AIFeatureJvBuModel *model) {
         [decoratorJvBuModel.gtModels addObject:model];
     }];
+    
+    //43. 处理匹配度，符合度
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.gtModels) {
+        [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
+    }
+    
+    //53. 排序
+    NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.getZonHeMatch;
+    }];
+    
+    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.5f, 2), 30));
+    
+    //60. 更新赋值回去。
+    decoratorJvBuModel.gtModels = [[NSMutableArray alloc] initWithArray:validModels];
+    
+    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.gtModels) {
+        //TODOTOMORROW20250803: 从colorDic中取到protoGT的元素，进行类比和抽具象关联。
+        //[AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];//assGT和protoGT的抽具关联（写的时候参考单特征类比算法中代码）。
+        //[AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];//assGT在protoGT中的rect（写的时候参考单特征类比算法中代码）。
+        //[protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
+        //[protoT updateMatchDegree:model.assT matchDegree:model.matchDegree * model.matchAssRatio];
+        
+        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
+        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
+        
+        //52. debug (\t符合度:%.1f\t健全度:%.1f)
+        if (Log4RecogDesc || decoratorJvBuModel.gtModels.count > 0) NSLog(@"组特征识别结果:GT%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",
+                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue);
+        [SMGUtils runByMainQueue:^{
+            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别组GT%ld(%ld/%ld)",[resultModel.models indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+        }];
+    }
+    
+    //61. debugLog
+    [TIUtils printLogDescRate:[SMGUtils convertArr:decoratorJvBuModel.gtModels convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT.p;
+    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 组特征",dotSize)];
 }
 
 //MARK:===============================================================
