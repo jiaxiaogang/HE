@@ -371,6 +371,10 @@
 }
 
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT {
+    return [self analogyFeature_General:jvBuModel protoT:protoT isGT:false];
+}
+
++(AIFeatureNode*) analogyFeature_General:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT isGT:(BOOL)isGT {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     
     // 2025.06.14: 如果一致，即不必类比抽象，因为内容一致时：抽象就是assT本身。
@@ -430,29 +434,30 @@
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:absGVModels];
     
     //31. 外类比构建
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[jvBuModel.assT,protoT] at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
+    NSArray *conNodes = protoT ? @[jvBuModel.assT,protoT] : @[jvBuModel.assT];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:conNodes at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:isGT];
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
-    [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
+    if (protoT) [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
     if ([absT.p isEqual:jvBuModel.assT.p] || [absT.p isEqual:protoT.p]) return nil;
     
     //32. 更新匹配度;
     [jvBuModel.assT updateMatchValue:absT matchValue:1];
-    [protoT updateMatchValue:absT matchValue:jvBuModel.matchValue];
+    if (protoT) [protoT updateMatchValue:absT matchValue:jvBuModel.matchValue];
     
     //33. 存conPorts的rect（参考34135-TODO1）。
     [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
-    [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
+    if (protoT) [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
     
     //34. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
     [jvBuModel.assT updateMatchDegree:absT matchDegree:1];
-    [protoT updateMatchDegree:absT matchDegree:jvBuModel.matchDegree];
+    if (protoT) [protoT updateMatchDegree:absT matchDegree:jvBuModel.matchDegree];
     
     //41. debugLog
-    NSLog(@"单特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
+    NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
     [SMGUtils runByMainQueue:^{
         //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld类比后(abs%ld GV%ld)%p",jvBuModel.assT.pId,absT.count,jvBuModel.bestGVs.count,jvBuModel) left:jvBuModel.bestGVsAtProtoTRect.origin.x top:jvBuModel.bestGVsAtProtoTRect.origin.y];
     }];
-    if (Log4Ana || true) NSLog(@"\n单特征类比结果(%@) ======================> \nAss单特征T%ld（GV数:%ld）%@\n%@Abs单特征T%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,
+    if (Log4Ana || true) NSLog(@"\n%@特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",isGT?@"组":@"单",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
                                absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
     return absT;
@@ -534,6 +539,10 @@
                                assT.pId,sameItems.count,assT.count,CLEANSTR([assT getLogDesc:false]),FeatureDesc(assT.p,1),
                                absT.pId,sameItems.count,absGVModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
     return absT;
+}
+
++(AIFeatureNode*) analogyGroupFeatureV4:(AIFeatureJvBuModel*)jvBuModel {
+    return [self analogyFeature_General:jvBuModel protoT:nil isGT:true];
 }
 
 /**

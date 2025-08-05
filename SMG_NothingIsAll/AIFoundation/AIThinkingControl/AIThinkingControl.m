@@ -284,6 +284,9 @@ static AIThinkingControl *_instance;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // TODOTOMORROW20250803: 先仅仅识别组特征，不类比，不识别交集组特征，等测试通过后，再加上protoGT，GT类比等这些。
+    for (AIFeatureJvBuModel *model in jvBuModel.gtModels) {
+        [AIAnalogy analogyGroupFeatureV4:model];
+    }
     
     //// 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     //NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.stModels dotSize:dotSize];
