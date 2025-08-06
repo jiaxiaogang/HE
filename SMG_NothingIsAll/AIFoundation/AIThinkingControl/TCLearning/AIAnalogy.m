@@ -390,17 +390,12 @@
     //    [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"%ld类比前(GV%ld ass%ld)%p",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count,jvBuModel) left:jvBuModel.bestGVsAtProtoTRect.origin.x - bestGVs_AssT_Log.origin.x top:jvBuModel.bestGVsAtProtoTRect.origin.y - bestGVs_AssT_Log.origin.y];
     //}];
     
-    // 剔除主责。
+    // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
     // 2025.06.13: 先关掉，其实局部特征识别时已经充分竞争了，此处不再另行剔除。
-    //NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
-    //    //12. 当前有主责，直接剔除: GV类比: 进行共同点抽象 (参考29025-11);
-    //    CGFloat curDegree = item.matchDegree;
-    //    CGFloat curMatchValue = item.matchValue;
-    //    BOOL noZeRen = [TCLearningUtil noZeRenForPingJun:curMatchValue * curDegree bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree];
-    //
-    //    //13. 当前码责任<50%时 (次要责任时,免责): 收集有效的映射：用于后面计算rect用。
-    //    return noZeRen;
-    //}]];
+    // 2025.08.06: 打开，单特征识别时充分竞争，不表示不类比中再抽象了，并且组特征现在也需要这里抽象一下，并且是在无protoT的情况下就要实现抽象（参考35062-TODO2）。
+    NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
+        return [TCLearningUtil noZeRenForPingJun:item.matchValue * item.matchDegree * item.diffValue bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree * jvBuModel.matchDiffValue];
+    }]];
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
     NSArray *sortValidItems = [SMGUtils sortSmall2Big:jvBuModel.bestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
