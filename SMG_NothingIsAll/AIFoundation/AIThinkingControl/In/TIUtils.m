@@ -174,7 +174,7 @@
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  */
-+(void) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept {
++(void) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize {
     [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic decoratorJvBuModel:decoratorJvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
         //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
         //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
@@ -182,6 +182,52 @@
     } itemSuccess:^(AIFeatureJvBuModel *model) {
         [decoratorJvBuModel.stModels addObject:model];
     }];
+    
+    //43. 处理匹配度，符合度
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
+    }
+    
+    //52. 无效过滤器1、matchValue=0排除掉。
+    NSArray *validModels = [SMGUtils filterArr:decoratorJvBuModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
+        return model.matchValue > 0;
+    }];
+    
+    //53. 排序
+    //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
+    validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.getZonHeMatch;
+    }];
+    
+    //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
+    //2025.07.23: 单特征不该防重，在一个手写8上面，有四处右下线，但防重后就只剩一个了，导致单特征识别结果不全面（实测过，很多单特征识别结果中同一个单特征，它们的rect其实也都是不一样的）。
+    //validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) { return obj.assT.p; }];
+    
+    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
+    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
+    //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.8f, 20), 100));
+    
+    //60. 更新赋值回去。
+    decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
+    
+    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        
+        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
+        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
+        
+        //52. debug (\t符合度:%.1f\t健全度:%.1f)
+        NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue);
+        [SMGUtils runByMainQueue:^{
+            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[resultModel.models indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+        }];
+    }
+    
+    //61. debugLog
+    [TIUtils printLogDescRate:[SMGUtils convertArr:decoratorJvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT.p;
+    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 单特征",dotSize)];
 }
 
 /**
@@ -204,9 +250,8 @@
     if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
         return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
     }]) return;
-    
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    AIFeatureJvBuModels *resultModel = decoratorJvBuModel;
+    
     //1. 单码排序。
     NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
         return [XGRedisUtil compareStrA:obj1 strB:obj2];
@@ -349,36 +394,13 @@
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
 }
 
+/**
+ *  MARK:--------------------构建protoT--------------------
+ *  @version
+ *      2025.08.07: 废弃（参考35062-TODO3）。
+ */
 +(AIFeatureNode*) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc dotSize:(CGFloat)dotSize {
-    //43. 处理匹配度，符合度
-    for (AIFeatureJvBuModel *model in resultModel.stModels) {
-        //[resultModel.debug updateLogDic:2000 assPId:model.assT.pId];
-        [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
-    }
     
-    //51. 过滤非全含。
-    //2025.05.10: 冷启时，可能全部不全，并且下面已经有健全度竞争了，此处全含过滤器先去掉。
-    //resultModel.models = [SMGUtils filterArr:resultModel.models checkValid:^BOOL(AIFeatureJvBuModel *model) {
-    //    return model.bestGVs.count >= model.assT.count;
-    //}];
-    
-    //52. 无效过滤器1、matchValue=0排除掉。
-    NSArray *validModels = [SMGUtils filterArr:resultModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
-        return model.matchValue > 0;
-    }];
-    
-    //53. 排序
-    //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
-    validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        //return obj.matchValue * /*obj.matchDegree * obj.matchAssProtoRatio **/ obj.matchAssRatio * obj.matchDiffValue;
-        return obj.getZonHeMatch;
-    }];
-    
-    //for (AIFeatureJvBuModel *model in validModels) {
-    //    NSLog(@"单特征淘汰前:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f %@",
-    //                                     model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue,Rect2Str(model.bestGVsAtProtoTRect));
-    //}
-    //NSLog(@"");
     //TODOTOMORROW20250717: 识别不准确问题（会把手写0识别成1）：
     //思路0：调整竞争因子参数：
     //  1、调试：经测，色似度都太低了 & 匹配度也太低了
@@ -390,50 +412,6 @@
     //思路3：用一模一样的手写0，多次跑试下，这样很方便观察识别过程中有什么细节问题。
     //思路4：把单特征的综合竞争值，也计算到组特征识别竞争里（已加到组特征识别竞争中）`T`。
     //思路5：单特征识别结果中，同一个T也隶属于protoT中不同的rect范围，比如8有四个下划线，不应该防重（废弃单特征结果根据T防重）`T`。
-    //
-    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
-    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.63 = 0.17 {Mnist0 = 2.76;}
-    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.63 = 0.16 {Mnist0 = 2.76;}
-    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
-    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
-    //单特征淘汰前:T1196     匹配条数:5/ass5    匹配度:0.24    匹配率:1.0    色似度:0.60 = 0.14 {Mnist0 = 2.76;}
-    //单特征淘汰前:T1253     匹配条数:5/ass23    匹配度:0.56    匹配率:0.2    色似度:0.80 = 0.10 {Mnist1 = 1.00;}
-    //单特征淘汰前:T1218     匹配条数:5/ass36    匹配度:0.53    匹配率:0.1    色似度:0.73 = 0.05 {Mnist0 = 1.00;}
-    //单特征淘汰前:T1189     匹配条数:7/ass45    匹配度:0.25    匹配率:0.2    色似度:0.62 = 0.02 {Mnist0 = 1.00;}
-    //单特征淘汰前:T1189     匹配条数:7/ass45    匹配度:0.25    匹配率:0.2    色似度:0.62 = 0.02 {Mnist0 = 1.00;}
-    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.27    匹配率:0.1    色似度:0.67 = 0.02 {Mnist0 = 1.00;}
-    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.27    匹配率:0.1    色似度:0.63 = 0.02 {Mnist0 = 1.00;}
-    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.25    匹配率:0.1    色似度:0.63 = 0.02 {Mnist0 = 1.00;}
-    //单特征淘汰前:T1189     匹配条数:5/ass45    匹配度:0.24    匹配率:0.1    色似度:0.60 = 0.02 {Mnist0 = 1.00;}
-    //
-    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
-    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.63 = 0.17 {Mnist0 = 2.76;}
-    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.63 = 0.16 {Mnist0 = 2.76;}
-    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
-    //单特征淘汰后:T1196     匹配条数:5/ass5    匹配度:0.25    匹配率:1.0    色似度:0.60 = 0.15 {Mnist0 = 2.76;}
-    //
-    //单特征防重后:T1196     匹配条数:5/ass5    匹配度:0.27    匹配率:1.0    色似度:0.67 = 0.18 {Mnist0 = 2.76;}
-    
-    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
-    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
-    //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(resultModel.stModels.count * 0.8f, 20), 100));
-    
-    //for (AIFeatureJvBuModel *model in validModels) {
-    //    [model run4BestGvsAtProtoTRect];
-    //    NSLog(@"单特征淘汰后:T%ld\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.2f = %.2f %@ 视角匹配度:%.2f %@",
-    //                                     model.assT.pId,model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue,model.matchValue*model.matchAssRatio*model.matchDiffValue,CLEANSTR([model.assT getLogDesc:true]),model.matchRectValue,Rect2Str(model.bestGVsAtProtoTRect));
-    //}
-    //NSLog(@"");
-    
-    //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
-    //2025.07.23: 单特征不该防重，在一个手写8上面，有四处右下线，但防重后就只剩一个了，导致单特征识别结果不全面（实测过，很多单特征识别结果中同一个单特征，它们的rect其实也都是不一样的）。
-    //validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) {
-    //    return obj.assT.p;
-    //}];
-    
-    //60. 更新赋值回去。
-    resultModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
     
     // 从protoColorDic实时计算：构建protoT所需的gvModels。
     // 说明：这里生成protoT有三种方案：
@@ -482,26 +460,13 @@
         CGRect ass_Proto = [AINetUtils getBAtA:model.bestGVsAtProtoTRect atB:bestGVsAtAssTRect B:assTRect];
         [AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];
         
-        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
-        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
+        // 存上protoT与assT的匹配度 & 符合度。
         [protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
         [protoT updateMatchDegree:model.assT matchDegree:model.matchDegree * model.matchAssRatio];
         //model.assT.jvBuModelV2 = model;
         //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
         //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
-        
-        //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        if (Log4RecogDesc || resultModel.stModels.count > 0) NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",
-                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue);
-        [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[resultModel.models indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
-        }];
     }
-    
-    //61. debugLog
-    [TIUtils printLogDescRate:[SMGUtils convertArr:resultModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT.p;
-    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 单特征",dotSize)];
     return protoT;
 }
 

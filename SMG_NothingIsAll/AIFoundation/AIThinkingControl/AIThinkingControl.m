@@ -247,7 +247,7 @@ static AIThinkingControl *_instance;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 单特征识别：通过组码识别。
-                [TIUtils recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept];
+                [TIUtils recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize];
                 
                 //22. 组特征识别：通过单特征识别。
                 [TIUtils recognitionGroupFeatureV4:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic decoratorJvBuModel:jvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize];
@@ -273,21 +273,22 @@ static AIThinkingControl *_instance;
     // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
     // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
     // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
-    AIFeatureNode *protoT = [TIUtils recognitionFeatureV2_Step2:jvBuModel colorDic:colorDic at:at ds:ds logDesc:logDesc dotSize:dotSize];
+    // 2025.08.07: 废弃构建protoT，因为类比用不着，何必拼凑这个很多gvs元素的isGT出来呢（参考35062-TODO3）。
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // 局部特征类比：借助bestGVs来类比。
+    // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoT:protoT];
+        [AIAnalogy analogyFeatureV2:model protoT:nil];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // TODOTOMORROW20250803: 先仅仅识别组特征，不类比，不识别交集组特征，等测试通过后，再加上protoGT，GT类比等这些。
+    // 组特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.gtModels) {
         [AIAnalogy analogyGroupFeatureV4:model];
     }
     
+    // ====================== 组特征识别类比V3（已被V4替代） ======================
     //// 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
     //NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.stModels dotSize:dotSize];
     //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -607,9 +608,10 @@ static AIThinkingControl *_instance;
     NSArray *bGroupModels = [theNet algModelConvert2PointersV2:algsModel.splitBColors at:algsType ds:@"bColors" levelNum:algsModel.levelNum];
     
     //3、构建具象特征。
-    AIFeatureNode *hFeature = [AIGeneralNodeCreater createFeatureNode:hGroupModels conNodes:nil at:algsType ds:@"hColors" isOut:false isJiao:false isGT:false];
-    AIFeatureNode *sFeature = [AIGeneralNodeCreater createFeatureNode:sGroupModels conNodes:nil at:algsType ds:@"sColors" isOut:false isJiao:false isGT:false];
-    AIFeatureNode *bFeature = [AIGeneralNodeCreater createFeatureNode:bGroupModels conNodes:nil at:algsType ds:@"bColors" isOut:false isJiao:false isGT:false];
+    //2025.08.07: 具象似层即使是固定粒度也是isGT（参考35062-TODO3.1）。
+    AIFeatureNode *hFeature = [AIGeneralNodeCreater createFeatureNode:hGroupModels conNodes:nil at:algsType ds:@"hColors" isOut:false isJiao:false isGT:true];
+    AIFeatureNode *sFeature = [AIGeneralNodeCreater createFeatureNode:sGroupModels conNodes:nil at:algsType ds:@"sColors" isOut:false isJiao:false isGT:true];
+    AIFeatureNode *bFeature = [AIGeneralNodeCreater createFeatureNode:bGroupModels conNodes:nil at:algsType ds:@"bColors" isOut:false isJiao:false isGT:true];
     [hFeature updateLogDescItem:logDesc];
     [sFeature updateLogDescItem:logDesc];
     [bFeature updateLogDescItem:logDesc];
