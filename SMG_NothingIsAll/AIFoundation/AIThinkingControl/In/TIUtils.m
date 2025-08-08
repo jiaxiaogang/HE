@@ -178,7 +178,8 @@
     [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic decoratorJvBuModel:decoratorJvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
         //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
         //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
-        return !ass_p.isGT;
+        //2025.08.08: 现在固定粒度构建isGT=true了，只有单特征类比结果才为false，那这里冷启也需要，也就得识别所有结果了（先识别isGT，才能类比出抽象单特征，所以不能只识别单特征，不然死循环了）。
+        return true;//!ass_p.isGT;
     } itemSuccess:^(AIFeatureJvBuModel *model) {
         [decoratorJvBuModel.stModels addObject:model];
     }];
