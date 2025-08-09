@@ -174,15 +174,21 @@
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  */
-+(void) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize {
-    [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic decoratorJvBuModel:decoratorJvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize {
+    return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
         //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
         //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
         //2025.08.08: 现在固定粒度构建isGT=true了，只有单特征类比结果才为false，那这里冷启也需要，也就得识别所有结果了（先识别isGT，才能类比出抽象单特征，所以不能只识别单特征，不然死循环了）。
         return true;//!ass_p.isGT;
-    } itemSuccess:^(AIFeatureJvBuModel *model) {
-        [decoratorJvBuModel.stModels addObject:model];
     }];
+}
+
+/**
+ *  MARK:--------------------单特征识别结果竞争--------------------
+ *  @version
+ *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
+ */
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel {
     
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
@@ -228,7 +234,7 @@
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:decoratorJvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
-    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 单特征",dotSize)];
+    }] protoLogDesc:nil prefix:@"单特征"];
 }
 
 /**
@@ -236,21 +242,22 @@
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(void) recognitionFeature_General:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept
-                    checkItemValid:(BOOL(^)(AIKVPointer* ass_p))checkItemValid itemSuccess:(void(^)(AIFeatureJvBuModel *model))itemSuccess {
++(NSArray*) recognitionFeature_General:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept
+                    checkItemValid:(BOOL(^)(AIKVPointer* ass_p))checkItemValid {
     // 数据准备
+    NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
     
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
         return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
-    }]) return;
+    }]) return result;
     
     //2. 过滤器2：被切入点成功识别过的相近区域，防重不再做为切入识别。
     if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
         return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
-    }]) return;
+    }]) return result;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //1. 单码排序。
@@ -375,7 +382,7 @@
             if (model.bestGVs.count <= 4) continue;
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
-            itemSuccess(model);
+            [result addObject:model];
             //[decoratorJvBuModel.debug updateLogDic:1004 assPId:model.assT.pId];
             
             //52. 有效单特征条目后，才计为防重（关掉，如果一张图有多个3也得能识别）。
@@ -393,82 +400,7 @@
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-}
-
-/**
- *  MARK:--------------------构建protoT--------------------
- *  @version
- *      2025.08.07: 废弃（参考35062-TODO3）。
- */
-+(AIFeatureNode*) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)resultModel colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc dotSize:(CGFloat)dotSize {
-    
-    //TODOTOMORROW20250717: 识别不准确问题（会把手写0识别成1）：
-    //思路0：调整竞争因子参数：
-    //  1、调试：经测，色似度都太低了 & 匹配度也太低了
-    //  2、分析：感觉当前算法，并没有把准确的搞出来，得查下是不是step1的时候过滤太狠了，过滤掉了
-    //  3、结果：加训几张后竞争值有明显更高的浮现了，没啥问题。
-    //  4、回测：虽然竞争值明显有更高浮现，但仍然有不准问题，下面继续分析该问题。
-    //思路1：如果我训练了0三张，返过来再跑第1张，能不能成功识别到？
-    //思路2：先把与固定粒度一样的那个粒度跑一下试下？（没有固定的粒度，只有更接近的比例）`所以没法限定那个固定的粒度，但把比例打出来了，在日志中可以方便查看 T`。
-    //思路3：用一模一样的手写0，多次跑试下，这样很方便观察识别过程中有什么细节问题。
-    //思路4：把单特征的综合竞争值，也计算到组特征识别竞争里（已加到组特征识别竞争中）`T`。
-    //思路5：单特征识别结果中，同一个T也隶属于protoT中不同的rect范围，比如8有四个下划线，不应该防重（废弃单特征结果根据T防重）`T`。
-    
-    // 从protoColorDic实时计算：构建protoT所需的gvModels。
-    // 说明：这里生成protoT有三种方案：
-    //      1、用单特征数组嵌套而成。（缺点：结构会复杂，毕竟有嵌套。优点：数据量小）。
-    //      2、用单特征的gvs求并集而成。（缺点：数据量会大。状态：目前在用）。
-    //      3、直接用固定粒度的gvs生成。（缺点：现在类比时要用gvs求交的rect，此方案无法支持）。
-    NSArray *protoGVModels = [SMGUtils convertArr:resultModel.stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuItem) {
-        return [SMGUtils convertArr:jvBuItem.bestGVs convertBlock:^id(AIFeatureJvBuItem *item) {
-            
-            // 切gv九宫 & 转3索引码 & 单码装箱 & 打包组码。
-            NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:item.bestGVAtProtoTRect];
-            if (!ARRISOK(subDots)) return nil;
-            NSDictionary *protoGVIndexs = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-            NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndexs algsType:at];
-            item_ps = [SMGUtils sortPointers:item_ps];
-            AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
-            return [InputGroupValueModel new:groupValue.p rect:item.bestGVAtProtoTRect];
-        }];
-    }];
-    
-    // gvModels排序 & 防重。
-    NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:protoGVModels];
-    sortGroupModels = [SMGUtils removeRepeat:sortGroupModels convertBlock:^id(InputGroupValueModel *obj) {
-        return @(obj.rect);
-    }];
-    if (!ARRISOK(sortGroupModels)) return nil;
-    
-    // 构建protoT
-    AIFeatureNode *protoT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
-    [protoT updateLogDescItem:logDesc];
-    [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:protoT lab:STRFORMAT(@"protoT%ld",protoT.pId) left:0 top:0];
-    }];
-    
-    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
-    for (AIFeatureJvBuModel *model in resultModel.stModels) {
-        //[protoT updateLogDescDic:model.assT.logDesc rate:model.matchValue * model.matchDegree * model.matchAssRatio];
-        [AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];
-        
-        // 2025.06.10：旧方案：从具象中选抽象，protoT与assT构建抽具象关联，然后试下识别响应效率会不会更快。
-        // 把bestGVs在proto的Rect转成assT在proto的Rect。
-        CGRect bestGVsAtAssTRect = [AINetUtils convertPartOfFeatureContent2Rect:model.assT contentIndexes:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
-            return @(obj.assIndex);
-        }]];
-        CGRect assTRect = [AINetUtils convertAllOfFeatureContent2Rect:model.assT];
-        CGRect ass_Proto = [AINetUtils getBAtA:model.bestGVsAtProtoTRect atB:bestGVsAtAssTRect B:assTRect];
-        [AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];
-        
-        // 存上protoT与assT的匹配度 & 符合度。
-        [protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
-        [protoT updateMatchDegree:model.assT matchDegree:model.matchDegree * model.matchAssRatio];
-        //model.assT.jvBuModelV2 = model;
-        //[protoFeature updateIndexDic:assFeature indexDic:matchModel.indexDic];
-        //[protoFeature updateDegreeDic:assFeature.pId degreeDic:matchModel.degreeDic];
-    }
-    return protoT;
+    return result;
 }
 
 /**
@@ -624,12 +556,14 @@
 
 /**
  *  MARK:--------------------组特征自举识别算法（参考35061-TODO1）--------------------
+ *  @param itemSTModels 一个粒度层的单特征识别结果。
  */
-+(void) recognitionGroupFeatureV4:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize {
++(NSArray*) recognitionGroupFeatureV4_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize itemSTModels:(NSArray*)itemSTModels {
+    if (!ARRISOK(itemSTModels)) return nil;
     
     //1. 收集：每个absT分别向整体取conPorts。
     NSMutableArray *validConPortGTs = [NSMutableArray new];
-    for (AIFeatureJvBuModel *matchModel in decoratorJvBuModel.stModels) {
+    for (AIFeatureJvBuModel *matchModel in itemSTModels) {
         NSArray *conPorts = [AINetUtils conPorts_All:matchModel.assT];
         for (AIPort *conPort in conPorts) {
             //13. 只要似层组特征结果（参考34135-TODO6）。
@@ -639,12 +573,16 @@
     }
     
     //2. 组特征识别。
-    [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic decoratorJvBuModel:decoratorJvBuModel excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
+    return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
         //2025.08.02: 仅针对有效GT交集结果（gv.refPorts指向 & 单T.conPorts指向）（参考35061-TODO2）。
         return [validConPortGTs containsObject:ass_p];
-    } itemSuccess:^(AIFeatureJvBuModel *model) {
-        [decoratorJvBuModel.gtModels addObject:model];
     }];
+}
+
+/**
+ *  MARK:--------------------组特征竞争--------------------
+ */
++(void) recognitionGroupFeatureV4_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel {
     
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.gtModels) {
@@ -684,7 +622,7 @@
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:decoratorJvBuModel.gtModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT.p;
-    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 组特征",dotSize)];
+    }] protoLogDesc:nil prefix:@"组特征"];
 }
 
 //MARK:===============================================================
@@ -779,7 +717,7 @@
                 //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
                 //a. 通过组码做单特征识别。
                 AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel colorDic:nil at:nil ds:nil logDesc:nil dotSize:1];
+                [self recognitionFeatureV2_Step2:jvBuModel];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = [self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.stModels dotSize:1];
