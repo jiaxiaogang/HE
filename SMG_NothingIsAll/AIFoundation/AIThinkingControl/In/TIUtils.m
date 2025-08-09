@@ -572,6 +572,10 @@
         }
     }
     
+    if (validConPortGTs.count > 0) {
+        NSLog(@"TODOTOMORROW20250809：查下，为什么这里的有效一直是0，上面的过滤条件是不是有问题。");
+    }
+    
     //2. 组特征识别。
     return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
         //2025.08.02: 仅针对有效GT交集结果（gv.refPorts指向 & 单T.conPorts指向）（参考35061-TODO2）。
