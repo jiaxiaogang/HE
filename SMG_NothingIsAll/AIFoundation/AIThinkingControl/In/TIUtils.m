@@ -567,20 +567,19 @@
         NSArray *conPorts = [AINetUtils conPorts_All:matchModel.assT];
         for (AIPort *conPort in conPorts) {
             //13. 只要似层组特征结果（参考34135-TODO6）。
-            if (conPort.target_p.isJiao || !conPort.target_p.isGT) continue;
+            //2025.08.10: 只要GT结果，现在GT也会类比抽象，扣出来的显著GT图，更该被识别到。
+            if (!conPort.target_p.isGT) continue;
             [validConPortGTs addObject:conPort.target_p];
         }
     }
     
-    if (validConPortGTs.count > 0) {
-        NSLog(@"TODOTOMORROW20250809：查下，为什么这里的有效一直是0，上面的过滤条件是不是有问题。");
-    }
-    
     //2. 组特征识别。
-    return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
+    NSArray *result = [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
         //2025.08.02: 仅针对有效GT交集结果（gv.refPorts指向 & 单T.conPorts指向）（参考35061-TODO2）。
         return [validConPortGTs containsObject:ass_p];
     }];
+    NSLog(@"TODOTOMORROW20250810: 查下为什么一直组特征识别结果是0条:%ld",result.count);
+    return result;
 }
 
 /**
@@ -606,7 +605,6 @@
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.gtModels) {
-        //TODOTOMORROW20250803: 从colorDic中取到protoGT的元素，进行类比和抽具象关联。
         //[AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];//assGT和protoGT的抽具关联（写的时候参考单特征类比算法中代码）。
         //[AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];//assGT在protoGT中的rect（写的时候参考单特征类比算法中代码）。
         //[protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
