@@ -253,6 +253,7 @@
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
         return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
     }]) return result;
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //2. 过滤器2：被切入点成功识别过的相近区域，防重不再做为切入识别。
     if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
@@ -371,7 +372,8 @@
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
                 AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
-                if (!bestItem) break;
+                //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
+                if (!bestItem) continue;
                 [model.bestGVs addObject:bestItem];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
@@ -574,12 +576,11 @@
     }
     
     //2. 组特征识别。
-    NSArray *result = [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
+    //2025.08.10: 组特征不对beginRectExcept和assRectExcept切入点做防重了，因为组特征本来就是全局的）。
+    return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:nil/*beginRectExcept*/ assRectExcept:nil/*assRectExcept*/ checkItemValid:^BOOL(AIKVPointer *ass_p) {
         //2025.08.02: 仅针对有效GT交集结果（gv.refPorts指向 & 单T.conPorts指向）（参考35061-TODO2）。
         return [validConPortGTs containsObject:ass_p];
     }];
-    NSLog(@"TODOTOMORROW20250810: 查下为什么一直组特征识别结果是0条:%ld",result.count);
-    return result;
 }
 
 /**
@@ -617,7 +618,7 @@
         if (Log4RecogDesc || decoratorJvBuModel.gtModels.count > 0) NSLog(@"组特征识别结果:GT%ld%@\t 匹配条数:%ld/ass%ld\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",
                                          model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.matchValue,model.matchAssRatio,model.matchDiffValue);
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别组GT%ld(%ld/%ld)",[resultModel.models indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别组GT%ld(%ld/%ld)",[decoratorJvBuModel.gtModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
     }
     

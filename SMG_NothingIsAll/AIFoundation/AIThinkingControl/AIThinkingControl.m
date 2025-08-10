@@ -269,7 +269,7 @@ static AIThinkingControl *_instance;
         NSLog(@"第1步、所有粒度层单特征识别总结果为0条。");
         return;
     }
-    NSLog(@"第1步、识别结束时:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
+    NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
     // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
