@@ -38,5 +38,6 @@
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;
 -(CGFloat) getZonHeMatch;
+-(NSString*) getZonHeMatchDesc;
 
 @end

@@ -66,8 +66,14 @@
     }
 }
 
+//2025.08.14: 因为竞争浮现不明显，去掉色似度后ok了，如果以后因为去掉色似度导致bug，可以改回来，然后把匹配率改成2次方来强调它的作用试下（参考35064）。
 -(CGFloat) getZonHeMatch {
-    return self.matchValue * self.matchAssRatio * self.matchDiffValue;
+    return self.matchValue * self.matchAssRatio;// * self.matchDiffValue;
+}
+
+-(NSString*) getZonHeMatchDesc {
+    //return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
+    return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f",self.matchValue,self.matchAssRatio);
 }
 
 @end
