@@ -232,9 +232,11 @@
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:[SMGUtils convertArr:decoratorJvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT.p;
-    }] protoLogDesc:nil prefix:@"单特征"];
+    [TIUtils printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT;
+    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
+        return obj.getZonHeMatch;
+    }];
 }
 
 /**
@@ -550,9 +552,11 @@
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        return obj.assT;
-    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 组特征",dotSize)];
+    [TIUtils printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 组特征",dotSize) convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
+        return [SMGUtils searchNode:obj.assT];
+    } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
+        return obj.modelMatchDegree * obj.modelMatchValue * obj.matchRatio * obj.modelZonHeMatchByJvBu;
+    }];
     return resultModels;
 }
 
@@ -623,9 +627,11 @@
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:[SMGUtils convertArr:decoratorJvBuModel.gtModels convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT.p;
-    }] protoLogDesc:nil prefix:@"组特征"];
+    [TIUtils printLogDescRate:decoratorJvBuModel.gtModels protoLogDesc:nil prefix:@"组特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT;
+    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
+        return obj.getZonHeMatch;
+    }];
 }
 
 //MARK:===============================================================
@@ -858,7 +864,9 @@
     //18. debugLog3
     [TIUtils printLogDescRate:[SMGUtils convertArr:logModels convertBlock:^id(AIMatchAlgModel *obj) {
         return obj.matchAlg;
-    }] protoLogDesc:CLEANSTR([protoAlg getLogDesc:false].allKeys) prefix:@"概念"];
+    }] protoLogDesc:CLEANSTR([protoAlg getLogDesc:false].allKeys) prefix:@"概念" convertNodeBlock:^id(id obj) {
+        return [SMGUtils searchNode:obj];
+    } convertMatchBlock:nil];
     
     //19. 概念识别结果可视化（参考34176）。
     [SMGUtils runByMainQueue:^{
@@ -1431,16 +1439,17 @@
     return nil;
 }
 
-+(void) printLogDescRate:(NSArray*)ass_ps protoLogDesc:(NSString*)protoLogDesc prefix:(NSString*)prefix {
++(void) printLogDescRate:(NSArray*)asses protoLogDesc:(NSString*)protoLogDesc prefix:(NSString*)prefix convertNodeBlock:(id(^)(id obj))convertNodeBlock convertMatchBlock:(float(^)(id obj))convertMatchBlock {
     //18. debugLog3
     NSMutableDictionary *allLogDic = [NSMutableDictionary new];
-    for (AIKVPointer *ass_p in ass_ps) {
-        AINodeBase *assNode = [SMGUtils searchNode:ass_p];
+    for (id itemAss in asses) {
+        AINodeBase *assNode = convertNodeBlock(itemAss);
+        CGFloat match = convertMatchBlock ? convertMatchBlock(itemAss) : 1;
         NSDictionary *itemLogDic = [assNode getLogDesc_Number:true];
         for (NSString *key in itemLogDic.allKeys) {
             CGFloat oldCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
             CGFloat newCount = NUMTOOK([itemLogDic objectForKey:key]).floatValue;
-            [allLogDic setObject:@(oldCount + newCount) forKey:key];
+            [allLogDic setObject:@(oldCount + newCount * match) forKey:key];
         }
     }
     CGFloat sum = [SMGUtils sumOfArr:allLogDic.allValues convertBlock:^double(NSNumber *obj) {
