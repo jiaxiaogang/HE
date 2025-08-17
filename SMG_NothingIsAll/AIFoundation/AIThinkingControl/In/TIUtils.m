@@ -213,7 +213,7 @@
     //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
     //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
     //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.8f, 20), 100));
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.5f, 2), 100));
     
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
@@ -603,7 +603,7 @@
     }];
     
     //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.5f, 2), 30));
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.3f, 2), 30));
     
     //60. 更新赋值回去。
     decoratorJvBuModel.gtModels = [[NSMutableArray alloc] initWithArray:validModels];
