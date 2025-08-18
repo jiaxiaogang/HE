@@ -397,12 +397,6 @@
         return [TCLearningUtil noZeRenForPingJun:item.matchValue * item.matchDegree * item.diffValue bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree * jvBuModel.matchDiffValue];
     }]];
     
-    
-    //TODOTOMORROW20250817: 经查此处bestGVs竞争没更新赋值问题，可能导致没法让识别越来越抽象浮现，导致识别不准确（导致0识别成1啥的）。
-    // 如果再有问题，可以查下，在识别时，用不用把bestGVs也竞争下？
-    
-    
-    
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
     NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.assIndex;

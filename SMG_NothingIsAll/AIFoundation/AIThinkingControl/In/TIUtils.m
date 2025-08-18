@@ -319,9 +319,18 @@
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         
+        // TODOTOMORROW20250818: 查此处是不是过滤的太早，导致新的事物，没有激活资格。
+        [self printLogDescRate:Ports2Pits(refPorts) protoLogDesc:nil prefix:@"前" convertNodeBlock:^id(id obj) {
+            return [SMGUtils searchNode:obj];
+        } convertMatchBlock:nil];
+        
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
         //NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
         refPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.3f, 5), 20));
+        
+        [self printLogDescRate:Ports2Pits(refPorts) protoLogDesc:nil prefix:@"后" convertNodeBlock:^id(id obj) {
+            return [SMGUtils searchNode:obj];
+        } convertMatchBlock:nil];
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
@@ -384,6 +393,12 @@
             //44. 单特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到单特征最低标准）。
             //[decoratorJvBuModel.debug updateLogDic:1003 assPId:model.assT.pId];
             if (model.bestGVs.count <= 4) continue;
+            
+            
+            //TODOTOMORROW20250817: 如果再有0识别成1问题，查下此处用不用把bestGVs也竞争下（应该不需要，类比时会定责过滤，并且此处不能因为不准确的bestGVs就去掉，这样成了哪个也准，但事实上是不准确的）。
+            
+            
+            
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [result addObject:model];
