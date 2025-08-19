@@ -224,6 +224,15 @@
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
+        //TODOTOMORROW20250820:
+        //1. 此处没对proto和ass构建关联，并且assT也只是原本的logDesc。
+        //2. 那为什么训练10个0后，1那么难激活呢？即使激活了，还是没几个结果？
+        //3. 只有1识别到1后，才会开始有1的类比抽象，此前都是1和0的类比抽象结果。
+        //4. 感觉是组特征自举识别的问题，为什么1和1没能在组特征识别中优胜？
+        //5. 或者当错误的0和1类比时，已经有了很多过度抽象的结果？
+        //6. 得边训练边分析到底问题出在哪？
+        
+        
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld %@",model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getZonHeMatchDesc);
         [SMGUtils runByMainQueue:^{
@@ -385,12 +394,6 @@
             //44. 单特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到单特征最低标准）。
             //[decoratorJvBuModel.debug updateLogDic:1003 assPId:model.assT.pId];
             if (model.bestGVs.count <= 4) continue;
-            
-            
-            //TODOTOMORROW20250817: 如果再有0识别成1问题，查下此处用不用把bestGVs也竞争下（应该不需要，类比时会定责过滤，并且此处不能因为不准确的bestGVs就去掉，这样成了哪个也准，但事实上是不准确的）。
-            
-            
-            
             
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
             [result addObject:model];
