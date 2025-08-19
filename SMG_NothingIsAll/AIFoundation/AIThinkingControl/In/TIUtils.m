@@ -319,18 +319,10 @@
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         
-        // TODOTOMORROW20250818: 查此处是不是过滤的太早，导致新的事物，没有激活资格。
-        [self printLogDescRate:Ports2Pits(refPorts) protoLogDesc:nil prefix:@"前" convertNodeBlock:^id(id obj) {
-            return [SMGUtils searchNode:obj];
-        } convertMatchBlock:nil];
-        
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
+        //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
         //NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
-        refPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.3f, 5), 20));
-        
-        [self printLogDescRate:Ports2Pits(refPorts) protoLogDesc:nil prefix:@"后" convertNodeBlock:^id(id obj) {
-            return [SMGUtils searchNode:obj];
-        } convertMatchBlock:nil];
+        //refPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.3f, 5), 20));
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
