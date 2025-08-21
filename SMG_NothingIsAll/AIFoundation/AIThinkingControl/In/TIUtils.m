@@ -68,7 +68,6 @@
         model.matchValue = matchValue;
         return model;
     }];
-    NSLog(@"单码识别结果:%ld",result.count);
     return result;
 }
 
@@ -107,7 +106,6 @@
         NSArray *vMatchModels = [AIRecognitionCache getCache:STRFORMAT(@"%@_%.2f",item.v1,itemData) cacheBlock:^id{
             return [self recognitionValue:0.2 minLimit:10 at:at ds:ds isOut:isOut protoData:itemData];//v1单码特征
         }];
-        NSLog(@"组码识别结果Step1 单码识别数(%@):%ld",ds,vMatchModels.count);
         if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"37");
         
         //4. 每一个vMatchModel都向refPorts找结果。
@@ -141,7 +139,6 @@
     gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *obj) {
         return obj.matchValue;
     }];
-    NSLog(@"组码识别结果Step2 组码识别到:%ld",gMatchModels.count);
     if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3f");//循环圈:1 代码块:3e 计数:51 均耗:27.96 = 总耗:1426 读:481 写:0
     
     //24. 过滤不准确的结果。
@@ -150,12 +147,11 @@
     //25. 更新: ref强度 & 相似度 & 抽具象;
     if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g1");
     for (AIMatchModel *matchModel in gMatchModels) {
-        if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g2");
-        AIGroupValueNode *assNode = [SMGUtils searchNode:matchModel.match_p];//性能：起初需要IO时1ms/条，后面有缓存后均耗0.05ms 总22ms。
         if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g3");
         //2025.03.30: 这儿性能不太好，经查现在组码识别不需要单码索引强度做竞争，先关掉。
         //[AINetUtils insertRefPorts_General:assNode.p content_ps:assNode.content_ps difStrong:1 header:assNode.header];
         if (forProtoGV) {
+            AIGroupValueNode *assNode = [SMGUtils searchNode:matchModel.match_p];//性能：起初需要IO时1ms/条，后面有缓存后均耗0.05ms 总22ms。
             AIGroupValueNode *protoGroupValue = [SMGUtils searchNode:forProtoGV];
             [protoGroupValue updateMatchValue:assNode matchValue:matchModel.matchValue];//性能均耗0.15ms 总65ms
             if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g4");
@@ -165,7 +161,6 @@
         //NSLog(@"组码识别结果(%ld/%ld) GV%ld 匹配数:%ld 匹配度:%.2f",[gMatchModels indexOfObject:matchModel],gMatchModels.count,matchModel.match_p.pointerId,matchModel.matchCount,matchModel.matchValue);
     }
     if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g6");
-    NSLog(@"组码识别结果Step3 竞争后数:%ld",gMatchModels.count);
     return gMatchModels;
 }
 
@@ -333,6 +328,10 @@
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        
+        //TODOTOMORROW20250821: 还是先查下这里：
+        //1. sv和gv识别没问题，就是匹配度来排序的。
+        //2. 核实下此处是否还是旧太多，新太少？
         
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
