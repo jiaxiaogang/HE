@@ -54,7 +54,7 @@
     near_ps = ARR_SUB(near_ps, 0, limit);
     
     //4. 转matchModel模型并返回，取上相近度。
-    return [SMGUtils convertArr:near_ps convertBlock:^id(AIKVPointer *near_p) {
+    NSArray *result = [SMGUtils convertArr:near_ps convertBlock:^id(AIKVPointer *near_p) {
         
         //5. 第1_计算出nearV (参考25082-公式1) (性能:400次计算,耗100ms很正常);
         //2024.04.27: BUG_这里有nearV为0的,导致后面可能激活一些完全不准确的结果 (修复: 加上末尾淘汰: 相似度为0的就不收集了先,看下应该也不影响别的什么);
@@ -68,6 +68,8 @@
         model.matchValue = matchValue;
         return model;
     }];
+    NSLog(@"单码识别结果:%ld",result.count);
+    return result;
 }
 
 //MARK:===============================================================
@@ -105,6 +107,7 @@
         NSArray *vMatchModels = [AIRecognitionCache getCache:STRFORMAT(@"%@_%.2f",item.v1,itemData) cacheBlock:^id{
             return [self recognitionValue:0.2 minLimit:10 at:at ds:ds isOut:isOut protoData:itemData];//v1单码特征
         }];
+        NSLog(@"组码识别结果Step1 单码识别数(%@):%ld",ds,vMatchModels.count);
         if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"37");
         
         //4. 每一个vMatchModel都向refPorts找结果。
@@ -138,6 +141,7 @@
     gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *obj) {
         return obj.matchValue;
     }];
+    NSLog(@"组码识别结果Step2 组码识别到:%ld",gMatchModels.count);
     if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3f");//循环圈:1 代码块:3e 计数:51 均耗:27.96 = 总耗:1426 读:481 写:0
     
     //24. 过滤不准确的结果。
@@ -161,6 +165,7 @@
         //NSLog(@"组码识别结果(%ld/%ld) GV%ld 匹配数:%ld 匹配度:%.2f",[gMatchModels indexOfObject:matchModel],gMatchModels.count,matchModel.match_p.pointerId,matchModel.matchCount,matchModel.matchValue);
     }
     if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g6");
+    NSLog(@"组码识别结果Step3 竞争后数:%ld",gMatchModels.count);
     return gMatchModels;
 }
 
@@ -195,6 +200,7 @@
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
     
+    //TODOTOMORROW20250821: 此处已经有了：新事物激活困难问题。
     [self printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"前" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:nil];
@@ -231,15 +237,6 @@
         
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
-        
-        //TODOTOMORROW20250820:
-        //1. 此处没对proto和ass构建关联，并且assT也只是原本的logDesc。
-        //2. 那为什么训练10个0后，1那么难激活呢？即使激活了，还是没几个结果？
-        //3. 只有1识别到1后，才会开始有1的类比抽象，此前都是1和0的类比抽象结果。
-        //4. 感觉是组特征自举识别的问题，为什么1和1没能在组特征识别中优胜？
-        //5. 或者当错误的0和1类比时，已经有了很多过度抽象的结果？
-        //6. 得边训练边分析到底问题出在哪？
-        
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld %@",model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getZonHeMatchDesc);
@@ -299,6 +296,7 @@
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
+    NSLog(@"特征识别结果Step0 组码激活数:%ld",gMatchModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
