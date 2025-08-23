@@ -291,7 +291,6 @@
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
-    NSLog(@"特征识别结果Step0 组码激活数:%ld",gMatchModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
@@ -329,9 +328,11 @@
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         
-        //TODOTOMORROW20250821: 还是先查下这里：
-        //1. sv和gv识别没问题，就是匹配度来排序的。
-        //2. 核实下此处是否还是旧太多，新太少？
+        //TODOTOMORROW20250821:
+        //1. 经查日志，识别的结果中，大多pid也挺新的，不应该全是旧的，感觉问题是不是出在logDesc在类比时，缺乏protoT，所以。。。全是0抽象成0。
+        //2. 那么：识别时GT就全是0吗？1呢？还是从GT识别查起，为什么GT没搜到1？
+        
+        
         
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。

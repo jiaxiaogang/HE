@@ -625,9 +625,9 @@ static AIThinkingControl *_instance;
     [hFeature updateLogDescItem:logDesc];
     [sFeature updateLogDescItem:logDesc];
     [bFeature updateLogDescItem:logDesc];
-    NSLog(@"%@ H ====================================\n%@",logDesc,FeatureDesc(hFeature.p,1));
-    NSLog(@"%@ S ====================================\n%@",logDesc,FeatureDesc(sFeature.p,1));
-    NSLog(@"%@ B ====================================\n%@",logDesc,FeatureDesc(bFeature.p,1));
+    NSLog(@"%@ H T%ld====================================\n%@",logDesc,hFeature.pId,FeatureDesc(hFeature.p,1));
+    NSLog(@"%@ S T%ld====================================\n%@",logDesc,sFeature.pId,FeatureDesc(sFeature.p,1));
+    NSLog(@"%@ B T%ld====================================\n%@",logDesc,bFeature.pId,FeatureDesc(bFeature.p,1));
     //[SMGUtils runByMainQueue:^{
     //    [theApp.imgTrainerView setDataForFeature:hFeature lab:STRFORMAT(@"入%@T%ld",hFeature.ds,hFeature.pId)];
     //    [theApp.imgTrainerView setDataForFeature:sFeature lab:STRFORMAT(@"入%@T%ld",sFeature.ds,sFeature.pId)];
