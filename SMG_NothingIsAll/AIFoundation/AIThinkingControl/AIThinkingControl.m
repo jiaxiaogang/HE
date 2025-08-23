@@ -285,13 +285,13 @@ static AIThinkingControl *_instance;
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoT:nil];
+        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 组特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.gtModels) {
-        [AIAnalogy analogyGroupFeatureV4:model];
+        [AIAnalogy analogyGroupFeatureV4:model protoTLogDesc:logDesc];
     }
     
     // ====================== 组特征识别类比V3（已被V4替代） ======================

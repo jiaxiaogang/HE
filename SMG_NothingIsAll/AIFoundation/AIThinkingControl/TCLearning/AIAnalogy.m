@@ -370,11 +370,11 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT {
-    return [self analogyFeature_General:jvBuModel protoT:protoT isGT:false];
++(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc {
+    return [self analogyFeature_General:jvBuModel protoT:protoT protoTLogDesc:protoTLogDesc isGT:false];
 }
 
-+(AIFeatureNode*) analogyFeature_General:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT isGT:(BOOL)isGT {
++(AIFeatureNode*) analogyFeature_General:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc isGT:(BOOL)isGT {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     
     // 2025.06.14: 如果一致，即不必类比抽象，因为内容一致时：抽象就是assT本身。
@@ -432,6 +432,7 @@
     NSArray *conNodes = protoT ? @[jvBuModel.assT,protoT] : @[jvBuModel.assT];
     AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:conNodes at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:isGT];
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
+    [absT updateLogDescItem:protoTLogDesc];
     if (protoT) [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
     if ([absT.p isEqual:jvBuModel.assT.p] || [absT.p isEqual:protoT.p]) return nil;
     
@@ -535,8 +536,8 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyGroupFeatureV4:(AIFeatureJvBuModel*)jvBuModel {
-    return [self analogyFeature_General:jvBuModel protoT:nil isGT:true];
++(AIFeatureNode*) analogyGroupFeatureV4:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc {
+    return [self analogyFeature_General:jvBuModel protoT:nil protoTLogDesc:protoTLogDesc isGT:true];
 }
 
 /**
