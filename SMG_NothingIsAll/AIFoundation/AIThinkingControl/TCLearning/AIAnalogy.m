@@ -431,9 +431,14 @@
     //31. 外类比构建
     NSArray *conNodes = protoT ? @[jvBuModel.assT,protoT] : @[jvBuModel.assT];
     AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:conNodes at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:isGT];
+    
+    //2025.08.24: protoT为空时，也要记录protoLogDesc+1，避免一些抽象特征明明很广泛了，还是只记录着最初的那个logDesc（比如通过识别1触发的多次抽象，仅因最具象时是0，最后还只认为它是0是不对的）。
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
-    [absT updateLogDescItem:protoTLogDesc];
-    if (protoT) [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
+    if (protoT) {
+        [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
+    } else {
+        [absT updateLogDescItem:protoTLogDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
+    }
     if ([absT.p isEqual:jvBuModel.assT.p] || [absT.p isEqual:protoT.p]) return nil;
     
     //35. 存protoT与absT的匹配度 & 存conPorts的rect（参考34135-TODO1）& 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
