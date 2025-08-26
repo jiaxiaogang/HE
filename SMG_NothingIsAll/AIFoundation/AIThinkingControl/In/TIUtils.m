@@ -208,7 +208,7 @@
     //53. 排序
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.getZonHeMatch;
+        return obj.getSTMatch;
     }];
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
@@ -234,7 +234,7 @@
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld %@",model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getZonHeMatchDesc);
+        NSLog(@"单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld %@",model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
         [SMGUtils runByMainQueue:^{
             //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
@@ -244,7 +244,7 @@
     [TIUtils printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getZonHeMatch;
+        return obj.getSTMatch;
     }];
 }
 
@@ -615,7 +615,7 @@
     
     //53. 排序
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.getZonHeMatch;
+        return obj.getGTMatch;
     }];
     
     //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
@@ -636,7 +636,7 @@
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         if (Log4RecogDesc || decoratorJvBuModel.gtModels.count > 0) NSLog(@"组特征识别结果:GT%ld%@\t 匹配条数:%ld/ass%ld %@",
-                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getZonHeMatchDesc);
+                                         model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getGTMatchDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别组GT%ld(%ld/%ld)",[decoratorJvBuModel.gtModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
@@ -646,7 +646,7 @@
     [TIUtils printLogDescRate:decoratorJvBuModel.gtModels protoLogDesc:nil prefix:@"组特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getZonHeMatch;
+        return obj.getGTMatch;
     }];
 }
 

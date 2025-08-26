@@ -312,12 +312,12 @@ static AIThinkingControl *_instance;
     [TIUtils printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getZonHeMatch;
+        return obj.getSTMatch;
     }];
     [TIUtils printLogDescRate:jvBuModel.gtModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getZonHeMatch;
+        return obj.getGTMatch;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
