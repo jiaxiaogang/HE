@@ -71,9 +71,10 @@
     return self.matchValue * self.matchAssRatio;// * self.matchDiffValue;
 }
 
-//2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案）。
+//2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
 -(CGFloat) getGTMatch {
-    return self.matchValue;
+    return self.matchValue * self.matchAssRatio;// * self.matchDiffValue;
+    //return self.matchValue;
 }
 
 -(NSString*) getSTMatchDesc {
@@ -82,7 +83,8 @@
 }
 
 -(NSString*) getGTMatchDesc {
-    return STRFORMAT(@"\t匹配度:%.2f",self.matchValue);
+    //return STRFORMAT(@"\t匹配度:%.2f",self.matchValue);
+    return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f",self.matchValue,self.matchAssRatio);
 }
 
 @end
