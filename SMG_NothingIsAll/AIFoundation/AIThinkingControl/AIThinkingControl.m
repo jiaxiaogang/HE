@@ -323,6 +323,31 @@ static AIThinkingControl *_instance;
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
 
+-(void) testZiJv:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
+    //TODOTOMORROW20250828: 写个自举算法的单元测试。
+    //1. 前十张0和1，调用createSplitFor9Block先生成并收集起来。
+    MapModel *createResult = [self createSplitFor9Block:algsModel algsType:algsType logDesc:logDesc];
+    AIFeatureNode *hFeature = createResult.v1;
+    AIFeatureNode *sFeature = createResult.v2;
+    AIFeatureNode *bFeature = createResult.v3;
+    
+    //2. 自举：每个assT一条条自举自身的gv。
+    //  a. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
+    //    for (NSInteger i = 1; i < assT.count; i++) {
+    //        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    //        NSInteger curIndex = (beginAssIndex + i) % assT.count;
+    //        AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+    //        //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
+    //        if (!bestItem) continue;
+    //        [model.bestGVs addObject:bestItem];
+    //        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    //    }
+    //3. 首先，这个protoRect是从protoColorDic切入来的，这个是不是有问题？这个要做为切入点，切assT用的。。。
+    //  a. 首先它性能不佳。
+    //  b. 再次它切入点可能很不准确（因为它的信息量不明确，不像createSplitFor9Block里那种处理过的，用来表达protoT的信息量更精准）。
+    //4. ST用组码切入还好，但GT识别，可以改成由ST识别结果来做切入点。
+}
+
 /**
  *  MARK:--------------------数据输入--------------------
  *  @param dics : 多model (models仅含普通算法model -> 目前没有imv和普通信息掺杂在models中的情况;)
