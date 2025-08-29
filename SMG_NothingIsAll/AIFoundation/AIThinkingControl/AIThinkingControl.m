@@ -31,6 +31,8 @@
 @property (assign, nonatomic) BOOL tiRuning2;                       //TI执行中
 @property (assign, nonatomic) BOOL tiRuning3;                       //TI执行中
 
+@property (strong, nonatomic) NSMutableArray *tempModels;            //测试，临时存前几个输入的models
+
 /**
  *  MARK:--------------------当前能量值--------------------
  *  1. 激活: mv输入时激活;
@@ -331,7 +333,32 @@ static AIThinkingControl *_instance;
     AIFeatureNode *sFeature = createResult.v2;
     AIFeatureNode *bFeature = createResult.v3;
     
-    //2. 自举：每个assT一条条自举自身的gv。
+    //2. 前十个收集起来。
+    if (!self.tempModels) {
+        self.tempModels = [NSMutableArray new];
+    }
+    if (![logDesc isEqual:@"0_10"]) {
+        [self.tempModels addObject:bFeature];
+        return;
+    }
+ 
+    //3. 第10个，与前9个分别进行：自举识别：每个assT一条条自举自身的gv。
+    for (NSInteger i = 0; i < self.tempModels.count; i++) {
+        AIFeatureNode *passedModel = ARR_INDEX(self.tempModels, i);
+        
+        for (NSInteger j = 0; j < passedModel.count; j++) {
+            AIKVPointer *protoGV = ARR_INDEX(bFeature.content_ps, j);
+            NSValue *protoRectV = ARR_INDEX(bFeature.rects, j);
+            AIKVPointer *protoGV = ARR_INDEX(passedModel.content_ps, j);
+            NSValue *protoRectV = ARR_INDEX(passedModel.rects, j);
+            
+        }
+        
+        
+        
+    }
+    
+    
     //  a. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
     //    for (NSInteger i = 1; i < assT.count; i++) {
     //        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
