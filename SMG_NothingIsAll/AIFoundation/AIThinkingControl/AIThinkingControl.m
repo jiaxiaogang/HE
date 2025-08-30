@@ -325,50 +325,66 @@ static AIThinkingControl *_instance;
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
 
--(void) testZiJv:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
+-(void) testZiJv:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)at logDesc:(NSString*)logDesc {
     //TODOTOMORROW20250828: 写个自举算法的单元测试。
-    //1. 前十张0和1，调用createSplitFor9Block先生成并收集起来。
-    MapModel *createResult = [self createSplitFor9Block:algsModel algsType:algsType logDesc:logDesc];
-    AIFeatureNode *hFeature = createResult.v1;
-    AIFeatureNode *sFeature = createResult.v2;
-    AIFeatureNode *bFeature = createResult.v3;
     
-    //2. 前十个收集起来。
+    //1. 0到9调用createSplitFor9Block先生成并收集起来。
     if (!self.tempModels) {
         self.tempModels = [NSMutableArray new];
     }
     if (![logDesc isEqual:@"0_10"]) {
+        MapModel *createResult = [self createSplitFor9Block:algsModel algsType:at logDesc:logDesc];
+        AIFeatureNode *hFeature = createResult.v1;
+        AIFeatureNode *sFeature = createResult.v2;
+        AIFeatureNode *bFeature = createResult.v3;
         [self.tempModels addObject:bFeature];
         return;
     }
- 
-    //3. 第10个，与前9个分别进行：自举识别：每个assT一条条自举自身的gv。
+    
+    //2. 第10个分别与前面的测试自举识别算法：数据准备。
+    NSMutableArray *result = [NSMutableArray new];
+    NSString *ds = @"bColors";
+    NSDictionary *colorDic = algsModel.bColors;
+    BOOL isOut = false;
+    
+    //3. 循环分别进行：自举识别：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < self.tempModels.count; i++) {
-        AIFeatureNode *passedModel = ARR_INDEX(self.tempModels, i);
-        
-        for (NSInteger j = 0; j < passedModel.count; j++) {
-            AIKVPointer *protoGV = ARR_INDEX(bFeature.content_ps, j);
-            NSValue *protoRectV = ARR_INDEX(bFeature.rects, j);
-            AIKVPointer *protoGV = ARR_INDEX(passedModel.content_ps, j);
-            NSValue *protoRectV = ARR_INDEX(passedModel.rects, j);
+        AIFeatureNode *passedT = ARR_INDEX(self.tempModels, i);
+        AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:passedT];
+        for (NSInteger j = 0; j < passedT.count; j++) {
+            //4. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
+            //4. 从passedT中一个个gv与protoColorDic做自举。
+            AIKVPointer *passedGV = ARR_INDEX(passedT.content_ps, j);
+            NSValue *passedRectV = ARR_INDEX(passedT.rects, j);
+            CGRect passedRect = passedRectV.CGRectValue;
             
+            //5. 用passedT的gv从proto切块。
+            NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:passedRect];
+            NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+            
+            //6. 提前加载好vInfo & dataDic缓存，后面复用。
+            NSDictionary *vInfoCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
+                AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:protoK isOut:isOut];
+                return @[protoK,vInfo];
+            }];
+            NSDictionary *dataDicCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
+                NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:isOut];
+                return @[protoK,dataDic];
+            }];
+            
+            //7. 收集起来自举算法结果。
+            AIFeatureJvBuItem *bestItem = [TIUtils ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+            if (!bestItem) continue;
+            [model.bestGVs addObject:bestItem];
         }
         
+        //8.
+        [result addObject:model];
         
         
     }
     
     
-    //  a. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
-    //    for (NSInteger i = 1; i < assT.count; i++) {
-    //        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    //        NSInteger curIndex = (beginAssIndex + i) % assT.count;
-    //        AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
-    //        //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
-    //        if (!bestItem) continue;
-    //        [model.bestGVs addObject:bestItem];
-    //        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    //    }
     //3. 首先，这个protoRect是从protoColorDic切入来的，这个是不是有问题？这个要做为切入点，切assT用的。。。
     //  a. 首先它性能不佳。
     //  b. 再次它切入点可能很不准确（因为它的信息量不明确，不像createSplitFor9Block里那种处理过的，用来表达protoT的信息量更精准）。

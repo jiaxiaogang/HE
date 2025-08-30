@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class AIFeatureJvBuModels,DDic,AIGroupFeatureNode;
+@class AIFeatureJvBuModels,DDic,AIGroupFeatureNode,AIFeatureJvBuItem;
 @interface TIUtils : NSObject
 
 //MARK:===============================================================
@@ -51,5 +51,14 @@
 //+(void) recognitionCansetFo:(AIKVPointer*)newCanset_p sceneFo:(AIKVPointer*)sceneFo_p es:(EffectStatus)es;
 
 +(void) printLogDescRate:(NSArray*)asses protoLogDesc:(NSString*)protoLogDesc prefix:(NSString*)prefix convertNodeBlock:(id(^)(id obj))convertNodeBlock convertMatchBlock:(float(^)(id obj))convertMatchBlock;
+
++(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
+                          assT:(AIFeatureNode*)assT
+                 lastProtoRect:(CGRect)lastProtoRect
+                 lastAtAssRect:(CGRect)lastAtAssRect
+                 protoColorDic:(NSDictionary*)protoColorDic
+                            ds:(NSString*)ds
+                  dataDicCache:(NSDictionary*)dataDicCache
+                    vInfoCache:(NSDictionary*)vInfoCache;
 
 @end
