@@ -332,7 +332,7 @@ static AIThinkingControl *_instance;
     if (!self.tempModels) {
         self.tempModels = [NSMutableArray new];
     }
-    if (![logDesc isEqual:@"0_10"]) {
+    if (![logDesc isEqual:@"Mnist0_10"]) {
         MapModel *createResult = [self createSplitFor9Block:algsModel algsType:at logDesc:logDesc];
         AIFeatureNode *hFeature = createResult.v1;
         AIFeatureNode *sFeature = createResult.v2;
@@ -355,7 +355,6 @@ static AIThinkingControl *_instance;
         for (NSInteger j = 0; j < passedT.count; j++) {
             //4. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
             //4. 从passedT中一个个gv与protoColorDic做自举。
-            AIKVPointer *passedGV = ARR_INDEX(passedT.content_ps, j);
             NSValue *passedRectV = ARR_INDEX(passedT.rects, j);
             CGRect passedRect = passedRectV.CGRectValue;
             
