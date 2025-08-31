@@ -192,7 +192,8 @@ static AIThinkingControl *_instance;
     __block AIVisionAlgsModelV2 *weakAlgsModel = algsModel;
     dispatch_async(self.tiQueue, ^{//30083去异步
         self.tiRuning1 = true;
-        [self commitInputWithSplitV2:weakAlgsModel algsType:algsType logDesc:logDesc];
+        //[self commitInputWithSplitV2:weakAlgsModel algsType:algsType logDesc:logDesc];
+        [self testZiJv:weakAlgsModel algsType:algsType logDesc:logDesc];
         self.tiRuning1 = false;
     });
 }
@@ -325,9 +326,8 @@ static AIThinkingControl *_instance;
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
 
+//TODOTOMORROW20250828: 写个自举算法的单元测试。
 -(void) testZiJv:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)at logDesc:(NSString*)logDesc {
-    //TODOTOMORROW20250828: 写个自举算法的单元测试。
-    
     //1. 0到9调用createSplitFor9Block先生成并收集起来。
     if (!self.tempModels) {
         self.tempModels = [NSMutableArray new];
@@ -338,6 +338,7 @@ static AIThinkingControl *_instance;
         AIFeatureNode *sFeature = createResult.v2;
         AIFeatureNode *bFeature = createResult.v3;
         [self.tempModels addObject:bFeature];
+        NSLog(@"构建itemT %@ success",logDesc);
         return;
     }
     
@@ -377,12 +378,27 @@ static AIThinkingControl *_instance;
             if (!bestItem) continue;
             [model.bestGVs addObject:bestItem];
         }
-        
-        //8.
+        //8. 收集
         [result addObject:model];
-        
-        
     }
+    
+    //43. 处理匹配度，符合度
+    for (AIFeatureJvBuModel *model in result) {
+        [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
+    }
+    
+    //53. 排序
+    NSArray *validResult = [SMGUtils sortBig2Small:result compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.getSTMatch;
+    }];
+    
+    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
+    for (AIFeatureJvBuModel *model in validResult) {
+        
+        //52. debug (\t符合度:%.1f\t健全度:%.1f)
+        NSLog(@"%ld. 单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld %@",[validResult indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
+    }
+    
     
     
     //3. 首先，这个protoRect是从protoColorDic切入来的，这个是不是有问题？这个要做为切入点，切assT用的。。。
