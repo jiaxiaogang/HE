@@ -73,7 +73,7 @@
 
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
 -(CGFloat) getGTMatch {
-    return self.matchValue * self.matchAssRatio;// * self.matchDiffValue;
+    return self.matchValue * self.matchAssRatio * self.matchAssRatio;// * self.matchDiffValue;
     //return self.matchValue;
 }
 
