@@ -286,6 +286,16 @@ static AIThinkingControl *_instance;
     [TIUtils recognitionGroupFeatureV4_Step2:jvBuModel];
     NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
+    
+    // 把局部识别结果打包成protoGT（参考35072-TODO2）。
+    NSArray *orders = [SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return [InputGroupFeatureModel new:obj.assT.p rect:obj.bestGVsAtProtoTRect];
+    }];
+    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    
+    // V5新版GT识别。
+    [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels dotSize:1];
+    
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
         [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
