@@ -296,6 +296,12 @@ static AIThinkingControl *_instance;
     // V5新版GT识别。
     [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels dotSize:1];
     
+    
+    //TODOTOMORROW20250909: 继续写这儿：组特征类比。
+    
+    
+    
+    
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
         [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
