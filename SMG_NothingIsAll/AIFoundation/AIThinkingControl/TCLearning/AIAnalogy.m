@@ -478,20 +478,26 @@
         newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.itemAtAssRect);
     }
     
+    NSArray *orders = [SMGUtils convertArr:sameItems convertBlock:^id(AIFeatureZenTiItem_Rect *obj) {
+        
+        
+        
+        //TODOTOMORROW20250910: 继续写这儿：组特征类比。
+        
+        
+        //下面的sameItems下存的是jvBuModel，而jvBuModel.bestGV是不会存在protoT下的，protoT的元素是ST，而bestGV应该是存在各个st下的才对。
+        // 1. 先把单特征类比结果absSTs搞过来，用那个来生成absGT才对。
+        // 2. 根据gvsAtProtoRect和itemAtAssRect，可以计算出absST在absGT中的位置。
+        
+        return [InputGroupFeatureModel new:obj.fromItemT.assT.p rect:obj.fromItemT.bestGVsAtProtoTRect];
+    }];
+    AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    
     //20. 根据protoT和itemAbsT的映射来实现类比抽象（参考34164-方案2）。
     //2025.04.23: 修复收集到的absGVModels数竟然有达到1000的情况，改为通过protoT和itemAbsT的映射，收集protoT的gv元素做抽象。
     NSMutableArray *protoIndexes = [SMGUtils convertArr:sameItems convertItemArrBlock:^NSArray *(AIFeatureZenTiItem_Rect *item) {
         //2025.06.11: 把旧有从jvBuModel.indexDic取protoIndexes，改成由protoT中jvBuItem.bestGVAtProtoTRect来取protoIndex。
         return [SMGUtils convertArr:item.fromItemT.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
-            
-            
-            
-            //TODOTOMORROW20250910: 继续写这儿：组特征类比。
-            
-            
-            //下面的sameItems下存的是jvBuModel，而jvBuModel.bestGV是不会存在protoT下的，protoT的元素是ST，而bestGV应该是存在各个st下的才对。
-            
-            
             NSInteger protoIndex = [protoT indexOfRect:obj.bestGVAtProtoTRect];
             if (protoIndex < 0) {
                 ELog(@"此处取protoIndex错误，根据bestGVAtProtoTRect未取到有效的protoIndex值");
