@@ -488,6 +488,11 @@
         //下面的sameItems下存的是jvBuModel，而jvBuModel.bestGV是不会存在protoT下的，protoT的元素是ST，而bestGV应该是存在各个st下的才对。
         // 1. 先把单特征类比结果absSTs搞过来，用那个来生成absGT才对。
         // 2. 根据gvsAtProtoRect和itemAtAssRect，可以计算出absST在absGT中的位置。
+        // 3. 构建protoGT的，和GT识别的，都是整个assST，所以此处其实也不必说必须得用absST，先就用assST也是可以的。
+        // 4. 即直接用itemAtAssRect即可做为assST在assGT中的位置。
+        // 5. 同时它也可以做为assST在absGT中的位置（只是需要左上角把leftMargin和leftMargin留白减掉）。
+        // 6. 另外：absGT和assGT要构建抽具关联，absGT在assGT的范围即为：itemAtAssRect。
+        // 6. 另外：absGT和protoGT就先不进行抽具关联了，它俩的关联需求没那么强，看起来不怎么用的着。
         
         return [InputGroupFeatureModel new:obj.fromItemT.assT.p rect:obj.fromItemT.bestGVsAtProtoTRect];
     }];
