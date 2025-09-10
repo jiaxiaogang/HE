@@ -293,14 +293,13 @@ static AIThinkingControl *_instance;
     }];
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     
-    // V5新版GT识别。
-    [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels dotSize:1];
+    // GT识别V5。
+    NSArray *assGTs = [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels dotSize:1];
     
-    
-    //TODOTOMORROW20250909: 继续写这儿：组特征类比。
-    
-    
-    
+    // GT类比V5。
+    for (AIFeatureZenTiModel *assGT in assGTs) {
+        [AIAnalogy analogyGroupFeatureV5:protoGT zenTiModel:assGT];
+    }
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {

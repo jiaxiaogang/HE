@@ -75,7 +75,7 @@
 //MARK:===============================================================
 //MARK:                     < 单特征综合竞争分 >
 //MARK:===============================================================
-@property (assign, nonatomic) CGFloat modelZonHeMatchByJvBu;//单特征综合竞争分。
--(void) run4ModelZonHeMatchByJvBu;
+@property (assign, nonatomic) CGFloat modelSTMatch;//单特征综合竞争分。
+-(void) run4STMatch;
 
 @end

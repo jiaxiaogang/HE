@@ -269,7 +269,7 @@
         //12. 借助absT来类比时，复用ZenTi的识别结果model数据，并且用完就清空，防止循环野指针（参考34139-TODO3）。
         AIFeatureZenTiModel *zenTiModel = assFeature.zenTiModel;
         assFeature.zenTiModel = nil;
-        return [self analogyGroupFeatureV3:protoFeature ass:assFeature zenTiModel:zenTiModel];
+        return [self analogyGroupFeatureV5:protoFeature zenTiModel:zenTiModel];
     }
     //21. 特征识别step1识别到的结果，复用indexDic进行类比。
     else if(assFeature.jvBuModel && [protoT_p isEqual:assFeature.jvBuModel.v2] ) {
@@ -463,11 +463,12 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyGroupFeatureV3:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
++(AIFeatureNode*) analogyGroupFeatureV5:(AIFeatureNode*)protoT zenTiModel:(AIFeatureZenTiModel*)zenTiModel {
+    AIGroupFeatureNode *assT = [SMGUtils searchNode:zenTiModel.assT];
     //NSLog(@"==============> 特征类比Step2：protoT%ld assT%ld",protoT.pId,assT.pId);
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
     NSArray *sameItems = [SMGUtils filterArr:zenTiModel.rectItems checkValid:^BOOL(AIFeatureZenTiItem_Rect *obj) {
-        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchValue * obj.itemMatchDegree bigerMatchValue:zenTiModel.modelMatchValue * zenTiModel.modelMatchDegree];
+        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree * obj.fromItemT.getSTMatch bigerMatchValue:zenTiModel.modelMatchDegree * zenTiModel.modelSTMatch];
     }];
     
     //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
@@ -482,6 +483,15 @@
     NSMutableArray *protoIndexes = [SMGUtils convertArr:sameItems convertItemArrBlock:^NSArray *(AIFeatureZenTiItem_Rect *item) {
         //2025.06.11: 把旧有从jvBuModel.indexDic取protoIndexes，改成由protoT中jvBuItem.bestGVAtProtoTRect来取protoIndex。
         return [SMGUtils convertArr:item.fromItemT.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+            
+            
+            
+            //TODOTOMORROW20250910: 继续写这儿：组特征类比。
+            
+            
+            //下面的sameItems下存的是jvBuModel，而jvBuModel.bestGV是不会存在protoT下的，protoT的元素是ST，而bestGV应该是存在各个st下的才对。
+            
+            
             NSInteger protoIndex = [protoT indexOfRect:obj.bestGVAtProtoTRect];
             if (protoIndex < 0) {
                 ELog(@"此处取protoIndex错误，根据bestGVAtProtoTRect未取到有效的protoIndex值");

@@ -88,10 +88,10 @@
     }
 }
 
--(void) run4ModelZonHeMatchByJvBu {
+-(void) run4STMatch {
     // 计算单特征综合竞争分
     for (AIFeatureZenTiModel *model in self.models) {
-        [model run4ModelZonHeMatchByJvBu];
+        [model run4STMatch];
     }
 }
 

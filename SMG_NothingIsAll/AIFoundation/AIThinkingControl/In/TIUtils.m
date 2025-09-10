@@ -544,7 +544,7 @@
     [zenTiModel run4MatchRatio];
     
     //25. 计算：综合单特征竞争分。
-    [zenTiModel run4ModelZonHeMatchByJvBu];
+    [zenTiModel run4STMatch];
     
     //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
     //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
@@ -553,7 +553,7 @@
     //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
     //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:zenTiModel.models compareBlock:^double(AIFeatureZenTiModel *obj) {
-        return obj.modelMatchDegree * obj.matchRatio * obj.modelZonHeMatchByJvBu;
+        return obj.modelMatchDegree * obj.matchRatio * obj.modelSTMatch;
     }], 0, zenTiModel.models.count * 0.5);
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -582,7 +582,7 @@
                                          matchModel.rectItems.count,assFeature.count,protoFeature.count,
                                          matchModel.modelMatchValue,matchModel.modelMatchDegree,
                                          matchModel.matchRatio,matchModel.rectItems.count,assFeature.count,
-                                         matchModel.modelZonHeMatchByJvBu);
+                                         matchModel.modelSTMatch);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。

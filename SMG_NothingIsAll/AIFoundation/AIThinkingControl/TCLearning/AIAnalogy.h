@@ -43,6 +43,7 @@
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc;
 +(AIFeatureNode*) analogyGroupFeatureV3:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel;
 +(AIFeatureNode*) analogyGroupFeatureV4:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc;
++(AIFeatureNode*) analogyGroupFeatureV5:(AIFeatureNode*)protoT zenTiModel:(AIFeatureZenTiModel*)zenTiModel;
 
 /**
  *  MARK:--------------------Canset类比 --------------------
