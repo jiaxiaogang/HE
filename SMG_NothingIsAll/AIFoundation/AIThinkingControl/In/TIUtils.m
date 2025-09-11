@@ -502,7 +502,7 @@
  *      2025.05.07: v2-支持自适应粒度。
  *      2025.09.09: v5-改回GT为独立网络模块（参考35072-TODO3）。
  */
-+(NSArray*) recognitionGroupFeatureV5:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels dotSize:(CGFloat)dotSize {
++(NSArray*) recognitionGroupFeatureV5:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
     //1. 数据准备
     AIFeatureNode *protoFeature = [SMGUtils searchNode:protoFeature_p];
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
@@ -598,7 +598,7 @@
     //61. debugLog
     [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
         return obj.assT;
-    }] protoLogDesc:nil prefix:STRFORMAT(@"item粒度层:%.2f 组特征",dotSize) convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
+    }] protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
         return [SMGUtils searchNode:obj.assT];
     } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
         return obj.modelMatchDegree * obj.matchRatio;

@@ -254,8 +254,8 @@ static AIThinkingControl *_instance;
                 [jvBuModel.stModels addObjectsFromArray:itemSTModels];
                 
                 //22. 组特征识别：通过单特征识别。
-                NSArray *itemGTModels = [TIUtils recognitionGroupFeatureV4_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize itemSTModels:itemSTModels];
-                [jvBuModel.gtModels addObjectsFromArray:itemGTModels];
+                //NSArray *itemGTModels = [TIUtils recognitionGroupFeatureV4_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize itemSTModels:itemSTModels];
+                //[jvBuModel.gtModels addObjectsFromArray:itemGTModels];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -283,21 +283,19 @@ static AIThinkingControl *_instance;
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    [TIUtils recognitionGroupFeatureV4_Step2:jvBuModel];
-    NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
+    //[TIUtils recognitionGroupFeatureV4_Step2:jvBuModel];
+    //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
     // 把局部识别结果打包成protoGT（参考35072-TODO2）。
     NSArray *orders = [SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return [InputGroupFeatureModel new:obj.assT.p rect:obj.bestGVsAtProtoTRect];
     }];
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:nil at:at ds:ds isOut:false isJiao:false];
-    
-    
-    
-    //TODOTOMORROW20250911: 看下此处，用不用在每个dotSize中调用，然后最后统一再竞争：即分成step1和step2。
+    NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels dotSize:1];
+    NSArray *assGTs = [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels];
+    NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
@@ -316,10 +314,10 @@ static AIThinkingControl *_instance;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.getSTMatch;
     }];
-    [TIUtils printLogDescRate:jvBuModel.gtModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
-    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getGTMatch;
+    [TIUtils printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
+        return [SMGUtils searchNode:obj.assT];
+    } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
+        return obj.modelMatchDegree * obj.matchRatio;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
