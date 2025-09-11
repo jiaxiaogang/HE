@@ -286,20 +286,18 @@ static AIThinkingControl *_instance;
     [TIUtils recognitionGroupFeatureV4_Step2:jvBuModel];
     NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
-    
     // 把局部识别结果打包成protoGT（参考35072-TODO2）。
     NSArray *orders = [SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return [InputGroupFeatureModel new:obj.assT.p rect:obj.bestGVsAtProtoTRect];
     }];
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     
-    // GT识别V5。
-    NSArray *assGTs = [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels dotSize:1];
     
-    // GT类比V5。
-    for (AIFeatureZenTiModel *assGT in assGTs) {
-        [AIAnalogy analogyGroupFeatureV5:protoGT zenTiModel:assGT];
-    }
+    
+    //TODOTOMORROW20250911: 看下此处，用不用在每个dotSize中调用，然后最后统一再竞争：即分成step1和step2。
+    
+    // 组特征识别：GT识别V5。
+    NSArray *assGTs = [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels dotSize:1];
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
@@ -307,24 +305,10 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    // 组特征类比：借助bestGVs来类比。
-    for (AIFeatureJvBuModel *model in jvBuModel.gtModels) {
-        [AIAnalogy analogyGroupFeatureV4:model protoTLogDesc:logDesc];
+    // 组特征类比V5：用子元素assSTs来类比。
+    for (AIFeatureZenTiModel *assGT in assGTs) {
+        [AIAnalogy analogyGroupFeatureV5:protoGT zenTiModel:assGT];
     }
-    
-    // ====================== 组特征识别类比V3（已被V4替代） ======================
-    //// 组特征识别：通过抽象单特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-    //NSArray *zenTiModel = [TIUtils recognitionGroupFeatureV3:protoT.p matchModels:jvBuModel.stModels dotSize:dotSize];
-    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    //
-    //// 组特征类比：借助rectItems来类比。
-    //for (AIFeatureZenTiModel *model in zenTiModel) {
-    //    AIFeatureNode *assGT = [SMGUtils searchNode:model.assT];
-    //    [AIAnalogy analogyGroupFeatureV3:protoT ass:assGT zenTiModel:model];
-    //}
-    //[TIUtils printLogDescRate:[SMGUtils convertArr:zenTiModel convertBlock:^id(AIFeatureZenTiModel *obj) {
-    //    return obj.assT;
-    //}] protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc)];
     
     // debug
     [TIUtils printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
