@@ -192,8 +192,8 @@ static AIThinkingControl *_instance;
     __block AIVisionAlgsModelV2 *weakAlgsModel = algsModel;
     dispatch_async(self.tiQueue, ^{//30083去异步
         self.tiRuning1 = true;
-        //[self commitInputWithSplitV2:weakAlgsModel algsType:algsType logDesc:logDesc];
-        [self testZiJv:weakAlgsModel algsType:algsType logDesc:logDesc];
+        [self commitInputWithSplitV2:weakAlgsModel algsType:algsType logDesc:logDesc];
+        //[self testZiJv:weakAlgsModel algsType:algsType logDesc:logDesc];
         self.tiRuning1 = false;
     });
 }

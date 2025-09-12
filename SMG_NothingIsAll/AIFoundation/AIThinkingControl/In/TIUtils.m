@@ -596,9 +596,7 @@
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:[SMGUtils convertArr:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        return obj.assT;
-    }] protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
+    [TIUtils printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
         return [SMGUtils searchNode:obj.assT];
     } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
         return obj.modelMatchDegree * obj.matchRatio;
