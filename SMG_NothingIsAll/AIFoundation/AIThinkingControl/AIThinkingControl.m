@@ -291,6 +291,7 @@ static AIThinkingControl *_instance;
         return [InputGroupFeatureModel new:obj.assT.p rect:obj.bestGVsAtProtoTRect];
     }];
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    [protoGT updateLogDescItem:logDesc];
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
@@ -709,8 +710,8 @@ static AIThinkingControl *_instance;
     [hFeature updateLogDescItem:logDesc];
     [sFeature updateLogDescItem:logDesc];
     [bFeature updateLogDescItem:logDesc];
-    NSLog(@"%@ H T%ld====================================\n%@",logDesc,hFeature.pId,FeatureDesc(hFeature.p,1));
-    NSLog(@"%@ S T%ld====================================\n%@",logDesc,sFeature.pId,FeatureDesc(sFeature.p,1));
+    //NSLog(@"%@ H T%ld====================================\n%@",logDesc,hFeature.pId,FeatureDesc(hFeature.p,1));
+    //NSLog(@"%@ S T%ld====================================\n%@",logDesc,sFeature.pId,FeatureDesc(sFeature.p,1));
     NSLog(@"%@ B T%ld====================================\n%@",logDesc,bFeature.pId,FeatureDesc(bFeature.p,1));
     //[SMGUtils runByMainQueue:^{
     //    [theApp.imgTrainerView setDataForFeature:hFeature lab:STRFORMAT(@"入%@T%ld",hFeature.ds,hFeature.pId)];

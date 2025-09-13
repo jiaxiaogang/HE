@@ -195,11 +195,6 @@
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
     
-    //TODOTOMORROW20250821: 此处已经有了：新事物激活困难问题。
-    [self printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"前" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
-    } convertMatchBlock:nil];
-    
     //52. 无效过滤器1、matchValue=0排除掉。
     NSArray *validModels = [SMGUtils filterArr:decoratorJvBuModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
         return model.matchValue > 0;
@@ -219,10 +214,6 @@
     //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
     //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
     validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.5f, 2), 100));
-    
-    [self printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"后" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
-    } convertMatchBlock:nil];
     
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
