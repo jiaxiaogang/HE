@@ -522,6 +522,9 @@
         //[zenTiModel updateItem:protoFeature_p fromItemT:absT.p itemAtAssRect:rect];
     }
     
+    // 防重下：避免rectItems.count > assGT.count，从而导致健全度大于1。
+    [zenTiModel run4BestRemoveRepeat:protoFeature_p];
+    
     //21. 计算：位置符合度: 根据每个组特征与单特征的rect来计算。
     [zenTiModel run4MatchDegree:protoFeature_p];
     
@@ -566,9 +569,6 @@
         
         //42. 存下来zenTiModel用于类比时用一下（参考34139-TODO3）。
         //assFeature.zenTiModel = matchModel;
-        
-        //TODOTOMORROW20250913: 一步步测特征，先测识别结果：
-        //findbug: 此处健全度>1的情况。组特征识别结果:T2695{Mnist0 = 2.91;}    ProtoGT长:17    符合度:0.8    健全度:1.22(11/9)    局部综合匹配度:0.18
         
         //43. debug
         if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\tProtoGT长:%ld\t符合度:%.1f\t健全度:%.2f(%ld/%ld)\t局部综合匹配度:%.2f",

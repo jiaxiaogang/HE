@@ -286,6 +286,13 @@ static AIThinkingControl *_instance;
     //[TIUtils recognitionGroupFeatureV4_Step2:jvBuModel];
     //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
+    
+    
+    
+    //TODOTOMORROW20250913: 一步步测特征，先测识别结果：
+    //此处有可能100条stModesls，来构建protoGT，这样肯定太长了。但如果只取前10条，会不会这10条都是0的右上角？得实测下。
+    
+    
     // 把局部识别结果打包成protoGT（参考35072-TODO2）。
     NSArray *orders = [SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
         return [InputGroupFeatureModel new:obj.assT.p rect:obj.bestGVsAtProtoTRect];
