@@ -324,7 +324,7 @@ static AIThinkingControl *_instance;
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
 
-//TODOTOMORROW20250828: 写个自举算法的单元测试。
+//自举算法的单元测试。
 -(void) testZiJv:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)at logDesc:(NSString*)logDesc {
     //1. 0到9调用createSplitFor9Block先生成并收集起来。
     if (!self.tempModels) {
@@ -397,15 +397,12 @@ static AIThinkingControl *_instance;
         NSLog(@"%ld. 单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld %@",[validResult indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
     }
     
-    
-    
     //3. 首先，这个protoRect是从protoColorDic切入来的，这个是不是有问题？这个要做为切入点，切assT用的。。。
     //  a. 首先它性能不佳。
     //  b. 再次它切入点可能很不准确（因为它的信息量不明确，不像createSplitFor9Block里那种处理过的，用来表达protoT的信息量更精准）。
     //4. ST用组码切入还好，但GT识别，可以改成由ST识别结果来做切入点。
     
-    //用0识别0确实准一些，但单纯的这样自举肯定不太够，明天继续分析自举算法的问题（参考35069）。
-    
+    //用0识别0确实准一些，但单纯的这样自举肯定不太够，gt也采用自举算法效果差强人意（参考35069）。
 }
 
 /**

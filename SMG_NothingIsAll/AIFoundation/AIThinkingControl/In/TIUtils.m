@@ -567,12 +567,13 @@
         //42. 存下来zenTiModel用于类比时用一下（参考34139-TODO3）。
         //assFeature.zenTiModel = matchModel;
         
+        //TODOTOMORROW20250913: 一步步测特征，先测识别结果：
+        //findbug: 此处健全度>1的情况。组特征识别结果:T2695{Mnist0 = 2.91;}    ProtoGT长:17    符合度:0.8    健全度:1.22(11/9)    局部综合匹配度:0.18
+        
         //43. debug
-        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\t（单特征数:%ld assGV数:%ld protoGV数:%ld）\t匹配度:%.2f\t符合度:%.1f\t健全度:%.2f(%ld/%ld)\t局部综合匹配度:%.2f",
-                                         matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),
-                                         matchModel.rectItems.count,assFeature.count,protoFeature.count,
-                                         matchModel.modelMatchValue,matchModel.modelMatchDegree,
-                                         matchModel.matchRatio,matchModel.rectItems.count,assFeature.count,
+        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\tProtoGT长:%ld\t符合度:%.1f\t健全度:%.2f(%ld/%ld)\t局部综合匹配度:%.2f",
+                                         matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),protoFeature.count,
+                                         matchModel.modelMatchDegree,matchModel.matchRatio,matchModel.rectItems.count,assFeature.count,
                                          matchModel.modelSTMatch);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
