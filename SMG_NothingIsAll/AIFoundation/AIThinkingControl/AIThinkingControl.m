@@ -286,11 +286,21 @@ static AIThinkingControl *_instance;
     //[TIUtils recognitionGroupFeatureV4_Step2:jvBuModel];
     //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
-    // 把局部识别结果打包成protoGT（参考35072-TODO2）。
-    NSArray *orders = [SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return [InputGroupFeatureModel new:obj.assT.p rect:obj.bestGVsAtProtoTRect];
-    }];
-    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    // 单特征类比：借助bestGVs来类比。
+    NSMutableArray *gtOrders = [NSMutableArray new];
+    for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
+        AIFeatureNode *absST = [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
+        
+        // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
+        AIPort *conPort = [AINetUtils getConPort:absST con:model.assT.p];
+        if (conPort) {
+            [gtOrders addObject:[InputGroupFeatureModel new:absST.p rect:conPort.rect]];
+        }
+    }
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
+    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     [protoGT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
@@ -300,12 +310,6 @@ static AIThinkingControl *_instance;
     // 组特征识别：GT识别V5。
     NSArray *assGTs = [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
-    
-    // 单特征类比：借助bestGVs来类比。
-    for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
-    }
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 组特征类比V5：用子元素assSTs来类比。
     for (AIFeatureZenTiModel *assGT in assGTs) {
