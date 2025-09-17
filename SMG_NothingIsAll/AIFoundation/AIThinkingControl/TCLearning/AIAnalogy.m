@@ -402,6 +402,13 @@
         return obj.assIndex;
     }];
     NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
+        
+        
+        //TODOTOMORROW20250917: 经回测还是有重影。
+        //分析：abs在ass中的位置ok了，但它不是在proto的位置，所以还不是一个坐标系，当然会有重影。
+        //所以：应该收集出obj.bestGVAtProtoTRect，而不是absAtAssRect。
+        
+        
         return @(obj.assIndex);
     }];
     CGRect bestGVs_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
@@ -455,7 +462,9 @@
     //41. debugLog
     NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
     [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld类比后(abs%ld GV%ld)%p",jvBuModel.assT.pId,absT.count,jvBuModel.bestGVs.count,jvBuModel) left:jvBuModel.bestGVsAtProtoTRect.origin.x top:jvBuModel.bestGVsAtProtoTRect.origin.y];
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"Abs%@T%ld (%ld/%ld)",isGT?@"G":@"S",absT.pId,absT.count,jvBuModel.bestGVs.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y];
+        }];
     }];
     if (Log4Ana || true) NSLog(@"\n%@特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",isGT?@"组":@"单",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
