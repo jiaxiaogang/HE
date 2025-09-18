@@ -22,6 +22,11 @@
 //每条最佳gv的数据：List<AIFeatureJvBuItem>
 @property (strong, nonatomic) NSMutableArray *bestGVs;
 
+//在ST类比后，把构建absST的bestGVs存下来，后面构建protoGT时要用。
+@property (strong, nonatomic) NSArray *bestGVs4NoZeRen;
+//在ST类比后，把构建absST的指针存下来，后面构建protoGT时要用。
+@property (strong, nonatomic) AIKVPointer *abs_p;
+
 //用bestGVs每一条gv求平均得出匹配度。
 @property (assign, nonatomic) CGFloat matchValue;
 //用bestGVs每一条gv求平均得出符合度。

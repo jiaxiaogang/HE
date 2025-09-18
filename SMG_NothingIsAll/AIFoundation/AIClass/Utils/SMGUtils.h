@@ -176,6 +176,7 @@
 +(NSMutableArray*) convertArr:(NSArray*)arr convertBlock:(id(^)(id obj))convertBlock;
 +(NSMutableArray*) convertArr:(NSArray*)arr iConvertBlock:(id(^)(NSInteger i, id obj))iConvertBlock;
 +(NSMutableArray*) convertArr:(NSArray*)arr convertItemArrBlock:(NSArray*(^)(id obj))convertItemArrBlock;
++(CGRect) convertArr2Rect:(NSArray*)arr itemRectBlock:(CGRect(^)(id item))itemRectBlock;
 //将arr转成dic
 +(NSDictionary*) convertArr2Dic:(NSArray*)objs kvBlock:(NSArray*(^)(id obj))kvBlock;
 //将dic转成dic

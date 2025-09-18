@@ -661,6 +661,20 @@
     return result;
 }
 
++(CGRect) convertArr2Rect:(NSArray*)arr itemRectBlock:(CGRect(^)(id item))itemRectBlock {
+    //1. 数据准备。
+    CGRect resultRect = CGRectNull;
+    
+    //2. 把contentIndexes对应的每个组码取出来。
+    for (id item in arr) {
+        CGRect itemRect = itemRectBlock(item);
+        resultRect = CGRectUnion(resultRect, itemRect);
+    }
+    
+    //3. 将求得的范围并集返回。
+    return resultRect;
+}
+
 /**
  *  MARK:--------------------将arr转成dic--------------------
  */

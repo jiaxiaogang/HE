@@ -1190,17 +1190,10 @@
     return [self convertPartOfFeatureContent2Rect:tNode contentIndexes:tNode.indexes];
 }
 +(CGRect) convertPartOfFeatureContent2Rect:(AIFeatureNode*)tNode contentIndexes:(NSArray*)contentIndexes {
-    //1. 数据准备。
-    CGRect resultRect = CGRectNull;
-    
-    //2. 把contentIndexes对应的每个组码取出来。
-    for (NSNumber *contentIndex in contentIndexes) {
+    return [SMGUtils convertArr2Rect:contentIndexes itemRectBlock:^CGRect(NSNumber *contentIndex) {
         CGRect itemRect = VALTOOK(ARR_INDEX(tNode.rects, contentIndex.integerValue)).CGRectValue;
-        resultRect = CGRectUnion(resultRect, itemRect);
-    }
-    
-    //3. 将求得的范围并集返回。
-    return resultRect;
+        return itemRect;
+    }];
 }
 
 /**

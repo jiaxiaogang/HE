@@ -287,17 +287,19 @@ static AIThinkingControl *_instance;
     //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
     // 单特征类比：借助bestGVs来类比。
-    NSMutableArray *gtOrders = [NSMutableArray new];
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
         AIFeatureNode *absST = [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
-        
-        // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
-        AIPort *conPort = [AINetUtils getConPort:absST con:model.assT.p];
-        if (conPort) {
-            [gtOrders addObject:[InputGroupFeatureModel new:absST.p rect:conPort.rect]];
-        }
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
+    // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
+    NSMutableArray *gtOrders = [SMGUtils convertArr:jvBuModel.stModels convertBlock:^id(AIFeatureJvBuModel *model) {
+        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            return item.bestGVAtProtoTRect;
+        }];
+        return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
+    }];
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];

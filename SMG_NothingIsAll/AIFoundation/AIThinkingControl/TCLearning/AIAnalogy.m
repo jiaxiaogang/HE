@@ -402,13 +402,6 @@
         return obj.assIndex;
     }];
     NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
-        
-        
-        //TODOTOMORROW20250917: 经回测还是有重影。
-        //分析：abs在ass中的位置ok了，但它不是在proto的位置，所以还不是一个坐标系，当然会有重影。
-        //所以：应该收集出obj.bestGVAtProtoTRect，而不是absAtAssRect。
-        
-        
         return @(obj.assIndex);
     }];
     CGRect bestGVs_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
@@ -469,6 +462,10 @@
     if (Log4Ana || true) NSLog(@"\n%@特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",isGT?@"组":@"单",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
                                absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
+    
+    // 把后面会用到的一些数据存下来。
+    jvBuModel.bestGVs4NoZeRen = validBestGVs;
+    jvBuModel.abs_p = absT.p;
     return absT;
 }
 
