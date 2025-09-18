@@ -40,6 +40,15 @@
     for (AIFeatureZenTiModel *assModel in self.models) {
         if ([assModel.assT isEqual:protoT]) continue;
         [assModel run4BestRemoveRepeat:protoModel];
+        
+        
+        //TODOTOMORROW20250918: 因此处protoModel.rectItems.count=0,导致很多位置符合度计算成NaN。
+        if (protoModel.rectItems.count == 0) {
+            NSLog(@"为0条");
+        }
+        if ([STRFORMAT(@"%.2f",protoModel.modelMatchDegree) isEqualToString:@"nan"]) {
+            NSLog(@"为nan");
+        }
     }
 }
 

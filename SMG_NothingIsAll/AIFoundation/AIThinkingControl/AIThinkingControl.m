@@ -288,7 +288,7 @@ static AIThinkingControl *_instance;
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        AIFeatureNode *absST = [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
+        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
