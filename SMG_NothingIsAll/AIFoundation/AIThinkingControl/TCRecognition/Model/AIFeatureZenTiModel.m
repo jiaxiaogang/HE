@@ -183,7 +183,7 @@
         AIFeatureNode *fromItemT = [SMGUtils searchNode:item.fromItemT_p];
         
         //3. assT与absT的匹配度 * assT与protoT的匹配度 = assT与protoT的匹配度。
-        //TODOTOMORROW20250919: absST和assGT之间，没有匹配度。
+        //2025.09.19: absST和assGT之间，没有匹配度，所以这里是取不到值的，不过该方法目前并无地方调用，这个先放着不管。
         item.itemMatchValue = [fromItemT getConMatchValue:self.assT] * [fromItemT getConMatchValue:protoT];
     }
     
