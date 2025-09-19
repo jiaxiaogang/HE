@@ -511,7 +511,8 @@
             //if ([refPort.target_p isEqual:protoFeature_p]) continue;
             
             //13. 只要似层结果（参考34135-TODO6）。
-            if (refPort.target_p.isJiao) continue;
+            //2025.09.19: GT已经独立模块了，当然得开放识别交层GT，不然次次只能识别到一两条GT结果，且健全度都超低。
+            //if (refPort.target_p.isJiao) continue;
             
             //14. 收集原始item数据（参考34136）(v1版本没有protoGTIndex，在类比时也不会用，直接传-1）。
             [zenTiModel updateItem:refPort fromItemT:matchModel protoGTIndex:-1];
