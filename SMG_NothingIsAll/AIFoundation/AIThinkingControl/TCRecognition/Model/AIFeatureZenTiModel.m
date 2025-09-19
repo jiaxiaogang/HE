@@ -183,6 +183,7 @@
         AIFeatureNode *fromItemT = [SMGUtils searchNode:item.fromItemT_p];
         
         //3. assT与absT的匹配度 * assT与protoT的匹配度 = assT与protoT的匹配度。
+        //TODOTOMORROW20250919: absST和assGT之间，没有匹配度。
         item.itemMatchValue = [fromItemT getConMatchValue:self.assT] * [fromItemT getConMatchValue:protoT];
     }
     
@@ -235,7 +236,7 @@
     CGRect conAssRect = rectItem.rect;
     
     //2. 计算缩放scale。
-    return protoRect.size.width == 0 ? : conAssRect.size.width / (float)protoRect.size.width;
+    return protoRect.size.width == 0 ? 0 : conAssRect.size.width / (float)protoRect.size.width;
 }
 
 //返回 rectItem 在 conAssT 与 protoT 的deltaX偏移量。

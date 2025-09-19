@@ -502,7 +502,8 @@
     for (AIFeatureJvBuModel *matchModel in matchModels) {
         
         //20250610: abs改为assT，因为absT识别效果不太好，不知是否它的锅，但改成assT测下再说。
-        NSArray *refPorts = [AINetUtils refPorts_All:matchModel.assT.p];
+        //20250919: ass改为absT，因为assST在protoGT中的位置无法计算导致重影等问题，改成absST来构建protoGT和识别assGT。
+        NSArray *refPorts = [AINetUtils refPorts_All:matchModel.abs_p];
         
         //12. 将每个conPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {

@@ -23,7 +23,8 @@
 -(AIKVPointer*) fromItemT_p {
     //生成protoT的是absT就传absT，是assT就传assT，因为：一来要用它们的抽具象关联，二来要和fromItemT.bestGVs相对应（后面的类比等操作都要依赖这个bestGVs）。
     //改为assT,absT准备废弃掉，因为识别时，不再依赖类比后，统一直接改成原来的assT方式。
-    return self.fromItemT.assT.p;
+    //2025.09.19: ass改为absT，因为assST在protoGT中的位置无法计算导致重影等问题，改成absST来构建protoGT和识别assGT。
+    return self.fromItemT.abs_p;
 }
 
 @end
