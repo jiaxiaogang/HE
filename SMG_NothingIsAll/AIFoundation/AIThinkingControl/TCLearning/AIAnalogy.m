@@ -455,7 +455,7 @@
     //41. debugLog
     NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"Abs%@T%ld (%ld/%ld)",isGT?@"G":@"S",absT.pId,absT.count,jvBuModel.bestGVs.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y];
+        //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"Abs%@T%ld (%ld/%ld)",isGT?@"G":@"S",absT.pId,absT.count,jvBuModel.bestGVs.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y];
     }];
     if (Log4Ana || true) NSLog(@"\n%@特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",isGT?@"组":@"单",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),

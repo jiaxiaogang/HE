@@ -585,7 +585,7 @@
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld-识别组T%ld",[resultModels indexOfObject:matchModel]+1,assFeature.pId) left:0 top:0];
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:matchModel]+1,assFeature.pId,matchModel.rectItems.count,assFeature.count) left:0 top:0];
         }];
     }
     
