@@ -598,6 +598,132 @@
     return resultModels;
 }
 
++(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
+    //1. 数据准备
+    AIFeatureNode *protoFeature = [SMGUtils searchNode:protoFeature_p];
+    AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
+    
+    //11. 收集：每个absT分别向整体取conPorts。
+    for (AIFeatureJvBuModel *obj in matchModels) {
+        
+        // 先用assST取conPorts（参考35075B-方案3）。
+        AIFeatureNode *absST = [SMGUtils searchNode:obj.abs_p];
+        NSArray *conPorts = [AINetUtils conPorts_All:absST];
+        
+        
+        //TODOTOMORROW20250921: 根据强度只取conPorts和refPorts的前x条，避免性能问题。
+        
+        
+        for (AIPort *conPort in conPorts) {
+            
+            //20250610: abs改为assT，因为absT识别效果不太好，不知是否它的锅，但改成assT测下再说。
+            //20250919: ass改为absT，因为assST在protoGT中的位置无法计算导致重影等问题，改成absST来构建protoGT和识别assGT。
+            NSArray *refPorts = [AINetUtils refPorts_All:conPort.target_p];
+            
+            //12. 将每个conPort先收集到zenTiModel。
+            for (AIPort *refPort in refPorts) {
+                //13. protoFeature单独收集。
+                //if ([refPort.target_p isEqual:protoFeature_p]) continue;
+                
+                //TODOTOMORROW20250921: 根据assGT来做一些防重等，避免多次计算。
+                
+                //13. 只要似层结果（参考34135-TODO6）。
+                //2025.09.19: GT已经独立模块了，当然得开放识别交层GT，不然次次只能识别到一两条GT结果，且健全度都超低。
+                //if (refPort.target_p.isJiao) continue;
+                
+                AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+                
+                //TODOTOMORROW20250921：写GT自举算法。
+                
+                //取到absST在protoGT的rect。
+                //取到absST在conST的rect。
+                //取到conST在assGT的rect。
+                
+                //每个assGT的每一个元素，根据切入点去估算下一个的rect，然后与真正的下一个在protoGT的位置，去比较一下位置符合度。
+                
+                
+                
+                
+                //14. 收集原始item数据（参考34136）(v1版本没有protoGTIndex，在类比时也不会用，直接传-1）。
+                [zenTiModel updateItem:refPort fromItemT:matchModel protoGTIndex:-1];
+            }
+        }
+    }
+    
+    // 防重下：避免rectItems.count > assGT.count，从而导致健全度大于1。
+    [zenTiModel run4BestRemoveRepeat:protoFeature_p];
+    
+    //21. 计算：位置符合度: 根据每个组特征与单特征的rect来计算。
+    [zenTiModel run4MatchDegree:protoFeature_p];
+    
+    //22. 计算：每个assT和protoT的综合匹配度。
+    //[zenTiModel run4MatchValue:protoFeature_p];
+    
+    //23. 计算：每个model的显著度。
+    //[zenTiModel run4StrongRatio];
+    
+    //24. 计算：健全度（即匹配率）。
+    [zenTiModel run4MatchRatio];
+    
+    //25. 计算：综合单特征竞争分。
+    [zenTiModel run4STMatch];
+    
+    //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
+    //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
+    //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
+    //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
+    //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
+    //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
+    NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:zenTiModel.models compareBlock:^double(AIFeatureZenTiModel *obj) {
+        return obj.modelMatchDegree * obj.matchRatio * obj.modelSTMatch;
+    }], 0, zenTiModel.models.count * 0.5);
+    
+    //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
+    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
+        return obj.assT;
+    }];
+    
+    //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
+    for (AIFeatureZenTiModel *matchModel in resultModels) {
+        AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.assT];
+        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
+        //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
+        // 目前不支持refPort存匹配度，先注掉。
+        //[protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
+        [protoFeature updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
+        
+        // 从protoT更新logDesc到assGT。
+        [assFeature updateLogDescDic:protoFeature.logDesc rate:matchModel.modelMatchDegree * matchModel.matchRatio];
+        
+        //42. 存下来zenTiModel用于类比时用一下（参考34139-TODO3）。
+        //assFeature.zenTiModel = matchModel;
+        
+        //43. debug
+        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\tProtoGT长:%ld\t符合度:%.1f\t健全度:%.2f(%ld/%ld)\t局部综合匹配度:%.2f",
+                                         matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),protoFeature.count,
+                                         matchModel.modelMatchDegree,matchModel.matchRatio,matchModel.rectItems.count,assFeature.count,
+                                         matchModel.modelSTMatch);
+        
+        //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
+        //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
+        [AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
+        //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
+        
+        //45. 组特征识别结果可视化（参考34176）。
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:matchModel]+1,assFeature.pId,matchModel.rectItems.count,assFeature.count) left:0 top:0];
+        }];
+    }
+    
+    //61. debugLog
+    [TIUtils printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
+        return [SMGUtils searchNode:obj.assT];
+    } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
+        return obj.modelMatchDegree * obj.matchRatio;
+    }];
+    return resultModels;
+}
+
 //MARK:===============================================================
 //MARK:                     < 概念识别 >
 //MARK:===============================================================
