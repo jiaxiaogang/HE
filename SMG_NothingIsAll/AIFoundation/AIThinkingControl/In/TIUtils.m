@@ -633,7 +633,9 @@
                 
                 AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
                 
-                // 求出conST分别在：assGT和protoGT中的rect。
+                // 方案1：求出conST分别在：assGT和protoGT中的rect（当前局部特征在以往GT上是什么样子的）。
+                // 方案2：求出absST分别在：protoGT和assGT中的rect。
+                // 抉择：这两个方案应该等效，不过方案1看起来更贴合assGT，就先采纳方案1吧。
                 NSInteger protoIndex = [protoGT.content_ps indexOfObject:obj.abs_p];
                 if (protoIndex < 0) {
                     NSLog(@"tempLog_查下");
@@ -642,6 +644,12 @@
                 CGRect absST_ProtoGT = absST_ProtoGTValue.CGRectValue;//取到absST在protoGT的rect。
                 CGRect absST_ConST = conPort.rect;//取到absST在conST的rect。
                 CGRect conST_AssGT = refPort.rect;//取到conST在assGT的rect。
+                
+                
+                // 此处conST的宽度怎么计算呢？
+                CGRect conST_ProtoGT = CGRectMake(absST_ProtoGT.origin.x - absST_ConST.origin.x,
+                                                  absST_ProtoGT.origin.y - absST_ConST.origin.y,
+                                                  <#CGFloat width#>, <#CGFloat height#>)
                 
                 // 根据这些rect求出protoGT与assGT当前元素的位置符合度 及 wh比例。
                 
