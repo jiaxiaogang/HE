@@ -600,7 +600,7 @@
 
 +(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
     //1. 数据准备
-    AIFeatureNode *protoFeature = [SMGUtils searchNode:protoFeature_p];
+    AIFeatureNode *protoGT = [SMGUtils searchNode:protoFeature_p];
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     
     //11. 收集：每个absT分别向整体取conPorts。
@@ -633,11 +633,23 @@
                 
                 AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
                 
-                //TODOTOMORROW20250921：写GT自举算法。
+                // 求出conST分别在：assGT和protoGT中的rect。
+                NSInteger protoIndex = [protoGT.content_ps indexOfObject:obj.abs_p];
+                if (protoIndex < 0) {
+                    NSLog(@"tempLog_查下");
+                }
+                NSValue *absST_ProtoGTValue = ARR_INDEX(protoGT.rects, protoIndex);
+                CGRect absST_ProtoGT = absST_ProtoGTValue.CGRectValue;//取到absST在protoGT的rect。
+                CGRect absST_ConST = conPort.rect;//取到absST在conST的rect。
+                CGRect conST_AssGT = refPort.rect;//取到conST在assGT的rect。
                 
-                //取到absST在protoGT的rect。
-                //取到absST在conST的rect。
-                //取到conST在assGT的rect。
+                // 根据这些rect求出protoGT与assGT当前元素的位置符合度 及 wh比例。
+                
+                //TODOTOMORROW20250921：继续写GT自举算法。
+                
+                
+                
+                
                 
                 //每个assGT的每一个元素，根据切入点去估算下一个的rect，然后与真正的下一个在protoGT的位置，去比较一下位置符合度。
                 
@@ -690,23 +702,23 @@
         //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
         // 目前不支持refPort存匹配度，先注掉。
         //[protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
-        [protoFeature updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
+        [protoGT updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
         
         // 从protoT更新logDesc到assGT。
-        [assFeature updateLogDescDic:protoFeature.logDesc rate:matchModel.modelMatchDegree * matchModel.matchRatio];
+        [assFeature updateLogDescDic:protoGT.logDesc rate:matchModel.modelMatchDegree * matchModel.matchRatio];
         
         //42. 存下来zenTiModel用于类比时用一下（参考34139-TODO3）。
         //assFeature.zenTiModel = matchModel;
         
         //43. debug
         if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\tProtoGT长:%ld\t符合度:%.1f\t健全度:%.2f(%ld/%ld)\t局部综合匹配度:%.2f",
-                                         matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),protoFeature.count,
+                                         matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),protoGT.count,
                                          matchModel.modelMatchDegree,matchModel.matchRatio,matchModel.rectItems.count,assFeature.count,
                                          matchModel.modelSTMatch);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
-        [AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoFeature] isNew:false difStrong:1];
+        [AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoGT] isNew:false difStrong:1];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
         //45. 组特征识别结果可视化（参考34176）。
