@@ -615,6 +615,8 @@
         
         
         for (AIPort *conPort in conPorts) {
+            AIFeatureNode *conST = [SMGUtils searchNode:conPort.target_p];
+            CGRect conSTRect = [SMGUtils convertArr2Rect:conST.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
             
             //20250610: abs改为assT，因为absT识别效果不太好，不知是否它的锅，但改成assT测下再说。
             //20250919: ass改为absT，因为assST在protoGT中的位置无法计算导致重影等问题，改成absST来构建protoGT和识别assGT。
@@ -645,15 +647,23 @@
                 CGRect absST_ConST = conPort.rect;//取到absST在conST的rect。
                 CGRect conST_AssGT = refPort.rect;//取到conST在assGT的rect。
                 
+                // 需要先缩放：把conST的rect缩放成absST的坐标系，这样才能计算conST在protoGT的rect。
+                CGFloat wRate = absST_ProtoGT.size.width / absST_ConST.size.width;
+                CGFloat hRate = absST_ProtoGT.size.height / absST_ConST.size.height;
                 
-                // 此处conST的宽度怎么计算呢？
-                CGRect conST_ProtoGT = CGRectMake(absST_ProtoGT.origin.x - absST_ConST.origin.x,
-                                                  absST_ProtoGT.origin.y - absST_ConST.origin.y,
-                                                  <#CGFloat width#>, <#CGFloat height#>)
+                // 计算conST在protoGT的rect。
+                CGRect conST_ProtoGT = CGRectMake(absST_ProtoGT.origin.x - absST_ConST.origin.x * wRate,
+                                                  absST_ProtoGT.origin.y - absST_ConST.origin.y * hRate,
+                                                  conSTRect.size.width * wRate, conSTRect.size.height * hRate);
                 
-                // 根据这些rect求出protoGT与assGT当前元素的位置符合度 及 wh比例。
+                // 根据conST分别在：assGT和protoGT的rect，计算切入点的wh比例。
+                CGFloat defaultWRate = conST_ProtoGT.size.width / conST_AssGT.size.width;
+                CGFloat defaultHRate = conST_ProtoGT.size.height / conST_AssGT.size.height;
                 
                 //TODOTOMORROW20250921：继续写GT自举算法。
+                // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
+                // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
+                // 最后进行综合竞争，把最符合的找出来。
                 
                 
                 
