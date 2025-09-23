@@ -603,6 +603,9 @@
     AIFeatureNode *protoGT = [SMGUtils searchNode:protoFeature_p];
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     
+    // 初始化gtModels
+    GTModels *gtModels = [GTModels new];
+    
     //11. 收集：每个absT分别向整体取conPorts。
     for (AIFeatureJvBuModel *obj in matchModels) {
         
@@ -625,15 +628,20 @@
             //12. 将每个conPort先收集到zenTiModel。
             for (AIPort *refPort in refPorts) {
                 //13. protoFeature单独收集。
-                //if ([refPort.target_p isEqual:protoFeature_p]) continue;
+                if ([refPort.target_p isEqual:protoFeature_p]) continue;
                 
                 //TODOTOMORROW20250921: 根据assGT来做一些防重等，避免多次计算。
+                if ([gtModels objectForKey:@(refPort.target_p.pointerId)]) continue;
                 
                 //13. 只要似层结果（参考34135-TODO6）。
                 //2025.09.19: GT已经独立模块了，当然得开放识别交层GT，不然次次只能识别到一两条GT结果，且健全度都超低。
                 //if (refPort.target_p.isJiao) continue;
                 
                 AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+                
+                // 初始化gtModel
+                GTModel *gtModel = [GTModel new:assGT];
+                [gtModels setObject:gtModel forKey:@(assGT.pId)];
                 
                 // 方案1：求出conST分别在：assGT和protoGT中的rect（当前局部特征在以往GT上是什么样子的）。
                 // 方案2：求出absST分别在：protoGT和assGT中的rect。
@@ -648,22 +656,26 @@
                 CGRect conST_AssGT = refPort.rect;//取到conST在assGT的rect。
                 
                 // 需要先缩放：把conST的rect缩放成absST的坐标系，这样才能计算conST在protoGT的rect。
-                CGFloat wRate = absST_ProtoGT.size.width / absST_ConST.size.width;
-                CGFloat hRate = absST_ProtoGT.size.height / absST_ConST.size.height;
+                CGFloat wRate_AbsST = absST_ProtoGT.size.width / absST_ConST.size.width;
+                CGFloat hRate_AbsST = absST_ProtoGT.size.height / absST_ConST.size.height;
                 
                 // 计算conST在protoGT的rect。
-                CGRect conST_ProtoGT = CGRectMake(absST_ProtoGT.origin.x - absST_ConST.origin.x * wRate,
-                                                  absST_ProtoGT.origin.y - absST_ConST.origin.y * hRate,
-                                                  conSTRect.size.width * wRate, conSTRect.size.height * hRate);
-                
-                // 根据conST分别在：assGT和protoGT的rect，计算切入点的wh比例。
-                CGFloat defaultWRate = conST_ProtoGT.size.width / conST_AssGT.size.width;
-                CGFloat defaultHRate = conST_ProtoGT.size.height / conST_AssGT.size.height;
+                CGRect conST_ProtoGT = CGRectMake(absST_ProtoGT.origin.x - absST_ConST.origin.x * wRate_AbsST,
+                                                  absST_ProtoGT.origin.y - absST_ConST.origin.y * hRate_AbsST,
+                                                  conSTRect.size.width * wRate_AbsST, conSTRect.size.height * hRate_AbsST);
                 
                 //TODOTOMORROW20250921：继续写GT自举算法。
                 // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
+                NSInteger assIndex = [assGT.content_ps indexOfObject:conST.p];
+                [gtModel addObject:[GTItem new:protoIndex assIndex:assIndex conST_ProtoGT:conST_ProtoGT conST_AssGT:conST_AssGT]];
+                
                 // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
+                for (NSInteger i = assIndex; i < assGT.count; i++) {
+                    
+                }
+                
                 // 最后进行综合竞争，把最符合的找出来。
+                
                 
                 
                 

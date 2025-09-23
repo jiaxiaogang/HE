@@ -71,6 +71,9 @@
 #import "AIFeatureJvBuItem.h"
 #import "AIFeatureJvBuModel.h"
 #import "AIFeatureJvBuModels.h"
+#import "GTModels.h"
+#import "GTModel.h"
+#import "GTItem.h"
 
 //短时记忆
 #import "TOAlgModel.h"
