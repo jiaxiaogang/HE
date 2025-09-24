@@ -603,6 +603,22 @@
     AIFeatureNode *protoGT = [SMGUtils searchNode:protoFeature_p];
     AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     
+    // 收集全量conST数据：用于自举。
+    NSArray *allConSTModels = [SMGUtils convertArr:matchModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuModel) {
+        // 先用assST取conPorts（参考35075B-方案3）。
+        AIFeatureNode *absST = [SMGUtils searchNode:jvBuModel.abs_p];
+        NSArray *conPorts = [AINetUtils conPorts_All:absST];
+        return [SMGUtils convertArr:conPorts convertBlock:^id(AIPort *conPort) {
+            AIFeatureNode *conST = [SMGUtils searchNode:conPort.target_p];
+            CGRect conSTRect = [SMGUtils convertArr2Rect:conST.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
+            return [MapModel newWithV1:jvBuModel v2:absST v3:conPort v4:@(conSTRect)];
+        }];
+    }];
+    NSArray *allConSTPorts = [SMGUtils convertArr:allConSTModels convertBlock:^id(MapModel *obj) {
+        return obj.v3;
+    }];
+    NSArray *allConST_ps = Ports2Pits(allConSTPorts);
+    
     // 初始化gtModels
     GTModels *gtModels = [GTModels new];
     
@@ -669,9 +685,77 @@
                 NSInteger assIndex = [assGT.content_ps indexOfObject:conST.p];
                 [gtModel addObject:[GTItem new:protoIndex assIndex:assIndex conST_ProtoGT:conST_ProtoGT conST_AssGT:conST_AssGT]];
                 
+                
+                // 问题：自举有点麻烦。
+                // 思路：要不先不写自举，因为自举说白了，是为了性能好，但增加了复杂度，那我们先跑跑看，等性能优化不过来的时候再写自举。
+                // 方案1：虽然麻烦，但性能确实到位，并且也写过一次了，可以看下能不能直接就写了。
+                // 方案2：如果先不写的话，也可以边识别，边对已收集到的进行提前判否，比如：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
+                
                 // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
                 for (NSInteger i = assIndex; i < assGT.count; i++) {
+                    NSInteger curAssIndex = (assIndex + i) % assGT.count;
                     
+                    
+                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                    AIKVPointer *curAssST_p = ARR_INDEX(assGT.content_ps, curAssIndex);
+                    
+                    // 不包含该元素，则完全不匹配。
+                    if (![allConST_ps containsObject:curAssST_p]) continue;
+                    
+                    // ======== 包含该元素，则进行匹配度判断等 ========
+                    AIGroupValueNode *curAssST = [SMGUtils searchNode:curAssST_p];
+                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                    
+                    // 取curAbsST_ConST & curAbsST_ProtoGT & curConST_AssGT
+                    MapModel *curMapModel = [SMGUtils filterSingleFromArr:allConSTModels checkValid:^BOOL(MapModel *item) {
+                        AIPort *conPort = item.v3;
+                        return [conPort.target_p isEqual:curAssST_p];
+                    }];
+                    AIFeatureJvBuModel *curJvBuModel = curMapModel.v1;
+                    AIFeatureNode *absST = curMapModel.v2;
+                    AIPort *baseConPort = curMapModel.v3;
+                    CGRect curConSTRect = VALTOOK(curMapModel.v4).CGRectValue;
+                    NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:absST.p];
+                    CGRect curAbsST_ConST = baseConPort.rect;
+                    CGRect curAbsST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
+                    CGRect curConST_AssGT = [assGT rectByIndex:curAssIndex];
+                    
+                    // 需要先缩放：把conST的rect缩放成absST的坐标系，这样才能计算conST在protoGT的rect。
+                    CGFloat wRate_AbsST = curAbsST_ProtoGT.size.width / curAbsST_ConST.size.width;
+                    CGFloat hRate_AbsST = curAbsST_ProtoGT.size.height / curAbsST_ConST.size.height;
+                    
+                    // 计算conST在protoGT的rect。
+                    CGRect curConST_ProtoGT = CGRectMake(curAbsST_ProtoGT.origin.x - curAbsST_ConST.origin.x * wRate_AbsST,
+                                                      curAbsST_ProtoGT.origin.y - curAbsST_ConST.origin.y * hRate_AbsST,
+                                                      curConSTRect.size.width * wRate_AbsST, curConSTRect.size.height * hRate_AbsST);
+                    
+                    //TODOTOMORROW20250921：继续写GT自举算法。
+                    // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
+                    [gtModel addObject:[GTItem new:curProtoIndex assIndex:curAssIndex conST_ProtoGT:curConST_ProtoGT conST_AssGT:curConST_AssGT]];
+                    
+                    //35. 保留最匹配的一条。
+                    // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
+                    if (!best || NUMTOOK(best.v1).floatValue < curGMatchValue) {
+                        best = [MapModel newWithV1:@(curGMatchValue) v2:@(checkCurProtoRect) v3:@(scale) v4:@(curDiffMatchValue)];
+                    }
+                    
+                    
+                    //41. 有中断太多次匹配不上的元素，直接计为自举审核失败。
+                    
+                    
+                    //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
+                    //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
+                    CGFloat scale = NUMTOOK(best.v3).floatValue;
+                    CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
+                    CGFloat diffValue = NUMTOOK(best.v4).floatValue;
+                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                    return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
+                    
+                    
+                        AIFeatureJvBuItem *bestItem = [self ziJvItem:curAssIndex assT:assGT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+                        //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
+                        if (!bestItem) continue;
+                        [model.bestGVs addObject:bestItem];
                 }
                 
                 // 最后进行综合竞争，把最符合的找出来。

@@ -17,6 +17,7 @@
 
 //根据rect找下标，找不到时返-1。
 -(NSInteger) indexOfRect:(CGRect)rect;
+-(CGRect) rectByIndex:(NSInteger)index;
 
 //MARK:===============================================================
 //MARK:             < 特征位置符合度（类似匹配度，持久化）>
