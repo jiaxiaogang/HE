@@ -658,43 +658,15 @@
                 // 初始化gtModel
                 GTModel *gtModel = [GTModel new:assGT];
                 [gtModels setObject:gtModel forKey:@(assGT.pId)];
-                
-                // 方案1：求出conST分别在：assGT和protoGT中的rect（当前局部特征在以往GT上是什么样子的）。
-                // 方案2：求出absST分别在：protoGT和assGT中的rect。
-                // 抉择：这两个方案应该等效，不过方案1看起来更贴合assGT，就先采纳方案1吧。
-                NSInteger protoIndex = [protoGT.content_ps indexOfObject:obj.abs_p];
-                if (protoIndex < 0) {
-                    NSLog(@"tempLog_查下");
-                }
-                NSValue *absST_ProtoGTValue = ARR_INDEX(protoGT.rects, protoIndex);
-                CGRect absST_ProtoGT = absST_ProtoGTValue.CGRectValue;//取到absST在protoGT的rect。
-                CGRect absST_ConST = conPort.rect;//取到absST在conST的rect。
-                CGRect conST_AssGT = refPort.rect;//取到conST在assGT的rect。
-                
-                // 需要先缩放：把conST的rect缩放成absST的坐标系，这样才能计算conST在protoGT的rect。
-                CGFloat wRate_AbsST = absST_ProtoGT.size.width / absST_ConST.size.width;
-                CGFloat hRate_AbsST = absST_ProtoGT.size.height / absST_ConST.size.height;
-                
-                // 计算conST在protoGT的rect。
-                CGRect conST_ProtoGT = CGRectMake(absST_ProtoGT.origin.x - absST_ConST.origin.x * wRate_AbsST,
-                                                  absST_ProtoGT.origin.y - absST_ConST.origin.y * hRate_AbsST,
-                                                  conSTRect.size.width * wRate_AbsST, conSTRect.size.height * hRate_AbsST);
-                
-                //TODOTOMORROW20250921：继续写GT自举算法。
-                // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
                 NSInteger assIndex = [assGT.content_ps indexOfObject:conST.p];
-                [gtModel addObject:[GTItem new:protoIndex assIndex:assIndex conST_ProtoGT:conST_ProtoGT conST_AssGT:conST_AssGT]];
                 
-                
+                // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
                 // 问题：自举有点麻烦。
                 // 思路：要不先不写自举，因为自举说白了，是为了性能好，但增加了复杂度，那我们先跑跑看，等性能优化不过来的时候再写自举。
                 // 方案1：虽然麻烦，但性能确实到位，并且也写过一次了，可以看下能不能直接就写了。
                 // 方案2：如果先不写的话，也可以边识别，边对已收集到的进行提前判否，比如：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
-                
-                // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
                 for (NSInteger i = assIndex; i < assGT.count; i++) {
                     NSInteger curAssIndex = (assIndex + i) % assGT.count;
-                    
                     
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     AIKVPointer *curAssST_p = ARR_INDEX(assGT.content_ps, curAssIndex);
@@ -706,7 +678,7 @@
                     AIGroupValueNode *curAssST = [SMGUtils searchNode:curAssST_p];
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     
-                    // 取curAbsST_ConST & curAbsST_ProtoGT & curConST_AssGT
+                    // 取mapModel。
                     MapModel *curMapModel = [SMGUtils filterSingleFromArr:allConSTModels checkValid:^BOOL(MapModel *item) {
                         AIPort *conPort = item.v3;
                         return [conPort.target_p isEqual:curAssST_p];
@@ -715,7 +687,17 @@
                     AIFeatureNode *absST = curMapModel.v2;
                     AIPort *baseConPort = curMapModel.v3;
                     CGRect curConSTRect = VALTOOK(curMapModel.v4).CGRectValue;
+                    
+                    // 取protoIndex
                     NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:absST.p];
+                    if (curProtoIndex < 0) {
+                        NSLog(@"tempLog_查下");
+                    }
+                    
+                    // 计算几个用于计算位置符合度的rect：curAbsST_ConST & curAbsST_ProtoGT & curConST_AssGT。
+                    // 方案1：求出conST分别在：assGT和protoGT中的rect（当前局部特征在以往GT上是什么样子的）。
+                    // 方案2：求出absST分别在：protoGT和assGT中的rect。
+                    // 抉择：这两个方案应该等效，不过方案1看起来更贴合assGT，就先采纳方案1吧。
                     CGRect curAbsST_ConST = baseConPort.rect;
                     CGRect curAbsST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
                     CGRect curConST_AssGT = [assGT rectByIndex:curAssIndex];
