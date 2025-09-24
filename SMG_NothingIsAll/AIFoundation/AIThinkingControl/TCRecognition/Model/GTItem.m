@@ -28,4 +28,9 @@
     return self.conST_ProtoGT.size.height / self.conST_AssGT.size.height;
 }
 
+-(CGFloat) getMatchDegree {
+    //TODO: 此处根据整个model的平均位置符合度，计算当前item的位置符合度。
+    return 1;
+}
+
 @end

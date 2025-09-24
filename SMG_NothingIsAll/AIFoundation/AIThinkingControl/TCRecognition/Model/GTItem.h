@@ -21,5 +21,6 @@
 
 -(CGFloat) wRate;
 -(CGFloat) hRate;
+-(CGFloat) getMatchDegree;
 
 @end
