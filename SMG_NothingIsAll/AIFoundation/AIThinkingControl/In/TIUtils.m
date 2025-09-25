@@ -646,7 +646,7 @@
                 //13. protoFeature单独收集。
                 if ([refPort.target_p isEqual:protoFeature_p]) continue;
                 
-                //TODOTOMORROW20250921: 根据assGT来做一些防重等，避免多次计算。
+                // 根据assGT来做一些防重等，避免多次计算。
                 if ([gtModels objectForKey:@(refPort.target_p.pointerId)]) continue;
                 
                 //13. 只要似层结果（参考34135-TODO6）。

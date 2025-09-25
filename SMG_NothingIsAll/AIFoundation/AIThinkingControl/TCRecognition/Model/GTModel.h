@@ -17,4 +17,7 @@
 
 @property (strong, nonatomic) AIGroupFeatureNode *assGT;
 
+@property (assign, nonatomic) CGFloat modelMatchDegree;
+-(void) run4ModelMatchDegree;
+
 @end

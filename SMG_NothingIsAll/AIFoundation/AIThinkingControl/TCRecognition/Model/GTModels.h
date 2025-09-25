@@ -10,4 +10,7 @@
 
 @interface GTModels : NSMutableDictionary
 
+@property (assign, nonatomic) CGFloat pinJunMatchDegree;
+-(void) run4PinJunMatchDegree;
+
 @end

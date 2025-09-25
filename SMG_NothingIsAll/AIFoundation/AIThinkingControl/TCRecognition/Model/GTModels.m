@@ -10,4 +10,10 @@
 
 @implementation GTModels
 
+-(void) run4PinJunMatchDegree {
+    [SMGUtils sumOfArr:self.allValues convertBlock:^double(GTModel *obj) {
+        return obj.match;
+    }]
+}
+
 @end
