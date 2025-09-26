@@ -714,25 +714,45 @@
                     GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel checkValid:^BOOL(GTItem *item) {
                         return item.assIndex == curAssIndex;
                     }];
-                    if (!oldGTItem || oldGTItem.getMatchDegree < newGTItem.getMatchDegree) {
-                        if (oldGTItem) [gtModel removeObject:oldGTItem];
+                    
+                    // 首条直接收集。
+                    if (!oldGTItem) {
                         [gtModel addObject:newGTItem];
+                    } else {
+                        // 计算oldItem和newItem的itemMatchDegree。
+                        [oldGTItem run4ItemMatchDegree:gtModel];
+                        [newGTItem run4ItemMatchDegree:gtModel];
+                        
+                        // 新的更好，则替掉旧的。
+                        if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
+                            if (oldGTItem) [gtModel removeObject:oldGTItem];
+                            [gtModel addObject:newGTItem];
+                        }
                     }
                     
                     // 有中断太多次匹配不上的元素，直接计为自举审核失败。
                     // 边识别边对已收集到的进行提前竞争，不合格的提前中断。比如：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
                     // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
+                    if (gtModel.modelMatchDegree < gtModels.pinJunMatchDegree) {
+                        //gtModel.isFailure = true;
+                        break;
+                    }
                     
                     
                     
                 }
                 
-                // 最后进行综合竞争，把最符合的找出来。
+                // 每个gtModel后，都备好whxyModel，因为下一条每次收集newItem时，要用来判断好坏。
+                [gtModel run4WHXYModelMatchDegree];
+                
                 
                 
             }
         }
     }
+    
+    // 最后进行综合竞争，把最符合的找出来。
+    [gtModels run4PinJunMatchDegree];
     
     // 防重下：避免rectItems.count > assGT.count，从而导致健全度大于1。
     [zenTiModel run4BestRemoveRepeat:protoFeature_p];

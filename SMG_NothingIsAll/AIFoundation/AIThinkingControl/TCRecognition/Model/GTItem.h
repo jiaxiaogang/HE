@@ -23,7 +23,8 @@
 -(CGFloat) hRate;
 -(CGFloat) xDelta;
 -(CGFloat) yDelta;
--(CGFloat) matchRate;
--(CGFloat) getMatchDegree;
+
+@property (assign, nonatomic) CGFloat itemMatchDegree;
+-(void) run4ItemMatchDegree:(GTModel*)baseGTModel;
 
 @end

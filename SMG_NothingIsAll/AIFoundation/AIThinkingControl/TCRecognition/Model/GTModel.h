@@ -17,6 +17,18 @@
 
 @property (strong, nonatomic) AIGroupFeatureNode *assGT;
 
+/**
+ *  MARK:--------------------重新计算PinJun、Min、Max、Span存到以下WHXYModel中--------------------
+ */
+@property (strong, nonatomic) MapModel *wModel;
+@property (strong, nonatomic) MapModel *hModel;
+@property (strong, nonatomic) MapModel *xModel;
+@property (strong, nonatomic) MapModel *yModel;
+-(void) run4WHXYModelMatchDegree;
+
+/**
+ *  MARK:--------------------重新计算whxyModel、itemMatchDegree、modelMatchDegree值--------------------
+ */
 @property (assign, nonatomic) CGFloat modelMatchDegree;
 -(void) run4ModelMatchDegree;
 
