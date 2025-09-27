@@ -12,5 +12,6 @@
 
 @property (assign, nonatomic) CGFloat modelsMatchDegree;
 -(void) run4ModelsMatchDegree;
+-(void) run4ModelsMatchRatio;
 
 @end

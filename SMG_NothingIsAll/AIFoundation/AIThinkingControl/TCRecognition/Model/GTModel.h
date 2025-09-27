@@ -32,4 +32,10 @@
 @property (assign, nonatomic) CGFloat modelMatchDegree;
 -(void) run4ModelMatchDegree;
 
+/**
+ *  MARK:--------------------计算健全度--------------------
+ */
+@property (assign, nonatomic) CGFloat modelMatchRatio;
+-(void) run4ModelMatchRatio;
+
 @end

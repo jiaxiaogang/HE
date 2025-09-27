@@ -16,4 +16,10 @@
     }] / self.count : 0;
 }
 
+-(void) run4ModelsMatchRatio {
+    for (GTModel *model in self) {
+        [model run4ModelMatchDegree];
+    }
+}
+
 @end

@@ -620,7 +620,7 @@
     
     // 初始化gtModels
     GTModels *gtModels = [GTModels new];
-    NSDictionary *exceptGTs = [NSMutableDictionary new];
+    NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
     
     //11. 收集：每个absT分别向整体取conPorts。
     for (AIFeatureJvBuModel *obj in matchModels) {
@@ -629,9 +629,8 @@
         AIFeatureNode *absST = [SMGUtils searchNode:obj.abs_p];
         NSArray *conPorts = [AINetUtils conPorts_All:absST];
         
-        
-        //TODOTOMORROW20250921: 根据强度只取conPorts和refPorts的前x条，避免性能问题。
-        
+        // 根据强度只取conPorts和refPorts的前x条，避免性能问题。
+        conPorts = ARR_SUB(conPorts, 0, conPorts.count * 0.5f);
         
         for (AIPort *conPort in conPorts) {
             AIFeatureNode *conST = [SMGUtils searchNode:conPort.target_p];
@@ -754,7 +753,7 @@
     //[gtModels run4StrongRatio];
     
     //24. 计算：健全度（即匹配率）。
-    //[gtModels run4MatchRatio];
+    [gtModels run4ModelsMatchRatio];
     
     //25. 计算：综合单特征竞争分。
     //[gtModels run4STMatch];
@@ -767,51 +766,46 @@
     //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
     //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModel *obj) {
-        return obj.modelMatchDegree * obj.matchRatio * obj.modelSTMatch;
+        return obj.modelMatchDegree * obj.modelMatchRatio;
     }], 0, gtModels.count * 0.5);
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
-    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {
-        return obj.assT;
+    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTModel *obj) {
+        return @(obj.assGT.pId);
     }];
     
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
-    for (AIFeatureZenTiModel *matchModel in resultModels) {
-        AIFeatureNode *assFeature = [SMGUtils searchNode:matchModel.assT];
+    for (GTModel *model in resultModels) {
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
         // 目前不支持refPort存匹配度，先注掉。
         //[protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
-        [protoGT updateMatchDegree:assFeature matchDegree:matchModel.modelMatchDegree];
+        [protoGT updateMatchDegree:model.assGT matchDegree:model.modelMatchDegree];
         
         // 从protoT更新logDesc到assGT。
-        [assFeature updateLogDescDic:protoGT.logDesc rate:matchModel.modelMatchDegree * matchModel.matchRatio];
-        
-        //42. 存下来zenTiModel用于类比时用一下（参考34139-TODO3）。
-        //assFeature.zenTiModel = matchModel;
+        [model.assGT updateLogDescDic:protoGT.logDesc rate:model.modelMatchDegree * model.modelMatchRatio];
         
         //43. debug
-        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\tProtoGT长:%ld\t符合度:%.1f\t健全度:%.2f(%ld/%ld)\t局部综合匹配度:%.2f",
-                                         matchModel.assT.pointerId,CLEANSTR([assFeature getLogDesc:true]),protoGT.count,
-                                         matchModel.modelMatchDegree,matchModel.matchRatio,matchModel.rectItems.count,assFeature.count,
-                                         matchModel.modelSTMatch);
+        if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\tProtoGT长:%ld\t符合度:%.1f\t健全度:%.2f(%ld/%ld)",
+                                         model.assGT.pId,CLEANSTR([model.assGT getLogDesc:true]),protoGT.count,
+                                         model.modelMatchDegree,model.modelMatchRatio,model.count,model.assGT.count);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
-        [AINetUtils relateGeneralAbs:assFeature absConPorts:assFeature.conPorts conNodes:@[protoGT] isNew:false difStrong:1];
+        [AINetUtils relateGeneralAbs:model.assGT absConPorts:model.assGT.conPorts conNodes:@[protoGT] isNew:false difStrong:1];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:assFeature lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:matchModel]+1,assFeature.pId,matchModel.rectItems.count,assFeature.count) left:0 top:0];
+            [theApp.imgTrainerView setDataForFeature:model.assGT lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.count,model.assGT.count) left:0 top:0];
         }];
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
-        return [SMGUtils searchNode:obj.assT];
-    } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
-        return obj.modelMatchDegree * obj.matchRatio;
+    [TIUtils printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModel *obj) {
+        return obj.assGT;
+    } convertMatchBlock:^float(GTModel *obj) {
+        return obj.modelMatchDegree * obj.modelMatchRatio;
     }];
     return resultModels;
 }

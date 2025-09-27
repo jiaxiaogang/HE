@@ -50,6 +50,10 @@
     }] / self.count;
 }
 
+-(void) run4ModelMatchRatio {
+    self.modelMatchRatio = self.assGT.count > 0 ? self.count / (float)self.assGT.count : 0;
+}
+
 //MARK:===============================================================
 //MARK:                     < PrivateMethod >
 //MARK:===============================================================
