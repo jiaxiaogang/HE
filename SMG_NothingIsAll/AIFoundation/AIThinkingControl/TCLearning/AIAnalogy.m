@@ -554,6 +554,57 @@
     return [MapModel newWithV1:assG_p v2:@(curMatchValue) v3:@(curDegree)];
 }
 
++(AIFeatureNode*) analogyGroupFeatureV6:(AIFeatureNode*)protoGT gtModel:(GTModel*)gtModel {
+    //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
+    NSArray *sameItems = [SMGUtils filterArr:gtModel checkValid:^BOOL(GTItem *obj) {
+        return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree bigerMatchValue:gtModel.modelMatchDegree];
+    }];
+    
+    //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
+    CGRect newAbsAtAssRect = CGRectNull;
+    for (GTItem *item in sameItems) {
+        //12. 取并每个itemAbsT在assT的范围。
+        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.conST_AssGT);
+    }
+    
+    NSArray *orders = [SMGUtils convertArr:sameItems convertBlock:^id(GTItem *obj) {
+        // 计算itemST在absGT中的位置，其实就是ST在assGT中的位置，减掉margin左上角的留白（参考上面的方案2-TODO2）。
+        CGRect curSTAtAbsGTRect = obj.conST_AssGT;
+        curSTAtAbsGTRect.origin.x -= newAbsAtAssRect.origin.x;//- marginLeft
+        curSTAtAbsGTRect.origin.y -= newAbsAtAssRect.origin.y;//- marginTop
+        AIKVPointer *itemST = ARR_INDEX(gtModel.assGT.content_ps, obj.assIndex);
+        return [InputGroupFeatureModel new:itemST rect:curSTAtAbsGTRect];
+    }];
+    
+    // 构建absGT
+    AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.assGT] at:protoGT.at ds:protoGT.ds isOut:protoGT.isOut isJiao:true];
+    
+    //41. 更新logDesc。
+    [absGT updateLogDescDic:protoGT.logDesc];
+    [absGT updateLogDescDic:gtModel.assGT.logDesc rate:gtModel.modelMatchDegree * gtModel.modelMatchRatio];
+    
+    //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。
+    //2025.09.11: 不记录protoGT与absGT的匹配度，位置符合度，范围rect（参考上面方案2-TODO3）。
+    //42. 记录匹配度：根据每个匹配itemAbsT，来计算平均匹配度。
+    [gtModel.assGT updateMatchValue:absGT matchValue:1];//gtModel.modelSTMatch;
+    
+    //43. 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
+    [gtModel.assGT updateMatchDegree:absGT matchDegree:gtModel.modelMatchDegree];
+    
+    //44. 记录整体absT.conPort到protoT和assT的rect（参考上面的方案2-TODO1）。
+    [AINetUtils updateConPortRect:absGT conT:gtModel.assGT.p rect:newAbsAtAssRect];
+    
+    //51. debug
+    [SMGUtils runByMainQueue:^{
+        //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比GT%ld->GT%ld",assT.pId,absGT.pId) left:0 top:0];
+    }];
+    if (Log4Ana || true) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
+                               protoGT.pId,protoGT.count,CLEANSTR([protoGT getLogDesc:false]),FeatureDesc(protoGT.p,1),
+                               gtModel.assGT.pId,gtModel.assGT.count,CLEANSTR([gtModel.assGT getLogDesc:false]),FeatureDesc(gtModel.assGT.p,1),
+                               absGT.pId,absGT.count,CLEANSTR([absGT getLogDesc:false]),FeatureDesc(absGT.p,1));
+    return absGT;
+}
+
 /**
  *  MARK:--------------------单码类比--------------------
  */
