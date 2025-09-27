@@ -10,10 +10,10 @@
 
 @implementation GTModels
 
--(void) run4PinJunMatchDegree {
-    [SMGUtils sumOfArr:self.allValues convertBlock:^double(GTModel *obj) {
+-(void) run4ModelsMatchDegree {
+    self.modelsMatchDegree = self.count > 0 ? [SMGUtils sumOfArr:self convertBlock:^double(GTModel *obj) {
         return obj.modelMatchDegree;
-    }]
+    }] / self.count : 0;
 }
 
 @end

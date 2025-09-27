@@ -601,7 +601,6 @@
 +(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
     //1. 数据准备
     AIFeatureNode *protoGT = [SMGUtils searchNode:protoFeature_p];
-    AIFeatureZenTiModels *zenTiModel = [AIFeatureZenTiModels new];
     
     // 收集全量conST数据：用于自举。
     NSArray *allConSTModels = [SMGUtils convertArr:matchModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuModel) {
@@ -621,6 +620,7 @@
     
     // 初始化gtModels
     GTModels *gtModels = [GTModels new];
+    NSDictionary *exceptGTs = [NSMutableDictionary new];
     
     //11. 收集：每个absT分别向整体取conPorts。
     for (AIFeatureJvBuModel *obj in matchModels) {
@@ -647,7 +647,8 @@
                 if ([refPort.target_p isEqual:protoFeature_p]) continue;
                 
                 // 根据assGT来做一些防重等，避免多次计算。
-                if ([gtModels objectForKey:@(refPort.target_p.pointerId)]) continue;
+                if ([exceptGTs objectForKey:@(refPort.target_p.pointerId)]) continue;
+                [exceptGTs setObject:@"" forKey:@(refPort.target_p.pointerId)];
                 
                 //13. 只要似层结果（参考34135-TODO6）。
                 //2025.09.19: GT已经独立模块了，当然得开放识别交层GT，不然次次只能识别到一两条GT结果，且健全度都超低。
@@ -657,13 +658,24 @@
                 
                 // 初始化gtModel
                 GTModel *gtModel = [GTModel new:assGT];
-                [gtModels setObject:gtModel forKey:@(assGT.pId)];
+                [gtModels addObject:gtModel];
                 NSInteger assIndex = [assGT.content_ps indexOfObject:conST.p];
                 
                 // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
-                for (NSInteger i = assIndex; i < assGT.count; i++) {
-                    NSInteger curAssIndex = (assIndex + i) % assGT.count;
+                for (NSInteger i = 0; i < assGT.count; i++) {
                     
+                    // 边识别边对已收集到的进行提前竞争，不合格的提前中断。比如：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
+                    // 每个gtItem后，都要计算好modelMatchDegree，因为如果gtModel不够好，直接会中断它。
+                    if (i > 5 && gtModel.count > 1) { // 超过判断5条，则收集到1条以上时，才开始进行提前淘汰。
+                        [gtModel run4ModelMatchDegree];
+                        if (![TCLearningUtil noZeRenForPingJun:gtModel.modelMatchDegree bigerMatchValue:gtModels.modelsMatchDegree]) { //或用(modelMatchDegree < modelsMatchDegree)
+                            [gtModels removeObject:gtModel];
+                            break;
+                        }
+                    }
+                    
+                    // 计算curAssIndex 取curAssST。
+                    NSInteger curAssIndex = (assIndex + i) % assGT.count;
                     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                     AIKVPointer *curAssST_p = ARR_INDEX(assGT.content_ps, curAssIndex);
                     
@@ -720,67 +732,43 @@
                         [gtModel addObject:newGTItem];
                     } else {
                         // 计算oldItem和newItem的itemMatchDegree。
-                        [oldGTItem run4ItemMatchDegree:gtModel];
                         [newGTItem run4ItemMatchDegree:gtModel];
                         
                         // 新的更好，则替掉旧的。
+                        // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
                         if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
                             if (oldGTItem) [gtModel removeObject:oldGTItem];
                             [gtModel addObject:newGTItem];
                         }
                     }
-                    
-                    // 有中断太多次匹配不上的元素，直接计为自举审核失败。
-                    // 边识别边对已收集到的进行提前竞争，不合格的提前中断。比如：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
-                    // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
-                    if (gtModel.modelMatchDegree < gtModels.pinJunMatchDegree) {
-                        //gtModel.isFailure = true;
-                        break;
-                    }
-                    
-                    
-                    
                 }
                 
-                // 每个gtModel后，都备好whxyModel，因为下一条每次收集newItem时，要用来判断好坏。
-                [gtModel run4WHXYModelMatchDegree];
-                
-                
-                
+                // 每个gtModel后，都备好位置符合度，因为下一条gtModel判断时，要实时判断如果不好进行中断节约性能。
+                [gtModel run4ModelMatchDegree];
+                [gtModels run4ModelsMatchDegree];
             }
         }
     }
     
-    // 最后进行综合竞争，把最符合的找出来。
-    [gtModels run4PinJunMatchDegree];
-    
-    // 防重下：避免rectItems.count > assGT.count，从而导致健全度大于1。
-    [zenTiModel run4BestRemoveRepeat:protoFeature_p];
-    
-    //21. 计算：位置符合度: 根据每个组特征与单特征的rect来计算。
-    [zenTiModel run4MatchDegree:protoFeature_p];
-    
-    //22. 计算：每个assT和protoT的综合匹配度。
-    //[zenTiModel run4MatchValue:protoFeature_p];
-    
     //23. 计算：每个model的显著度。
-    //[zenTiModel run4StrongRatio];
+    //[gtModels run4StrongRatio];
     
     //24. 计算：健全度（即匹配率）。
-    [zenTiModel run4MatchRatio];
+    //[gtModels run4MatchRatio];
     
     //25. 计算：综合单特征竞争分。
-    [zenTiModel run4STMatch];
+    //[gtModels run4STMatch];
     
+    // 最后进行综合竞争，把最符合的找出来。
     //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
     //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
     //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
     //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
     //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
     //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
-    NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:zenTiModel.models compareBlock:^double(AIFeatureZenTiModel *obj) {
+    NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModel *obj) {
         return obj.modelMatchDegree * obj.matchRatio * obj.modelSTMatch;
-    }], 0, zenTiModel.models.count * 0.5);
+    }], 0, gtModels.count * 0.5);
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(AIFeatureZenTiModel *obj) {

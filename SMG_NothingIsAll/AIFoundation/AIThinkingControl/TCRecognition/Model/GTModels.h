@@ -8,9 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-@interface GTModels : NSMutableDictionary
+@interface GTModels : NSMutableArray
 
-@property (assign, nonatomic) CGFloat pinJunMatchDegree;
--(void) run4PinJunMatchDegree;
+@property (assign, nonatomic) CGFloat modelsMatchDegree;
+-(void) run4ModelsMatchDegree;
 
 @end
