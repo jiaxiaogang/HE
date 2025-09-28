@@ -634,7 +634,6 @@
         
         for (AIPort *conPort in conPorts) {
             AIFeatureNode *conST = [SMGUtils searchNode:conPort.target_p];
-            CGRect conSTRect = [SMGUtils convertArr2Rect:conST.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
             
             //20250610: abs改为assT，因为absT识别效果不太好，不知是否它的锅，但改成assT测下再说。
             //20250919: ass改为absT，因为assST在protoGT中的位置无法计算导致重影等问题，改成absST来构建protoGT和识别assGT。
@@ -653,9 +652,8 @@
                 //2025.09.19: GT已经独立模块了，当然得开放识别交层GT，不然次次只能识别到一两条GT结果，且健全度都超低。
                 //if (refPort.target_p.isJiao) continue;
                 
-                AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
-                
                 // 初始化gtModel
+                AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
                 GTModel *gtModel = [GTModel new:assGT];
                 [gtModels.models addObject:gtModel];
                 NSInteger assIndex = [assGT.content_ps indexOfObject:conST.p];
@@ -663,9 +661,11 @@
                 // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
                 for (NSInteger i = 0; i < assGT.count; i++) {
                     
-                    // 边识别边对已收集到的进行提前竞争，不合格的提前中断。比如：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
-                    // 每个gtItem后，都要计算好modelMatchDegree，因为如果gtModel不够好，直接会中断它。
-                    if (i > 5 && gtModel.items.count > 1) { // 超过判断5条，则收集到1条以上时，才开始进行提前淘汰。
+                    // 功能说明：边识别边对已收集到的进行提前竞争，不合格的提前中断。
+                    // 白话示例：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
+                    // 数据准备：每个gtItem后，都要计算好modelMatchDegree，因为如果gtModel不够好，直接会中断它。
+                    // 判断条件：总models超过10条，当前model已判断超过5条，则收集到1条以上 => 开始提前判断model淘汰。
+                    if (i > 5 && gtModel.items.count > 1 && gtModels.models.count > 10) {
                         [gtModel run4ModelMatchDegree];
                         if (![TCLearningUtil noZeRenForPingJun:gtModel.modelMatchDegree bigerMatchValue:gtModels.modelsMatchDegree]) { //或用(modelMatchDegree < modelsMatchDegree)
                             [gtModels.models removeObject:gtModel];
@@ -681,9 +681,7 @@
                     // 不包含该元素，则完全不匹配。
                     if (![allConST_ps containsObject:curAssST_p]) continue;
                     
-                    // ======== 包含该元素，则进行匹配度判断等 ========
-                    AIGroupValueNode *curAssST = [SMGUtils searchNode:curAssST_p];
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                    //TODOTOMORROW20250928: 此处应该能找出多条结果，竞争仅保留最best的一条。
                     
                     // 取mapModel。
                     MapModel *curMapModel = [SMGUtils filterSingleFromArr:allConSTModels checkValid:^BOOL(MapModel *item) {
