@@ -657,7 +657,7 @@
                 
                 // 初始化gtModel
                 GTModel *gtModel = [GTModel new:assGT];
-                [gtModels addObject:gtModel];
+                [gtModels.models addObject:gtModel];
                 NSInteger assIndex = [assGT.content_ps indexOfObject:conST.p];
                 
                 // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
@@ -665,10 +665,10 @@
                     
                     // 边识别边对已收集到的进行提前竞争，不合格的提前中断。比如：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
                     // 每个gtItem后，都要计算好modelMatchDegree，因为如果gtModel不够好，直接会中断它。
-                    if (i > 5 && gtModel.count > 1) { // 超过判断5条，则收集到1条以上时，才开始进行提前淘汰。
+                    if (i > 5 && gtModel.items.count > 1) { // 超过判断5条，则收集到1条以上时，才开始进行提前淘汰。
                         [gtModel run4ModelMatchDegree];
                         if (![TCLearningUtil noZeRenForPingJun:gtModel.modelMatchDegree bigerMatchValue:gtModels.modelsMatchDegree]) { //或用(modelMatchDegree < modelsMatchDegree)
-                            [gtModels removeObject:gtModel];
+                            [gtModels.models removeObject:gtModel];
                             break;
                         }
                     }
@@ -722,13 +722,13 @@
                     GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex conST_ProtoGT:curConST_ProtoGT conST_AssGT:curConST_AssGT];
                     
                     // 保留最匹配的一条。
-                    GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel checkValid:^BOOL(GTItem *item) {
+                    GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
                         return item.assIndex == curAssIndex;
                     }];
                     
                     // 首条直接收集。
                     if (!oldGTItem) {
-                        [gtModel addObject:newGTItem];
+                        [gtModel.items addObject:newGTItem];
                     } else {
                         // 计算oldItem和newItem的itemMatchDegree。
                         [newGTItem run4ItemMatchDegree:gtModel];
@@ -736,8 +736,8 @@
                         // 新的更好，则替掉旧的。
                         // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
                         if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
-                            if (oldGTItem) [gtModel removeObject:oldGTItem];
-                            [gtModel addObject:newGTItem];
+                            if (oldGTItem) [gtModel.items removeObject:oldGTItem];
+                            [gtModel.items addObject:newGTItem];
                         }
                     }
                 }
@@ -765,9 +765,9 @@
     //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
     //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
     //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
-    NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModel *obj) {
+    NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchRatio;
-    }], 0, gtModels.count * 0.5);
+    }], 0, gtModels.models.count * 0.5);
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTModel *obj) {
@@ -788,7 +788,7 @@
         //43. debug
         if (Log4RecogDesc || true) NSLog(@"组特征识别结果:T%ld%@\tProtoGT长:%ld\t符合度:%.1f\t健全度:%.2f(%ld/%ld)",
                                          model.assGT.pId,CLEANSTR([model.assGT getLogDesc:true]),protoGT.count,
-                                         model.modelMatchDegree,model.modelMatchRatio,model.count,model.assGT.count);
+                                         model.modelMatchDegree,model.modelMatchRatio,model.items.count,model.assGT.count);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
@@ -797,7 +797,7 @@
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:model.assGT lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.count,model.assGT.count) left:0 top:0];
+            [theApp.imgTrainerView setDataForFeature:model.assGT lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.items.count,model.assGT.count) left:0 top:0];
         }];
     }
     

@@ -8,7 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-@interface GTModels : NSMutableArray
+@interface GTModels : NSObject
+
+@property (strong, nonatomic) NSMutableArray *models;
 
 @property (assign, nonatomic) CGFloat modelsMatchDegree;
 -(void) run4ModelsMatchDegree;

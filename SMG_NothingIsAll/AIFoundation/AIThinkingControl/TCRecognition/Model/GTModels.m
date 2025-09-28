@@ -10,14 +10,19 @@
 
 @implementation GTModels
 
+-(NSMutableArray*) models {
+    if (!_models) _models = [NSMutableArray new];
+    return _models;
+}
+
 -(void) run4ModelsMatchDegree {
-    self.modelsMatchDegree = self.count > 0 ? [SMGUtils sumOfArr:self convertBlock:^double(GTModel *obj) {
+    self.modelsMatchDegree = self.models.count > 0 ? [SMGUtils sumOfArr:self.models convertBlock:^double(GTModel *obj) {
         return obj.modelMatchDegree;
-    }] / self.count : 0;
+    }] / self.models.count : 0;
 }
 
 -(void) run4ModelsMatchRatio {
-    for (GTModel *model in self) {
+    for (GTModel *model in self.models) {
         [model run4ModelMatchDegree];
     }
 }

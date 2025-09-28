@@ -311,12 +311,12 @@ static AIThinkingControl *_instance;
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TIUtils recognitionGroupFeatureV5:protoGT.p matchModels:jvBuModel.stModels];
+    NSArray *assGTs = [TIUtils recognitionGroupFeatureV6:protoGT.p matchModels:jvBuModel.stModels];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。
-    for (AIFeatureZenTiModel *assGT in assGTs) {
-        [AIAnalogy analogyGroupFeatureV5:protoGT zenTiModel:assGT];
+    for (GTModel *assGT in assGTs) {
+        [AIAnalogy analogyGroupFeatureV6:protoGT gtModel:assGT];
     }
     
     // debug
@@ -325,10 +325,10 @@ static AIThinkingControl *_instance;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.getSTMatch;
     }];
-    [TIUtils printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
-        return [SMGUtils searchNode:obj.assT];
-    } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
-        return obj.modelMatchDegree * obj.matchRatio;
+    [TIUtils printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
+        return obj.assGT;
+    } convertMatchBlock:^float(GTModel *obj) {
+        return obj.modelMatchDegree * obj.modelMatchRatio;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);

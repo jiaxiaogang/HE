@@ -11,10 +11,11 @@
 /**
  *  MARK:--------------------GT识别模型--------------------
  */
-@interface GTModel : NSMutableArray
+@interface GTModel : NSObject
 
 +(id) new:(AIGroupFeatureNode*)assGT;
 
+@property (strong, nonatomic) NSMutableArray *items;
 @property (strong, nonatomic) AIGroupFeatureNode *assGT;
 
 /**
