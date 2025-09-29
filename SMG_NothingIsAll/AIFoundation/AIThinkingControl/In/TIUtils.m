@@ -681,61 +681,67 @@
                     // 不包含该元素，则完全不匹配。
                     if (![allConST_ps containsObject:curAssST_p]) continue;
                     
-                    //TODOTOMORROW20250928: 此处应该能找出多条结果，竞争仅保留最best的一条。
-                    
-                    // 取mapModel。
-                    MapModel *curMapModel = [SMGUtils filterSingleFromArr:allConSTModels checkValid:^BOOL(MapModel *item) {
+                    // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
+                    NSArray *curMapModels = [SMGUtils filterArr:allConSTModels checkValid:^BOOL(MapModel *item) {
                         AIPort *conPort = item.v3;
                         return [conPort.target_p isEqual:curAssST_p];
                     }];
-                    AIFeatureJvBuModel *curJvBuModel = curMapModel.v1;
-                    AIFeatureNode *absST = curMapModel.v2;
-                    AIPort *baseConPort = curMapModel.v3;
-                    CGRect curConSTRect = VALTOOK(curMapModel.v4).CGRectValue;
                     
-                    // 取protoIndex
-                    NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:absST.p];
-                    if (curProtoIndex < 0) {
-                        NSLog(@"tempLog_查下");
-                    }
-                    
-                    // 计算几个用于计算位置符合度的rect：curAbsST_ConST & curAbsST_ProtoGT & curConST_AssGT。
-                    // 方案1：求出conST分别在：assGT和protoGT中的rect（当前局部特征在以往GT上是什么样子的）。
-                    // 方案2：求出absST分别在：protoGT和assGT中的rect。
-                    // 抉择：这两个方案应该等效，不过方案1看起来更贴合assGT，就先采纳方案1吧。
-                    CGRect curAbsST_ConST = baseConPort.rect;
-                    CGRect curAbsST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
-                    CGRect curConST_AssGT = [assGT rectByIndex:curAssIndex];
-                    
-                    // 需要先缩放：把conST的rect缩放成absST的坐标系，这样才能计算conST在protoGT的rect。
-                    CGFloat wRate_AbsST = curAbsST_ProtoGT.size.width / curAbsST_ConST.size.width;
-                    CGFloat hRate_AbsST = curAbsST_ProtoGT.size.height / curAbsST_ConST.size.height;
-                    
-                    // 计算conST在protoGT的rect。
-                    CGRect curConST_ProtoGT = CGRectMake(curAbsST_ProtoGT.origin.x - curAbsST_ConST.origin.x * wRate_AbsST,
-                                                      curAbsST_ProtoGT.origin.y - curAbsST_ConST.origin.y * hRate_AbsST,
-                                                      curConSTRect.size.width * wRate_AbsST, curConSTRect.size.height * hRate_AbsST);
-                    
-                    // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
-                    GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex conST_ProtoGT:curConST_ProtoGT conST_AssGT:curConST_AssGT];
-                    
-                    // 保留最匹配的一条。
-                    GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
-                        return item.assIndex == curAssIndex;
-                    }];
-                    
-                    // 首条直接收集。
-                    if (!oldGTItem) {
-                        [gtModel.items addObject:newGTItem];
-                    } else {
-                        // 计算oldItem和newItem的itemMatchDegree。
-                        [newGTItem run4ItemMatchDegree:gtModel];
+                    // 找bestGTItem：最终只收集最好的一条。
+                    for (MapModel *curMapModel in curMapModels) {
+                        //AIFeatureJvBuModel *curJvBuModel = curMapModel.v1;
+                        AIFeatureNode *absST = curMapModel.v2;
+                        AIPort *baseConPort = curMapModel.v3;
+                        CGRect curConSTRect = VALTOOK(curMapModel.v4).CGRectValue;
                         
-                        // 新的更好，则替掉旧的。
-                        // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
-                        if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
-                            if (oldGTItem) [gtModel.items removeObject:oldGTItem];
+                        // 取protoIndex
+                        NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:absST.p];
+                        if (curProtoIndex < 0) {
+                            NSLog(@"tempLog_查下");
+                        }
+                        
+                        // 计算几个用于计算位置符合度的rect：curAbsST_ConST & curAbsST_ProtoGT & curConST_AssGT。
+                        // 方案1：求出conST分别在：assGT和protoGT中的rect（当前局部特征在以往GT上是什么样子的）。
+                        // 方案2：求出absST分别在：protoGT和assGT中的rect。
+                        // 抉择：这两个方案应该等效，不过方案1看起来更贴合assGT，就先采纳方案1吧。
+                        CGRect curAbsST_ConST = baseConPort.rect;
+                        CGRect curAbsST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
+                        CGRect curConST_AssGT = [assGT rectByIndex:curAssIndex];
+                        
+                        // 需要先缩放：把conST的rect缩放成absST的坐标系，这样才能计算conST在protoGT的rect。
+                        CGFloat wRate_AbsST = curAbsST_ProtoGT.size.width / curAbsST_ConST.size.width;
+                        CGFloat hRate_AbsST = curAbsST_ProtoGT.size.height / curAbsST_ConST.size.height;
+                        
+                        // 计算conST在protoGT的rect。
+                        CGRect curConST_ProtoGT = CGRectMake(curAbsST_ProtoGT.origin.x - curAbsST_ConST.origin.x * wRate_AbsST,
+                                                          curAbsST_ProtoGT.origin.y - curAbsST_ConST.origin.y * hRate_AbsST,
+                                                          curConSTRect.size.width * wRate_AbsST, curConSTRect.size.height * hRate_AbsST);
+                        
+                        // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
+                        GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex conST_ProtoGT:curConST_ProtoGT conST_AssGT:curConST_AssGT];
+                        
+                        // 保留最匹配的一条。
+                        GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
+                            return item.assIndex == curAssIndex;
+                        }];
+                        
+                        // 首条直接收集。
+                        if (!oldGTItem) {
                             [gtModel.items addObject:newGTItem];
+                            [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。
+                            [newGTItem run4ItemMatchDegree:gtModel];
+                        } else {
+                            // 计算oldItem和newItem的itemMatchDegree。
+                            [newGTItem run4ItemMatchDegree:gtModel];
+                            
+                            // 新的更好，则替掉旧的。
+                            // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
+                            if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
+                                [gtModel.items removeObject:oldGTItem];
+                                [gtModel.items addObject:newGTItem];
+                                [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。
+                                [newGTItem run4ItemMatchDegree:gtModel];
+                            }
                         }
                     }
                 }

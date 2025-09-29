@@ -28,7 +28,7 @@
 -(void) run4WHXYModelMatchDegree;
 
 /**
- *  MARK:--------------------重新计算whxyModel、itemMatchDegree、modelMatchDegree值--------------------
+ *  MARK:--------------------重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
  */
 @property (assign, nonatomic) CGFloat modelMatchDegree;
 -(void) run4ModelMatchDegree;

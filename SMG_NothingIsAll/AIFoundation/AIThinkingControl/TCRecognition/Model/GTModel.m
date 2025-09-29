@@ -18,7 +18,7 @@
 }
 
 /**
- *  MARK:--------------------重新计算whxyModel、itemMatchDegree、modelMatchDegree值--------------------
+ *  MARK:--------------------重新计算PinJun、Min、Max、Span存到以下WHXYModel中--------------------
  */
 -(void) run4WHXYModelMatchDegree {
     // ========= 计算WHXY的平均值，最小值，最大值，SPAN值 =========
@@ -36,10 +36,10 @@
     }]];
 }
 
+/**
+ *  MARK:--------------------重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
+ */
 -(void) run4ModelMatchDegree {
-    //1. 算WHXYModel
-    [self run4WHXYModelMatchDegree];
-    
     //2. 算itemMatchDegree
     for (GTItem *item in self.items) {
         [item run4ItemMatchDegree:self];
