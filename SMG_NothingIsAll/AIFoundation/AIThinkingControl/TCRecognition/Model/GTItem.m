@@ -14,6 +14,8 @@
     GTItem *result = [GTItem new];
     result.protoIndex = protoIndex;
     result.assIndex = assIndex;
+    result.conST_ProtoGT = conST_ProtoGT;
+    result.conST_AssGT = conST_AssGT;
     return result;
 }
 

@@ -23,7 +23,7 @@
 
 -(void) run4ModelsMatchRatio {
     for (GTModel *model in self.models) {
-        [model run4ModelMatchDegree];
+        [model run4ModelMatchRatio];
     }
 }
 
