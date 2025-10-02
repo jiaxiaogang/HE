@@ -378,7 +378,9 @@
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     
     // 2025.06.14: 如果一致，即不必类比抽象，因为内容一致时：抽象就是assT本身。
-    if (jvBuModel.bestGVs.count >= jvBuModel.assT.count) return nil;
+    // 2025.10.02: 一致也抽象，只是absST就是assST自己而已，不然这里return的太早了，下面还可能判责后，再是需要抽象的，并且即使不抽象也要给absST赋值，不然会构建出无法可视化的无效protoGT。
+    //if (jvBuModel.bestGVs.count >= jvBuModel.assT.count) return nil;
+    
     //1. 类比前可视化
     //[jvBuModel run4BestGvsAtProtoTRect];
     //NSArray *assContentIndexes_Log = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {

@@ -292,6 +292,13 @@ static AIThinkingControl *_instance;
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
+    // debug
+    [TIUtils printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT;
+    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
+        return obj.getSTMatch;
+    }];
+    
     // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
     // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
@@ -302,6 +309,7 @@ static AIThinkingControl *_instance;
         }];
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
+    if (gtOrders.count == 0) return;
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
@@ -321,11 +329,6 @@ static AIThinkingControl *_instance;
     }
     
     // debug
-    [TIUtils printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
-    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getSTMatch;
-    }];
     [TIUtils printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModel *obj) {
