@@ -441,18 +441,20 @@
     } else {
         [absT updateLogDescItem:protoTLogDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
     }
-    if ([absT.p isEqual:jvBuModel.assT.p] || [absT.p isEqual:protoT.p]) return nil;
     
-    //35. 存protoT与absT的匹配度 & 存conPorts的rect（参考34135-TODO1）& 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
-    if (protoT) [protoT updateMatchValue:absT matchValue:jvBuModel.matchValue];
-    if (protoT) [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
-    if (protoT) [protoT updateMatchDegree:absT matchDegree:jvBuModel.matchDegree];
-    
-    //36. 类比竞争完后，重新计算然后再存assT与absT的：匹配度 & 存conPorts的rect（参考34135-TODO1）& 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
-    [jvBuModel run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
-    [jvBuModel.assT updateMatchValue:absT matchValue:jvBuModel.matchValue];
-    [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
-    [jvBuModel.assT updateMatchDegree:absT matchDegree:1];
+    // 只有不同时，才存各种匹配度等。
+    if (![absT.p isEqual:jvBuModel.assT.p] && ![absT.p isEqual:protoT.p]) {
+        //35. 存protoT与absT的匹配度 & 存conPorts的rect（参考34135-TODO1）& 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
+        if (protoT) [protoT updateMatchValue:absT matchValue:jvBuModel.matchValue];
+        if (protoT) [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
+        if (protoT) [protoT updateMatchDegree:absT matchDegree:jvBuModel.matchDegree];
+        
+        //36. 类比竞争完后，重新计算然后再存assT与absT的：匹配度 & 存conPorts的rect（参考34135-TODO1）& 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
+        [jvBuModel run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
+        [jvBuModel.assT updateMatchValue:absT matchValue:jvBuModel.matchValue];
+        [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
+        [jvBuModel.assT updateMatchDegree:absT matchDegree:1];
+    }
     
     //41. debugLog
     NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
