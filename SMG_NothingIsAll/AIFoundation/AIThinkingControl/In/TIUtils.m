@@ -801,7 +801,7 @@
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:model.assGT lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.items.count,model.assGT.count) left:0 top:0];
+            [theApp.imgTrainerView setDataForGTModel:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.items.count,model.assGT.count) left:0 top:0];
         }];
     }
     

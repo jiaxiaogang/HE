@@ -237,6 +237,14 @@
     [self.previewTableView reloadData];
 }
 
+-(void) setDataForGTModel:(GTModel*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top {
+    NSArray *indexes = [SMGUtils convertArr:gtModel.items convertBlock:^id(GTItem *gtItem) {
+        return @(gtItem.assIndex);
+    }];
+    [self addFeatureToPreview:gtModel.assGT indexes:indexes lab:lab left:left top:top];
+    [self.previewTableView reloadData];
+}
+
 -(void) setDataForAlgs:(NSArray*)models {
     for (AIMatchAlgModel *model in models) {
         AIAlgNodeBase *assAlg = [SMGUtils searchNode:model.matchAlg];
