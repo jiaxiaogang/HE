@@ -560,7 +560,7 @@
 
 +(AIFeatureNode*) analogyGroupFeatureV6:(AIFeatureNode*)protoGT gtModel:(GTModel*)gtModel {
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    NSArray *sameItems = [SMGUtils filterArr:gtModel checkValid:^BOOL(GTItem *obj) {
+    NSArray *sameItems = [SMGUtils filterArr:gtModel.items checkValid:^BOOL(GTItem *obj) {
         return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree bigerMatchValue:gtModel.modelMatchDegree];
     }];
     
