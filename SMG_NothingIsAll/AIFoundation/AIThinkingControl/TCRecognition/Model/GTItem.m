@@ -46,6 +46,13 @@
     CGFloat xMatchDegree = 1 - (NUMTOOK(baseGTModel.xModel.v4).floatValue == 0 ? 0 : fabs(self.xDelta) / NUMTOOK(baseGTModel.xModel.v4).floatValue);
     CGFloat yMatchDegree = 1 - (NUMTOOK(baseGTModel.yModel.v4).floatValue == 0 ? 0 : fabs(self.yDelta) / NUMTOOK(baseGTModel.yModel.v4).floatValue);
     self.itemMatchDegree = wMatchDegree * hMatchDegree * xMatchDegree * yMatchDegree;
+    
+    
+    
+    //todotomorrow20251005-查下此处位置符合度有大于1的问题。
+    if (self.itemMatchDegree > 1) {
+        NSLog(@"");
+    }
 }
 
 @end
