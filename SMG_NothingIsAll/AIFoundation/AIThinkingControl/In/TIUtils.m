@@ -696,7 +696,8 @@
                         
                         // 取protoIndex
                         NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:absST.p];
-                        if (curProtoIndex < 0) {
+                        if (curProtoIndex < 0 || curProtoIndex == NSNotFound)  {
+                            //todotomorrow20251006-查下此处NotFount导致conST_ProtoGT的size为0,0问题。
                             NSLog(@"tempLog_查下");
                         }
                         
