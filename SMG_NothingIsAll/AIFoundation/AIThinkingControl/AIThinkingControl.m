@@ -320,7 +320,7 @@ static AIThinkingControl *_instance;
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TIUtils recognitionGroupFeatureV6:protoGT.p matchModels:jvBuModel.stModels];
+    NSArray *assGTs = [TIUtils recognitionGroupFeatureV6:protoGT.p matchModels:goodSTModels];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。

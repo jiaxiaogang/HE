@@ -41,25 +41,23 @@
 -(void) run4ItemMatchDegree:(GTModel*)baseGTModel {
     // 求四个相近度（参考34136-TODO4），然后四个要素乘积“位置符合度”（参考34136-TODO5）。
     // 根据item与proto的差距 / 最大差距 = 得出相近度。
-    
     CGFloat wMatchDegree = 1 - (NUMTOOK(baseGTModel.wModel.v4).floatValue == 0 ? 0 : fabs(self.wRate - 1) / NUMTOOK(baseGTModel.wModel.v4).floatValue);
-    
-    
-    //todotomorrow20251005-查下此处位置符合度有大于1的问题。
-    //当span=0.3-0.1=0.2时 & wRate=0.2时，下方w公式可算出 = 1-abs(0.2-1)/0.2 = 1-0.8/0.2 = 1-4 = -3。
-    //但这个公式肯定是不对的，得回去参考下这个公式的来源，看怎么改一下。
-    if (wMatchDegree < 0) {
-        CGFloat wRate = self.wRate;
-        CGFloat wSpan = NUMTOOK(baseGTModel.wModel.v4).floatValue;
-        NSLog(@"");
-        wMatchDegree = 1 - fabs(wRate - 1) / wSpan;
-        NSLog(@"");
-    }
-    
     CGFloat hMatchDegree = 1 - (NUMTOOK(baseGTModel.hModel.v4).floatValue == 0 ? 0 : fabs(self.hRate - 1) / NUMTOOK(baseGTModel.hModel.v4).floatValue);
     CGFloat xMatchDegree = 1 - (NUMTOOK(baseGTModel.xModel.v4).floatValue == 0 ? 0 : fabs(self.xDelta) / NUMTOOK(baseGTModel.xModel.v4).floatValue);
     CGFloat yMatchDegree = 1 - (NUMTOOK(baseGTModel.yModel.v4).floatValue == 0 ? 0 : fabs(self.yDelta) / NUMTOOK(baseGTModel.yModel.v4).floatValue);
+    
+    // 精度处理（避免-0.0000001这种问题）。
+    wMatchDegree = (int)(wMatchDegree * 100) / 100.0f;
+    hMatchDegree = (int)(hMatchDegree * 100) / 100.0f;
+    xMatchDegree = (int)(xMatchDegree * 100) / 100.0f;
+    yMatchDegree = (int)(yMatchDegree * 100) / 100.0f;
+    
     self.itemMatchDegree = wMatchDegree * hMatchDegree * xMatchDegree * yMatchDegree;
+    
+    // todotomorrow20251007: 此处yMatchDegree还是有为负的情况问题。
+    if (self.itemMatchDegree < 0 || self.itemMatchDegree > 1) {
+        ELog(@"itemMatchDegree值越界：%.2f",self.itemMatchDegree);
+    }
 }
 
 @end

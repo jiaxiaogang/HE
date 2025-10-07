@@ -697,8 +697,7 @@
                         // 取protoIndex
                         NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:absST.p];
                         if (curProtoIndex < 0 || curProtoIndex == NSNotFound)  {
-                            //todotomorrow20251006-查下此处NotFount导致conST_ProtoGT的size为0,0问题。
-                            NSLog(@"tempLog_查下");
+                            NSLog(@"此处NotFount导致conST_ProtoGT的size为0,0问题: %@ \n absST:%ld",[SMGUtils convertArr:protoGT.content_ps convertBlock:^id(AIKVPointer *obj) { return @(obj.pointerId); }],absST.pId);
                         }
                         
                         // 计算几个用于计算位置符合度的rect：curAbsST_ConST & curAbsST_ProtoGT & curConST_AssGT。
