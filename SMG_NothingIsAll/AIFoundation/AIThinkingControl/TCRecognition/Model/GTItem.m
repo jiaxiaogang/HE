@@ -56,7 +56,9 @@
     
     // todotomorrow20251007: 此处yMatchDegree还是有为负的情况问题。
     if (self.itemMatchDegree < 0 || self.itemMatchDegree > 1) {
-        ELog(@"itemMatchDegree值越界：%.2f",self.itemMatchDegree);
+        //线索：调用时的newItem的yDelta，比前面的那些最大的span，确实有可能更大。（这样的话，应该是把yMatchDegree最小不能<0就行了）。
+        ELog(@"itemMatchDegree值越界：%.2f %.3f %.3f",self.itemMatchDegree,self.yDelta,NUMTOOK(baseGTModel.yModel.v4).floatValue);
+        NSLog(@"");
     }
 }
 
