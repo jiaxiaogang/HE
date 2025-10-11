@@ -51,8 +51,12 @@
     CGFloat wMatchDegree = 1 - (NUMTOOK(baseGTModel.wModel.v4).floatValue == 0 ? 0 : fabs(curWRate - 1) / NUMTOOK(baseGTModel.wModel.v4).floatValue);
     
     
-    // hRate = 9/12=0.75 baseGTModel.hModel.v4span = 0.028 v1平均=0.764 v2min=0.75 v3max=778 所以：1-(0.75-1)/0.028=-7.999
+    // hRate = 9/12=0.75 baseGTModel.hModel.v4span = 0.028 v1平均=0.764 v2min=0.75 v3max=0.778 所以：1-(0.75-1)/0.028=-7.999
     // 线索：此处当前hRate也没越界，但却算出-7.999，明天继续分析下，这里怎么限定一下它的值范围。
+    
+    //TODOTOMORROW20251011: 应该改成cur与平均之间的距离，<的话就是在平均与min之间的占位比例，>的话就是在平均与max之间的占位比例，越接近平均越匹配。
+    
+    
     CGFloat hMatchDegree = 1 - (NUMTOOK(baseGTModel.hModel.v4).floatValue == 0 ? 0 : fabs(curHRate - 1) / NUMTOOK(baseGTModel.hModel.v4).floatValue);
     
     CGFloat xMatchDegree = 1 - (NUMTOOK(baseGTModel.xModel.v4).floatValue == 0 ? 0 : fabs(curXDelta) / NUMTOOK(baseGTModel.xModel.v4).floatValue);
