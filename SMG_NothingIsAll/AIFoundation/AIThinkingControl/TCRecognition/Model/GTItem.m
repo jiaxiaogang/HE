@@ -39,41 +39,17 @@
 }
 
 -(void) run4ItemMatchDegree:(GTModel*)baseGTModel {
-    // hRate = 14/18=0.778 baseGTModel.hModel.v4span = 0.057 v1平均=0.981 v2min=0.943 v3max=1 所以：1-(0.0778-1)/0.057=-2.88
-    // 线索：看起来其实还是当前hRate越界了，以往经验中，最小的是0.943，但新的hRate却成了0.778，这里限定一下它的值范围。
-    CGFloat curWRate = MAX(self.wRate, NUMTOOK(baseGTModel.wModel.v2).floatValue);
-    CGFloat curHRate = MAX(self.hRate, NUMTOOK(baseGTModel.hModel.v2).floatValue);
-    CGFloat curXDelta = MAX(self.xDelta, NUMTOOK(baseGTModel.xModel.v2).floatValue);
-    CGFloat curYDelta = MAX(self.yDelta, NUMTOOK(baseGTModel.yModel.v2).floatValue);
-    
     // 求四个相近度（参考34136-TODO4），然后四个要素乘积“位置符合度”（参考34136-TODO5）。
     // 根据item与proto的差距 / 最大差距 = 得出相近度。
-    CGFloat wMatchDegree = 1 - (NUMTOOK(baseGTModel.wModel.v4).floatValue == 0 ? 0 : fabs(curWRate - 1) / NUMTOOK(baseGTModel.wModel.v4).floatValue);
-    
-    
-    // hRate = 9/12=0.75 baseGTModel.hModel.v4span = 0.028 v1平均=0.764 v2min=0.75 v3max=0.778 所以：1-(0.75-1)/0.028=-7.999
-    // 线索：此处当前hRate也没越界，但却算出-7.999，明天继续分析下，这里怎么限定一下它的值范围。
-    
-    //TODOTOMORROW20251011: 应该改成cur与平均之间的距离，<的话就是在平均与min之间的占位比例，>的话就是在平均与max之间的占位比例，越接近平均越匹配。
-    
-    
-    CGFloat hMatchDegree = 1 - (NUMTOOK(baseGTModel.hModel.v4).floatValue == 0 ? 0 : fabs(curHRate - 1) / NUMTOOK(baseGTModel.hModel.v4).floatValue);
-    
-    CGFloat xMatchDegree = 1 - (NUMTOOK(baseGTModel.xModel.v4).floatValue == 0 ? 0 : fabs(curXDelta) / NUMTOOK(baseGTModel.xModel.v4).floatValue);
-    CGFloat yMatchDegree = 1 - (NUMTOOK(baseGTModel.yModel.v4).floatValue == 0 ? 0 : fabs(curYDelta) / NUMTOOK(baseGTModel.yModel.v4).floatValue);
+    CGFloat wMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.wModel curV:self.wRate];
+    CGFloat hMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.hModel curV:self.hRate];
+    CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta];
+    CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta];
     
     // xyMatchDegree可能<0的问题：调用时的newItem的yDelta，比前面的那些最大的span，确实有可能更大。（这样的话，应该是把yMatchDegree最小不能<0就行了）。
     if (wMatchDegree < 0 || hMatchDegree < 0 || xMatchDegree < 0 || yMatchDegree < 0) {
         NSLog(@"查下为负原因");
     }
-    xMatchDegree = MAX(xMatchDegree, 0);
-    yMatchDegree = MAX(yMatchDegree, 0);
-    
-    // 精度处理（避免-0.0000001这种问题）。
-    wMatchDegree = (int)(wMatchDegree * 100) / 100.0f;
-    hMatchDegree = (int)(hMatchDegree * 100) / 100.0f;
-    xMatchDegree = (int)(xMatchDegree * 100) / 100.0f;
-    yMatchDegree = (int)(yMatchDegree * 100) / 100.0f;
     
     self.itemMatchDegree = wMatchDegree * hMatchDegree * xMatchDegree * yMatchDegree;
     
@@ -82,6 +58,28 @@
         ELog(@"itemMatchDegree值越界：%.2f %.3f %.3f",self.itemMatchDegree,self.yDelta,NUMTOOK(baseGTModel.yModel.v4).floatValue);
         NSLog(@"");
     }
+}
+
+// 把xywh其中一个维度的位置符合度算出来。
+-(CGFloat) run4XYWHItemMatchDegree:(MapModel*)xywhItemModel curV:(CGFloat)curV {
+    // 数据准备。
+    CGFloat pinjun = NUMTOOK(xywhItemModel.v1).floatValue;
+    CGFloat min = NUMTOOK(xywhItemModel.v2).floatValue;
+    CGFloat max = NUMTOOK(xywhItemModel.v3).floatValue;
+    
+    // FINDBUG：hRate = 9/12=0.75 baseGTModel.hModel.v4span = 0.028 v1平均=0.764 v2min=0.75 v3max=0.778 所以：1-(0.75-1)/0.028=-7.999
+    // FINDBUG：hRate = 14/18=0.778 baseGTModel.hModel.v4span = 0.057 v1平均=0.981 v2min=0.943 v3max=1 所以：1-(0.0778-1)/0.057=-2.88
+    // 线索：此处当前hRate也没越界，但却算出-7.999，明天继续分析下，这里怎么限定一下它的值范围。
+    // BUGFIX：此处当前hRate越界了，以往经验中，最小的是0.943，但新的hRate却成了0.778，这里限定一下它的值范围。
+    curV = MIN(MAX(curV, min), max);
+    
+    // 改成cur与平均之间的距离：当小于pinjun的话就是在平均与min之间的占位比例，大于pinjun的话就是在平均与max之间的占位比例，越接近平均越匹配。
+    // 小于平均时：越靠近min越接近0，越靠近pinjun越接近1。
+    // 大于平均时：越靠近max越接近0，越靠近pinjun越接近1。
+    CGFloat result = curV < pinjun ? (curV - min) / (pinjun - min) : (max - curV) / (max - pinjun);
+    
+    // 精度处理（避免-0.0000001这种问题）。
+    return (int)(result * 100) / 100.0f;
 }
 
 @end
