@@ -46,18 +46,7 @@
     CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta];
     CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta];
     
-    // xyMatchDegree可能<0的问题：调用时的newItem的yDelta，比前面的那些最大的span，确实有可能更大。（这样的话，应该是把yMatchDegree最小不能<0就行了）。
-    if (wMatchDegree < 0 || hMatchDegree < 0 || xMatchDegree < 0 || yMatchDegree < 0) {
-        NSLog(@"查下为负原因");
-    }
-    
     self.itemMatchDegree = wMatchDegree * hMatchDegree * xMatchDegree * yMatchDegree;
-    
-    // todotomorrow20251007: 此处yMatchDegree还是有为负的情况问题。
-    if (self.itemMatchDegree < 0 || self.itemMatchDegree > 1) {
-        ELog(@"itemMatchDegree值越界：%.2f %.3f %.3f",self.itemMatchDegree,self.yDelta,NUMTOOK(baseGTModel.yModel.v4).floatValue);
-        NSLog(@"");
-    }
 }
 
 // 把xywh其中一个维度的位置符合度算出来。
@@ -76,7 +65,14 @@
     // 改成cur与平均之间的距离：当小于pinjun的话就是在平均与min之间的占位比例，大于pinjun的话就是在平均与max之间的占位比例，越接近平均越匹配。
     // 小于平均时：越靠近min越接近0，越靠近pinjun越接近1。
     // 大于平均时：越靠近max越接近0，越靠近pinjun越接近1。
-    CGFloat result = curV < pinjun ? (curV - min) / (pinjun - min) : (max - curV) / (max - pinjun);
+    CGFloat span = curV < pinjun ? pinjun - min : max - pinjun;
+    CGFloat score = curV < pinjun ? curV - min : max - curV;
+    CGFloat result = span > 0 ? score / span : 1;
+    
+    // xywhMatchDegree可能<0的问题：上面已经对curV的值越界做了处理，这个不应该还有<0的问题了。
+    if (result < 0 || result > 1) {
+        ELog(@"查下itemMatchDegree值越界：%.2f %.3f %.3f %.3f %.3f",result,curV,pinjun,min,max);
+    }
     
     // 精度处理（避免-0.0000001这种问题）。
     return (int)(result * 100) / 100.0f;
