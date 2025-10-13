@@ -49,6 +49,11 @@
     self.modelMatchDegree = self.items.count == 0 ? 0 : [SMGUtils sumOfArr:self.items convertBlock:^double(GTItem *obj) {
         return obj.itemMatchDegree;
     }] / self.items.count;
+    
+    // TODOTOMORROW20251013:
+    if (self.modelMatchDegree > 0 && self.modelMatchDegree < 1) {
+        NSLog(@"查下为什么符合度全是0和1，没中间值？");
+    }
 }
 
 -(void) run4ModelMatchRatio {
