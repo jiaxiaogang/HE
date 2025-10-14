@@ -41,9 +41,9 @@
 -(void) run4ItemMatchDegree:(GTModel*)baseGTModel {
     // 求四个相近度（参考34136-TODO4），然后四个要素乘积“位置符合度”（参考34136-TODO5）。
     // 根据item与proto的差距 / 最大差距 = 得出相近度。
-    CGFloat wMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.wModel curV:self.wRate gtModelPId:baseGTModel.assGT.pId];
+    CGFloat wMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.wModel curV:self.wRate gtModelPId:0];
     CGFloat hMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.hModel curV:self.hRate gtModelPId:0];
-    CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta gtModelPId:0];
+    CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta gtModelPId:baseGTModel.assGT.pId];
     CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta gtModelPId:0];
     self.itemMatchDegree = wMatchDegree * hMatchDegree * xMatchDegree * yMatchDegree;
 }
@@ -77,7 +77,7 @@
     
     // TODOTOMORROW20251013:
     if (gtModelPId > 0) {
-        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld %.3f %.3f %.3f %.3f %.3f",gtModelPId,result,curV,pinjun,min,max);
+        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld MATCH=%.3f CUR=%.3f JUN=%.3f MIN=%.3f MAX=%.3f",gtModelPId,result,curV,pinjun,min,max);
     }
     
     

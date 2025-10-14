@@ -37,8 +37,13 @@
     
     
     
-    // TODOTOMORROW20251013:
-    NSLog(@"1. 查下为什么符合度全是0和1，没中间值？GT%ld %.3f %.3f %.3f %.3f",self.assGT.pId,NUMTOOK(self.wModel.v1).floatValue,NUMTOOK(self.wModel.v2).floatValue,NUMTOOK(self.wModel.v3).floatValue,NUMTOOK(self.wModel.v4).floatValue);
+    // TODOTOMORROW20251013: 日志如下：
+    // <错误> 1. 查下为什么符合度全是0和1，没中间值？GT1871 JUN=0.000 MIN=0.778 MAX=1.000 SPAN=0.222
+    // <错误> 2. 查下为什么符合度全是0和1，没中间值？GT1871 MATCH=1.000 CUR=0.000 JUN=0.000 MIN=0.000 MAX=0.000
+    // 问题1：MIN和MAX都>0，为什么JUN=0？
+    // 问题2：第一条日志显示它MIN和MAX都不是0，为什么第二条日志里又是0了？
+    
+    ELog(@"1. 查下为什么符合度全是0和1，没中间值？GT%ld JUN=%.3f MIN=%.3f MAX=%.3f SPAN=%.3f",self.assGT.pId,NUMTOOK(self.xModel.v1).floatValue,NUMTOOK(self.wModel.v2).floatValue,NUMTOOK(self.wModel.v3).floatValue,NUMTOOK(self.wModel.v4).floatValue);
     
 }
 
