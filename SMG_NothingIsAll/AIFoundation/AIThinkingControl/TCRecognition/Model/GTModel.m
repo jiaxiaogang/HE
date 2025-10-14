@@ -34,6 +34,12 @@
     self.yModel = [self run4PinJunMinMaxSpan:[SMGUtils convertArr:self.items convertBlock:^id(GTItem *obj) {
         return @(obj.yDelta);
     }]];
+    
+    
+    
+    // TODOTOMORROW20251013:
+    NSLog(@"1. 查下为什么符合度全是0和1，没中间值？GT%ld %.3f %.3f %.3f %.3f",self.assGT.pId,NUMTOOK(self.wModel.v1).floatValue,NUMTOOK(self.wModel.v2).floatValue,NUMTOOK(self.wModel.v3).floatValue,NUMTOOK(self.wModel.v4).floatValue);
+    
 }
 
 /**
@@ -49,11 +55,6 @@
     self.modelMatchDegree = self.items.count == 0 ? 0 : [SMGUtils sumOfArr:self.items convertBlock:^double(GTItem *obj) {
         return obj.itemMatchDegree;
     }] / self.items.count;
-    
-    // TODOTOMORROW20251013:
-    if (self.modelMatchDegree > 0 && self.modelMatchDegree < 1) {
-        NSLog(@"查下为什么符合度全是0和1，没中间值？");
-    }
 }
 
 -(void) run4ModelMatchRatio {

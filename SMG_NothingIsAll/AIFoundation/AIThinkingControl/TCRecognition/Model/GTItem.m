@@ -41,16 +41,15 @@
 -(void) run4ItemMatchDegree:(GTModel*)baseGTModel {
     // 求四个相近度（参考34136-TODO4），然后四个要素乘积“位置符合度”（参考34136-TODO5）。
     // 根据item与proto的差距 / 最大差距 = 得出相近度。
-    CGFloat wMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.wModel curV:self.wRate];
-    CGFloat hMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.hModel curV:self.hRate];
-    CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta];
-    CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta];
-    
+    CGFloat wMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.wModel curV:self.wRate gtModelPId:baseGTModel.assGT.pId];
+    CGFloat hMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.hModel curV:self.hRate gtModelPId:0];
+    CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta gtModelPId:0];
+    CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta gtModelPId:0];
     self.itemMatchDegree = wMatchDegree * hMatchDegree * xMatchDegree * yMatchDegree;
 }
 
 // 把xywh其中一个维度的位置符合度算出来。
--(CGFloat) run4XYWHItemMatchDegree:(MapModel*)xywhItemModel curV:(CGFloat)curV {
+-(CGFloat) run4XYWHItemMatchDegree:(MapModel*)xywhItemModel curV:(CGFloat)curV gtModelPId:(NSInteger)gtModelPId {
     // 数据准备。
     CGFloat pinjun = NUMTOOK(xywhItemModel.v1).floatValue;
     CGFloat min = NUMTOOK(xywhItemModel.v2).floatValue;
@@ -73,6 +72,14 @@
     if (result < 0 || result > 1) {
         ELog(@"查下itemMatchDegree值越界：%.2f %.3f %.3f %.3f %.3f",result,curV,pinjun,min,max);
     }
+    
+    
+    
+    // TODOTOMORROW20251013:
+    if (gtModelPId > 0) {
+        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld %.3f %.3f %.3f %.3f %.3f",gtModelPId,result,curV,pinjun,min,max);
+    }
+    
     
     // 精度处理（避免-0.0000001这种问题）。
     return (int)(result * 100) / 100.0f;
