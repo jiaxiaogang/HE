@@ -791,7 +791,7 @@
         [model.assGT updateLogDescDic:protoGT.logDesc rate:model.modelMatchDegree * model.modelMatchRatio];
         
         //43. debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld%@ \tProtoGT长:%ld \t符合度:%.1f \t健全度:%.2f(%ld/%ld)",[resultModels indexOfObject:model],
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld%@ \tProtoGT长:%ld \t符合度:%.2f \t健全度:%.2f(%ld/%ld)",[resultModels indexOfObject:model],
                                          model.assGT.pId,CLEANSTR([model.assGT getLogDesc:true]),protoGT.count,
                                          model.modelMatchDegree,model.modelMatchRatio,model.items.count,model.assGT.count);
         

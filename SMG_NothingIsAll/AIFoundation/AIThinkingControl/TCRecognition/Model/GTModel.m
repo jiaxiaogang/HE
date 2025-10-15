@@ -64,15 +64,6 @@
     CGFloat pinJun = sort.count == 0 ? 0 : [SMGUtils sumOfArr:sort convertBlock:^double(NSNumber *obj) { return obj.floatValue; }] / sort.count;// 求平均。
     CGFloat min = NUMTOOK(ARR_INDEX_REVERSE(sort, 0)).floatValue;
     CGFloat max = NUMTOOK(ARR_INDEX(sort, 0)).floatValue;
-    
-    // TODOTOMORROW20251013: 日志如下：
-    // <错误> 1. 查下为什么符合度全是0和1，没中间值？GT1871 JUN=0.000 MIN=0.778 MAX=1.000 SPAN=0.222
-    // <错误> 2. 查下为什么符合度全是0和1，没中间值？GT1871 MATCH=1.000 CUR=0.000 JUN=0.000 MIN=0.000 MAX=0.000
-    // 问题1：MIN和MAX都>0，为什么JUN=0？
-    // 问题2：第一条日志显示它MIN和MAX都不是0，为什么第二条日志里又是0了？
-    
-    ELog(@"1. 查下为什么符合度全是0和1，没中间值？GT%ld.%@ JUN = %.3f MIN = %.3f MAX = %.3f SPAN = %.3f",self.assGT.pId,logDesc,pinJun,min,max,max - min);
-    
     return [MapModel newWithV1:@(pinJun) v2:@(min) v3:@(max) v4:@(max - min)];
 }
 

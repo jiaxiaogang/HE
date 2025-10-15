@@ -74,14 +74,8 @@
     if (result < 0 || result > 1) {
         ELog(@"查下itemMatchDegree值越界：%.2f %.3f %.3f %.3f %.3f",result,curV,pinjun,min,max);
     }
-    
-    
-    
-    // TODOTOMORROW20251013:
-    if (gtModelPId > 0) {
-        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld.%ld.%@ MATCH = %.3f CUR = %.3f JUN = %.3f MIN = %.3f MAX = %.3f",gtModelPId,self.assIndex,logDesc,result,curV,pinjun,min,max);
-    }
-    
+    // 很正常，很多激活的xywh比例很一样，就没啥变化（本来就符合）。
+    // if (gtModelPId > 0 && curV != min && curV != max) ELog(@"查下符合度几乎全是0和1：GT%ld.%ld.%@ MATCH = %.3f CUR = %.3f JUN = %.3f MIN = %.3f MAX = %.3f",gtModelPId,self.assIndex,logDesc,result,curV,pinjun,min,max);
     
     // 精度处理（避免-0.0000001这种问题）。
     return (int)(result * 100) / 100.0f;
