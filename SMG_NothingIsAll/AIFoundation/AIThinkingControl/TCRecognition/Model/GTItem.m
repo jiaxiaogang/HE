@@ -45,7 +45,9 @@
     CGFloat hMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.hModel curV:self.hRate gtModelPId:0];
     CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta gtModelPId:baseGTModel.assGT.pId];
     CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta gtModelPId:0];
-    self.itemMatchDegree = wMatchDegree * hMatchDegree * xMatchDegree * yMatchDegree;
+    
+    // 2025.10.15: 改成求均值：不能有一项不行，就全否认。
+    self.itemMatchDegree = (wMatchDegree + hMatchDegree + xMatchDegree + yMatchDegree) / 4.0f;
 }
 
 // 把xywh其中一个维度的位置符合度算出来。
@@ -77,7 +79,7 @@
     
     // TODOTOMORROW20251013:
     if (gtModelPId > 0) {
-        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld MATCH=%.3f CUR=%.3f JUN=%.3f MIN=%.3f MAX=%.3f",gtModelPId,result,curV,pinjun,min,max);
+        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld.%ld MATCH = %.3f CUR = %.3f JUN = %.3f MIN = %.3f MAX = %.3f",gtModelPId,self.assIndex,result,curV,pinjun,min,max);
     }
     
     
