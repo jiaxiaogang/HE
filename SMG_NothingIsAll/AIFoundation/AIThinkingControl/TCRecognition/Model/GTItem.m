@@ -41,17 +41,17 @@
 -(void) run4ItemMatchDegree:(GTModel*)baseGTModel {
     // 求四个相近度（参考34136-TODO4），然后四个要素乘积“位置符合度”（参考34136-TODO5）。
     // 根据item与proto的差距 / 最大差距 = 得出相近度。
-    CGFloat wMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.wModel curV:self.wRate gtModelPId:0];
-    CGFloat hMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.hModel curV:self.hRate gtModelPId:0];
-    CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta gtModelPId:baseGTModel.assGT.pId];
-    CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta gtModelPId:0];
+    CGFloat wMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.wModel curV:self.wRate gtModelPId:baseGTModel.assGT.pId logDesc:@"w"];
+    CGFloat hMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.hModel curV:self.hRate gtModelPId:baseGTModel.assGT.pId logDesc:@"h"];
+    CGFloat xMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.xModel curV:self.xDelta gtModelPId:baseGTModel.assGT.pId logDesc:@"x"];
+    CGFloat yMatchDegree = [self run4XYWHItemMatchDegree:baseGTModel.yModel curV:self.yDelta gtModelPId:baseGTModel.assGT.pId logDesc:@"y"];
     
     // 2025.10.15: 改成求均值：不能有一项不行，就全否认。
     self.itemMatchDegree = (wMatchDegree + hMatchDegree + xMatchDegree + yMatchDegree) / 4.0f;
 }
 
 // 把xywh其中一个维度的位置符合度算出来。
--(CGFloat) run4XYWHItemMatchDegree:(MapModel*)xywhItemModel curV:(CGFloat)curV gtModelPId:(NSInteger)gtModelPId {
+-(CGFloat) run4XYWHItemMatchDegree:(MapModel*)xywhItemModel curV:(CGFloat)curV gtModelPId:(NSInteger)gtModelPId logDesc:(NSString*)logDesc {
     // 数据准备。
     CGFloat pinjun = NUMTOOK(xywhItemModel.v1).floatValue;
     CGFloat min = NUMTOOK(xywhItemModel.v2).floatValue;
@@ -79,7 +79,7 @@
     
     // TODOTOMORROW20251013:
     if (gtModelPId > 0) {
-        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld.%ld MATCH = %.3f CUR = %.3f JUN = %.3f MIN = %.3f MAX = %.3f",gtModelPId,self.assIndex,result,curV,pinjun,min,max);
+        ELog(@"2. 查下为什么符合度全是0和1，没中间值？GT%ld.%ld.%@ MATCH = %.3f CUR = %.3f JUN = %.3f MIN = %.3f MAX = %.3f",gtModelPId,self.assIndex,logDesc,result,curV,pinjun,min,max);
     }
     
     
