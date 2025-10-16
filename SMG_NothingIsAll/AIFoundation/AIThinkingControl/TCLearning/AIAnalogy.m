@@ -463,12 +463,10 @@
     
     
     
-    //TODOTOMORROW20251016: 查35076BUG：ST识别不是0下半部分，那继续查下面的抽象absST是下半部分么？
-//    for (AIFeatureJvBuModel *model in matchModels) {
-//        [SMGUtils runByMainQueue:^{
-//            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[matchModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
-//        }];
-//    }
+    //TODOTOMORROW20251016: 查35076BUG：
+    // 1. ST识别不是0下半部分。
+    // 2. 追查下面的抽象absST有33%是0的下半部分。
+    // 3. 明天查下，最后GT识别结果的下半部分问题，是不是这里有关系导致的？
     
     
     [SMGUtils runByMainQueue:^{
