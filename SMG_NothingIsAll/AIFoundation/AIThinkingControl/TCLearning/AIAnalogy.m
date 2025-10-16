@@ -458,8 +458,21 @@
     
     //41. debugLog
     NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
+    
+    
+    
+    
+    
+    //TODOTOMORROW20251016: 查35076BUG：ST识别不是0下半部分，那继续查下面的抽象absST是下半部分么？
+//    for (AIFeatureJvBuModel *model in matchModels) {
+//        [SMGUtils runByMainQueue:^{
+//            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[matchModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+//        }];
+//    }
+    
+    
     [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"Abs%@T%ld (%ld/%ld)",isGT?@"G":@"S",absT.pId,absT.count,jvBuModel.bestGVs.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y];
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"Abs%@T%ld (%ld/%ld)",isGT?@"G":@"S",absT.pId,absT.count,jvBuModel.bestGVs.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y];
     }];
     if (Log4Ana || true) NSLog(@"\n%@特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",isGT?@"组":@"单",jvBuModel.assT.ds,
                                jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),

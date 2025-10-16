@@ -44,7 +44,7 @@
     mModel.inputTime = [[NSDate date] timeIntervalSince1970];
     
     //2. 识别概念;
-    [TIUtils recognitionAlgStep1:except_ps inModel:mModel];
+    [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel];
     
     //3. 将mModel保留 (只有先保留后,构建时序时,才会含新帧概念);
     [theTC.inModelManager add:mModel];
@@ -70,7 +70,7 @@
     }
     
     //8. 二次过滤后,进行概念抽具象关联 (参考3313b-TODO4);
-    [TIUtils recognitionAlgStep2:mModel];
+    [TCRecognitionInvoke recognitionAlgStep2:mModel];
     
     //9. 行为不触发学习 (参考28137-修复);
     if (!algNode.pointer.isOut || Switch4IsOutReIn) {
@@ -120,7 +120,7 @@
     DebugE();
     
     //2. 识别概念;
-    [TIUtils recognitionAlgStep1:nil inModel:shortModel];
+    [TCRecognitionInvoke recognitionAlgStep1:nil inModel:shortModel];
     
     //2. 转regroup生成protoFo;
     [TCRegroup pRegroup:mv shortModel:shortModel];
@@ -135,7 +135,7 @@
     [TCRecognition pRecognition:shortModel];
     
     //6. 二次过滤后,进行概念抽具象关联 (参考3313b-TODO4);
-    [TIUtils recognitionAlgStep2:shortModel];
+    [TCRecognitionInvoke recognitionAlgStep2:shortModel];
     
     //6. 学习
     [TCLearning pLearning:shortModel.protoFo];

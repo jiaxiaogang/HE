@@ -1,5 +1,5 @@
 //
-//  TIUtils.h
+//  TCRecognitionInvoke.h
 //  SMG_NothingIsAll
 //
 //  Created by jia on 2021/12/27.
@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 @class AIFeatureJvBuModels,DDic,AIGroupFeatureNode,AIFeatureJvBuItem;
-@interface TIUtils : NSObject
+@interface TCRecognitionInvoke : NSObject
 
 //MARK:===============================================================
 //MARK:                     < 单特征识别 >

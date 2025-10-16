@@ -127,7 +127,7 @@
 		0871C27626685D4800CB3889 /* TOModelVisionUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 0871C27526685D4800CB3889 /* TOModelVisionUtil.m */; };
 		0871C27926685DA200CB3889 /* UnorderItemModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0871C27826685DA200CB3889 /* UnorderItemModel.m */; };
 		087268E0219CF3B500B5490F /* AIVisionAlgs.m in Sources */ = {isa = PBXBuildFile; fileRef = 087268DF219CF3B500B5490F /* AIVisionAlgs.m */; };
-		0872E1682779EF7C0067C97D /* TIUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 0872E1672779EF7C0067C97D /* TIUtils.m */; };
+		0872E1682779EF7C0067C97D /* TCRecognitionInvoke.m in Sources */ = {isa = PBXBuildFile; fileRef = 0872E1672779EF7C0067C97D /* TCRecognitionInvoke.m */; };
 		0873E11328B45D0600FBC09E /* TCRefrection.m in Sources */ = {isa = PBXBuildFile; fileRef = 0873E11228B45D0600FBC09E /* TCRefrection.m */; };
 		087418D22DA893D80019908C /* AIFeatureZenTiModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 087418D12DA893D80019908C /* AIFeatureZenTiModel.m */; };
 		087418D82DA898810019908C /* AIFeatureZenTiModels.m in Sources */ = {isa = PBXBuildFile; fileRef = 087418D72DA898810019908C /* AIFeatureZenTiModels.m */; };
@@ -487,8 +487,8 @@
 		0871C27826685DA200CB3889 /* UnorderItemModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UnorderItemModel.m; sourceTree = "<group>"; };
 		087268DE219CF3B500B5490F /* AIVisionAlgs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIVisionAlgs.h; sourceTree = "<group>"; };
 		087268DF219CF3B500B5490F /* AIVisionAlgs.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIVisionAlgs.m; sourceTree = "<group>"; };
-		0872E1662779EF7C0067C97D /* TIUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TIUtils.h; sourceTree = "<group>"; };
-		0872E1672779EF7C0067C97D /* TIUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TIUtils.m; sourceTree = "<group>"; };
+		0872E1662779EF7C0067C97D /* TCRecognitionInvoke.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCRecognitionInvoke.h; sourceTree = "<group>"; };
+		0872E1672779EF7C0067C97D /* TCRecognitionInvoke.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TCRecognitionInvoke.m; sourceTree = "<group>"; };
 		0873E11128B45D0600FBC09E /* TCRefrection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCRefrection.h; sourceTree = "<group>"; };
 		0873E11228B45D0600FBC09E /* TCRefrection.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TCRefrection.m; sourceTree = "<group>"; };
 		087418D02DA893D80019908C /* AIFeatureZenTiModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIFeatureZenTiModel.h; sourceTree = "<group>"; };
@@ -1154,14 +1154,6 @@
 				084B4B0724433AA900FB3670 /* ShortMatchManager.m */,
 				08A7E06824EE07C40042C7A9 /* AIShortMatchModel_Simple.h */,
 				08A7E06924EE07C40042C7A9 /* AIShortMatchModel_Simple.m */,
-				0832AD4125BC5AEF001B4DB1 /* AIMatchFoModel.h */,
-				0832AD4225BC5AEF001B4DB1 /* AIMatchFoModel.m */,
-				087C81882792DD400046DF9E /* AIMatchAlgModel.h */,
-				087C81892792DD400046DF9E /* AIMatchAlgModel.m */,
-				080A126B29D4813B0042870B /* AIMatchCansetModel.h */,
-				080A126C29D4813B0042870B /* AIMatchCansetModel.m */,
-				089041722D8AF2E100545CD7 /* AIMatchModel.h */,
-				089041732D8AF2E100545CD7 /* AIMatchModel.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -1258,8 +1250,6 @@
 			isa = PBXGroup;
 			children = (
 				084B4B0524433A3100FB3670 /* Model */,
-				0872E1662779EF7C0067C97D /* TIUtils.h */,
-				0872E1672779EF7C0067C97D /* TIUtils.m */,
 			);
 			path = In;
 			sourceTree = "<group>";
@@ -1349,6 +1339,8 @@
 				0850859A2A25B26F00ED63F2 /* TCRecognitionUtil.m */,
 				083680402853863E003F91FE /* AIAnalyst.h */,
 				083680412853863E003F91FE /* AIAnalyst.m */,
+				0872E1662779EF7C0067C97D /* TCRecognitionInvoke.h */,
+				0872E1672779EF7C0067C97D /* TCRecognitionInvoke.m */,
 			);
 			path = TCRecognition;
 			sourceTree = "<group>";
@@ -1491,6 +1483,14 @@
 		08ABC56C2D90107400E67D5B /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				0832AD4125BC5AEF001B4DB1 /* AIMatchFoModel.h */,
+				0832AD4225BC5AEF001B4DB1 /* AIMatchFoModel.m */,
+				087C81882792DD400046DF9E /* AIMatchAlgModel.h */,
+				087C81892792DD400046DF9E /* AIMatchAlgModel.m */,
+				080A126B29D4813B0042870B /* AIMatchCansetModel.h */,
+				080A126C29D4813B0042870B /* AIMatchCansetModel.m */,
+				089041722D8AF2E100545CD7 /* AIMatchModel.h */,
+				089041732D8AF2E100545CD7 /* AIMatchModel.m */,
 				08ABC56D2D9010AB00E67D5B /* AIFeatureNextGVRankItem.h */,
 				08ABC56E2D9010AB00E67D5B /* AIFeatureNextGVRankItem.m */,
 				089F986B2D90E55400908D0C /* AIFeatureAllBestGVModel.h */,
@@ -2287,7 +2287,7 @@
 				08AF454A1E97D0B500377887 /* main.m in Sources */,
 				08B180D327F495340069F11E /* TVTimeLine.m in Sources */,
 				08D05C2E2DCAE47B00A967D0 /* AIFeatureJvBuModel.m in Sources */,
-				0872E1682779EF7C0067C97D /* TIUtils.m in Sources */,
+				0872E1682779EF7C0067C97D /* TCRecognitionInvoke.m in Sources */,
 				085BA9F4241C421500829450 /* HeLogUtil.m in Sources */,
 				88988524208979E6001D1ADC /* AINetIndex.m in Sources */,
 				08AFC5F0276979D8000BAB26 /* TCPlan.m in Sources */,

@@ -250,11 +250,11 @@ static AIThinkingControl *_instance;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 单特征识别：通过组码识别。
-                NSArray *itemSTModels = [TIUtils recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize];
+                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize];
                 [jvBuModel.stModels addObjectsFromArray:itemSTModels];
                 
                 //22. 组特征识别：通过单特征识别。
-                //NSArray *itemGTModels = [TIUtils recognitionGroupFeatureV4_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize itemSTModels:itemSTModels];
+                //NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV4_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize itemSTModels:itemSTModels];
                 //[jvBuModel.gtModels addObjectsFromArray:itemGTModels];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
@@ -279,11 +279,11 @@ static AIThinkingControl *_instance;
     // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
     // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
     // 2025.08.07: 废弃构建protoT，因为类比用不着，何必拼凑这个很多gvs元素的isGT出来呢（参考35062-TODO3）。
-    [TIUtils recognitionFeatureV2_Step2:jvBuModel];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //[TIUtils recognitionGroupFeatureV4_Step2:jvBuModel];
+    //[TCRecognitionInvoke recognitionGroupFeatureV4_Step2:jvBuModel];
     //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
     // 单特征类比：借助bestGVs来类比。
@@ -293,7 +293,7 @@ static AIThinkingControl *_instance;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // debug
-    [TIUtils printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.getSTMatch;
@@ -320,7 +320,7 @@ static AIThinkingControl *_instance;
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TIUtils recognitionGroupFeatureV6:protoGT.p matchModels:goodSTModels];
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:protoGT.p matchModels:goodSTModels];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。
@@ -329,7 +329,7 @@ static AIThinkingControl *_instance;
     }
     
     // debug
-    [TIUtils printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchRatio;
@@ -386,7 +386,7 @@ static AIThinkingControl *_instance;
             }];
             
             //7. 收集起来自举算法结果。
-            AIFeatureJvBuItem *bestItem = [TIUtils ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
             if (!bestItem) continue;
             [model.bestGVs addObject:bestItem];
         }

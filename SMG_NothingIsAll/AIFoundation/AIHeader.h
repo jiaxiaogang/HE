@@ -38,7 +38,7 @@
 //Util
 #import "ThinkingUtils.h"
 #import "TOUtils.h"
-#import "TIUtils.h"
+#import "TCRecognitionInvoke.h"
 #import "TCSolutionUtil.h"
 #import "TCRecognitionUtil.h"
 #import "NVViewUtil.h"

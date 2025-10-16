@@ -1,16 +1,16 @@
 //
-//  TIUtils.m
+//  TCRecognitionInvoke.m
 //  SMG_NothingIsAll
 //
 //  Created by jia on 2021/12/27.
 //  Copyright © 2021年 XiaoGang. All rights reserved.
 //
 
-#import "TIUtils.h"
+#import "TCRecognitionInvoke.h"
 
 #define cDebugMode false
 
-@implementation TIUtils
+@implementation TCRecognitionInvoke
 
 //MARK:===============================================================
 //MARK:                     < 稀疏码识别 >
@@ -232,7 +232,7 @@
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.getSTMatch;
@@ -479,7 +479,7 @@
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:decoratorJvBuModel.gtModels protoLogDesc:nil prefix:@"组特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.gtModels protoLogDesc:nil prefix:@"组特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.getGTMatch;
@@ -590,7 +590,7 @@
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(AIFeatureZenTiModel *obj) {
         return [SMGUtils searchNode:obj.assT];
     } convertMatchBlock:^float(AIFeatureZenTiModel *obj) {
         return obj.modelMatchDegree * obj.matchRatio;
@@ -802,12 +802,12 @@
         
         //45. 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForGTModel:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.items.count,model.assGT.count) left:0 top:0];
+            // [theApp.imgTrainerView setDataForGTModel:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.items.count,model.assGT.count) left:0 top:0];
         }];
     }
     
     //61. debugLog
-    [TIUtils printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModel *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchRatio;
@@ -1043,7 +1043,7 @@
     }
     
     //18. debugLog3
-    [TIUtils printLogDescRate:[SMGUtils convertArr:logModels convertBlock:^id(AIMatchAlgModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:[SMGUtils convertArr:logModels convertBlock:^id(AIMatchAlgModel *obj) {
         return obj.matchAlg;
     }] protoLogDesc:CLEANSTR([protoAlg getLogDesc:false].allKeys) prefix:@"概念" convertNodeBlock:^id(id obj) {
         return [SMGUtils searchNode:obj];

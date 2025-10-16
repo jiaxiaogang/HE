@@ -175,7 +175,7 @@
                     //12. 有mv反馈时,做Canset识别 (参考28185-todo5);
                     //[TCEffect rInEffect:waitMatchFo matchRFos:waitModel.baseFrameModel.matchRFos es:es];
                     //EffectStatus es = score > 0 ? ES_HavEff : ES_NoEff;
-                    //[TIUtils recognitionCansetFo:protoFo.pointer sceneFo:waitMatchFo.pointer es:es];
+                    //[TCRecognitionInvoke recognitionCansetFo:protoFo.pointer sceneFo:waitMatchFo.pointer es:es];
                 }
                 
                 //13. pFo任务失效 (参考27093-条件1 & 27095-1);
