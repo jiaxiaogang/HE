@@ -459,10 +459,6 @@
     //41. debugLog
     NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
     
-    
-    
-    
-    
     //TODOTOMORROW20251016: 查35076BUG：
     // 1. ST识别不是0下半部分。
     // 2. 追查下面的抽象absST有33%是0的下半部分。
@@ -470,6 +466,14 @@
     //  调试1：训练到第3,4的0的时候，0的上下部分都有。
     //  调试2：训练到第6,7的0的时候，结果几乎只剩0的下半部分了。
     //  原因：可见，是随着竞争，absST慢慢都成了0的下半部分，而protoGT构建基于absST，所以后面的GT识别等也就都受了影响。
+    
+    
+    NSLog(@"absST%ld在: proto中的位置：%@",absT.pId,Rect2Str(jvBuModel.bestGVsAtProtoTRect));
+    NSLog(@"absST%ld在: assST中的位置：%@",absT.pId,Rect2Str(bestGVs_AssT));
+    // proto中的位置：<x0 y8 w21 h14>
+    // assST中的位置：<x0 y0 w27 h18>
+    // 那么：...
+    
     
     
     [SMGUtils runByMainQueue:^{
