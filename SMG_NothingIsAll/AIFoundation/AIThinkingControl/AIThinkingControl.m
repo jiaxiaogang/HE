@@ -202,14 +202,20 @@ static AIThinkingControl *_instance;
     if (self.thinkMode == 2) return;
     
     //2. 对未切粒度的color字典进行自适应粒度并识别。
-    //方便测试，只开放b试下。
-    //[self commitInputWithSplitV2_Single_TonDao:algsModel.hColors whSize:algsModel.whSize at:algsType ds:@"hColors" logDesc:logDesc];
-    //[self commitInputWithSplitV2_Single_TonDao:algsModel.sColors whSize:algsModel.whSize at:algsType ds:@"sColors" logDesc:logDesc];
-    [self commitInputWithSplitV2_Single_TonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc];
-    
-    //3. 异步构建一下默认三分粒度的protoT，不过不用于识别，只用于以后被识别。
-    //TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）。
-    [self createSplitFor9Block:algsModel algsType:algsType logDesc:logDesc];
+    //202x.xx.xx: 方便测试，只开放b试下。
+    NSArray *dsArr = @[@"hColors", @"sColors", @"bColors"];
+    for (NSString *ds in dsArr) {
+        //2. 装箱（稀疏码的：单码层 和 组码层）。
+        NSArray *hsbGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:ds logDesc:logDesc];
+        
+        //2025.10.18: 自动改成有内容的(hsbGroupModels.count > 5)再跑识别类比等。
+        if (hsbGroupModels.count > 5) [self commitInputWithSplitV2_Single_TonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc];
+        
+        //3、构建具象特征。
+        //3. 异步构建一下默认三分粒度的protoT，不过不用于识别，只用于以后被识别。
+        //TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）。
+        [self createSplitFor9BlockV2_Step2:hsbGroupModels at:algsType ds:ds logDesc:logDesc];
+    }
 }
 
 //单通道
@@ -704,32 +710,44 @@ static AIThinkingControl *_instance;
 
 //构建默认九宫特征。
 -(MapModel*) createSplitFor9Block:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
-    //1. 植物模式阻断感知;
-    if (self.thinkMode == 2) return nil;
+    //2. 装箱（稀疏码的：单码层 和 组码层）。
+    NSArray *hGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:@"hColors" logDesc:logDesc];
+    NSArray *sGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:@"sColors" logDesc:logDesc];
+    NSArray *bGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:@"bColors" logDesc:logDesc];
     
+    //3、构建具象特征。
+    AIFeatureNode *hFeature = [self createSplitFor9BlockV2_Step2:hGroupModels at:algsType ds:@"hColors" logDesc:logDesc];
+    AIFeatureNode *sFeature = [self createSplitFor9BlockV2_Step2:sGroupModels at:algsType ds:@"sColors" logDesc:logDesc];
+    AIFeatureNode *bFeature = [self createSplitFor9BlockV2_Step2:bGroupModels at:algsType ds:@"bColors" logDesc:logDesc];
+    return [MapModel newWithV1:hFeature v2:sFeature v3:bFeature];
+}
+
+-(NSArray*) createSplitFor9BlockV2_Step1:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType ds:(NSString*)ds logDesc:(NSString*)logDesc {
     //2. 装箱（稀疏码的：单码层 和 组码层）。
     //TODO: 这里随后转成NSDictionary后，只要判断dataSource对应的value是dic类型，也可以这么处理（到时候，改V2支持model转Dic类型输入时，自然就知道这里怎么改了）。
-    NSArray *hGroupModels = [theNet algModelConvert2PointersV2:algsModel.splitHColors at:algsType ds:@"hColors" levelNum:algsModel.levelNum];
-    NSArray *sGroupModels = [theNet algModelConvert2PointersV2:algsModel.splitSColors at:algsType ds:@"sColors" levelNum:algsModel.levelNum];
-    NSArray *bGroupModels = [theNet algModelConvert2PointersV2:algsModel.splitBColors at:algsType ds:@"bColors" levelNum:algsModel.levelNum];
+    if ([ds isEqualToString:@"hColors"]) {
+        return [theNet algModelConvert2PointersV2:algsModel.splitHColors at:algsType ds:ds levelNum:algsModel.levelNum];
+    } else if ([ds isEqualToString:@"sColors"]) {
+        return [theNet algModelConvert2PointersV2:algsModel.splitSColors at:algsType ds:ds levelNum:algsModel.levelNum];
+    } else if ([ds isEqualToString:@"bColors"]) {
+        return [theNet algModelConvert2PointersV2:algsModel.splitBColors at:algsType ds:ds levelNum:algsModel.levelNum];
+    }
+    return nil;
+}
+
+-(AIFeatureNode*) createSplitFor9BlockV2_Step2:(NSArray*)hsbGroupModels at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
+    if (!ARRISOK(hsbGroupModels)) return nil;
     
     //3、构建具象特征。
     //2025.08.07: 具象似层即使是固定粒度也是isGT（参考35062-TODO3.1）。
-    AIFeatureNode *hFeature = [AIGeneralNodeCreater createFeatureNode:hGroupModels conNodes:nil at:algsType ds:@"hColors" isOut:false isJiao:false isGT:true];
-    AIFeatureNode *sFeature = [AIGeneralNodeCreater createFeatureNode:sGroupModels conNodes:nil at:algsType ds:@"sColors" isOut:false isJiao:false isGT:true];
-    AIFeatureNode *bFeature = [AIGeneralNodeCreater createFeatureNode:bGroupModels conNodes:nil at:algsType ds:@"bColors" isOut:false isJiao:false isGT:true];
-    [hFeature updateLogDescItem:logDesc];
-    [sFeature updateLogDescItem:logDesc];
-    [bFeature updateLogDescItem:logDesc];
-    //NSLog(@"%@ H T%ld====================================\n%@",logDesc,hFeature.pId,FeatureDesc(hFeature.p,1));
-    //NSLog(@"%@ S T%ld====================================\n%@",logDesc,sFeature.pId,FeatureDesc(sFeature.p,1));
-    NSLog(@"%@ B T%ld====================================\n%@",logDesc,bFeature.pId,FeatureDesc(bFeature.p,1));
+    AIFeatureNode *hsbFeature = [AIGeneralNodeCreater createFeatureNode:hsbGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
+    [hsbFeature updateLogDescItem:logDesc];
+    
+    NSLog(@"%@ %@ T%ld====================================\n%@",logDesc,ds,hsbFeature.pId,FeatureDesc(hsbFeature.p,1));
     //[SMGUtils runByMainQueue:^{
-    //    [theApp.imgTrainerView setDataForFeature:hFeature lab:STRFORMAT(@"入%@T%ld",hFeature.ds,hFeature.pId)];
-    //    [theApp.imgTrainerView setDataForFeature:sFeature lab:STRFORMAT(@"入%@T%ld",sFeature.ds,sFeature.pId)];
-    //    [theApp.imgTrainerView setDataForFeature:bFeature lab:STRFORMAT(@"入%@T%ld",bFeature.ds,bFeature.pId)];
+    //    [theApp.imgTrainerView setDataForFeature:hsbFeature lab:STRFORMAT(@"入%@T%ld",hsbFeature.ds,hsbFeature.pId)];
     //}];
-    return [MapModel newWithV1:hFeature v2:sFeature v3:bFeature];
+    return hsbFeature;
 }
 
 @end

@@ -477,6 +477,7 @@
     
     
     [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:jvBuModel.assT lab:STRFORMAT(@"AssST%ld (%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count) left:0 top:0];
         [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"Abs%@T%ld (%ld/%ld)",isGT?@"G":@"S",absT.pId,absT.count,jvBuModel.bestGVs.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y];
     }];
     if (Log4Ana || true) NSLog(@"\n%@特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",isGT?@"组":@"单",jvBuModel.assT.ds,
