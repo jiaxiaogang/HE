@@ -203,6 +203,19 @@
     //53. 排序
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        
+        
+        
+        
+        //TODOTOMORROW20251016: 查35076BUG：
+        //  调试1：训练到第3,4的0的时候，0的上下部分都有。
+        //  调试2：训练到第6,7的0的时候，结果几乎只剩0的下半部分了，absST慢慢都成了0的下半部分，而protoGT构建基于absST，所以后面的GT识别等也就都受了影响。
+        //  调试3：即ST识别结果过度抽象问题，也即显著度问题，查下显著度竞争，和显著度公式是不是有问题（参考35076-方案3）。
+        
+        
+        
+        
+        
         return obj.getSTMatch;
     }];
     
@@ -227,7 +240,7 @@
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%ld. 单特征识别结果:T%ld%@\t 匹配条数:%ld/ass%ld %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
         [SMGUtils runByMainQueue:^{
-            //[theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
     }
     
