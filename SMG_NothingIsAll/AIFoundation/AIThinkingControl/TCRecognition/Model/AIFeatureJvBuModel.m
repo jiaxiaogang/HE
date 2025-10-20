@@ -68,7 +68,10 @@
 
 //2025.08.14: 因为竞争浮现不明显，去掉色似度后ok了，如果以后因为去掉色似度导致bug，可以改回来，然后把匹配率改成2次方来强调它的作用试下（参考35064）。
 -(CGFloat) getSTMatch {
-    return self.matchValue * self.matchAssRatio;// * self.matchDiffValue;
+    // 说明：防止过度抽象或过度具象：显著度matchAssRatio可以防止过度具象，匹配数bestGVs.count可以防止过度抽象（二者互相制衡，动态平衡竞争）。
+    // xxxx.xx.xx: 防止过度具象：加上matchAssRatio (bestGVs.count/assST.count)，如果过度具象bestGVs肯定不达标，这样就能让它没竞争力（缺点是越抽象越显著，它可能过度抽象）。
+    // 2025.10.20: 防止过度抽象：加上bestGVs.count，因为这样就可以防止过度抽象，因为过度抽象的bestGVs.count会越来越接近1条（缺点是越具象匹配数越大，它可能过度具象）。
+    return self.matchValue * self.matchAssRatio * self.bestGVs.count;// * self.matchDiffValue;
 }
 
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
@@ -79,7 +82,7 @@
 
 -(NSString*) getSTMatchDesc {
     //return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
-    return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f",self.matchValue,self.matchAssRatio);
+    return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t匹配数:%ld",self.matchValue,self.matchAssRatio,self.bestGVs.count);
 }
 
 -(NSString*) getGTMatchDesc {
