@@ -44,4 +44,7 @@
 +(CGFloat) getCooledValue_28:(CGFloat)pastRate;
 +(CGFloat) getCooledValue:(CGFloat)pastRate finishValue:(CGFloat)finishValue;
 
+//取rect的中心点
++(CGPoint) getRectCenterPoint:(CGRect)rect;
+
 @end
