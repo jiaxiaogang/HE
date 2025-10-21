@@ -200,23 +200,15 @@
         return model.matchValue > 0;
     }];
     
-    //53. 排序
+    //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
-    validModels = [SMGUtils sortBig2Small:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+    //2025.10.21：支持分区竞争：每一条都与区域内所有条目进行竞争排名（起因：越来越只识别到0的下半部分，上半部分一条都没有）（参考35076-TODO2）。
+    for (AIFeatureJvBuModel *item in validModels) {
         
-        
-        
-        
-        //TODOTOMORROW20251016: 查35076BUG：
-        //  调试1：训练到第3,4的0的时候，0的上下部分都有。
-        //  调试2：训练到第6,7的0的时候，结果几乎只剩0的下半部分了，absST慢慢都成了0的下半部分，而protoGT构建基于absST，所以后面的GT识别等也就都受了影响。
-        //  调试3：即ST识别结果过度抽象问题，也即显著度问题，查下显著度竞争，和显著度公式是不是有问题（参考35076-方案3）。
-        
-        
-        
-        
-        
-        return obj.getSTMatch;
+        //TODOTOMORROW20251021: 继续写这里。
+    }
+    validModels = [SMGUtils sortSmall2Big:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.rankScore;
     }];
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。

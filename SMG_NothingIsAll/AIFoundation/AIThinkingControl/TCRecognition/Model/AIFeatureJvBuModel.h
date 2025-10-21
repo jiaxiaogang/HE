@@ -47,4 +47,8 @@
 -(NSString*) getSTMatchDesc;
 -(NSString*) getGTMatchDesc;
 
+@property (assign, nonatomic) NSInteger rankSum; // 排名名次之和。
+@property (assign, nonatomic) NSInteger rankNum; // 排名考试次数。
+-(CGFloat) rankScore; // 平均名次（越小越靠前越好）。
+
 @end

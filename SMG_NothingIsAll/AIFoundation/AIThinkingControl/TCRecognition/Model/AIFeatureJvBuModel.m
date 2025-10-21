@@ -90,4 +90,9 @@
     return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f",self.matchValue,self.matchAssRatio);
 }
 
+// 平均名次（越小越靠前越好）。
+-(CGFloat) rankScore {
+    return self.rankNum > 0 ? self.rankSum / (float)self.rankNum : 0;
+}
+
 @end
