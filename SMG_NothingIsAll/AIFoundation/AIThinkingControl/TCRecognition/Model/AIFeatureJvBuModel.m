@@ -97,27 +97,25 @@
 
 // 分别对每个stModel所在的区域进行竞争排名计分。
 -(void) run4ItemRankScore:(NSArray*)stModels {
-    for (AIFeatureJvBuModel *stModel in stModels) {
-        // 当前Rect和Center点。
-        CGRect protoR = stModel.bestGVsAtProtoTRect;
-        CGPoint centP = [MathUtils getRectCenterPoint:protoR];
-        
-        // 缩放大1.3倍区域，找出所有在这个区域里的stModels（参考35076-TODO2）。
-        CGFloat scale = 1.3f;
-        CGRect zoneRect = CGRectMake(centP.x - protoR.size.width * scale * 0.5f, centP.y - protoR.size.height * scale * 0.5f, protoR.size.width * scale, protoR.size.height * scale);
-        NSArray *zoneSTModels = [SMGUtils filterArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
-            return CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
-        }];
-        
-        // 给区域内的stModels排名 & 并计分 & 计次。
-        zoneSTModels = [SMGUtils sortBig2Small:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-            return obj.getSTMatch;
-        }];
-        for (NSInteger i = 0; i < zoneSTModels.count; i++) {
-            AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
-            obj.rankSum += i; // 累计名次（参考35076-TODO2.2）;
-            obj.rankNum += 1;
-        }
+    // 当前Rect和Center点。
+    CGRect protoR = self.bestGVsAtProtoTRect;
+    CGPoint centP = [MathUtils getRectCenterPoint:protoR];
+    
+    // 缩放大1.3倍区域，找出所有在这个区域里的stModels（参考35076-TODO2）。
+    CGFloat scale = 1.3f;
+    CGRect zoneRect = CGRectMake(centP.x - protoR.size.width * scale * 0.5f, centP.y - protoR.size.height * scale * 0.5f, protoR.size.width * scale, protoR.size.height * scale);
+    NSArray *zoneSTModels = [SMGUtils filterArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
+        return CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
+    }];
+    
+    // 给区域内的stModels排名 & 并计分 & 计次。
+    zoneSTModels = [SMGUtils sortBig2Small:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.getSTMatch;
+    }];
+    for (NSInteger i = 0; i < zoneSTModels.count; i++) {
+        AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
+        obj.rankSum += i; // 累计名次（参考35076-TODO2.2）;
+        obj.rankNum += 1;
     }
 }
 
