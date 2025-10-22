@@ -95,7 +95,7 @@
     return self.rankNum > 0 ? self.rankSum / (float)self.rankNum : CGFLOAT_MAX;
 }
 
-// 分别对每个stModel所在的区域进行竞争排名计分。
+// ST分区均衡竞争算法：分别对每个stModel所在的区域进行竞争排名计分。
 -(void) run4ItemRankScore:(NSArray*)stModels {
     // 当前Rect和Center点。
     CGRect protoR = self.bestGVsAtProtoTRect;
