@@ -217,7 +217,7 @@
     //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
     //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
     //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.5f, 2), 100));
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.5f, 2), 30));
     
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
@@ -625,6 +625,8 @@
     // 初始化gtModels
     GTModels *gtModels = [GTModels new];
     NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
+    
+    //TODOTOMORROW20251024: 查下：训练手写2，第10张了，还是总GT识别条数为0。
     
     //11. 收集：每个absT分别向整体取conPorts。
     for (AIFeatureJvBuModel *obj in matchModels) {
