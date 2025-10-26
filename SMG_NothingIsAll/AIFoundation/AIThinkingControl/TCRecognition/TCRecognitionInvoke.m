@@ -626,14 +626,17 @@
     GTModels *gtModels = [GTModels new];
     NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
     
-    //TODOTOMORROW20251024: 查下：训练手写2，第10张了，还是总GT识别条数为0。
-    
     //11. 收集：每个absT分别向整体取conPorts。
     for (AIFeatureJvBuModel *obj in matchModels) {
         
         // 先用assST取conPorts（参考35075B-方案3）。
         AIFeatureNode *absST = [SMGUtils searchNode:obj.abs_p];
         NSArray *conPorts = [AINetUtils conPorts_All:absST];
+        
+        //TODOTOMORROW20251024: 查下：训练手写2，第10张了，还是总GT识别条数为0。
+        // 因为这里conPorts往往只有一条，查下抽象没对撞上？只有多个conST抽象到同一个absST时，才能取到多条。
+        // 分析下，如果这里就是很难快速对撞上，总得先让它能识别到GT吧？
+        NSLog(@"conPorts.count: %ld",conPorts.count);
         
         // 根据强度只取conPorts和refPorts的前x条，避免性能问题。
         conPorts = ARR_SUB(conPorts, 0, conPorts.count * 0.5f);
