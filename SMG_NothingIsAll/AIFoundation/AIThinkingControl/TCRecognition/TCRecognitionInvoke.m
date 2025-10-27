@@ -173,6 +173,12 @@
  *  @desc 识别抽象的单特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
+ *  @test 作用：此总结可方便该算法的测试与BUG分析。
+ *        目标：需达成以下功能。
+ *         1. 多样性（比如0的各个局部，都得有多个识别结果，使后续GT识别中，可以每元素contains判断到，以取交识别到更准确的GT）。
+ *         2. 稳定性（不得只识别最具象和最抽象，而是稳定的中间部位，得识别到）。
+ *         3. 显著性（得慢慢竞争浮现出显著的局部特征结果，比如小人的头总是圆的）。
+ *         4. 竞争性（广入窄出）。
  */
 +(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize {
     return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
@@ -229,7 +235,7 @@
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld%@\t %@\t排名因子:%.2f",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.getSTMatchDesc,model.rankScore);
+        NSLog(@"%ld. 单特征识别结果:T%ld%@\t %@\t排名因子:%.2f",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.getSTMatchDesc,MIN(model.rankScore, 10000));
         [SMGUtils runByMainQueue:^{
             // [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
@@ -647,6 +653,8 @@
         //2. 单特征识别结果:T290{Mnist2 = 2.41;}         匹配度:0.48    匹配数:37/38    匹配率:1.0    排名因子:2.00
         //3. 单特征识别结果:T73{Mnist2 = 1.00;}         匹配度:0.49    匹配数:37/39    匹配率:0.9    排名因子:3.00
         // 思路3、从上日志可见，st识别结果果然太具象了，查下前段时间改的分区竞争排名因子，该问题是其副作用来的。
+        // 经核实：确实是因为分区竞争，导致它稳定性没那么强竞争力了（即多样性影响到了稳定性）。
+        // 思路4、分析下，分区竞争对稳定性竞争因子的削弱影响有多大，怎么重新恢复其作用（应该多样性评分，只做为其中一个竞争因子，而别的几个竞争因子，看下应该继续起作用才行）。
         
         
         
