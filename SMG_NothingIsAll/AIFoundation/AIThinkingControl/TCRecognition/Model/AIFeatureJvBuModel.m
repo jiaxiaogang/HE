@@ -71,7 +71,8 @@
     // 说明：防止过度抽象或过度具象：显著度matchAssRatio可以防止过度具象，匹配数bestGVs.count可以防止过度抽象（二者互相制衡，动态平衡竞争）。
     // xxxx.xx.xx: 防止过度具象：加上matchAssRatio (bestGVs.count/assST.count)，如果过度具象bestGVs肯定不达标，这样就能让它没竞争力（缺点是越抽象越显著，它可能过度抽象）。
     // 2025.10.20: 防止过度抽象：加上bestGVs.count，因为这样就可以防止过度抽象，因为过度抽象的bestGVs.count会越来越接近1条（缺点是越具象匹配数越大，它可能过度具象）。
-    return self.matchValue * self.matchAssRatio * self.bestGVs.count;// * self.matchDiffValue;
+    // 2025.10.28: 加上分区竞争后，bestGVs.count太重了，会导致识别的st全是过度具象的，进而导致GT识别时取交对撞不到结果（参考35082-方案3）。
+    return self.matchValue * self.matchAssRatio;// * self.bestGVs.count;// * self.matchDiffValue;
 }
 
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
