@@ -201,19 +201,16 @@
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
     
-    //52. 无效过滤器1、matchValue=0排除掉。
-    NSArray *validModels = [SMGUtils filterArr:decoratorJvBuModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
-        return model.matchValue > 0;
-    }];
+    // 竞争因子计算：分区竞争匹配度。
+    [decoratorJvBuModel run4AreaMatchRatio];
+    
+    // 竞争因子计算：防止过度抽象匹配数。
+    [decoratorJvBuModel run4BestGVsCountRatio];
     
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
-    //2025.10.21：支持分区竞争：每一条都与区域内所有条目进行竞争排名（起因：越来越只识别到0的下半部分，上半部分一条都没有）（参考35076-TODO2）。
-    for (AIFeatureJvBuModel *item in validModels) {
-        [item run4ItemRankScore:validModels];
-    }
-    validModels = [SMGUtils sortSmall2Big:validModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.rankScore;
+    NSArray *validModels = [SMGUtils sortSmall2Big:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.areaMatchRatio * obj.bestGVsCountRatio;
     }];
     
     //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。

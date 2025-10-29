@@ -26,4 +26,42 @@
     return _gtModels;
 }
 
+// 分区竞争匹配度：计算每条item的rankScore和rankRatio。
+-(void) run4AreaMatchRatio {
+    //1. 无效过滤器1、matchValue=0排到最后。
+    NSArray *validModels = [SMGUtils filterArr:self.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
+        return model.matchValue > 0;
+    }];
+    
+    //2. 计算分区均衡排名分。
+    for (AIFeatureJvBuModel *item in validModels) {
+        [item run4ItemAreaRankScore:validModels];
+    }
+    
+    //3. 排名。
+    NSArray *sorts = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.areaRankScore;
+    }];
+    
+    //4. 归一化区域排名分（参考35082-方案4）。
+    for (NSInteger i = 0; i < sorts.count; i++) {
+        AIFeatureJvBuModel *item = ARR_INDEX(sorts, i);
+        item.areaMatchRatio = 1 - ((float)i / sorts.count);
+    }
+}
+
+// item.bestGVs.count防止过度抽象，归一化计算。
+-(void) run4BestGVsCountRatio {
+    // 找出最长item的bestGVs.count。
+    NSInteger maxCount = 0;
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        maxCount = MAX(maxCount, item.bestGVs.count);
+    }
+    
+    // 归一化每一条：越多的越好，越少的越孬（参考35082-方案4）。
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        item.bestGVsCountRatio = (float)item.bestGVs.count / maxCount;
+    }
+}
+
 @end

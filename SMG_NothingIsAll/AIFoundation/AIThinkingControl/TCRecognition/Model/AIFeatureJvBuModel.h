@@ -47,9 +47,14 @@
 -(NSString*) getSTMatchDesc;
 -(NSString*) getGTMatchDesc;
 
-@property (assign, nonatomic) NSInteger rankSum; // 排名名次之和。
-@property (assign, nonatomic) NSInteger rankNum; // 排名考试次数。
--(CGFloat) rankScore; // 平均名次（越小越靠前越好）。
--(void) run4ItemRankScore:(NSArray*)stModels;
+@property (assign, nonatomic) NSInteger areaRankSum; // 排名名次之和。
+@property (assign, nonatomic) NSInteger areaRankNum; // 排名考试次数。
+-(CGFloat) areaRankScore; // 平均名次（越小越靠前越好）。
+-(void) run4ItemAreaRankScore:(NSArray*)stModels;
 
+// 用分区均衡排名后，归一化，得到的排名优秀度（从不好到最优秀值范围0-1）。
+@property (assign, nonatomic) CGFloat areaMatchRatio;
+
+// 当前bestGVs.count的归一化，用于防止过度抽象（越长的越好，越短的越孬，值范围0-1）。
+@property (assign, nonatomic) CGFloat bestGVsCountRatio;
 @end

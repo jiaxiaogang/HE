@@ -28,4 +28,10 @@
 
 @property (strong, nonatomic) GroupDebug *debug;
 
+// 分区竞争匹配度：计算每条item的rankScore和rankRatio。
+-(void) run4AreaMatchRatio;
+
+// item.bestGVs.count防止过度抽象，归一化计算。
+-(void) run4BestGVsCountRatio;
+
 @end

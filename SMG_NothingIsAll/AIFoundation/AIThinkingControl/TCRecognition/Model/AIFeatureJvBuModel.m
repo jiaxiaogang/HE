@@ -72,7 +72,8 @@
     // xxxx.xx.xx: 防止过度具象：加上matchAssRatio (bestGVs.count/assST.count)，如果过度具象bestGVs肯定不达标，这样就能让它没竞争力（缺点是越抽象越显著，它可能过度抽象）。
     // 2025.10.20: 防止过度抽象：加上bestGVs.count，因为这样就可以防止过度抽象，因为过度抽象的bestGVs.count会越来越接近1条（缺点是越具象匹配数越大，它可能过度具象）。
     // 2025.10.28: 加上分区竞争后，bestGVs.count太重了，会导致识别的st全是过度具象的，进而导致GT识别时取交对撞不到结果（参考35082-方案3）。
-    return self.matchValue * self.matchAssRatio;// * self.bestGVs.count;// * self.matchDiffValue;
+    // 2025.10.29: 改为归一化之后的：分区匹配度 * 防过具象 * 防过抽象（参考35082-方案4）。
+    return self.areaMatchRatio * self.matchAssRatio * self.bestGVsCountRatio;// * self.bestGVs.count;// * self.matchDiffValue;
 }
 
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
@@ -92,12 +93,13 @@
 }
 
 // 平均名次（越小越靠前越好）（求平均原因：参考35076-TODO2.3）。
--(CGFloat) rankScore {
-    return self.rankNum > 0 ? self.rankSum / (float)self.rankNum : CGFLOAT_MAX;
+-(CGFloat) areaRankScore {
+    return self.areaRankNum > 0 ? self.areaRankSum / (float)self.areaRankNum : CGFLOAT_MAX;
 }
 
 // ST分区均衡竞争算法：分别对每个stModel所在的区域进行竞争排名计分。
--(void) run4ItemRankScore:(NSArray*)stModels {
+// 2025.10.21：支持分区竞争：每一条都与区域内所有条目进行竞争排名（起因：越来越只识别到0的下半部分，上半部分一条都没有）（参考35076-TODO2）。
+-(void) run4ItemAreaRankScore:(NSArray*)stModels {
     // 当前Rect和Center点。
     CGRect protoR = self.bestGVsAtProtoTRect;
     CGPoint centP = [MathUtils getRectCenterPoint:protoR];
@@ -111,12 +113,12 @@
     
     // 给区域内的stModels排名 & 并计分 & 计次。
     zoneSTModels = [SMGUtils sortBig2Small:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.getSTMatch;
+        return obj.matchValue * obj.matchAssRatio;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
-        obj.rankSum += i; // 累计名次（参考35076-TODO2.2）;
-        obj.rankNum += 1;
+        obj.areaRankSum += i; // 累计名次（参考35076-TODO2.2）;
+        obj.areaRankNum += 1;
     }
 }
 
