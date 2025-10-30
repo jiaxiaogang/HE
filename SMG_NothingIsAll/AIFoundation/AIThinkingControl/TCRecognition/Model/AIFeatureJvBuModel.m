@@ -84,7 +84,7 @@
 
 -(NSString*) getSTMatchDesc {
     //return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
-    return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f\t防过抽象:%.1f = 综合:%.2f",self.areaMatchRatio,self.matchAssRatio,self.bestGVsCountRatio,self.areaMatchRatio*self.matchAssRatio*self.bestGVsCountRatio);
+    return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f = 综合:%.2f",self.areaMatchRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.areaMatchRatio*self.matchAssRatio*self.bestGVsCountRatio);
 }
 
 -(NSString*) getGTMatchDesc {
