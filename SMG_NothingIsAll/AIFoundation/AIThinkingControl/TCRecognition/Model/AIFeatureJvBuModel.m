@@ -84,7 +84,7 @@
 
 -(NSString*) getSTMatchDesc {
     //return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
-    return STRFORMAT(@"\t匹配度:%.2f\t匹配数:%ld/%ld\t匹配率:%.1f",self.matchValue,self.bestGVs.count,self.assT.count,self.matchAssRatio);
+    return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f\t防过抽象:%.1f = 综合:%.2f",self.areaMatchRatio,self.matchAssRatio,self.bestGVsCountRatio,self.areaMatchRatio*self.matchAssRatio*self.bestGVsCountRatio);
 }
 
 -(NSString*) getGTMatchDesc {
@@ -113,7 +113,7 @@
     
     // 给区域内的stModels排名 & 并计分 & 计次。
     zoneSTModels = [SMGUtils sortBig2Small:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * obj.matchAssRatio;
+        return obj.matchValue;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
