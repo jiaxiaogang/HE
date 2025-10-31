@@ -108,4 +108,7 @@
 //取全下标
 -(NSArray*) indexes;
 
+//记录抽象层数。
+@property (assign, nonatomic) NSInteger absLevel;
+
 @end

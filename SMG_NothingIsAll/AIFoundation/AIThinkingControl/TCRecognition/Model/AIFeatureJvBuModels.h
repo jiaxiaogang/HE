@@ -34,4 +34,7 @@
 // item.bestGVs.count防止过度抽象，归一化计算。
 -(void) run4BestGVsCountRatio;
 
+// item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
+-(void) run4AbsLevelRatio;
+
 @end

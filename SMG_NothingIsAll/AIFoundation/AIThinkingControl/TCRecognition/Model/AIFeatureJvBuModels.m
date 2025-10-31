@@ -64,4 +64,18 @@
     }
 }
 
+// item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
+-(void) run4AbsLevelRatio {
+    // 找出最高抽象级。
+    NSInteger maxLevel = 0;
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        maxLevel = MAX(maxLevel, item.assT.absLevel);
+    }
+    
+    // 归一化每一条：越抽象的越好，越具象的越孬（参考35082-方案4）。
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        item.absLevelRatio = (float)item.assT.absLevel / maxLevel;
+    }
+}
+
 @end

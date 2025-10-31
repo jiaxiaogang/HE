@@ -73,7 +73,8 @@
     // 2025.10.20: 防止过度抽象：加上bestGVs.count，因为这样就可以防止过度抽象，因为过度抽象的bestGVs.count会越来越接近1条（缺点是越具象匹配数越大，它可能过度具象）。
     // 2025.10.28: 加上分区竞争后，bestGVs.count太重了，会导致识别的st全是过度具象的，进而导致GT识别时取交对撞不到结果（参考35082-方案3）。
     // 2025.10.29: 改为归一化之后的：分区匹配度 * 防过具象 * 防过抽象（参考35082-方案4）。
-    return self.areaMatchRatio * self.matchAssRatio * self.bestGVsCountRatio;// * self.bestGVs.count;// * self.matchDiffValue;
+    // 2025.10.31: 稳定结果中，越抽象的越好：加上absLevelRatio。
+    return self.areaMatchRatio * self.matchAssRatio * self.bestGVsCountRatio * self.absLevelRatio;// * self.bestGVs.count;// * self.matchDiffValue;
 }
 
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
@@ -84,7 +85,7 @@
 
 -(NSString*) getSTMatchDesc {
     //return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
-    return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f = 综合:%.2f",self.areaMatchRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.areaMatchRatio*self.matchAssRatio*self.bestGVsCountRatio);
+    return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f\t稳中取抽象:%.1f = 综合:%.2f",self.areaMatchRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.absLevelRatio,self.areaMatchRatio*self.matchAssRatio*self.bestGVsCountRatio*self.absLevelRatio);
 }
 
 -(NSString*) getGTMatchDesc {

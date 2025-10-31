@@ -207,6 +207,9 @@
     // 竞争因子计算：防止过度抽象匹配数。
     [decoratorJvBuModel run4BestGVsCountRatio];
     
+    // 竞争因子计算：在稳定层里，抽象优先。
+    [decoratorJvBuModel run4AbsLevelRatio];
+    
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {

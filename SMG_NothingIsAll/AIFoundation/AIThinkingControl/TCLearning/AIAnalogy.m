@@ -434,6 +434,9 @@
     NSArray *conNodes = protoT ? @[jvBuModel.assT,protoT] : @[jvBuModel.assT];
     AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:conNodes at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:isGT];
     
+    // 如果abs的抽象层数少于当前proto或ass加1，则赋新抽象层数值（未达到abs本来就有的层级，则不变）。
+    absT.absLevel = MAX(MAX(jvBuModel.assT.absLevel, protoT ? protoT.absLevel : 0) + 1, absT.absLevel);
+    
     //2025.08.24: protoT为空时，也要记录protoLogDesc+1，避免一些抽象特征明明很广泛了，还是只记录着最初的那个logDesc（比如通过识别1触发的多次抽象，仅因最具象时是0，最后还只认为它是0是不对的）。
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
     if (protoT) {
@@ -510,6 +513,9 @@
     
     // 构建absGT
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[assT] at:protoGT.at ds:protoGT.ds isOut:protoGT.isOut isJiao:true];
+    
+    // 如果abs的抽象层数少于当前proto或ass加1，则赋新抽象层数值（未达到abs本来就有的层级，则不变）。
+    absGT.absLevel = MAX(assT.absLevel + 1, absGT.absLevel);
     
     //41. 更新logDesc。
     [absGT updateLogDescDic:protoGT.logDesc];

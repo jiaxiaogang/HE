@@ -306,6 +306,7 @@
         self.absIndexDDic = [aDecoder decodeObjectForKey:@"absIndexDDic"];
         self.conIndexDDic = [aDecoder decodeObjectForKey:@"conIndexDDic"];
         self.logDesc = [aDecoder decodeObjectForKey:@"logDesc"];
+        self.absLevel = [aDecoder decodeIntegerForKey:@"absLevel"];
     }
     return self;
 }
@@ -328,6 +329,7 @@
     [aCoder encodeObject:[self.absIndexDDic copy] forKey:@"absIndexDDic"];
     [aCoder encodeObject:[self.conIndexDDic copy] forKey:@"conIndexDDic"];
     [aCoder encodeObject:self.logDesc forKey:@"logDesc"];
+    [aCoder encodeInteger:self.absLevel forKey:@"absLevel"];
 }
 
 @end

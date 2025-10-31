@@ -57,4 +57,8 @@
 
 // 当前bestGVs.count的归一化，用于防止过度抽象（越长的越好，越短的越孬，值范围0-1）。
 @property (assign, nonatomic) CGFloat bestGVsCountRatio;
+
+// item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
+@property (assign, nonatomic) CGFloat absLevelRatio;
+
 @end
