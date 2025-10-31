@@ -53,10 +53,9 @@
 // item.bestGVs.count防止过度抽象，归一化计算。
 -(void) run4BestGVsCountRatio {
     // 找出最长item的bestGVs.count。
-    NSInteger maxCount = 0;
-    for (AIFeatureJvBuModel *item in self.stModels) {
-        maxCount = MAX(maxCount, item.bestGVs.count);
-    }
+    NSInteger maxCount = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return item.bestGVs.count;
+    }];
     
     // 归一化每一条：越多的越好，越少的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
@@ -67,14 +66,34 @@
 // item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
 -(void) run4AbsLevelRatio {
     // 找出最高抽象级。
-    NSInteger maxLevel = 0;
-    for (AIFeatureJvBuModel *item in self.stModels) {
-        maxLevel = MAX(maxLevel, item.assT.absLevel);
-    }
+    NSInteger maxLevel = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return item.assT.absLevel;
+    }];
     
     // 归一化每一条：越抽象的越好，越具象的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
         item.absLevelRatio = (float)item.assT.absLevel / maxLevel;
+    }
+}
+
+// item.assT.conPort.strong强度，归一化计算竞争力（用于在稳定层里优先抽象层）。
+-(void) run4ConPortStrongRatio {
+    // 计算每个assST的总强度值。
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        NSArray *conPorts = [AINetUtils conPorts_All:item.assT];
+        item.sumConPortStrong = [SMGUtils sumOfArr:conPorts convertBlock:^double(AIPort *obj) {
+            return obj.strong.value;
+        }];
+    }
+    
+    // 找出最高抽象级。
+    NSInteger maxStrong = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return item.sumConPortStrong;
+    }];
+    
+    // 归一化每一条：强度越大越好，越小越孬（参考35082-方案4）。
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        item.conPortStrongRatio = (float)item.sumConPortStrong / maxStrong;
     }
 }
 

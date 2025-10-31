@@ -37,4 +37,7 @@
 // item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
 -(void) run4AbsLevelRatio;
 
+// item.assT.conPort.strong强度，归一化计算竞争力（用于在稳定层里优先抽象层）。
+-(void) run4ConPortStrongRatio;
+
 @end
