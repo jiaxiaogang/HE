@@ -201,15 +201,15 @@
         [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
     
-    // 竞争因子计算：分区竞争匹配度。
-    [decoratorJvBuModel run4AreaMatchRatio];
-    
     // 竞争因子计算：防止过度抽象匹配数。
     [decoratorJvBuModel run4BestGVsCountRatio];
     
     // 竞争因子计算：在稳定层里，抽象优先。
     [decoratorJvBuModel run4AbsLevelRatio];
     [decoratorJvBuModel run4ConPortStrongRatio];
+    
+    // 竞争因子计算：分区竞争匹配度。
+    [decoratorJvBuModel run4AreaMatchRatio];
     
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
@@ -236,7 +236,7 @@
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld%@\t %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.getSTMatchDesc);
+        NSLog(@"%ld. 单特征识别结果:T%ld%@ (%ld/%ld)\t %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0];
         }];
