@@ -74,9 +74,9 @@
     // 2025.10.28: 加上分区竞争后，bestGVs.count太重了，会导致识别的st全是过度具象的，进而导致GT识别时取交对撞不到结果（参考35082-方案3）。
     // 2025.10.29: 改为归一化之后的：分区匹配度 * 防过具象 * 防过抽象（参考35082-方案4）。
     // 2025.10.31: 稳定结果中，越抽象的越好：加上absLevelRatio。
-    // return self.areaMatchRatio * self.matchAssRatio * self.bestGVsCountRatio * self.conPortStrongRatio;// * self.bestGVs.count;// * self.matchDiffValue;
-    // return self.areaMatchRatio * (1-self.absLevelRatio) * self.conPortStrongRatio;// * self.bestGVs.count;// * self.matchDiffValue;
-    return self.areaMatchRatio;// * self.bestGVs.count;// * self.matchDiffValue;
+    // return self.areaRankRatio * self.matchAssRatio * self.bestGVsCountRatio * self.conPortStrongRatio;// * self.bestGVs.count;// * self.matchDiffValue;
+    // return self.areaRankRatio * (1-self.absLevelRatio) * self.conPortStrongRatio;// * self.bestGVs.count;// * self.matchDiffValue;
+    return self.areaRankRatio;// * self.bestGVs.count;// * self.matchDiffValue;
 }
 
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
@@ -86,10 +86,10 @@
 }
 
 -(NSString*) getSTMatchDesc {
-    //return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
-    // return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f\t稳中取抽象:%.1f = 综合:%.2f",self.areaMatchRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.conPortStrongRatio,self.areaMatchRatio*self.matchAssRatio*self.bestGVsCountRatio*self.conPortStrongRatio);
-    // return STRFORMAT(@"\t匹配数:(%ld/%ld) 区度:%.1f x 防抽:%.1f x 防具:%.1f = 综合:%.2f",self.bestGVs.count,self.assT.count,self.areaMatchRatio,(1-self.absLevelRatio),self.conPortStrongRatio,self.areaMatchRatio*self.conPortStrongRatio*self.absLevelRatio);
-    return STRFORMAT(@"匹配度:%.1f x 防抽:%.1f x 防具:%.1f = 区域竞争力:%.2f",self.matchValue,(1-self.absLevelRatio),self.conPortStrongRatio,self.areaMatchRatio);
+    // return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
+    // return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f\t稳中取抽象:%.1f = 综合:%.2f",self.areaRankRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.conPortStrongRatio,self.areaRankRatio*self.matchAssRatio*self.bestGVsCountRatio*self.conPortStrongRatio);
+    // return STRFORMAT(@"\t匹配数:(%ld/%ld) 区度:%.1f x 防抽:%.1f x 防具:%.1f = 综合:%.2f",self.bestGVs.count,self.assT.count,self.areaRankRatio,(1-self.absLevelRatio),self.conPortStrongRatio,self.areaRankRatio*self.conPortStrongRatio*self.absLevelRatio);
+    return STRFORMAT(@"匹配度:%.2f 防抽:%.2f 防具:%.2f = 区域竞争力:%.2f(%.2f)",self.matchValue,self.absLevelRatio,self.conPortStrongRatio,self.areaRankRatio,self.areaRankScore);
 }
 
 -(NSString*) getGTMatchDesc {
@@ -97,9 +97,9 @@
     return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f",self.matchValue,self.matchAssRatio);
 }
 
-// 平均名次（越小越靠前越好）（求平均原因：参考35076-TODO2.3）。
+// 平均名次（越大越好）（求平均原因：参考35076-TODO2.3）。
 -(CGFloat) areaRankScore {
-    return self.areaRankNum > 0 ? self.areaRankSum / (float)self.areaRankNum : CGFLOAT_MAX;
+    return self.areaRankNum > 0 ? self.areaRankSum / (float)self.areaRankNum : 0;
 }
 
 // ST分区均衡竞争算法：分别对每个stModel所在的区域进行竞争排名计分。
@@ -116,9 +116,9 @@
         return CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
     }];
     
-    // 给区域内的stModels排名 & 并计分 & 计次。
-    zoneSTModels = [SMGUtils sortBig2Small:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * (1-self.absLevelRatio) * self.conPortStrongRatio;
+    // 给区域内的stModels排名 & 并计分 & 计次（排名越大越好）。
+    zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.matchValue * self.absLevelRatio * self.conPortStrongRatio;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);

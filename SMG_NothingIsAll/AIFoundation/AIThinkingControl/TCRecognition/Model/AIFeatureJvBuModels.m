@@ -27,26 +27,20 @@
 }
 
 // 分区竞争匹配度：计算每条item的rankScore和rankRatio。
--(void) run4AreaMatchRatio {
-    //1. 无效过滤器1、matchValue=0排到最后。
-    NSArray *validModels = [SMGUtils filterArr:self.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
-        return model.matchValue > 0;
-    }];
-    
-    //2. 计算分区均衡排名分。
-    for (AIFeatureJvBuModel *item in validModels) {
-        [item run4ItemAreaRankScore:validModels];
+-(void) run4AreaRankRatioV2 {
+    // 计算分区均衡排名分。
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        [item run4ItemAreaRankScore:self.stModels];
     }
     
-    //3. 排名。
-    NSArray *sorts = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.areaRankScore;
+    // 找出均分最好的。
+    CGFloat max = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return item.areaRankScore;
     }];
     
-    //4. 归一化区域排名分（参考35082-方案4）。
-    for (NSInteger i = 0; i < sorts.count; i++) {
-        AIFeatureJvBuModel *item = ARR_INDEX(sorts, i);
-        item.areaMatchRatio = 1 - ((float)i / sorts.count);
+    // 归一化每一条：越多的越好，越少的越孬（参考35082-方案4）。
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        item.areaRankRatio = (float)item.areaRankScore / max;
     }
 }
 
@@ -72,7 +66,7 @@
     
     // 归一化每一条：越抽象的越好，越具象的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
-        item.absLevelRatio = (float)item.assT.absLevel / maxLevel;
+        item.absLevelRatio = 1 - (float)item.assT.absLevel / maxLevel;
     }
 }
 
