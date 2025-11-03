@@ -321,7 +321,7 @@ static AIThinkingControl *_instance;
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     [protoGT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0];
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0 tvId:2];
     }];
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
