@@ -398,6 +398,12 @@
     NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
         return [TCLearningUtil noZeRenForPingJun:item.matchValue * item.matchDegree * item.diffValue bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree * jvBuModel.matchDiffValue];
     }]];
+    // 2025.11.04: 把noZeRenForPingJun改成竞争后保留80%进行增强类比激烈度测试。
+    // NSArray *validBestGVs = [SMGUtils sortBig2Small:jvBuModel.bestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
+    //    return obj.matchValue;
+    // }];
+    // validBestGVs = ARR_SUB(validBestGVs, 0, validBestGVs.count * 0.8f);
+    // NSLog(@"ST类比条数：%ld -> %ld",jvBuModel.bestGVs.count,validBestGVs.count);
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
     NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {

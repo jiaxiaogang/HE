@@ -645,7 +645,10 @@
         
         // TODOTOMORROW20251104: 根本原因还是conPorts往往只有一条，这一个assST最多也就能联想到一条assGT。
         // 分析：几乎是assST抽象后还是assST自己，即没有抽象，明天先查下类比算法中，它是不是往往抽象后还是自己，为什么没剔除掉gvItem。
-        NSLog(@"gt识别conPorts数:%ld %ld %d",conPorts.count,validConPorts.count,validConPorts.count == 1 && [obj.assT.p isEqual:ARR_INDEX(Ports2Pits(validConPorts), 0)]);
+        // 调试：把类比调成竞争力更强后，每次absST都不一样了，但取conPorts还是只有assST一条，这说明这个absST只被抽象到这么一次。
+        // 分析：absST只有6条左右时，才会有被多个assST共同abs指向之，而在10左右以上时，几乎都是只被抽象了一次的（还未达到被重复多次的训练量）。
+        // 那么：难道只能继续训练，不断训练，使之更多的抽具象树繁茂起来吗？还是？
+        NSLog(@"gt识别匹配数:(%ld/%ld) conPorts数:%ld %ld %d",obj.bestGVs.count,obj.assT.count,conPorts.count,validConPorts.count,validConPorts.count == 1 && [obj.assT.p isEqual:ARR_INDEX(Ports2Pits(validConPorts), 0)]);
         
         
         for (AIPort *conPort in validConPorts) {
