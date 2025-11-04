@@ -641,9 +641,14 @@
         NSArray *conPorts = [AINetUtils conPorts_All:absST];
         
         // 根据强度只取conPorts和refPorts的前x条，避免性能问题。
-        conPorts = ARR_SUB(conPorts, 0, conPorts.count * 0.5f);
+        NSArray *validConPorts = ARR_SUB(conPorts, 0, MIN(conPorts.count, MAX(3, conPorts.count * 0.5f)));
         
-        for (AIPort *conPort in conPorts) {
+        // TODOTOMORROW20251104: 根本原因还是conPorts往往只有一条，这一个assST最多也就能联想到一条assGT。
+        // 分析：几乎是assST抽象后还是assST自己，即没有抽象，明天先查下类比算法中，它是不是往往抽象后还是自己，为什么没剔除掉gvItem。
+        NSLog(@"gt识别conPorts数:%ld %ld %d",conPorts.count,validConPorts.count,validConPorts.count == 1 && [obj.assT.p isEqual:ARR_INDEX(Ports2Pits(validConPorts), 0)]);
+        
+        
+        for (AIPort *conPort in validConPorts) {
             AIFeatureNode *conST = [SMGUtils searchNode:conPort.target_p];
             
             //20250610: abs改为assT，因为absT识别效果不太好，不知是否它的锅，但改成assT测下再说。
