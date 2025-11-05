@@ -648,6 +648,10 @@
         // 调试：把类比调成竞争力更强后，每次absST都不一样了，但取conPorts还是只有assST一条，这说明这个absST只被抽象到这么一次。
         // 分析：absST只有6条左右时，才会有被多个assST共同abs指向之，而在10左右以上时，几乎都是只被抽象了一次的（还未达到被重复多次的训练量）。
         // 那么：难道只能继续训练，不断训练，使之更多的抽具象树繁茂起来吗？还是？
+        // 问题：GT识别很难对撞上，是现在规则的推力不足，还是结果的拉力不足？
+        //  1、推力：现在由absST构建GT，对撞不上太正常了（st抽象要对撞absST，再然后识别assST时还得能再碰着absST，再然后才是识别GT时每一个元素都要返过来跟assST对接上，这很难）。
+        //  2、拉力：由结果拉，即建sp反向拉去也很难，需要取abs再取con识别GT，这个过程有好几步，很难保证拉动有效。
+        //  3、结果：要不返过来想想，GT构建是不是用assST？然后识别时是不是仅用assST来refGT，而不是先abs再con。
         NSLog(@"gt识别匹配数:(%ld/%ld) conPorts数:%ld %ld %d",obj.bestGVs.count,obj.assT.count,conPorts.count,validConPorts.count,validConPorts.count == 1 && [obj.assT.p isEqual:ARR_INDEX(Ports2Pits(validConPorts), 0)]);
         
         
