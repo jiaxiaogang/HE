@@ -305,6 +305,12 @@ static AIThinkingControl *_instance;
         return obj.getSTMatch;
     }];
     
+    // TODOTOMORROW20251106:
+    // 用assST构建protoGT（参考35091-TODO1）。
+    //1、用bestGVs在protoGT和在assST中的rect，推断出整个assST在protoGT中的rect。
+    
+    
+    
     // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
     // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
