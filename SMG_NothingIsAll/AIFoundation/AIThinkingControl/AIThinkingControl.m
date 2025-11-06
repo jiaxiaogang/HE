@@ -315,11 +315,23 @@ static AIThinkingControl *_instance;
     // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
     NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-        if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
-        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
             return item.bestGVAtProtoTRect;
         }];
+        CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            return [model.assT rectByIndex:item.assIndex];
+        }];
+        CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
+            return item.CGRectValue;
+        }];
+        
+        //转换rect
+        [UIView convertWorldRect:nil];
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
+        
+        
+        
+        
     }];
     if (gtOrders.count == 0) return;
     
