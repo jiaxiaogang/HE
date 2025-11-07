@@ -680,7 +680,7 @@
 }
 
 // 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
-// 例子：多拉A梦带小C到它的宇宙B里玩，多拉A梦过去后长高了30%，小C原来是1米，过去后高多少？答：1.3米。
+// 例子：多拉A梦带小B到它的宇宙C里玩，多拉A梦过去后长高了30%，小B原来是1米，过去后高多少？答：1.3米。
 +(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize {
     CGFloat cbWRate = aAtC.width / aAtB.width;
     CGFloat cbHRate = aAtC.height / aAtB.height;
@@ -691,7 +691,7 @@
 }
 
 // 根据A在B的尺寸，以及A在C的尺寸，求出A在B的坐标。
-// 例子：多拉A梦带小C到他家B玩，多拉A梦过去后长高了30%，小C原来在多拉A梦西1米，过去后在哪？答：多拉A梦西1.3米。
+// 例子：多拉A梦带小B到它的宇宙C里玩，多拉A梦过去后长高了30%，多拉A梦原来在小B前1米，过去后在哪？答：多拉A梦在小B前1.3米。
 +(CGPoint) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoAAtBPoint:(CGPoint)protoAAtBPoint {
     CGFloat cbWRate = aAtC.width / aAtB.width;
     CGFloat cbHRate = aAtC.height / aAtB.height;
