@@ -325,6 +325,25 @@ static AIThinkingControl *_instance;
             return item.CGRectValue;
         }];
         
+        CGFloat wRate = bestGVs_ProtoT.size.width / bestGVs_AssST.size.width;
+        CGFloat hRate = bestGVs_ProtoT.size.height / bestGVs_AssST.size.height;
+        
+        // 统一放到protoT坐标系之：将放到protoT后的assSTRect的尺寸求出来。
+        // CGSize assST_Proto_Size = CGSizeMake(assSTRect.size.width * wRate, assSTRect.size.height * hRate);
+        // assST是B，proto是C，bestGVs是A。
+        CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size];
+        
+        // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
+        //CGPoint bestGVs_AssST_Point = CGPointMake(bestGVs_AssST.origin.x * wRate, bestGVs_AssST.origin.y * hRate);
+        CGPoint bestGVs_AssST_Point = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:assSTRect.origin];
+        
+        
+        [SMGUtils convertRect2Center:bestGVs_AssST];
+        
+        
+        // x和y有delta也有scale都得算。
+        CGRect assST_ProtoT = CGRectMake(assSTRect.origin.x, assSTRect.origin.y, <#CGFloat width#>, <#CGFloat height#>)
+        
         //转换rect
         [UIView convertWorldRect:nil];
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];

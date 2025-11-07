@@ -675,6 +675,32 @@
     return resultRect;
 }
 
++(CGPoint) convertRect2Center:(CGRect)rect {
+    return CGPointMake((CGRectGetMinX(rect) + CGRectGetMaxX(rect)) / 2.0f, (CGRectGetMinY(rect) + CGRectGetMaxY(rect)) / 2.0f);
+}
+
+// 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
+// 例子：多拉A梦带小C到它的宇宙B里玩，多拉A梦过去后长高了30%，小C原来是1米，过去后高多少？答：1.3米。
++(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize {
+    CGFloat cbWRate = aAtC.width / aAtB.width;
+    CGFloat cbHRate = aAtC.height / aAtB.height;
+    
+    // 统一放到C坐标系之：将放到C后的BSize的尺寸求出来。
+    CGSize resultBSize = CGSizeMake(protoBSize.width * cbWRate, protoBSize.height * cbHRate);
+    return resultBSize;
+}
+
+// 根据A在B的尺寸，以及A在C的尺寸，求出A在B的坐标。
+// 例子：多拉A梦带小C到他家B玩，多拉A梦过去后长高了30%，小C原来在多拉A梦西1米，过去后在哪？答：多拉A梦西1.3米。
++(CGPoint) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoAAtBPoint:(CGPoint)protoAAtBPoint {
+    CGFloat cbWRate = aAtC.width / aAtB.width;
+    CGFloat cbHRate = aAtC.height / aAtB.height;
+    
+    // 统一放到C坐标系之：将放到C后的A At B的xy坐标求出来。
+    CGPoint resultAAtBPoint = CGPointMake(protoAAtBPoint.x * cbWRate, protoAAtBPoint.y * cbHRate);
+    return resultAAtBPoint;
+}
+
 /**
  *  MARK:--------------------将arr转成dic--------------------
  */
