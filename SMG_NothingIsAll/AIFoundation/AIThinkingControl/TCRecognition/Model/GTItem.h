@@ -13,11 +13,11 @@
  */
 @interface GTItem : NSObject
 
-+(id) new:(NSInteger)protoIndex assIndex:(NSInteger)assIndex conST_ProtoGT:(CGRect)conST_ProtoGT conST_AssGT:(CGRect)conST_AssGT;
++(id) new:(NSInteger)protoIndex assIndex:(NSInteger)assIndex curST_ProtoGT:(CGRect)curST_ProtoGT curST_AssGT:(CGRect)curST_AssGT;
 @property (assign, nonatomic) NSInteger protoIndex;
 @property (assign, nonatomic) NSInteger assIndex;
-@property (assign, nonatomic) CGRect conST_ProtoGT;
-@property (assign, nonatomic) CGRect conST_AssGT;
+@property (assign, nonatomic) CGRect curST_ProtoGT;
+@property (assign, nonatomic) CGRect curST_AssGT;
 
 -(CGFloat) wRate;
 -(CGFloat) hRate;

@@ -612,156 +612,99 @@
 +(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
     //1. 数据准备
     AIFeatureNode *protoGT = [SMGUtils searchNode:protoFeature_p];
-    
-    // 收集全量conST数据：用于自举。
-    NSArray *allConSTModels = [SMGUtils convertArr:matchModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuModel) {
-        // 先用assST取conPorts（参考35075B-方案3）。
-        AIFeatureNode *absST = [SMGUtils searchNode:jvBuModel.abs_p];
-        NSArray *conPorts = [AINetUtils conPorts_All:absST];
-        return [SMGUtils convertArr:conPorts convertBlock:^id(AIPort *conPort) {
-            AIFeatureNode *conST = [SMGUtils searchNode:conPort.target_p];
-            CGRect conSTRect = [SMGUtils convertArr2Rect:conST.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
-            return [MapModel newWithV1:jvBuModel v2:absST v3:conPort v4:@(conSTRect)];
-        }];
-    }];
-    NSArray *allConSTPorts = [SMGUtils convertArr:allConSTModels convertBlock:^id(MapModel *obj) {
-        return obj.v3;
-    }];
-    NSArray *allConST_ps = Ports2Pits(allConSTPorts);
-    
-    // 初始化gtModels
-    GTModels *gtModels = [GTModels new];
+    GTModels *gtModels = [GTModels new]; // 初始化gtModels
     NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
     
-    //11. 收集：每个absT分别向整体取conPorts。
+    // 直接用assST取refPorts（参考35091-TODO2）。
     for (AIFeatureJvBuModel *obj in matchModels) {
+        NSArray *refPorts = [AINetUtils refPorts_All:obj.assT.p];
         
-        // 先用assST取conPorts（参考35075B-方案3）。
-        AIFeatureNode *absST = [SMGUtils searchNode:obj.abs_p];
-        NSArray *conPorts = [AINetUtils conPorts_All:absST];
-        
-        // 根据强度只取conPorts和refPorts的前x条，避免性能问题。
-        NSArray *validConPorts = ARR_SUB(conPorts, 0, MIN(conPorts.count, MAX(3, conPorts.count * 0.5f)));
-        NSLog(@"gt识别匹配数:(%ld/%ld) conPorts数:%ld %ld %d",obj.bestGVs.count,obj.assT.count,conPorts.count,validConPorts.count,validConPorts.count == 1 && [obj.assT.p isEqual:ARR_INDEX(Ports2Pits(validConPorts), 0)]);
-        
-        for (AIPort *conPort in validConPorts) {
-            AIFeatureNode *conST = [SMGUtils searchNode:conPort.target_p];
+        // 将每个refPort先收集到zenTiModel。
+        for (AIPort *refPort in refPorts) {
+            if ([refPort.target_p isEqual:protoFeature_p]) continue;
             
-            //20250610: abs改为assT，因为absT识别效果不太好，不知是否它的锅，但改成assT测下再说。
-            //20250919: ass改为absT，因为assST在protoGT中的位置无法计算导致重影等问题，改成absST来构建protoGT和识别assGT。
-            NSArray *refPorts = [AINetUtils refPorts_All:conPort.target_p];
+            // 根据assGT来做一些防重等，避免多次计算。
+            if ([exceptGTs objectForKey:@(refPort.target_p.pointerId)]) continue;
+            [exceptGTs setObject:@"" forKey:@(refPort.target_p.pointerId)];
             
-            //12. 将每个conPort先收集到zenTiModel。
-            for (AIPort *refPort in refPorts) {
-                //13. protoFeature单独收集。
-                if ([refPort.target_p isEqual:protoFeature_p]) continue;
+            // 初始化gtModel
+            AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+            GTModel *gtModel = [GTModel new:assGT];
+            [gtModels.models addObject:gtModel];
+            NSInteger assIndex = [assGT.content_ps indexOfObject:obj.assT.p];
+            
+            // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
+            for (NSInteger i = 0; i < assGT.count; i++) {
                 
-                // 根据assGT来做一些防重等，避免多次计算。
-                if ([exceptGTs objectForKey:@(refPort.target_p.pointerId)]) continue;
-                [exceptGTs setObject:@"" forKey:@(refPort.target_p.pointerId)];
-                
-                //13. 只要似层结果（参考34135-TODO6）。
-                //2025.09.19: GT已经独立模块了，当然得开放识别交层GT，不然次次只能识别到一两条GT结果，且健全度都超低。
-                //if (refPort.target_p.isJiao) continue;
-                
-                // 初始化gtModel
-                AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
-                GTModel *gtModel = [GTModel new:assGT];
-                [gtModels.models addObject:gtModel];
-                NSInteger assIndex = [assGT.content_ps indexOfObject:conST.p];
-                
-                // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
-                for (NSInteger i = 0; i < assGT.count; i++) {
-                    
-                    // 功能说明：边识别边对已收集到的进行提前竞争，不合格的提前中断。
-                    // 白话示例：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
-                    // 数据准备：每个gtItem后，都要计算好modelMatchDegree，因为如果gtModel不够好，直接会中断它。
-                    // 判断条件：总models超过10条，当前model已判断超过5条，则收集到1条以上 => 开始提前判断model淘汰。
-                    if (i > 5 && gtModel.items.count > 1 && gtModels.models.count > 10) {
-                        [gtModel run4ModelMatchDegree];
-                        if (![TCLearningUtil noZeRenForPingJun:gtModel.modelMatchDegree bigerMatchValue:gtModels.modelsMatchDegree]) { //或用(modelMatchDegree < modelsMatchDegree)
-                            [gtModels.models removeObject:gtModel];
-                            break;
-                        }
-                    }
-                    
-                    // 计算curAssIndex 取curAssST。
-                    NSInteger curAssIndex = (assIndex + i) % assGT.count;
-                    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                    AIKVPointer *curAssST_p = ARR_INDEX(assGT.content_ps, curAssIndex);
-                    
-                    // 不包含该元素，则完全不匹配。
-                    if (![allConST_ps containsObject:curAssST_p]) continue;
-                    
-                    // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
-                    NSArray *curMapModels = [SMGUtils filterArr:allConSTModels checkValid:^BOOL(MapModel *item) {
-                        AIPort *conPort = item.v3;
-                        return [conPort.target_p isEqual:curAssST_p];
-                    }];
-                    
-                    // 找bestGTItem：最终只收集最好的一条。
-                    for (MapModel *curMapModel in curMapModels) {
-                        //AIFeatureJvBuModel *curJvBuModel = curMapModel.v1;
-                        AIFeatureNode *absST = curMapModel.v2;
-                        AIPort *baseConPort = curMapModel.v3;
-                        CGRect curConSTRect = VALTOOK(curMapModel.v4).CGRectValue;
-                        
-                        // 取protoIndex
-                        NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:absST.p];
-                        if (curProtoIndex < 0 || curProtoIndex == NSNotFound)  {
-                            NSLog(@"此处NotFount导致conST_ProtoGT的size为0,0问题: %@ \n absST:%ld",[SMGUtils convertArr:protoGT.content_ps convertBlock:^id(AIKVPointer *obj) { return @(obj.pointerId); }],absST.pId);
-                        }
-                        
-                        // 计算几个用于计算位置符合度的rect：curAbsST_ConST & curAbsST_ProtoGT & curConST_AssGT。
-                        // 方案1：求出conST分别在：assGT和protoGT中的rect（当前局部特征在以往GT上是什么样子的）。
-                        // 方案2：求出absST分别在：protoGT和assGT中的rect。
-                        // 抉择：这两个方案应该等效，不过方案1看起来更贴合assGT，就先采纳方案1吧。
-                        CGRect curAbsST_ConST = baseConPort.rect;
-                        CGRect curAbsST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
-                        CGRect curConST_AssGT = [assGT rectByIndex:curAssIndex];
-                        
-                        // 需要先缩放：把conST的rect缩放成absST的坐标系，这样才能计算conST在protoGT的rect。
-                        CGFloat wRate_AbsST = curAbsST_ProtoGT.size.width / curAbsST_ConST.size.width;
-                        CGFloat hRate_AbsST = curAbsST_ProtoGT.size.height / curAbsST_ConST.size.height;
-                        
-                        // 计算conST在protoGT的rect。
-                        CGRect curConST_ProtoGT = CGRectMake(curAbsST_ProtoGT.origin.x - curAbsST_ConST.origin.x * wRate_AbsST,
-                                                          curAbsST_ProtoGT.origin.y - curAbsST_ConST.origin.y * hRate_AbsST,
-                                                          curConSTRect.size.width * wRate_AbsST, curConSTRect.size.height * hRate_AbsST);
-                        
-                        // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
-                        GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex conST_ProtoGT:curConST_ProtoGT conST_AssGT:curConST_AssGT];
-                        
-                        // 保留最匹配的一条。
-                        GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
-                            return item.assIndex == curAssIndex;
-                        }];
-                        
-                        // 首条直接收集。
-                        if (!oldGTItem) {
-                            [gtModel.items addObject:newGTItem];
-                            [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。
-                            [newGTItem run4ItemMatchDegree:gtModel];
-                        } else {
-                            // 计算oldItem和newItem的itemMatchDegree。
-                            [newGTItem run4ItemMatchDegree:gtModel];
-                            
-                            // 新的更好，则替掉旧的。
-                            // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
-                            if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
-                                [gtModel.items removeObject:oldGTItem];
-                                [gtModel.items addObject:newGTItem];
-                                [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。
-                                [newGTItem run4ItemMatchDegree:gtModel];
-                            }
-                        }
+                // 功能说明：边识别边对已收集到的进行提前竞争，不合格的提前中断。
+                // 白话示例：当前已匹配的20条assGT中，当前平均匹配率有40%，而新来的assGT前十元素只有10%，那可以直接判否中止匹配。
+                // 数据准备：每个gtItem后，都要计算好modelMatchDegree，因为如果gtModel不够好，直接会中断它。
+                // 判断条件：总models超过10条，当前model已判断超过5条，则收集到1条以上 => 开始提前判断model淘汰。
+                if (i > 5 && gtModel.items.count > 1 && gtModels.models.count > 10) {
+                    [gtModel run4ModelMatchDegree];
+                    if (![TCLearningUtil noZeRenForPingJun:gtModel.modelMatchDegree bigerMatchValue:gtModels.modelsMatchDegree]) { //或用(modelMatchDegree < modelsMatchDegree)
+                        [gtModels.models removeObject:gtModel];
+                        break;
                     }
                 }
                 
-                // 每个gtModel后，都备好位置符合度，因为下一条gtModel判断时，要实时判断如果不好进行中断节约性能。
-                [gtModel run4ModelMatchDegree];
-                [gtModels run4ModelsMatchDegree];
+                // 计算curAssIndex 取curAssST。
+                NSInteger curAssIndex = (assIndex + i) % assGT.count;
+                AIKVPointer *curAssST_p = ARR_INDEX(assGT.content_ps, curAssIndex);
+                
+                // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
+                NSArray *curJvBuModels = [SMGUtils filterArr:matchModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
+                    return [item.assT.p isEqual:curAssST_p];
+                }];
+                
+                // 不包含该元素，则完全不匹配。
+                if (!ARRISOK(curJvBuModels)) continue;
+                
+                // 找bestGTItem：最终只收集最好的一条。
+                for (AIFeatureJvBuModel *curJvBuModel in curJvBuModels) {
+                    
+                    // 取protoIndex
+                    NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:curJvBuModel.assT.p];
+                    if (curProtoIndex < 0 || curProtoIndex == NSNotFound)  {
+                        NSLog(@"此处NotFount导致conST_ProtoGT的size为0,0问题: %@ \n assST:%ld",[SMGUtils convertArr:protoGT.content_ps convertBlock:^id(AIKVPointer *obj) { return @(obj.pointerId); }],curJvBuModel.assT.pId);
+                    }
+                    
+                    // 计算两个用于计算位置符合度的rect：curAssST_ProtoGT & curAssST_AssGT。
+                    CGRect curAssST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
+                    CGRect curAssST_AssGT = [assGT rectByIndex:curAssIndex];
+                    
+                    // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
+                    GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex curST_ProtoGT:curAssST_ProtoGT curST_AssGT:curAssST_AssGT];
+                    
+                    // 保留最匹配的一条。
+                    GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
+                        return item.assIndex == curAssIndex;
+                    }];
+                    
+                    // 首条直接收集。
+                    if (!oldGTItem) {
+                        [gtModel.items addObject:newGTItem];
+                        [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。
+                        [newGTItem run4ItemMatchDegree:gtModel];
+                    } else {
+                        // 计算oldItem和newItem的itemMatchDegree。
+                        [newGTItem run4ItemMatchDegree:gtModel];
+                        
+                        // 新的更好，则替掉旧的。
+                        // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
+                        if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
+                            [gtModel.items removeObject:oldGTItem];
+                            [gtModel.items addObject:newGTItem];
+                            [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。
+                            [newGTItem run4ItemMatchDegree:gtModel];
+                        }
+                    }
+                }
             }
+            
+            // 每个gtModel后，都备好位置符合度，因为下一条gtModel判断时，要实时判断如果不好进行中断节约性能。
+            [gtModel run4ModelMatchDegree];
+            [gtModels run4ModelsMatchDegree];
         }
     }
     

@@ -10,12 +10,12 @@
 
 @implementation GTItem
 
-+(id) new:(NSInteger)protoIndex assIndex:(NSInteger)assIndex conST_ProtoGT:(CGRect)conST_ProtoGT conST_AssGT:(CGRect)conST_AssGT {
++(id) new:(NSInteger)protoIndex assIndex:(NSInteger)assIndex curST_ProtoGT:(CGRect)curST_ProtoGT curST_AssGT:(CGRect)curST_AssGT {
     GTItem *result = [GTItem new];
     result.protoIndex = protoIndex;
     result.assIndex = assIndex;
-    result.conST_ProtoGT = conST_ProtoGT;
-    result.conST_AssGT = conST_AssGT;
+    result.curST_ProtoGT = curST_ProtoGT;
+    result.curST_AssGT = curST_AssGT;
     return result;
 }
 
@@ -23,19 +23,19 @@
 // 这个whRate就是基准比例，即符合这个比例才是正常的（比如1:2)，如果不符合了反而不正常（比如下一元素变成1:1了）。
 // 当然真正竞争的时候，会以平均比例为基准，即匹配了那么多，排除最高低分之后的平均分为基准，离平均分近即匹配，离平均分远则不匹配。
 -(CGFloat) wRate {
-    return MIN(self.conST_ProtoGT.size.width / self.conST_AssGT.size.width, self.conST_AssGT.size.width / self.conST_ProtoGT.size.width);
+    return MIN(self.curST_ProtoGT.size.width / self.curST_AssGT.size.width, self.curST_AssGT.size.width / self.curST_ProtoGT.size.width);
 }
 
 -(CGFloat) hRate {
-    return MIN(self.conST_ProtoGT.size.height / self.conST_AssGT.size.height, self.conST_AssGT.size.height / self.conST_ProtoGT.size.height);
+    return MIN(self.curST_ProtoGT.size.height / self.curST_AssGT.size.height, self.curST_AssGT.size.height / self.curST_ProtoGT.size.height);
 }
 
 -(CGFloat) xDelta {
-    return self.conST_ProtoGT.origin.x - self.conST_AssGT.origin.x;
+    return self.curST_ProtoGT.origin.x - self.curST_AssGT.origin.x;
 }
 
 -(CGFloat) yDelta {
-    return self.conST_ProtoGT.origin.y - self.conST_AssGT.origin.y;
+    return self.curST_ProtoGT.origin.y - self.curST_AssGT.origin.y;
 }
 
 -(void) run4ItemMatchDegree:(GTModel*)baseGTModel {
