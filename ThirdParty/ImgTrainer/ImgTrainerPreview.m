@@ -46,6 +46,11 @@
             }
         }
     }
+    
+    //lightGroupView
+    self.lightGroupView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
+    [self addSubview:self.lightGroupView];
+    [self.lightGroupView.layer setMasksToBounds:true];
 }
 
 -(void) initData {
@@ -263,7 +268,7 @@
     if (!lightView) {
         lightView = [[UIView alloc] initWithFrame:CGRectMake(x * dotWH, y * dotWH, dotWH, dotWH)];
         [lightView setAlpha:1.0f];
-        [self addSubview:lightView];
+        [self.lightGroupView addSubview:lightView];
         [self.lightDic setObject:lightView forKey:key];
     }
     [lightView setBackgroundColor:color.getColor];

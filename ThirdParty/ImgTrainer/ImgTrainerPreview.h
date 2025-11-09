@@ -13,6 +13,7 @@
 @property (strong, nonatomic) UILabel *lab;
 @property (strong, nonatomic) NSMutableDictionary *lightDic;
 @property (strong, nonatomic) NSMutableDictionary *hsbDic;
+@property (strong, nonatomic) UIView *lightGroupView;
 
 -(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;
 -(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;

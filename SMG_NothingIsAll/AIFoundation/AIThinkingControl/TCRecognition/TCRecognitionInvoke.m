@@ -619,6 +619,8 @@
     for (AIFeatureJvBuModel *obj in matchModels) {
         NSArray *refPorts = [AINetUtils refPorts_All:obj.assT.p];
         
+        NSLog(@"refPorts条数：%ld",refPorts.count);
+        
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
             if ([refPort.target_p isEqual:protoFeature_p]) continue;
@@ -626,6 +628,9 @@
             // 根据assGT来做一些防重等，避免多次计算。
             if ([exceptGTs objectForKey:@(refPort.target_p.pointerId)]) continue;
             [exceptGTs setObject:@"" forKey:@(refPort.target_p.pointerId)];
+            
+            
+            NSLog(@"itemCheck条数：GT%ld",refPort.target_p.pointerId);
             
             // 初始化gtModel
             AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
