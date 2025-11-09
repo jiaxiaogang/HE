@@ -582,12 +582,12 @@
     CGRect newAbsAtAssRect = CGRectNull;
     for (GTItem *item in sameItems) {
         //12. 取并每个itemAbsT在assT的范围。
-        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.conST_AssGT);
+        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.curST_AssGT);
     }
     
     NSArray *orders = [SMGUtils convertArr:sameItems convertBlock:^id(GTItem *obj) {
         // 计算itemST在absGT中的位置，其实就是ST在assGT中的位置，减掉margin左上角的留白（参考上面的方案2-TODO2）。
-        CGRect curSTAtAbsGTRect = obj.conST_AssGT;
+        CGRect curSTAtAbsGTRect = obj.curST_AssGT;
         curSTAtAbsGTRect.origin.x -= newAbsAtAssRect.origin.x;//- marginLeft
         curSTAtAbsGTRect.origin.y -= newAbsAtAssRect.origin.y;//- marginTop
         AIKVPointer *itemST = ARR_INDEX(gtModel.assGT.content_ps, obj.assIndex);
