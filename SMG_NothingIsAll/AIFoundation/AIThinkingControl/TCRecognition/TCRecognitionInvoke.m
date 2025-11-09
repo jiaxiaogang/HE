@@ -619,7 +619,19 @@
     for (AIFeatureJvBuModel *obj in matchModels) {
         NSArray *refPorts = [AINetUtils refPorts_All:obj.assT.p];
         
-        NSLog(@"refPorts条数：%ld",refPorts.count);
+        // TODOTOMORROW20251109: 此处只有20%有值。
+        // 日志：refPorts条数：5 防重后：2 防PROTO后：1 防不应期后：1。
+        // 分析：refPorts中有很多重复的。
+        NSArray *rmRepeat1 = [SMGUtils removeRepeat:refPorts convertBlock:^id(AIPort *obj) {
+            return @(obj.target_p.pointerId);
+        }];
+        NSArray *rmProto2 = [SMGUtils filterArr:rmRepeat1 checkValid:^BOOL(AIPort *item) {
+            return ![item.target_p isEqual:protoFeature_p];
+        }];
+        NSArray *rmExcept3 = [SMGUtils filterArr:rmProto2 checkValid:^BOOL(AIPort *item) {
+            return ![exceptGTs objectForKey:@(item.target_p.pointerId)];
+        }];
+        NSLog(@"refPorts条数：%ld 防重后：%ld 防PROTO后：%ld 防不应期后：%ld",refPorts.count,rmRepeat1.count,rmProto2.count,rmExcept3.count);
         
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
@@ -732,7 +744,7 @@
     //2025.10.05: 加上obj.assGT.count，避免assGT的长度普遍太短问题。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchRatio * obj.assGT.count;
-    }], 0, gtModels.models.count * 0.5);
+    }], 0, MAX(5, gtModels.models.count * 0.5));
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTModel *obj) {
