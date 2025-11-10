@@ -344,6 +344,12 @@ static AIThinkingControl *_instance;
     if (gtOrders.count == 0) return;
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
+    
+    NSLog(@"防重前长度：%ld 防重后：%ld",gtOrders.count,[SMGUtils removeRepeat:gtOrders convertBlock:^id(InputGroupFeatureModel *obj) {
+        return obj.feature_p;
+    }].count);
+    
+    
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     [protoGT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{
@@ -352,7 +358,8 @@ static AIThinkingControl *_instance;
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:protoGT.p matchModels:goodSTModels];
+    // 2025.11.10: 增加切入点数量，从goodSTModels改成整个stModels（以避免gt识别数量较少问题）。
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:protoGT.p matchModels:jvBuModel.stModels];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。

@@ -622,6 +622,8 @@
         // TODOTOMORROW20251109: 此处只有20%有值。
         // 日志：refPorts条数：5 防重后：2 防PROTO后：1 防不应期后：1。
         // 分析：refPorts中有很多重复的。
+        // 调试：同一个item根据index和rect不同，确实可能重复出现在gt中。
+        // 思路：要根据这个调整下这里gt识别的防重规则吗？思考下（下面会逐帧从matchModels中筛选，所以这里防重后面也会全给找回来参与算法），
         NSArray *rmRepeat1 = [SMGUtils removeRepeat:refPorts convertBlock:^id(AIPort *obj) {
             return @(obj.target_p.pointerId);
         }];
