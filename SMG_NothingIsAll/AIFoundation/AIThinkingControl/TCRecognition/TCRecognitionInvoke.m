@@ -650,6 +650,10 @@
             AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
             GTModel *gtModel = [GTModel new:assGT];
             [gtModels.models addObject:gtModel];
+            
+            // TODOTOMORROW20251111:
+            // 1. 防重不仅对assGT也要对切入点assIndex。
+            // 2. 以下assIndex要用rect来计算，用assT.p不行，因为有重复元素。
             NSInteger assIndex = [assGT.content_ps indexOfObject:obj.assT.p];
             
             // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
