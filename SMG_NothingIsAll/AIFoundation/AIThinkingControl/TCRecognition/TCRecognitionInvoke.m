@@ -619,42 +619,24 @@
     for (AIFeatureJvBuModel *obj in matchModels) {
         NSArray *refPorts = [AINetUtils refPorts_All:obj.assT.p];
         
-        // TODOTOMORROW20251109: 此处只有20%有值。
-        // 日志：refPorts条数：5 防重后：2 防PROTO后：1 防不应期后：1。
-        // 分析：refPorts中有很多重复的。
-        // 调试：同一个item根据index和rect不同，确实可能重复出现在gt中。
-        // 思路：要根据这个调整下这里gt识别的防重规则吗？思考下（下面会逐帧从matchModels中筛选，所以这里防重后面也会全给找回来参与算法），
-        NSArray *rmRepeat1 = [SMGUtils removeRepeat:refPorts convertBlock:^id(AIPort *obj) {
-            return @(obj.target_p.pointerId);
-        }];
-        NSArray *rmProto2 = [SMGUtils filterArr:rmRepeat1 checkValid:^BOOL(AIPort *item) {
-            return ![item.target_p isEqual:protoFeature_p];
-        }];
-        NSArray *rmExcept3 = [SMGUtils filterArr:rmProto2 checkValid:^BOOL(AIPort *item) {
-            return ![exceptGTs objectForKey:@(item.target_p.pointerId)];
-        }];
-        NSLog(@"refPorts条数：%ld 防重后：%ld 防PROTO后：%ld 防不应期后：%ld",refPorts.count,rmRepeat1.count,rmProto2.count,rmExcept3.count);
-        
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
             if ([refPort.target_p isEqual:protoFeature_p]) continue;
             
-            // 根据assGT来做一些防重等，避免多次计算。
-            if ([exceptGTs objectForKey:@(refPort.target_p.pointerId)]) continue;
-            [exceptGTs setObject:@"" forKey:@(refPort.target_p.pointerId)];
-            
-            
             NSLog(@"itemCheck条数：GT%ld",refPort.target_p.pointerId);
             
-            // 初始化gtModel
+            // 以下assIndex要用rect来计算，用assT.p不行，因为有重复元素。
             AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+            NSInteger assIndex = [assGT indexOfRect:refPort.rect];
+            
+            // 根据assGT来做一些防重等，避免多次计算。
+            // 防重不仅对assGT也要对切入点assIndex（因为同一个assGT中可能有重复assST，但它们分别表示不同局部的特征）。
+            if ([exceptGTs objectForKey:STRFORMAT(@"%ld_%ld",assGT.pId,assIndex)]) continue;
+            [exceptGTs setObject:@"" forKey:STRFORMAT(@"%ld_%ld",assGT.pId,assIndex)];
+            
+            // 初始化gtModel
             GTModel *gtModel = [GTModel new:assGT];
             [gtModels.models addObject:gtModel];
-            
-            // TODOTOMORROW20251111:
-            // 1. 防重不仅对assGT也要对切入点assIndex。
-            // 2. 以下assIndex要用rect来计算，用assT.p不行，因为有重复元素。
-            NSInteger assIndex = [assGT.content_ps indexOfObject:obj.assT.p];
             
             // 写循环把切入点以及下一元素，最接受上一元素比例的那个best元素结果收集起来。
             for (NSInteger i = 0; i < assGT.count; i++) {
@@ -676,6 +658,7 @@
                 AIKVPointer *curAssST_p = ARR_INDEX(assGT.content_ps, curAssIndex);
                 
                 // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
+                // 正据：不同的refPort可能指向不同的切入点，那这里要进行多个竞争吗？应当是要的，这里表示的是assST识别结果可能重复，这里确实应该选最好的一条，与上面的refPort的多个切入点没有关系。
                 NSArray *curJvBuModels = [SMGUtils filterArr:matchModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
                     return [item.assT.p isEqual:curAssST_p];
                 }];
