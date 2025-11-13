@@ -609,21 +609,19 @@
     return resultModels;
 }
 
-+(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels {
++(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p {
     //1. 数据准备
     AIFeatureNode *protoGT = [SMGUtils searchNode:protoFeature_p];
     GTModels *gtModels = [GTModels new]; // 初始化gtModels
     NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
     
     // 直接用assST取refPorts（参考35091-TODO2）。
-    for (AIFeatureJvBuModel *obj in matchModels) {
-        NSArray *refPorts = [AINetUtils refPorts_All:obj.assT.p];
+    for (AIKVPointer *curAssST_p in protoGT.content_ps) {
+        NSArray *refPorts = [AINetUtils refPorts_All:curAssST_p];
         
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
             if ([refPort.target_p isEqual:protoFeature_p]) continue;
-            
-            NSLog(@"itemCheck条数：GT%ld",refPort.target_p.pointerId);
             
             // 以下assIndex要用rect来计算，用assT.p不行，因为有重复元素。
             AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
@@ -659,21 +657,12 @@
                 
                 // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
                 // 正据：不同的refPort可能指向不同的切入点，那这里要进行多个竞争吗？应当是要的，这里表示的是assST识别结果可能重复，这里确实应该选最好的一条，与上面的refPort的多个切入点没有关系。
-                NSArray *curJvBuModels = [SMGUtils filterArr:matchModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
-                    return [item.assT.p isEqual:curAssST_p];
-                }];
-                
-                // 不包含该元素，则完全不匹配。
-                if (!ARRISOK(curJvBuModels)) continue;
-                
-                // 找bestGTItem：最终只收集最好的一条。
-                for (AIFeatureJvBuModel *curJvBuModel in curJvBuModels) {
+                // 找bestGTItem：最终只收集最好的一条（不包含该元素，则完全不匹配）。
+                for (NSInteger curProtoIndex = 0; curProtoIndex < protoGT.count; curProtoIndex++) {
                     
-                    // 取protoIndex
-                    NSInteger curProtoIndex = [protoGT.content_ps indexOfObject:curJvBuModel.assT.p];
-                    if (curProtoIndex < 0 || curProtoIndex == NSNotFound)  {
-                        NSLog(@"此处NotFount导致conST_ProtoGT的size为0,0问题: %@ \n assST:%ld",[SMGUtils convertArr:protoGT.content_ps convertBlock:^id(AIKVPointer *obj) { return @(obj.pointerId); }],curJvBuModel.assT.pId);
-                    }
+                    // 找出protoGT中的assST，并对比，找出best一条。
+                    AIKVPointer *findAssSTFromProto = ARR_INDEX(protoGT.content_ps, curProtoIndex);
+                    if (![findAssSTFromProto isEqual:curAssST_p]) continue;
                     
                     // 计算两个用于计算位置符合度的rect：curAssST_ProtoGT & curAssST_AssGT。
                     CGRect curAssST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
