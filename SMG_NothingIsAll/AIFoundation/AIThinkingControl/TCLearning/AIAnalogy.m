@@ -542,7 +542,7 @@
     [SMGUtils runByMainQueue:^{
         //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比GT%ld->GT%ld",assT.pId,absGT.pId) left:0 top:0];
     }];
-    if (Log4Ana || true) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
+    if (Log4Ana) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
                                protoGT.pId,protoGT.count,CLEANSTR([protoGT getLogDesc:false]),FeatureDesc(protoGT.p,1),
                                assT.pId,assT.count,CLEANSTR([assT getLogDesc:false]),FeatureDesc(assT.p,1),
                                absGT.pId,absGT.count,CLEANSTR([absGT getLogDesc:false]),FeatureDesc(absGT.p,1));
@@ -616,7 +616,7 @@
     [SMGUtils runByMainQueue:^{
         //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比GT%ld->GT%ld",assT.pId,absGT.pId) left:0 top:0];
     }];
-    if (Log4Ana || true) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
+    if (Log4Ana) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
                                protoGT.pId,protoGT.count,CLEANSTR([protoGT getLogDesc:false]),FeatureDesc(protoGT.p,1),
                                gtModel.assGT.pId,gtModel.assGT.count,CLEANSTR([gtModel.assGT getLogDesc:false]),FeatureDesc(gtModel.assGT.p,1),
                                absGT.pId,absGT.count,CLEANSTR([absGT getLogDesc:false]),FeatureDesc(absGT.p,1));

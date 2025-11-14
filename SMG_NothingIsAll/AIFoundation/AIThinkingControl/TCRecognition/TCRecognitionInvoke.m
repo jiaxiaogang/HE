@@ -720,6 +720,10 @@
     //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
     //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
     //2025.10.05: 加上obj.assGT.count，避免assGT的长度普遍太短问题。
+    
+    // TODOTOMORROW20251114:
+    // 1. 这里也归一化处理，避免count带来大优势影响。
+    // 2. 必须深入到数据细节中测试，以此观察ST和GT的深化浮现。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchRatio * obj.assGT.count;
     }], 0, MAX(5, gtModels.models.count * 0.5));
