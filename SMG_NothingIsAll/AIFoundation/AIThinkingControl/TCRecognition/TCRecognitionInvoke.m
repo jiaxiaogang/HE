@@ -236,7 +236,7 @@
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld%@ (%ld/%ld)\t %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -709,6 +709,9 @@
     //24. 计算：健全度（即匹配率）。
     [gtModels run4ModelsMatchRatio];
     
+    // 防过抽竞争因子计算。
+    [gtModels run4ModelCountRatio];
+    
     //25. 计算：综合单特征竞争分。
     //[gtModels run4STMatch];
     
@@ -720,12 +723,9 @@
     //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
     //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
     //2025.10.05: 加上obj.assGT.count，避免assGT的长度普遍太短问题。
-    
-    // TODOTOMORROW20251114:
-    // 1. 这里也归一化处理，避免count带来大优势影响。
-    // 2. 必须深入到数据细节中测试，以此观察ST和GT的深化浮现。
+    //2025.11.14: 防过抽assGTCountRatio支持归一化（归一化处理，避免count权重优势影响）。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchRatio * obj.assGT.count;
+        return obj.modelMatchDegree * obj.modelMatchRatio * obj.modelCountRatio;
     }], 0, MAX(5, gtModels.models.count * 0.5));
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -745,9 +745,10 @@
         [model.assGT updateLogDescDic:protoGT.logDesc rate:model.modelMatchDegree * model.modelMatchRatio];
         
         //43. debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld%@ \tProtoGT长:%ld \t符合度:%.2f \t健全度:%.2f(%ld/%ld)",[resultModels indexOfObject:model],
-                                         model.assGT.pId,CLEANSTR([model.assGT getLogDesc:true]),protoGT.count,
-                                         model.modelMatchDegree,model.modelMatchRatio,model.items.count,model.assGT.count);
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t符合度:%.2f \t防过具(健全度):%.2f(%ld/%ld) \t防过抽(匹配数):%.2f =\t综合得分:%.3f",
+                                         [resultModels indexOfObject:model],model.assGT.pId,
+                                         model.modelMatchDegree,model.modelMatchRatio,model.items.count,model.assGT.count,model.modelCountRatio,
+                                         model.modelMatchDegree * model.modelMatchRatio * model.modelCountRatio);
         
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
         //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。

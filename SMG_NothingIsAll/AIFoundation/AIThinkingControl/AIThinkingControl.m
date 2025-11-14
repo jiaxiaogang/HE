@@ -344,12 +344,6 @@ static AIThinkingControl *_instance;
     if (gtOrders.count == 0) return;
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
-    
-    NSLog(@"防重前长度：%ld 防重后：%ld",gtOrders.count,[SMGUtils removeRepeat:gtOrders convertBlock:^id(InputGroupFeatureModel *obj) {
-        return obj.feature_p;
-    }].count);
-    
-    
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     [protoGT updateLogDescItem:logDesc];
     [SMGUtils runByMainQueue:^{

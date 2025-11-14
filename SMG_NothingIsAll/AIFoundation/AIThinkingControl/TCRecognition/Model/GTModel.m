@@ -37,7 +37,7 @@
 }
 
 /**
- *  MARK:--------------------重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
+ *  MARK:--------------------主因子：符合度，重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
  */
 -(void) run4ModelMatchDegree {
     //2. 算itemMatchDegree
@@ -51,6 +51,9 @@
     }] / self.items.count;
 }
 
+/**
+ *  MARK:--------------------辅因子：计算健全度（防过具：因为只有抽象的匹配数才会高）--------------------
+ */
 -(void) run4ModelMatchRatio {
     self.modelMatchRatio = self.assGT.count > 0 ? self.items.count / (float)self.assGT.count : 0;
 }

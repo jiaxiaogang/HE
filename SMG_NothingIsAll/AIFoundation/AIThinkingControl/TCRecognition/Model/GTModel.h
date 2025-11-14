@@ -28,15 +28,20 @@
 -(void) run4WHXYModelMatchDegree;
 
 /**
- *  MARK:--------------------重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
+ *  MARK:--------------------主因子：符合度，重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
  */
 @property (assign, nonatomic) CGFloat modelMatchDegree;
 -(void) run4ModelMatchDegree;
 
 /**
- *  MARK:--------------------计算健全度--------------------
+ *  MARK:--------------------辅因子：计算健全度（防过具：因为只有抽象的匹配数才会高）--------------------
  */
 @property (assign, nonatomic) CGFloat modelMatchRatio;
 -(void) run4ModelMatchRatio;
+
+/**
+ *  MARK:--------------------辅因子：元素数归一化值（防过抽：因为只有具象的匹配数count才可能长）--------------------
+ */
+@property (assign, nonatomic) CGFloat modelCountRatio;
 
 @end
