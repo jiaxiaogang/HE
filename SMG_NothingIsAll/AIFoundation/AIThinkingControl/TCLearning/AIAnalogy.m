@@ -614,7 +614,7 @@
     
     //51. debug
     [SMGUtils runByMainQueue:^{
-        //[theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"类比GT%ld->GT%ld",assT.pId,absGT.pId) left:0 top:0];
+        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"GT%ld_Abs%ld(%ld)",gtModel.assGT.pId,absGT.pId,absGT.count) left:0 top:0 tvId:3];
     }];
     if (Log4Ana) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
                                protoGT.pId,protoGT.count,CLEANSTR([protoGT getLogDesc:false]),FeatureDesc(protoGT.p,1),

@@ -21,12 +21,14 @@
 @property (weak, nonatomic) IBOutlet UITableView *tv;
 @property (weak, nonatomic) IBOutlet UITableView *previewTableView1;
 @property (weak, nonatomic) IBOutlet UITableView *previewTableView2;
+@property (weak, nonatomic) IBOutlet UITableView *previewTableView3;
 @property (weak, nonatomic) IBOutlet UIButton *playBtn;
 @property (weak, nonatomic) IBOutlet UIImageView *curImgView;
 @property (strong, nonatomic) NSMutableArray *tvDatas;
 @property (assign, nonatomic) NSInteger curSelectRow;
 @property (strong, nonatomic) NSMutableArray *previewDatas1;
 @property (strong, nonatomic) NSMutableArray *previewDatas2;
+@property (strong, nonatomic) NSMutableArray *previewDatas3;
 
 @end
 
@@ -67,22 +69,29 @@
     [self.tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
     //[self.tv setContentInset:UIEdgeInsetsMake(0, -10, 0, -10)];
     
-    //previewTableView
+    //previewTableView1
     self.previewTableView1.delegate = self;
     self.previewTableView1.dataSource = self;
     [self.previewTableView1.layer setBorderWidth:1.0f];
     [self.previewTableView1.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
     
-    //previewTableView
+    //previewTableView2
     self.previewTableView2.delegate = self;
     self.previewTableView2.dataSource = self;
     [self.previewTableView2.layer setBorderWidth:1.0f];
     [self.previewTableView2.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
+    
+    //previewTableView3
+    self.previewTableView3.delegate = self;
+    self.previewTableView3.dataSource = self;
+    [self.previewTableView3.layer setBorderWidth:1.0f];
+    [self.previewTableView3.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
 }
 
 -(void) initData{
     self.previewDatas1 = [NSMutableArray new];
     self.previewDatas2 = [NSMutableArray new];
+    self.previewDatas3 = [NSMutableArray new];
 }
 
 -(void) initDisplay {
@@ -344,6 +353,7 @@
 -(void) removePreviewDatas {
     [self removePreviewDatas:1];
     [self removePreviewDatas:2];
+    [self removePreviewDatas:3];
 }
 
 -(void) removePreviewDatas:(NSInteger)tvId {
@@ -360,11 +370,17 @@
 }
 
 -(UITableView*) getPreviewTV:(NSInteger)tvId {
-    return tvId == 1 ? self.previewTableView1 : self.previewTableView2;
+    if (tvId == 1) return self.previewTableView1;
+    if (tvId == 2) return self.previewTableView2;
+    if (tvId == 3) return self.previewTableView3;
+    return self.previewTableView1;
 }
 
 -(NSMutableArray*) getPreviewDatas:(NSInteger)tvId {
-    return tvId == 1 ? self.previewDatas1 : self.previewDatas2;
+    if (tvId == 1) return self.previewDatas1;
+    if (tvId == 2) return self.previewDatas2;
+    if (tvId == 3) return self.previewDatas3;
+    return self.previewDatas1;
 }
 
 //MARK:===============================================================
@@ -411,18 +427,18 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if ([tableView isEqual:self.previewTableView1]) return self.previewDatas1.count;
     if ([tableView isEqual:self.previewTableView2]) return self.previewDatas2.count;
+    if ([tableView isEqual:self.previewTableView3]) return self.previewDatas3.count;
     return self.tvDatas.count;
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     UITableViewCell *cell = [[UITableViewCell alloc] init];
-    if ([tableView isEqual:self.previewTableView1]) {
-        MapModel *model = ARR_INDEX(self.previewDatas1, indexPath.row);
-        ImgTrainerPreview *subPreview = model.v2;
-        [cell addSubview:subPreview];
-        return cell;
-    }
-    if ([tableView isEqual:self.previewTableView2]) {
-        MapModel *model = ARR_INDEX(self.previewDatas2, indexPath.row);
+    NSInteger tvId = -1;
+    if ([tableView isEqual:self.previewTableView1]) tvId = 1;
+    if ([tableView isEqual:self.previewTableView2]) tvId = 2;
+    if ([tableView isEqual:self.previewTableView3]) tvId = 3;
+    if (tvId == 1 || tvId == 2 || tvId == 3) {
+        NSArray *datas = [self getPreviewDatas:tvId];
+        MapModel *model = ARR_INDEX(datas, indexPath.row);
         ImgTrainerPreview *subPreview = model.v2;
         [cell addSubview:subPreview];
         return cell;
@@ -436,13 +452,13 @@
     return cell;
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2]) {
+    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2] || [tableView isEqual:self.previewTableView3]) {
         return 115;
     }
     return 20;
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2]) {
+    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2] || [tableView isEqual:self.previewTableView3]) {
         return;
     }
     self.curSelectRow = indexPath.row;
