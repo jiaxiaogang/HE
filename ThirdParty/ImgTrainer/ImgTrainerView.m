@@ -22,6 +22,7 @@
 @property (weak, nonatomic) IBOutlet UITableView *previewTableView1;
 @property (weak, nonatomic) IBOutlet UITableView *previewTableView2;
 @property (weak, nonatomic) IBOutlet UITableView *previewTableView3;
+@property (weak, nonatomic) IBOutlet UITableView *previewTableView4;
 @property (weak, nonatomic) IBOutlet UIButton *playBtn;
 @property (weak, nonatomic) IBOutlet UIImageView *curImgView;
 @property (strong, nonatomic) NSMutableArray *tvDatas;
@@ -29,6 +30,7 @@
 @property (strong, nonatomic) NSMutableArray *previewDatas1;
 @property (strong, nonatomic) NSMutableArray *previewDatas2;
 @property (strong, nonatomic) NSMutableArray *previewDatas3;
+@property (strong, nonatomic) NSMutableArray *previewDatas4;
 
 @end
 
@@ -46,7 +48,7 @@
 
 -(void) initView{
     //self
-    CGFloat width = 670;
+    CGFloat width = ScreenWidth - 200;
     [self setFrame:CGRectMake(ScreenWidth - width - 20, 64, width, ScreenHeight - 128)];
     
     //containerView
@@ -69,29 +71,25 @@
     [self.tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
     //[self.tv setContentInset:UIEdgeInsetsMake(0, -10, 0, -10)];
     
-    //previewTableView1
-    self.previewTableView1.delegate = self;
-    self.previewTableView1.dataSource = self;
-    [self.previewTableView1.layer setBorderWidth:1.0f];
-    [self.previewTableView1.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
-    
-    //previewTableView2
-    self.previewTableView2.delegate = self;
-    self.previewTableView2.dataSource = self;
-    [self.previewTableView2.layer setBorderWidth:1.0f];
-    [self.previewTableView2.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
-    
-    //previewTableView3
-    self.previewTableView3.delegate = self;
-    self.previewTableView3.dataSource = self;
-    [self.previewTableView3.layer setBorderWidth:1.0f];
-    [self.previewTableView3.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
+    //previewTableView
+    [self initPrefiewTV:self.previewTableView1];
+    [self initPrefiewTV:self.previewTableView2];
+    [self initPrefiewTV:self.previewTableView3];
+    [self initPrefiewTV:self.previewTableView4];
+}
+
+-(void) initPrefiewTV:(UITableView*)tv {
+    tv.delegate = self;
+    tv.dataSource = self;
+    [tv.layer setBorderWidth:1.0f];
+    [tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
 }
 
 -(void) initData{
     self.previewDatas1 = [NSMutableArray new];
     self.previewDatas2 = [NSMutableArray new];
     self.previewDatas3 = [NSMutableArray new];
+    self.previewDatas4 = [NSMutableArray new];
 }
 
 -(void) initDisplay {
@@ -354,6 +352,7 @@
     [self removePreviewDatas:1];
     [self removePreviewDatas:2];
     [self removePreviewDatas:3];
+    [self removePreviewDatas:4];
 }
 
 -(void) removePreviewDatas:(NSInteger)tvId {
@@ -373,6 +372,7 @@
     if (tvId == 1) return self.previewTableView1;
     if (tvId == 2) return self.previewTableView2;
     if (tvId == 3) return self.previewTableView3;
+    if (tvId == 4) return self.previewTableView4;
     return self.previewTableView1;
 }
 
@@ -380,6 +380,7 @@
     if (tvId == 1) return self.previewDatas1;
     if (tvId == 2) return self.previewDatas2;
     if (tvId == 3) return self.previewDatas3;
+    if (tvId == 4) return self.previewDatas4;
     return self.previewDatas1;
 }
 
@@ -428,6 +429,7 @@
     if ([tableView isEqual:self.previewTableView1]) return self.previewDatas1.count;
     if ([tableView isEqual:self.previewTableView2]) return self.previewDatas2.count;
     if ([tableView isEqual:self.previewTableView3]) return self.previewDatas3.count;
+    if ([tableView isEqual:self.previewTableView4]) return self.previewDatas4.count;
     return self.tvDatas.count;
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
@@ -436,7 +438,8 @@
     if ([tableView isEqual:self.previewTableView1]) tvId = 1;
     if ([tableView isEqual:self.previewTableView2]) tvId = 2;
     if ([tableView isEqual:self.previewTableView3]) tvId = 3;
-    if (tvId == 1 || tvId == 2 || tvId == 3) {
+    if ([tableView isEqual:self.previewTableView4]) tvId = 4;
+    if (tvId == 1 || tvId == 2 || tvId == 3 || tvId == 4) {
         NSArray *datas = [self getPreviewDatas:tvId];
         MapModel *model = ARR_INDEX(datas, indexPath.row);
         ImgTrainerPreview *subPreview = model.v2;
@@ -452,13 +455,13 @@
     return cell;
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2] || [tableView isEqual:self.previewTableView3]) {
+    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2] || [tableView isEqual:self.previewTableView3] || [tableView isEqual:self.previewTableView4]) {
         return 115;
     }
     return 20;
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2] || [tableView isEqual:self.previewTableView3]) {
+    if ([tableView isEqual:self.previewTableView1] || [tableView isEqual:self.previewTableView2] || [tableView isEqual:self.previewTableView3] || [tableView isEqual:self.previewTableView4]) {
         return;
     }
     self.curSelectRow = indexPath.row;
