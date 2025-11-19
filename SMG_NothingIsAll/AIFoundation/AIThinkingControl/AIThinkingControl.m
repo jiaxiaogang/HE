@@ -309,6 +309,11 @@ static AIThinkingControl *_instance;
     // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
     // 2025.11.07: 用assST构建protoGT（参考35091-TODO1）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
+    
+    goodSTModels = [SMGUtils filterArr:goodSTModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
+        return (float)item.bestGVs.count / item.assT.count > 0.65f;
+    }];
+    
     NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
         // 数据准备。
         CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
