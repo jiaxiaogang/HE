@@ -338,7 +338,22 @@ static AIThinkingControl *_instance;
         
         // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
         CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
-        NSLog(@"assSTAtProtoGT：assST%ld bestGVsAtProtoTRect:%@ assSTAtProtoGT:%@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
+        
+        
+        // TODOTOMORROW20251120：0的下半部分，在ST中显示在正确的位置（可视在下半部分），但在ProtoGT中，显示在了上面（y为负）。
+        // 日志：assST33 bestGVsAtProtoTRect:<x0 y0 w21 h18> assSTAtProtoGT:<x-6 y-9 w27 h27>
+        // 日志：assST355 bestGVsAtProtoTRect:<x0 y0 w21 h18> assSTAtProtoGT:<x-6 y-9 w27 h27>
+        // 1、把assSTAtProtoT打出来，感觉这个assSTAtProtoGT.size=<27,27>，事实上也没铺满啊，这个0显示出界，并且大小也并没有辅满。
+        // 2、因为bestGVsAtProto显示出来局部，与最终assSTAtProto中显示出来整体，虽然显示的一个是局部，一个是整体，但漏出来的部分，应该显示在同一个rect内才对。
+        NSLog(@"assST%ld bestGVsAtProtoTRect:%@ assSTAtProtoGT:%@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
+        if ([logDesc isEqual:@"Mnist0_4"] && assST_ProtoT.origin.y < 0) {
+            [model run4BestGvsAtProtoTRect]; // TempDebug
+            NSLog(@"");
+            
+            
+        }
+        
+        
         return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
 
     }];
