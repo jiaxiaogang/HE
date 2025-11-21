@@ -346,7 +346,13 @@ static AIThinkingControl *_instance;
         // 1、把assSTAtProtoT打出来，感觉这个assSTAtProtoGT.size=<27,27>，事实上也没铺满啊，这个0显示出界，并且大小也并没有辅满。
         // 2、因为bestGVsAtProto显示出来局部，与最终assSTAtProto中显示出来整体，虽然显示的一个是局部，一个是整体，但漏出来的部分，应该显示在同一个rect内才对。
         NSLog(@"assST%ld bestGVsAtProtoTRect:%@ assSTAtProtoGT:%@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
+        
+        // 经如下日志调试分析，T33在左上角的错位问题是正常的（见36095-5）。
         if ([logDesc isEqual:@"Mnist0_4"] && assST_ProtoT.origin.y < 0) {
+            NSLog(@"bestGVs_AssST:%@",Rect2Str(bestGVs_AssST));
+            NSLog(@"bestGVs_ProtoT:%@",Rect2Str(bestGVs_ProtoT));
+            NSLog(@"assSTRect:%@",Rect2Str(assSTRect));
+            NSLog(@"结果：assST_ProtoT:%@",Rect2Str(assST_ProtoT));
             [model run4BestGvsAtProtoTRect]; // TempDebug
             NSLog(@"");
             
