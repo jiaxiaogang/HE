@@ -339,29 +339,15 @@ static AIThinkingControl *_instance;
         // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
         CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
         
+        // TODOTOMORROW20251122：总感觉这里还是不太对，如下：
+        // 日志1：单特征识别结果:T468     (7/47)     匹配度:0.46     防抽:1.00     防具:0.00 =     区域竞争力:0.52(290/25=12)
+        // 日志2：item在ProtoGT中范围(ST468)：BestGVs = <x0 y16 w21 h9> AssST = <x-6 y16 w27 h27>
+        // 说明：上面日志中，BestGVs明明是0的顶部拱形，但它为什么Y会是16，相当于说：虽然这是0的顶部拱形，但却匹配到了Proto中的最底部的锅形。
+        // 分析：看起来，T468也有0.52的区域竞争力，但似乎导致ProtoGT不成形的assST都是末尾几条，看来这几个局部特征确实识别匹配度就不太行。
+        // 明天：还是再多跑跑训练，看st识别的匹配度能不能提升上来。
         
-        // TODOTOMORROW20251120：0的下半部分，在ST中显示在正确的位置（可视在下半部分），但在ProtoGT中，显示在了上面（y为负）。
-        // 日志：assST33 bestGVsAtProtoTRect:<x0 y0 w21 h18> assSTAtProtoGT:<x-6 y-9 w27 h27>
-        // 日志：assST355 bestGVsAtProtoTRect:<x0 y0 w21 h18> assSTAtProtoGT:<x-6 y-9 w27 h27>
-        // 1、把assSTAtProtoT打出来，感觉这个assSTAtProtoGT.size=<27,27>，事实上也没铺满啊，这个0显示出界，并且大小也并没有辅满。
-        // 2、因为bestGVsAtProto显示出来局部，与最终assSTAtProto中显示出来整体，虽然显示的一个是局部，一个是整体，但漏出来的部分，应该显示在同一个rect内才对。
-        NSLog(@"assST%ld bestGVsAtProtoTRect:%@ assSTAtProtoGT:%@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
-        
-        // 经如下日志调试分析，T33在左上角的错位问题是正常的（见36095-5）。
-        if ([logDesc isEqual:@"Mnist0_4"] && assST_ProtoT.origin.y < 0) {
-            NSLog(@"bestGVs_AssST:%@",Rect2Str(bestGVs_AssST));
-            NSLog(@"bestGVs_ProtoT:%@",Rect2Str(bestGVs_ProtoT));
-            NSLog(@"assSTRect:%@",Rect2Str(assSTRect));
-            NSLog(@"结果：assST_ProtoT:%@",Rect2Str(assST_ProtoT));
-            [model run4BestGvsAtProtoTRect]; // TempDebug
-            NSLog(@"");
-            
-            
-        }
-        
-        
+        NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
         return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
-
     }];
     if (gtOrders.count == 0) return;
     
