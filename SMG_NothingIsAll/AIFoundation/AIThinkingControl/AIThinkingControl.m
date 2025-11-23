@@ -338,14 +338,6 @@ static AIThinkingControl *_instance;
         
         // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
         CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
-        
-        // TODOTOMORROW20251122：总感觉这里还是不太对，如下：
-        // 日志1：单特征识别结果:T468     (7/47)     匹配度:0.46     防抽:1.00     防具:0.00 =     区域竞争力:0.52(290/25=12)
-        // 日志2：item在ProtoGT中范围(ST468)：BestGVs = <x0 y16 w21 h9> AssST = <x-6 y16 w27 h27>
-        // 说明：上面日志中，BestGVs明明是0的顶部拱形，但它为什么Y会是16，相当于说：虽然这是0的顶部拱形，但却匹配到了Proto中的最底部的锅形。
-        // 分析：看起来，T468也有0.52的区域竞争力，但似乎导致ProtoGT不成形的assST都是末尾几条，看来这几个局部特征确实识别匹配度就不太行。
-        // 明天：还是再多跑跑训练，看st识别的匹配度能不能提升上来。
-        
         NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
         return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
     }];
