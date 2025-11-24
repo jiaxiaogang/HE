@@ -47,7 +47,7 @@
 -(NSString*) getSTMatchDesc;
 -(NSString*) getGTMatchDesc;
 
-@property (assign, nonatomic) NSInteger areaRankSum; // 考试名次之和（越大越好）。
+@property (assign, nonatomic) CGFloat areaRankSum; // 考试名次之和（越大越好）。
 @property (assign, nonatomic) NSInteger areaRankNum; // 考试次数（用于计算均排名）。
 -(CGFloat) areaRankScore; // 平均名次（越大越好）。
 -(void) run4ItemAreaRankScore:(NSArray*)stModels;
