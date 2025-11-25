@@ -89,7 +89,7 @@
     // return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
     // return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f\t稳中取抽象:%.1f = 综合:%.2f",self.areaRankRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.conPortStrongRatio,self.areaRankRatio*self.matchAssRatio*self.bestGVsCountRatio*self.conPortStrongRatio);
     // return STRFORMAT(@"\t匹配数:(%ld/%ld) 区度:%.1f x 防抽:%.1f x 防具:%.1f = 综合:%.2f",self.bestGVs.count,self.assT.count,self.areaRankRatio,(1-self.absLevelRatio),self.conPortStrongRatio,self.areaRankRatio*self.conPortStrongRatio*self.absLevelRatio);
-    return STRFORMAT(@"匹配度:%.2f \t防抽:%.2f \t防具:%.2f = \t区域竞争力:%.2f(%ld/%ld=%.0f)",
+    return STRFORMAT(@"匹配度:%.2f \t防抽:%.2f \t防具:%.2f = \t区域竞争力:%.2f(%.0f/%ld=%.0f)",
                      self.matchValue,self.absLevelRatio,self.conPortStrongRatio,self.areaRankRatio,
                      self.areaRankSum,self.areaRankNum,self.areaRankScore);
 }
@@ -101,7 +101,7 @@
 
 // 平均名次（越大越好）（求平均原因：参考35076-TODO2.3）。
 -(CGFloat) areaRankScore {
-    return self.areaRankNum > 0 ? self.areaRankSum / (float)self.areaRankNum : 0;
+    return self.areaRankNum > 0 ? self.areaRankSum / self.areaRankNum : 0.0f;
 }
 
 // ST分区均衡竞争算法：分别对每个stModel所在的区域进行竞争排名计分。
