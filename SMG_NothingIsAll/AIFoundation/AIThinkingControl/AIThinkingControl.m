@@ -308,38 +308,50 @@ static AIThinkingControl *_instance;
     // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
     // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
     // 2025.11.07: 用assST构建protoGT（参考35091-TODO1）。
+    // 2025.11.28: 改回用absST构建ProtoGT（参考35102-方案2）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
+    
+    // 方案1、========== 用assST来构建ProtoGT ==========
+    //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+    //    // 数据准备。
+    //    CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+    //        return item.bestGVAtProtoTRect;
+    //    }];
+    //    CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+    //        return [model.assT rectByIndex:item.assIndex];
+    //    }];
+    //    CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
+    //        return item.CGRectValue;
+    //    }];
+    //
+    //    // ========== 用bestGVs在protoGT和在assST中的rect，推断出整个assST在protoGT中的rect ==========
+    //
+    //    // 方式1 =============> 统一放到protoT坐标系之：现计算。
+    //    // CGFloat wRate = bestGVs_ProtoT.size.width / bestGVs_AssST.size.width;
+    //    // CGFloat hRate = bestGVs_ProtoT.size.height / bestGVs_AssST.size.height;
+    //    // CGSize assST_Proto_Size = CGSizeMake(assSTRect.size.width * wRate, assSTRect.size.height * hRate);
+    //    // CGPoint bestGVs_AssST_Point_ByProto = CGPointMake(bestGVs_AssST.origin.x * wRate, bestGVs_AssST.origin.y * hRate);
+    //
+    //    // 方式2 =============> 增强易读性，封装计算。
+    //    // 统一放到protoT坐标系之：将放到protoT后的assSTRect的尺寸求出来。
+    //    CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
+    //
+    //    // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
+    //    CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
+    //
+    //    // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
+    //    CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
+    //    NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
+    //    return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
+    //}];
+    
+    // 方案2、========== 用absST来构建ProtoGT ==========
     NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-        // 数据准备。
-        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+        if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
+        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
             return item.bestGVAtProtoTRect;
         }];
-        CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return [model.assT rectByIndex:item.assIndex];
-        }];
-        CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
-            return item.CGRectValue;
-        }];
-        
-        // ========== 用bestGVs在protoGT和在assST中的rect，推断出整个assST在protoGT中的rect ==========
-        
-        // 方式1 =============> 统一放到protoT坐标系之：现计算。
-        // CGFloat wRate = bestGVs_ProtoT.size.width / bestGVs_AssST.size.width;
-        // CGFloat hRate = bestGVs_ProtoT.size.height / bestGVs_AssST.size.height;
-        // CGSize assST_Proto_Size = CGSizeMake(assSTRect.size.width * wRate, assSTRect.size.height * hRate);
-        // CGPoint bestGVs_AssST_Point_ByProto = CGPointMake(bestGVs_AssST.origin.x * wRate, bestGVs_AssST.origin.y * hRate);
-        
-        // 方式2 =============> 增强易读性，封装计算。
-        // 统一放到protoT坐标系之：将放到protoT后的assSTRect的尺寸求出来。
-        CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
-        
-        // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
-        CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
-        
-        // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
-        CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
-        NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
-        return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
+        return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
     if (gtOrders.count == 0) return;
     
