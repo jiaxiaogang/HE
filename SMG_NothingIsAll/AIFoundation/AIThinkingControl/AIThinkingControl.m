@@ -351,6 +351,7 @@ static AIThinkingControl *_instance;
         CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
             return item.bestGVAtProtoTRect;
         }];
+        NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(bestGVs_ProtoT));
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
     if (gtOrders.count == 0) return;
