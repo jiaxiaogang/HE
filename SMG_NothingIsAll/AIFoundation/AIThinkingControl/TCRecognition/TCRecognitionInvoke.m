@@ -378,7 +378,6 @@
             
             // 收集首条bestGV
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
-            NSLog(@"newItem:T%ld.%ld %@",model.assT.pId,beginAssIndex,Rect2Str(lastProtoRect));
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
             
@@ -1713,29 +1712,6 @@
     CGFloat scale = NUMTOOK(best.v3).floatValue;
     CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
     CGFloat diffValue = NUMTOOK(best.v4).floatValue;
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    // TODOTOMORROW20251130：经查，ST436就是0的下半部分，却显示到了顶端，每一条itemGV收集时的Rect数据如下。
-    //3121 [23:54:36:047 TI TCRecognitionInvo..1717] newItem:436.7 <x7 y15 w7 h7>
-    //3122 [23:54:36:047 TI TCRecognitionInvo..1717] newItem:436.8 <x7 y17 w2 h2>
-    //3123 [23:54:36:048 TI TCRecognitionInvo..1717] newItem:436.9 <x12 y17 w2 h2>
-    //3124 [23:54:36:048 TI TCRecognitionInvo..1717] newItem:436.0 <x0 y8 w7 h7>
-    //3125 [23:54:36:049 TI TCRecognitionInvo..1717] newItem:436.1 <x7 y8 w7 h7>
-    //3126 [23:54:36:049 TI TCRecognitionInvo..1717] newItem:436.2 <x14 y8 w7 h7>
-    //3127 [23:54:36:050 TI TCRecognitionInvo..1717] newItem:436.4 <x9 y13 w2 h2>
-    //3247 [23:54:36:133 TI TCRecognitionInvo..1717] newItem:436.4 <x24 y24 w2 h2>
-    //4030 [23:54:37:868 TI AIThinkingControl.m 354] item在ProtoGT中范围(ST436)：BestGVs = <x0 y0 w27 h18> AssST = <x0 y0 w27 h18>
-    //分析：如上日志，436.4有两条，第二条是maxY=26的，但最终打出的maxY=18，肯定中间还是有什么计算问题，明天继续追查下。
-    //看起来是union后，rect.y置0了，但其其实并不是0。
-    
-    
-    
-    
-    
-    
-    
-    
-    NSLog(@"newItem:T%ld.%ld %@",assT.pId,curIndex,Rect2Str(lastProtoRect));
     return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
 }
 
