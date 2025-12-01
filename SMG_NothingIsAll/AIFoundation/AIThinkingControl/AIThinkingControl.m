@@ -349,6 +349,30 @@ static AIThinkingControl *_instance;
     NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
         if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
         CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            NSLog(@"unionBestGVRect:T%ld.%ld %@",model.assT.pId,item.assIndex,Rect2Str(item.bestGVAtProtoTRect));
+            
+//            2864 [20:52:16:284 TI TCRecognitionInvo..1738] newItem:609.1 <x9 y0 w9 h9>
+//            2865 [20:52:16:285 TI TCRecognitionInvo..1738] newItem:609.2 <x18 y0 w9 h9>
+//            2866 [20:52:16:286 TI TCRecognitionInvo..1738] newItem:609.4 <x15 y3 w3 h3>
+//            2867 [20:52:16:286 TI TCRecognitionInvo..1738] newItem:609.5 <x15 y6 w3 h3>
+//            2868 [20:52:16:287 TI TCRecognitionInvo..1738] newItem:609.6 <x9 y9 w9 h9>
+//            2869 [20:52:16:287 TI TCRecognitionInvo..1738] newItem:609.7 <x9 y9 w3 h3>
+//            2870 [20:52:16:287 TI TCRecognitionInvo..1738] newItem:609.8 <x9 y12 w3 h3>
+//            2871 [20:52:16:288 TI TCRecognitionInvo..1738] newItem:609.9 <x15 y12 w3 h3>
+//
+//            5392 [20:52:18:920 TI AIThinkingControl.m 352] unionBestGVRect:609.0 <x0 y0 w9 h9>
+//            5393 [20:52:18:920 TI AIThinkingControl.m 352] unionBestGVRect:609.1 <x9 y0 w9 h9>
+//            5394 [20:52:18:921 TI AIThinkingControl.m 352] unionBestGVRect:609.2 <x18 y0 w9 h9>
+//            5395 [20:52:18:921 TI AIThinkingControl.m 352] unionBestGVRect:609.4 <x15 y3 w3 h3>
+//            5396 [20:52:18:921 TI AIThinkingControl.m 352] unionBestGVRect:609.5 <x15 y6 w3 h3>
+//            5397 [20:52:18:922 TI AIThinkingControl.m 352] unionBestGVRect:609.6 <x9 y9 w9 h9>
+//            5398 [20:52:18:922 TI AIThinkingControl.m 352] unionBestGVRect:609.7 <x9 y9 w3 h3>
+//            5399 [20:52:18:922 TI AIThinkingControl.m 352] unionBestGVRect:609.8 <x9 y12 w3 h3>
+//            5400 [20:52:18:922 TI AIThinkingControl.m 352] unionBestGVRect:609.9 <x15 y12 w3 h3>
+//            5401 [20:52:18:923 TI AIThinkingControl.m 378] item在ProtoGT中范围(ST609)：BestGVs = <x0 y0 w27 h18> AssST = <x0 y0 w27 h18>
+            
+            
+            
             return item.bestGVAtProtoTRect;
         }];
         NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(bestGVs_ProtoT));

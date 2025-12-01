@@ -378,7 +378,7 @@
             
             // 收集首条bestGV
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
-            NSLog(@"newItem:%ld.%ld %@",gModel.match_p.pointerId,beginAssIndex,Rect2Str(lastProtoRect));
+            NSLog(@"newItem:T%ld.%ld %@",model.assT.pId,beginAssIndex,Rect2Str(lastProtoRect));
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
             
@@ -1726,7 +1726,7 @@
     //3247 [23:54:36:133 TI TCRecognitionInvo..1717] newItem:436.4 <x24 y24 w2 h2>
     //4030 [23:54:37:868 TI AIThinkingControl.m 354] item在ProtoGT中范围(ST436)：BestGVs = <x0 y0 w27 h18> AssST = <x0 y0 w27 h18>
     //分析：如上日志，436.4有两条，第二条是maxY=26的，但最终打出的maxY=18，肯定中间还是有什么计算问题，明天继续追查下。
-
+    //看起来是union后，rect.y置0了，但其其实并不是0。
     
     
     
@@ -1735,7 +1735,7 @@
     
     
     
-    NSLog(@"newItem:%ld.%ld %@",assT.pId,curIndex,Rect2Str(lastProtoRect));
+    NSLog(@"newItem:T%ld.%ld %@",assT.pId,curIndex,Rect2Str(lastProtoRect));
     return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
 }
 
