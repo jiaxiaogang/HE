@@ -353,8 +353,12 @@ static AIThinkingControl *_instance;
         }];
         
         
-        // TODOTOMORROW20251202: gvsAtProtoGT通过union计算应该是错误的，没有topLeftMargin值。
-        // 可以把assSTAtProto的topLeft值取出来计进去即可。
+        // TODOTOMORROW20251202: 训练3到6张左右时，发现始终不成型。
+        // 疑点：gvsAtProtoGT通过union计算应该是错误的，没有topLeftMargin值。
+        // 思路：可以把assSTAtProto的topLeft值取出来计进去即可。
+        // 回顾：看了下代码，bestGVAtProtoRect应该是正确的，是从protoDic中直接取的rect值，所以不会有错。
+        // 小结：没查到原因，看起来都很正确，明天继续查下。。。
+        // 疑点：难道单纯就是匹配度不行？所以还原不出来ProtoGT的样子？（对比下，0是可以成型的，所以训练0和3时的匹配度区别，或者把别的日志也对比下，看能不能找出区别来）。
         
         // 数据准备。
         CGRect bestGVs_ProtoT2 = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
