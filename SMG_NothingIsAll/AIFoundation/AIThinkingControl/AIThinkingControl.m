@@ -351,6 +351,26 @@ static AIThinkingControl *_instance;
         CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
             return item.bestGVAtProtoTRect;
         }];
+        
+        
+        // TODOTOMORROW20251202: gvsAtProtoGT通过union计算应该是错误的，没有topLeftMargin值。
+        // 可以把assSTAtProto的topLeft值取出来计进去即可。
+        
+        // 数据准备。
+        CGRect bestGVs_ProtoT2 = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            return item.bestGVAtProtoTRect;
+        }];
+        CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            return [model.assT rectByIndex:item.assIndex];
+        }];
+        CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
+            return item.CGRectValue;
+        }];
+        
+        // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
+        CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT2.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A
+        
+        NSLog(@"%@",Rect2Str(model.bestGVsAtProtoTRect));
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
     if (gtOrders.count == 0) return;
