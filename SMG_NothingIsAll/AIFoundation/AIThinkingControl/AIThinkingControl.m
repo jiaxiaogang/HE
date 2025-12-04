@@ -464,7 +464,7 @@ static AIThinkingControl *_instance;
             }];
             
             //7. 收集起来自举算法结果。
-            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model];
             if (!bestItem) continue;
             [model.bestGVs addObject:bestItem];
         }

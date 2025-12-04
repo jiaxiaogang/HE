@@ -61,6 +61,7 @@
                  protoColorDic:(NSDictionary*)protoColorDic
                             ds:(NSString*)ds
                   dataDicCache:(NSDictionary*)dataDicCache
-                    vInfoCache:(NSDictionary*)vInfoCache;
+                    vInfoCache:(NSDictionary*)vInfoCache
+                         model:(AIFeatureJvBuModel*)model;
 
 @end

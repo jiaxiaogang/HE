@@ -236,7 +236,7 @@
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc);
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ %p:RECT:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,model,Rect2Str(model.bestGVsAtProtoTRect));
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
         }];
@@ -400,7 +400,7 @@
             CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
             
             // 收集首条bestGV
-            NSLog(@"识别assST%ld.%ld %@ %@ begin ==>",assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
+            NSLog(@"%p: 识别assST%ld.%ld %@ %@ begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
@@ -409,7 +409,7 @@
             for (NSInteger i = 1; i < assT.count; i++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [model.bestGVs addObject:bestItem];
@@ -1632,7 +1632,8 @@
                  protoColorDic:(NSDictionary*)protoColorDic
                             ds:(NSString*)ds
                   dataDicCache:(NSDictionary*)dataDicCache
-                    vInfoCache:(NSDictionary*)vInfoCache {
+                    vInfoCache:(NSDictionary*)vInfoCache
+                         model:(AIFeatureJvBuModel*)model {
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
     AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
@@ -1736,7 +1737,7 @@
     CGFloat scale = NUMTOOK(best.v3).floatValue;
     CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
     CGFloat diffValue = NUMTOOK(best.v4).floatValue;
-    NSLog(@"识别assST%ld.%ld %@ %@",assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
+    NSLog(@"%p: 识别assST%ld.%ld %@ %@",model,assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
     return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
 }
 
