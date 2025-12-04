@@ -261,6 +261,29 @@
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
     
+    // TODOTOMORROW20251204: 会不会是此处防重太严格了。
+    // 1. 切入点如果错了位，后面的都会错位。
+    //    > 可以打日志验证一下切入点是不是已经错位了，这个大概念是会的，毕竟就一个GV错点位可太正常了。
+    // 2. 如果错位的已经识别了，那么不错位的也没资格再进来了。
+    //    > 可以关掉防重试一下，看能不能有更准确的识别进来。
+    
+    
+    // 3. 调试：每次收集GV时，打出此日志：
+    // NSLog(@"识别assST%ld.%ld %@ %@ begin ==>",assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
+    // 结果打出取0下半部分显示到顶端时的某一个assST的识别结果日志如下：
+    //    > 识别assST194.6 <x0 y9 w9 h9> <x0 y15 w7 h7> begin ==>
+    //    > 识别assST194.7 <x9 y9 w9 h9> <x7 y15 w7 h7>
+    //    > 识别assST194.8 <x9 y12 w3 h3> <x7 y17 w2 h2>
+    //    > 识别assST194.9 <x15 y12 w3 h3> <x12 y17 w2 h2>
+    //    > 识别assST194.0 <x0 y0 w9 h9> <x0 y8 w7 h7>
+    //    > 识别assST194.1 <x9 y0 w9 h9> <x7 y8 w7 h7>
+    //    > 识别assST194.2 <x18 y0 w9 h9> <x14 y8 w7 h7>
+    //    > 识别assST194.4 <x12 y6 w3 h3> <x9 y13 w2 h2>
+    // 如上日志中：ProtoRect的X最小=0，但Y最小=7。但可视化的这一条assST扔显示在顶端了，这显然不对，明明匹配了Proto的下半部分0，为什么可视化到了顶端呢？
+        
+    
+    
+    
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
     if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
@@ -377,6 +400,7 @@
             CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
             
             // 收集首条bestGV
+            NSLog(@"识别assST%ld.%ld %@ %@ begin ==>",assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
@@ -1712,6 +1736,7 @@
     CGFloat scale = NUMTOOK(best.v3).floatValue;
     CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
     CGFloat diffValue = NUMTOOK(best.v4).floatValue;
+    NSLog(@"识别assST%ld.%ld %@ %@",assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
     return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
 }
 
