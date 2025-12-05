@@ -384,7 +384,7 @@ static AIThinkingControl *_instance;
         // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
         CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT2.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A
         
-        NSLog(@"%@",Rect2Str(model.bestGVsAtProtoTRect));
+        // NSLog(@"%@",Rect2Str(model.bestGVsAtProtoTRect));
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
     if (gtOrders.count == 0) return;
