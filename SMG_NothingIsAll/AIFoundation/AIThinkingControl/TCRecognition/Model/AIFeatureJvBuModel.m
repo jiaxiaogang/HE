@@ -111,6 +111,10 @@
     CGRect protoR = self.bestGVsAtProtoTRect;
     CGPoint centP = [MathUtils getRectCenterPoint:protoR];
     
+    // TODOTOMORROW20251206: 查下区域竞争算法，训练多个0后，ST识别的前20名会有严重的同质化问题（全是0的下半部分）。
+    // 改下此处，不能包含就同步竞争，不然最大的那个GV，肯定啥啥都包含。
+    // 得改成，不仅包含，还得宽高相近（注意assST和protoST有一个比例）。
+    
     // 缩放大1.3倍区域，找出所有在这个区域里的stModels（参考35076-TODO2）。
     CGFloat scale = 1.3f;
     CGRect zoneRect = CGRectMake(centP.x - protoR.size.width * scale * 0.5f, centP.y - protoR.size.height * scale * 0.5f, protoR.size.width * scale, protoR.size.height * scale);
