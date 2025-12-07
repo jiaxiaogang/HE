@@ -111,15 +111,15 @@
     CGRect protoR = self.bestGVsAtProtoTRect;
     CGPoint centP = [MathUtils getRectCenterPoint:protoR];
     
-    // TODOTOMORROW20251206: 查下区域竞争算法，训练多个0后，ST识别的前20名会有严重的同质化问题（全是0的下半部分）。
-    // 改下此处，不能包含就同步竞争，不然最大的那个GV，肯定啥啥都包含。
-    // 得改成，不仅包含，还得宽高相近（注意assST和protoST有一个比例）。
-    
     // 缩放大1.3倍区域，找出所有在这个区域里的stModels（参考35076-TODO2）。
+    // 2025.12.07: BUG：查训练多个0后，ST识别的前20名会有严重的同质化问题（全是0的下半部分），所以：此处改成，不仅包含，还得宽高相近（不然最大的那个GV全包含，所有gv都得先把它这个老大干掉才行）。
     CGFloat scale = 1.3f;
     CGRect zoneRect = CGRectMake(centP.x - protoR.size.width * scale * 0.5f, centP.y - protoR.size.height * scale * 0.5f, protoR.size.width * scale, protoR.size.height * scale);
     NSArray *zoneSTModels = [SMGUtils filterArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
-        return CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
+        CGFloat wRate = item.bestGVsAtProtoTRect.size.width / protoR.size.width;
+        CGFloat hRate = item.bestGVsAtProtoTRect.size.height / protoR.size.height;
+        BOOL whValid = wRate > 0.77f && wRate < 1.3f && hRate > 0.77f && hRate < 1.3f;
+        return whValid && CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
     }];
     
     // 给区域内的stModels排名 & 并计分 & 计次（排名越大越好）。
