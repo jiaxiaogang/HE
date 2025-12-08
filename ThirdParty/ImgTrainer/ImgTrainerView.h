@@ -26,6 +26,7 @@
 -(void) setDataForZenTiModel:(AIFeatureZenTiModel*)zenTiModel lab:(NSString*)lab tvId:(NSInteger)tvId;
 -(void) setDataForJvBuModelsV2:(NSArray*)jvBuModels lab:(NSString*)lab tvId:(NSInteger)tvId;//单特征识别结果数组，应该一个个元素显示，而不是一下把所有的显示到一个画布上。
 -(void) setDataForJvBuModelsV3:(NSArray*)jvBuModels lab:(NSString*)lab tvId:(NSInteger)tvId;//有BUG，可视化像一块块分裂着。
+-(void) setDataForJvBuModelV3:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId gvIndex:(NSInteger)gvIndex;//把jvBuModel中的index下标的gv可视化出来。
 -(void) setDataForAlgs:(NSArray*)models tvId:(NSInteger)tvId;
 
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;

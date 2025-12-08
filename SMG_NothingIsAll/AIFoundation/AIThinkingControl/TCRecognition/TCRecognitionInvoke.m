@@ -241,6 +241,15 @@
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
         }];
+        
+        // TODOTOMORROW20251208: 调试为什么0的下半部分，显示在顶端了。
+        if ([decoratorJvBuModel.stModels indexOfObject:model] == 0) {
+            [SMGUtils runByMainQueue:^{
+                for (NSInteger i = 0; i < model.bestGVs.count; i++) {
+                    [theApp.imgTrainerView setDataForJvBuModelV3:model lab:STRFORMAT(@"ST%ld.%ld",model.assT.pId,i) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:2 gvIndex:i];
+                }
+            }];
+        }
     }
     
     //61. debugLog
@@ -405,10 +414,11 @@
             
             // TODOTOMORROW20251208: 继续查下这里，训练0到第6张时，明明是0的下半部分，为什么仍是识别到顶部了。
             // 看能不能精准的把日志打到第6个0的第一个assST结果，查哪里有计算错误，还是itemGV的匹配度本来就不高，匹配错了？还是那个锚点计算有问题，本来就已在特定情况下有错位了？
+            // 明天继续查下，ST识别之初，为什么把第一条assST激活到的，是哪个rect激活到了哪块rect，具体再追查0的下半部分，显示到了顶端的问题。
             
             
             // 收集首条bestGV
-            NSLog(@"%p: 识别assST%ld.%ld %@ %@ begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
+            NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gModel.matchValue);
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
@@ -1745,7 +1755,7 @@
     CGFloat scale = NUMTOOK(best.v3).floatValue;
     CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
     CGFloat diffValue = NUMTOOK(best.v4).floatValue;
-    NSLog(@"%p: 识别assST%ld.%ld %@ %@",model,assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
+    NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f",model,assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gMatchValue);
     return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
 }
 
