@@ -370,20 +370,6 @@ static AIThinkingControl *_instance;
         //      问题1是GT识别结果总是较少（要把竞争力调低一些试下，即改为末尾淘汰）。
         //      问题2是assST识别结果的位置也很多偏移错误，rect应该还是计算有错误，单通过代码看不出问题，深入到某个assST的数据细节中查一下，看其偏移原因是什么。
         
-        // 数据准备。
-        CGRect bestGVs_ProtoT2 = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return item.bestGVAtProtoTRect;
-        }];
-        CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return [model.assT rectByIndex:item.assIndex];
-        }];
-        CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
-            return item.CGRectValue;
-        }];
-        
-        // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
-        CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT2.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A
-        
         // NSLog(@"%@",Rect2Str(model.bestGVsAtProtoTRect));
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
@@ -392,8 +378,10 @@ static AIThinkingControl *_instance;
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     [protoGT updateLogDescItem:logDesc];
+    CGRect jvs_ProtoGTRect = [SMGUtils convertArr2Rect:gtOrders itemRectBlock:^CGRect(InputGroupFeatureModel *item) { return item.rect; }]; // ProtoGT不一定是全局，如果只是一部分，处理下显示时的marginTop和marginLeft。
+    NSLog(@"jvs_ProtoGTRect:%@",Rect2Str(jvs_ProtoGTRect));
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0 tvId:2];
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:jvs_ProtoGTRect.origin.x top:jvs_ProtoGTRect.origin.y tvId:2];
     }];
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     

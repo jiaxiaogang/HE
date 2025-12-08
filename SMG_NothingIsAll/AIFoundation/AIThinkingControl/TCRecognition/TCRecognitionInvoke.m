@@ -403,6 +403,10 @@
             AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:ARR_INDEX(assT.content_ps, beginAssIndex) tDS:ds];
             CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
             
+            // TODOTOMORROW20251208: 继续查下这里，训练0到第6张时，明明是0的下半部分，为什么仍是识别到顶部了。
+            // 看能不能精准的把日志打到第6个0的第一个assST结果，查哪里有计算错误，还是itemGV的匹配度本来就不高，匹配错了？还是那个锚点计算有问题，本来就已在特定情况下有错位了？
+            
+            
             // 收集首条bestGV
             NSLog(@"%p: 识别assST%ld.%ld %@ %@ begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
