@@ -219,6 +219,7 @@ static AIThinkingControl *_instance;
 }
 
 //单通道
+//TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
 -(void) commitInputWithSplitV2_Single_TonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -234,6 +235,15 @@ static AIThinkingControl *_instance;
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
+        
+        //2025.12.09: 为了防止startX=0,startY=0的识别太多（会导致差生占位，优生没位置了，错位的差生明明错位了，因为startXY=0都显示在顶端），改为不根据切入点防重了。
+        // TODOTOMORROW20251209: 可是成功过不表示最准确，可能是错位的手写0只有30%的匹配度。
+        // 分析1：说白了，差生先进占了位置优生就没位置了，所以这个防重方式肯定是不对的。
+        // 分析2：dotSize和xy循环切入点时从0开始循环的，所以往往顶端的差生先进来，也所以可视化时0的下半部分被显示到了顶端（差生的marginLeftTop都=0）。
+        // 分析3：看来这个切入点肯定不能这么防重了，只能在报续识别算法中中，尽量搞复用（找具体识别代码哪里可以优化）。
+        // 方案1：应该是同一个protoRect区域对同一个assST.gvIndex进行防重。
+        // 方案2：或者干脆先不防重，跑下效果看看有没错位bug了，然后再看性能看着再优化。
+        // 方案3：还是通过竞争来实现优化吧，比如ref只激活前20%等方式。
         
         //2025.05.20: 从粗到细，识别十条单特征即可。
         //2025.05.20: BUG-protoGT经常不全：比如有时只识别了0的上半部分，没下半部分，因为这里达到限制条数中断导致的，先关掉，不然肯定有识别一半就中断的情况。
