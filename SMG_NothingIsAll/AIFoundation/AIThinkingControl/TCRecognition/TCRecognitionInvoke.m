@@ -220,15 +220,6 @@
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
         }];
-        
-        // TODOTOMORROW20251208: 调试为什么0的下半部分，显示在顶端了。
-        if ([decoratorJvBuModel.stModels indexOfObject:model] == 0) {
-            [SMGUtils runByMainQueue:^{
-                for (NSInteger i = 0; i < model.bestGVs.count; i++) {
-                    [theApp.imgTrainerView setDataForJvBuModelV3:model lab:STRFORMAT(@"ST%ld.%ld",model.assT.pId,i) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:2 gvIndex:i];
-                }
-            }];
-        }
     }
     
     //61. debugLog
@@ -258,31 +249,6 @@
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
-    
-    // TODOTOMORROW20251204: 会不会是此处防重太严格了。
-    // 1. 切入点如果错了位，后面的都会错位。
-    //    > 可以打日志验证一下切入点是不是已经错位了，这个大概念是会的，毕竟就一个GV错点位可太正常了。
-    // 2. 如果错位的已经识别了，那么不错位的也没资格再进来了。
-    //    > 可以关掉防重试一下，看能不能有更准确的识别进来。
-    
-    
-    // 3. 调试：每次收集GV时，打出此日志：
-    // NSLog(@"识别assST%ld.%ld %@ %@ begin ==>",assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect));
-    // 结果打出取0下半部分显示到顶端时的某一个assST的识别结果日志如下：
-    //    > 识别assST194.6 <x0 y9 w9 h9> <x0 y15 w7 h7> begin ==>
-    //    > 识别assST194.7 <x9 y9 w9 h9> <x7 y15 w7 h7>
-    //    > 识别assST194.8 <x9 y12 w3 h3> <x7 y17 w2 h2>
-    //    > 识别assST194.9 <x15 y12 w3 h3> <x12 y17 w2 h2>
-    //    > 识别assST194.0 <x0 y0 w9 h9> <x0 y8 w7 h7>
-    //    > 识别assST194.1 <x9 y0 w9 h9> <x7 y8 w7 h7>
-    //    > 识别assST194.2 <x18 y0 w9 h9> <x14 y8 w7 h7>
-    //    > 识别assST194.4 <x12 y6 w3 h3> <x9 y13 w2 h2>
-    // 如上日志中：ProtoRect的X最小=0，但Y最小=7。但可视化的这一条assST扔显示在顶端了，这显然不对，明明匹配了Proto的下半部分0，为什么可视化到了顶端呢？
-    // 把jvBuModel的model内存地址打出来，发现unionRect计算没问题，这些不在顶端和最后打印的，不是一回事，应该是在中途哪里就被竞争掉了。
-    // 经查：这些是在ST结果竞争中被竞争掉的，看起来应该有竞争问题，比如前20名全是0的下半部分（且是显示在顶端的那些下半部分）。
-    // 所以：查下区域竞争算法，在训练多个0后，为什么ST识别的前20名会有同质化问题这么严重（全是0的下半部分）（查ST竞争算法）。
-    
-    
     
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
@@ -390,19 +356,21 @@
             //2025.05.21: 去掉，如果一张图里有多个3呢，不能暴力的全过滤掉。
             //if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
             
-            // 防重：对相近区域的protoRect的同一个assST的同gvIndex进行防重。
+            // 防重：对相近区域的protoRect的同一个assST的同gvIndex进行防重（参考35104-方案1）。
             AIFeatureJvBuModel *aleardayHavSameJvBuModel = [SMGUtils filterSingleFromArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *oldSTModel) {
-                // 切入assST是同一个。
+                // 切入assST是同一个，才需防重。
                 if (oldSTModel.assT.pId != assT.pId) return false;
                 
-                // 切入assIndex的gv是同一个。
-                AIFeatureJvBuItem *firstGVItem = ARR_INDEX(oldSTModel.bestGVs, 0);
-                if (firstGVItem.assIndex != beginAssIndex) return false;
-                
-                // 切入的protoRect有80%以上的匹配度（交集面积 在 二者面积中 都占80%以上）。
-                CGRect jiaoJiRect = CGRectIntersection(firstGVItem.bestGVAtProtoTRect, protoRect);
-                CGFloat jiaoJiArea = jiaoJiRect.size.width * jiaoJiRect.size.height;
-                return jiaoJiArea > firstGVItem.bestGVAtProtoTRect.size.width * firstGVItem.bestGVAtProtoTRect.size.height * 0.8f && jiaoJiArea > protoRect.size.width * protoRect.size.height * 0.8f;
+                // 切入assIndex的gv是同一个，才需防重。
+                for (AIFeatureJvBuItem *oldGVItem in oldSTModel.bestGVs) {
+                    if (oldGVItem.assIndex == beginAssIndex) {
+                        // 切入的protoRect有80%以上的匹配度（交集面积 在 二者面积中 都占80%以上），则需防重。
+                        CGRect jiaoJiRect = CGRectIntersection(oldGVItem.bestGVAtProtoTRect, protoRect);
+                        CGFloat jiaoJiArea = jiaoJiRect.size.width * jiaoJiRect.size.height;
+                        if (jiaoJiArea > oldGVItem.bestGVAtProtoTRect.size.width * oldGVItem.bestGVAtProtoTRect.size.height * 0.8f && jiaoJiArea > protoRect.size.width * protoRect.size.height * 0.8f) return true;
+                    }
+                }
+                return false;
             }];
             if (aleardayHavSameJvBuModel) continue;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -417,13 +385,8 @@
             AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:ARR_INDEX(assT.content_ps, beginAssIndex) tDS:ds];
             CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
             
-            // TODOTOMORROW20251208: 继续查下这里，训练0到第6张时，明明是0的下半部分，为什么仍是识别到顶部了。
-            // 看能不能精准的把日志打到第6个0的第一个assST结果，查哪里有计算错误，还是itemGV的匹配度本来就不高，匹配错了？还是那个锚点计算有问题，本来就已在特定情况下有错位了？
-            // 明天继续查下，ST识别之初，为什么把第一条assST激活到的，是哪个rect激活到了哪块rect，具体再追查0的下半部分，显示到了顶端的问题。
-            
-            
             // 收集首条bestGV
-            NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gModel.matchValue);
+            // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gModel.matchValue);
             [model.bestGVs addObject:[AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue]];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
@@ -1730,7 +1693,7 @@
     CGFloat scale = NUMTOOK(best.v3).floatValue;
     CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
     CGFloat diffValue = NUMTOOK(best.v4).floatValue;
-    NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f",model,assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gMatchValue);
+    // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f",model,assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gMatchValue);
     return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
 }
 

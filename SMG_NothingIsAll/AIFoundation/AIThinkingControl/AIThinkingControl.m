@@ -236,15 +236,6 @@ static AIThinkingControl *_instance;
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
         
-        //2025.12.09: 为了防止startX=0,startY=0的识别太多（会导致差生占位，优生没位置了，错位的差生明明错位了，因为startXY=0都显示在顶端），改为不根据切入点防重了。
-        // TODOTOMORROW20251209: 可是成功过不表示最准确，可能是错位的手写0只有30%的匹配度。
-        // 分析1：说白了，差生先进占了位置优生就没位置了，所以这个防重方式肯定是不对的。
-        // 分析2：dotSize和xy循环切入点时从0开始循环的，所以往往顶端的差生先进来，也所以可视化时0的下半部分被显示到了顶端（差生的marginLeftTop都=0）。
-        // 分析3：看来这个切入点肯定不能这么防重了，只能在报续识别算法中中，尽量搞复用（找具体识别代码哪里可以优化）。
-        // 方案1：应该是同一个protoRect区域对同一个assST.gvIndex进行防重。
-        // 方案2：或者干脆先不防重，跑下效果看看有没错位bug了，然后再看性能看着再优化。
-        // 方案3：还是通过竞争来实现优化吧，比如ref只激活前20%等方式。
-        
         //2025.05.20: 从粗到细，识别十条单特征即可。
         //2025.05.20: BUG-protoGT经常不全：比如有时只识别了0的上半部分，没下半部分，因为这里达到限制条数中断导致的，先关掉，不然肯定有识别一半就中断的情况。
         //if (jvBuModel.models.count >= 10) break;
@@ -361,25 +352,6 @@ static AIThinkingControl *_instance;
         CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
             return item.bestGVAtProtoTRect;
         }];
-        
-        
-        // TODOTOMORROW20251202: 训练3到6张左右时，发现始终不成型。
-        // 疑点：gvsAtProtoGT通过union计算应该是错误的，没有topLeftMargin值。
-        // 思路：可以把assSTAtProto的topLeft值取出来计进去即可。
-        // 回顾：看了下代码，bestGVAtProtoRect应该是正确的，是从protoDic中直接取的rect值，所以不会有错。
-        // 小结：没查到原因，看起来都很正确，明天继续查下。。。
-        // 疑点：难道单纯就是匹配度不行？所以还原不出来ProtoGT的样子？（对比下，0是可以成型的，所以训练0和3时的匹配度区别，或者把别的日志也对比下，看能不能找出区别来）。
-        
-        // 2025.12.03：调试，结果如下：
-        // 经对比：二者确实有点区别，3感觉st结果匹配度还比较低，但0的识别感觉更同质化，很多都是0的下半部分，并且0的GT识别结果条数也不多，导致GT类比也不多，说白了一共就没几条0的GT。
-        // 反方：GT本来就是个从不成形到成形的演化过程，不可能刚上来就成形，毕竟那么多GT之间来回找规律，哪能一下就找稳。
-        // 正方：可是ProtoGT是根据原图取坐标的匹配的，即使不太准确也应该成形才对（把assST的可视化，加上leftTop和proto原图对齐显示，然后对比看下是不是同位置显示的大概一样？）。
-        //      经测：0加了top和left可视化后，assST识别结果还是有下半部分显示在上面的情况。
-        //      经测：3的st识别结果坐标也不太对，也有各种错位的情况。
-        // 总结一下：经上面调试：
-        //      问题1是GT识别结果总是较少（要把竞争力调低一些试下，即改为末尾淘汰）。
-        //      问题2是assST识别结果的位置也很多偏移错误，rect应该还是计算有错误，单通过代码看不出问题，深入到某个assST的数据细节中查一下，看其偏移原因是什么。
-        
         // NSLog(@"%@",Rect2Str(model.bestGVsAtProtoTRect));
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];

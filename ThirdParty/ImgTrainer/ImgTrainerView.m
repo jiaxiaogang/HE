@@ -217,6 +217,7 @@
 }
 
 //把jvBuModel中的index下标的gv可视化出来。
+//调用示例（把某个st的某元素gv可视化出来）：[SMGUtils runByMainQueue:^{ for (NSInteger i = 0; i < model.bestGVs.count; i++) [theApp.imgTrainerView setDataForJvBuModelV3:model lab:STRFORMAT(@"ST%ld.%ld",model.assT.pId,i) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:2 gvIndex:i]; }];
 -(void) setDataForJvBuModelV3:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId gvIndex:(NSInteger)gvIndex {
     AIFeatureJvBuItem *gvItem = ARR_INDEX(jvBuModel.bestGVs, gvIndex);
     [self addFeatureToPreview:jvBuModel.assT indexes:@[@(gvItem.assIndex)] lab:lab left:left top:top tvId:tvId];
