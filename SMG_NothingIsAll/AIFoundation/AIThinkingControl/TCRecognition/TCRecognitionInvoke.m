@@ -169,27 +169,6 @@
 //MARK:===============================================================
 
 /**
- *  MARK:--------------------单特征识别--------------------
- *  @desc 识别抽象的单特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
- *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
- *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
- *  @test 作用：此总结可方便该算法的测试与BUG分析。
- *        目标：需达成以下功能。
- *         1. 多样性（比如0的各个局部，都得有多个识别结果，使后续GT识别中，可以每元素contains判断到，以取交识别到更准确的GT）。
- *         2. 稳定性（不得只识别最具象和最抽象，而是稳定的中间部位，得识别到）。
- *         3. 显著性（得慢慢竞争浮现出显著的局部特征结果，比如小人的头总是圆的）。
- *         4. 竞争性（广入窄出）。
- */
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize {
-    return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept checkItemValid:^BOOL(AIKVPointer *ass_p) {
-        //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
-        //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
-        //2025.08.08: 现在固定粒度构建isGT=true了，只有单特征类比结果才为false，那这里冷启也需要，也就得识别所有结果了（先识别isGT，才能类比出抽象单特征，所以不能只识别单特征，不然死循环了）。
-        return true;//!ass_p.isGT;
-    }];
-}
-
-/**
  *  MARK:--------------------单特征识别结果竞争--------------------
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
@@ -261,12 +240,21 @@
 }
 
 /**
- *  MARK:--------------------单特征/组特征都可通过此方法实现自举识别--------------------
+ *  MARK:--------------------单特征识别--------------------
+ *  @desc 识别抽象的单特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
+ *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
+ *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
+ *  @param stModels 已收集的stModels（用于防重）。
+ *  @test 作用：此总结可方便该算法的测试与BUG分析。
+ *        目标：需达成以下功能。
+ *         1. 多样性（比如0的各个局部，都得有多个识别结果，使后续GT识别中，可以每元素contains判断到，以取交识别到更准确的GT）。
+ *         2. 稳定性（不得只识别最具象和最抽象，而是稳定的中间部位，得识别到）。
+ *         3. 显著性（得慢慢竞争浮现出显著的局部特征结果，比如小人的头总是圆的）。
+ *         4. 竞争性（广入窄出）。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeature_General:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept
-                    checkItemValid:(BOOL(^)(AIKVPointer* ass_p))checkItemValid {
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
@@ -293,22 +281,21 @@
     // 把jvBuModel的model内存地址打出来，发现unionRect计算没问题，这些不在顶端和最后打印的，不是一回事，应该是在中途哪里就被竞争掉了。
     // 经查：这些是在ST结果竞争中被竞争掉的，看起来应该有竞争问题，比如前20名全是0的下半部分（且是显示在顶端的那些下半部分）。
     // 所以：查下区域竞争算法，在训练多个0后，为什么ST识别的前20名会有同质化问题这么严重（全是0的下半部分）（查ST竞争算法）。
-        
     
     
     
     //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
     //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
-    if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
-        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
-    }]) return result;
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    //if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
+    //    return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
+    //}]) return result;
+    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //2. 过滤器2：被切入点成功识别过的相近区域，防重不再做为切入识别。
-    if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
-        return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
-    }]) return result;
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    //if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
+    //    return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
+    //}]) return result;
+    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //1. 单码排序。
     NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
@@ -375,8 +362,10 @@
         //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in refPorts) {
-            //[decoratorJvBuModel.debug updateLogDic:1001 assPId:refPort.target_p.pointerId];
-            if (!checkItemValid || !checkItemValid(refPort.target_p)) continue;
+            //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
+            //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
+            //2025.08.08: 现在固定粒度构建isGT=true了，只有单特征类比结果才为false，那这里冷启也需要，也就得识别所有结果了（先识别isGT，才能类比出抽象单特征，所以不能只识别单特征，不然死循环了）。
+            //if (refPort.target_p.isGT) continue;
             
             // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
             CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
@@ -400,6 +389,22 @@
             //说明3：也可能这里的防重，是一个博弈平衡，过于放开性能就不佳，过于防重识别结果就片面。
             //2025.05.21: 去掉，如果一张图里有多个3呢，不能暴力的全过滤掉。
             //if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
+            
+            // 防重：对相近区域的protoRect的同一个assST的同gvIndex进行防重。
+            AIFeatureJvBuModel *aleardayHavSameJvBuModel = [SMGUtils filterSingleFromArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *oldSTModel) {
+                // 切入assST是同一个。
+                if (oldSTModel.assT.pId != assT.pId) return false;
+                
+                // 切入assIndex的gv是同一个。
+                AIFeatureJvBuItem *firstGVItem = ARR_INDEX(oldSTModel.bestGVs, 0);
+                if (firstGVItem.assIndex != beginAssIndex) return false;
+                
+                // 切入的protoRect有80%以上的匹配度（交集面积 在 二者面积中 都占80%以上）。
+                CGRect jiaoJiRect = CGRectIntersection(firstGVItem.bestGVAtProtoTRect, protoRect);
+                CGFloat jiaoJiArea = jiaoJiRect.size.width * jiaoJiRect.size.height;
+                return jiaoJiArea > firstGVItem.bestGVAtProtoTRect.size.width * firstGVItem.bestGVAtProtoTRect.size.height * 0.8f && jiaoJiArea > protoRect.size.width * protoRect.size.height * 0.8f;
+            }];
+            if (aleardayHavSameJvBuModel) continue;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //13. 把tMatchModel收集起来。
@@ -462,38 +467,8 @@
 }
 
 /**
- *  MARK:--------------------组特征自举识别算法（参考35061-TODO1）--------------------
+ *  MARK:--------------------组特征自举识别算法之组特征竞争（参考35061-TODO1）--------------------
  *  @desc Step2 尽可能照顾特征的整体性，通过交层向下找似层结果（参考34135-TODO2）。
- *  @param itemSTModels 一个粒度层的单特征识别结果。
- *  @version
- *      2025.05.07: v2-支持自适应粒度。
- */
-+(NSArray*) recognitionGroupFeatureV4_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize itemSTModels:(NSArray*)itemSTModels {
-    if (!ARRISOK(itemSTModels)) return nil;
-    
-    //1. 收集：每个absT分别向整体取conPorts。
-    NSMutableArray *validConPortGTs = [NSMutableArray new];
-    for (AIFeatureJvBuModel *matchModel in itemSTModels) {
-        NSArray *conPorts = [AINetUtils conPorts_All:matchModel.assT];
-        for (AIPort *conPort in conPorts) {
-            //13. 只要似层组特征结果（参考34135-TODO6）。
-            //2025.08.10: 只要GT结果，现在GT也会类比抽象，扣出来的显著GT图，更该被识别到。
-            //2025.08.27: 只要似层GT结果，因为抽象的太不准了，总有些明明不是的会往上靠，因为它抽象，它匹配率高，它就优胜，最终输出不准确的结果（参考35068-方案2）。
-            if (!conPort.target_p.isGT || conPort.target_p.isJiao) continue;
-            [validConPortGTs addObject:conPort.target_p];
-        }
-    }
-    
-    //2. 组特征识别。
-    //2025.08.10: 组特征不对beginRectExcept和assRectExcept切入点做防重了，因为组特征本来就是全局的）。
-    return [self recognitionFeature_General:gvIndex at:at ds:ds isOut:isOut protoRect:protoRect protoColorDic:protoColorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:nil/*beginRectExcept*/ assRectExcept:nil/*assRectExcept*/ checkItemValid:^BOOL(AIKVPointer *ass_p) {
-        //2025.08.02: 仅针对有效GT交集结果（gv.refPorts指向 & 单T.conPorts指向）（参考35061-TODO2）。
-        return [validConPortGTs containsObject:ass_p];
-    }];
-}
-
-/**
- *  MARK:--------------------组特征竞争--------------------
  */
 +(void) recognitionGroupFeatureV4_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel {
     
