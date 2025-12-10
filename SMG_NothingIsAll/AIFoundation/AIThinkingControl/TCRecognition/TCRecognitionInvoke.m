@@ -321,13 +321,14 @@
         
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
-        //NSLog(@"GV%ld.refPorts: %@",gModel.match_p.pointerId,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
-        //refPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.3f, 5), 20));
+        //2025.12.10: 新事物也可以由旧局部特征拼出来，一看微观复用性，二看旧特征的抽象程度，但肯定不能自己拼自己，不然性能肯定跪（参考35105-方案2）。
+        NSArray *validRefPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.2f, 5), 30));
+        NSLog(@"ST识别：GV%ld.refPorts(%ld/%ld): %@",gModel.match_p.pointerId,validRefPorts.count,refPorts.count,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        for (AIPort *refPort in refPorts) {
+        for (AIPort *refPort in validRefPorts) {
             //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
             //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
             //2025.08.08: 现在固定粒度构建isGT=true了，只有单特征类比结果才为false，那这里冷启也需要，也就得识别所有结果了（先识别isGT，才能类比出抽象单特征，所以不能只识别单特征，不然死循环了）。
