@@ -315,6 +315,10 @@
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
+        
+        // TODOTOMORROW20251210:
+        // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
+        
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
@@ -323,7 +327,9 @@
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
         //2025.12.10: 新事物也可以由旧局部特征拼出来，一看微观复用性，二看旧特征的抽象程度，但肯定不能自己拼自己，不然性能肯定跪（参考35105-方案2）。
         NSArray *validRefPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.2f, 5), 30));
-        NSLog(@"ST识别：GV%ld.refPorts(%ld/%ld): %@",gModel.match_p.pointerId,validRefPorts.count,refPorts.count,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
+        if (refPorts.count > 5) {
+            NSLog(@"ST识别：GV%ld.refPorts(%ld/%ld): %@",gModel.match_p.pointerId,validRefPorts.count,refPorts.count,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
+        }
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
