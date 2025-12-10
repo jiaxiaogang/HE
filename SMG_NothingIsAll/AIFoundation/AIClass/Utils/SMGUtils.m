@@ -679,6 +679,14 @@
     return CGPointMake((CGRectGetMinX(rect) + CGRectGetMaxX(rect)) / 2.0f, (CGRectGetMinY(rect) + CGRectGetMaxY(rect)) / 2.0f);
 }
 
+// 求交集占比（交集rect占比小的那一个）。
++(CGFloat) rate4IntersectionRect:(CGRect)aRect bRect:(CGRect)bRect {
+    CGRect intersectionRect = CGRectIntersection(aRect, bRect);
+    CGFloat intersectionArea = intersectionRect.size.width * intersectionRect.size.height;
+    CGFloat abMaxArea = MAX(aRect.size.width * aRect.size.height,bRect.size.width * bRect.size.height);
+    return abMaxArea > 0 ? intersectionArea / abMaxArea : 0.0f;
+}
+
 // 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
 // 例子：多拉A梦带小B到它的宇宙C里玩，多拉A梦过去后长高了30%，小B原来是1米，过去后高多少？答：1.3米。
 +(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize {

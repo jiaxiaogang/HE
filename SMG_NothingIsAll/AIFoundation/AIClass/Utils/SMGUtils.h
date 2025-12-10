@@ -179,6 +179,9 @@
 +(CGRect) convertArr2Rect:(NSArray*)arr itemRectBlock:(CGRect(^)(id item))itemRectBlock;
 +(CGPoint) convertRect2Center:(CGRect)rect;
 
+// 求交集占比（交集rect占比小的那一个）。
++(CGFloat) rate4IntersectionRect:(CGRect)aRect bRect:(CGRect)bRect;
+
 // 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
 +(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize;
 

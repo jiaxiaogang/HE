@@ -227,6 +227,7 @@ static AIThinkingControl *_instance;
     DDic *excepts = [DDic new];
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
+    NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
@@ -257,7 +258,7 @@ static AIThinkingControl *_instance;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 单特征识别：通过组码识别。
-                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels];
+                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept];
                 [jvBuModel.stModels addObjectsFromArray:itemSTModels];
                 
                 //22. 组特征识别：通过单特征识别。

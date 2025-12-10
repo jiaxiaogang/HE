@@ -245,7 +245,7 @@
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels {
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
@@ -316,8 +316,17 @@
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
         
-        // TODOTOMORROW20251210:
         // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
+        NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
+        if (!gvIdProtoRects) {
+            gvIdProtoRects = [NSMutableArray new];
+            [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
+        }
+        NSValue *aleardayBeginGV = [SMGUtils filterSingleFromArr:gvIdProtoRects checkValid:^BOOL(NSValue *item) {
+            return [SMGUtils rate4IntersectionRect:item.CGRectValue bRect:protoRect] > 0.95f;
+        }];
+        if (aleardayBeginGV) continue;
+        [gvIdProtoRects addObject:@(protoRect)];
         
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
@@ -372,9 +381,7 @@
                 for (AIFeatureJvBuItem *oldGVItem in oldSTModel.bestGVs) {
                     if (oldGVItem.assIndex == beginAssIndex) {
                         // 切入的protoRect有80%以上的匹配度（交集面积 在 二者面积中 都占80%以上），则需防重。
-                        CGRect jiaoJiRect = CGRectIntersection(oldGVItem.bestGVAtProtoTRect, protoRect);
-                        CGFloat jiaoJiArea = jiaoJiRect.size.width * jiaoJiRect.size.height;
-                        if (jiaoJiArea > oldGVItem.bestGVAtProtoTRect.size.width * oldGVItem.bestGVAtProtoTRect.size.height * 0.8f && jiaoJiArea > protoRect.size.width * protoRect.size.height * 0.8f) return true;
+                        if ([SMGUtils rate4IntersectionRect:oldGVItem.bestGVAtProtoTRect bRect:protoRect] > 0.8f) return true;
                     }
                 }
                 return false;
