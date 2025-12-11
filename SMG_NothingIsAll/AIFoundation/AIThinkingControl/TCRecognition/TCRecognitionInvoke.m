@@ -1655,6 +1655,8 @@
         // 2025.06.20：如果到proto切范围为空，则直接跳过，判定为该itemGV未匹配到。
         if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) continue;
         
+        // TODOTOMORROW202512011: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用。
+        
         //33. 切出当前gv：九宫。
         //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
         //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
