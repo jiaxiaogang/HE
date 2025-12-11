@@ -236,6 +236,7 @@
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  *  @param stModels 已收集的stModels（用于防重）。
+ *  @param protoGVIndexPool 复用词，类似protoRect区域，直接复用切图计算protoGVIndex结果。
  *  @test 作用：此总结可方便该算法的测试与BUG分析。
  *        目标：需达成以下功能。
  *         1. 多样性（比如0的各个局部，都得有多个识别结果，使后续GT识别中，可以每元素contains判断到，以取交识别到更准确的GT）。
@@ -245,7 +246,7 @@
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept {
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoGVIndexPool:(NSMutableArray*)protoGVIndexPool {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
@@ -409,7 +410,7 @@
             for (NSInteger i = 1; i < assT.count; i++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model];
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model protoGVIndexPool:protoGVIndexPool];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [model.bestGVs addObject:bestItem];
@@ -1603,7 +1604,8 @@
                             ds:(NSString*)ds
                   dataDicCache:(NSDictionary*)dataDicCache
                     vInfoCache:(NSDictionary*)vInfoCache
-                         model:(AIFeatureJvBuModel*)model {
+                         model:(AIFeatureJvBuModel*)model
+              protoGVIndexPool:(NSMutableArray*)protoGVIndexPool {
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
     AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
@@ -1655,16 +1657,27 @@
         // 2025.06.20：如果到proto切范围为空，则直接跳过，判定为该itemGV未匹配到。
         if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) continue;
         
-        // TODOTOMORROW202512011: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用。
-        
         //33. 切出当前gv：九宫。
         //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
         //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
         //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
-        NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:checkCurProtoRect];
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        if (!ARRISOK(subDots)) continue;
-        NSDictionary *protoGVIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+        //2025.12.11: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用（参考35105-TODO3.1）。
+        MapModel *findFromPool = [SMGUtils filterSingleFromArr:protoGVIndexPool checkValid:^BOOL(MapModel *item) {
+            CGRect itemRect = VALTOOK(item.v1).CGRectValue;
+            return [SMGUtils rate4IntersectionRect:itemRect bRect:checkCurProtoRect] > 0.9f;
+        }];
+        NSDictionary *protoGVIndex = nil;
+        if (findFromPool) {
+            // 有相似则直接复用
+            NSDictionary *protoGVIndex = findFromPool.v2;
+        } else {
+            // 无相似则切图计算
+            NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:checkCurProtoRect];
+            NSDictionary *protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
+        }
+        // 新增一条计算记录。
+        [protoGVIndexPool addObject:[MapModel newWithV1:@(checkCurProtoRect) v2:protoGVIndex]];
+        if (!protoGVIndex) continue;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
         
         //34. 求切出的curProtoGV九宫与curAssGV的匹配度。

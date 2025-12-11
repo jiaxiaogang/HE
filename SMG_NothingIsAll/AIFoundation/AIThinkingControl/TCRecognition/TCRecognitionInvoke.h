@@ -14,7 +14,7 @@
 //MARK:===============================================================
 //MARK:                     < 单特征识别 >
 //MARK:===============================================================
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept;
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoGVIndexPool:(NSMutableArray*)protoGVIndexPool;
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel;
 
 //MARK:===============================================================
@@ -61,6 +61,7 @@
                             ds:(NSString*)ds
                   dataDicCache:(NSDictionary*)dataDicCache
                     vInfoCache:(NSDictionary*)vInfoCache
-                         model:(AIFeatureJvBuModel*)model;
+                         model:(AIFeatureJvBuModel*)model
+              protoGVIndexPool:(NSMutableArray*)protoGVIndexPool;
 
 @end
