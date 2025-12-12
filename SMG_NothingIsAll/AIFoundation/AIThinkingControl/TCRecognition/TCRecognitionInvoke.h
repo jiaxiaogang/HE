@@ -64,4 +64,6 @@
                          model:(AIFeatureJvBuModel*)model
               protoGVIndexPool:(NSMutableArray*)protoGVIndexPool;
 
++(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(NSMutableArray*)protoGVIndexPool protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds;
+
 @end

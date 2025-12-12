@@ -337,9 +337,6 @@
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
         //2025.12.10: 新事物也可以由旧局部特征拼出来，一看微观复用性，二看旧特征的抽象程度，但肯定不能自己拼自己，不然性能肯定跪（参考35105-方案2）。
         NSArray *validRefPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.2f, 5), 30));
-        if (refPorts.count > 5) {
-            NSLog(@"ST识别：GV%ld.refPorts(%ld/%ld): %@",gModel.match_p.pointerId,validRefPorts.count,refPorts.count,CLEANSTR([SMGUtils convertArr:refPorts convertBlock:^id(AIPort *obj) { return @(obj.strong.value); }]));
-        }
         
         //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
         //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
@@ -1661,22 +1658,8 @@
         //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
         //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
         //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
-        //2025.12.11: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用（参考35105-TODO3.1）。
-        MapModel *findFromPool = [SMGUtils filterSingleFromArr:protoGVIndexPool checkValid:^BOOL(MapModel *item) {
-            CGRect itemRect = VALTOOK(item.v1).CGRectValue;
-            return [SMGUtils rate4IntersectionRect:itemRect bRect:checkCurProtoRect] > 0.9f;
-        }];
-        NSDictionary *protoGVIndex = nil;
-        if (findFromPool) {
-            // 有相似则直接复用
-            NSDictionary *protoGVIndex = findFromPool.v2;
-        } else {
-            // 无相似则切图计算
-            NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:checkCurProtoRect];
-            NSDictionary *protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
-        }
-        // 新增一条计算记录。
-        [protoGVIndexPool addObject:[MapModel newWithV1:@(checkCurProtoRect) v2:protoGVIndex]];
+        //2025.12.11: 切图复用（参考35105-TODO3.1）。
+        NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImg:protoGVIndexPool protoRect:checkCurProtoRect protoColorDic:protoColorDic ds:ds];
         if (!protoGVIndex) continue;
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
         
@@ -1724,6 +1707,29 @@
     CGFloat diffValue = NUMTOOK(best.v4).floatValue;
     // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f",model,assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gMatchValue);
     return [AIFeatureJvBuItem new:lastProtoRect matchValue:gMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:diffValue];
+}
+
+//2025.12.11: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用（参考35105-TODO3.1）。
+//@result 有可能返回nil，因为切图切到空结果，也会复用到池子里，避免重复取空。
++(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(NSMutableArray*)protoGVIndexPool protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
+    // 从复用池找旧有
+    MapModel *findFromPool = [SMGUtils filterSingleFromArr:protoGVIndexPool checkValid:^BOOL(MapModel *item) {
+        CGRect itemRect = VALTOOK(item.v1).CGRectValue;
+        return [SMGUtils rate4IntersectionRect:itemRect bRect:protoRect] > 0.9f;
+    }];
+    NSDictionary *protoGVIndex = nil;
+    if (findFromPool) {
+        // 有相似则直接复用
+        protoGVIndex = findFromPool.v2;
+    } else {
+        // 无相似则切图计算
+        NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:protoRect];
+        protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
+        
+        // 新增一条计算记录
+        [protoGVIndexPool insertObject:[MapModel newWithV1:@(protoRect) v2:protoGVIndex] atIndex:0];
+    }
+    return protoGVIndex;
 }
 
 @end

@@ -230,10 +230,6 @@ static AIThinkingControl *_instance;
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     NSMutableArray *protoGVIndexPool = [NSMutableArray new]; // 从protoDic的类似切图只切一次，这是复用池。
     
-    // TODOTOMORROW20251212:
-    // 1. 先回测下优化方案3，看有没问题和有没效果。
-    // 2. 再实践下优化方案4，看这里调成dotSize多大时退出循环。
-    
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -257,9 +253,9 @@ static AIThinkingControl *_instance;
                 CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
                 
                 //14. 切出当前gv：九宫。
-                NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3)];
-                if (!ARRISOK(subDots)) continue;
-                NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+                //2025.12.11: 切图复用（参考35105-TODO3.1）。
+                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImg:protoGVIndexPool protoRect:curRect protoColorDic:colorDic ds:ds];
+                if (!gvIndex) continue;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 单特征识别：通过组码识别。
