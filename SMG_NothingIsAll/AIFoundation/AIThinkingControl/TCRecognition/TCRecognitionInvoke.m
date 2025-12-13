@@ -324,7 +324,7 @@
             [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
         }
         NSValue *aleardayBeginGV = [SMGUtils filterSingleFromArr:gvIdProtoRects checkValid:^BOOL(NSValue *item) {
-            return [SMGUtils rate4IntersectionRect:item.CGRectValue bRect:protoRect] > 0.95f;
+            return [SMGUtils rate4IntersectionRect:item.CGRectValue bRect:protoRect] > 0.6f;
         }];
         if (aleardayBeginGV) continue;
         [gvIdProtoRects addObject:@(protoRect)];
@@ -379,7 +379,7 @@
                 for (AIFeatureJvBuItem *oldGVItem in oldSTModel.bestGVs) {
                     if (oldGVItem.assIndex == beginAssIndex) {
                         // 切入的protoRect有80%以上的匹配度（交集面积 在 二者面积中 都占80%以上），则需防重。
-                        if ([SMGUtils rate4IntersectionRect:oldGVItem.bestGVAtProtoTRect bRect:protoRect] > 0.8f) return true;
+                        if ([SMGUtils rate4IntersectionRect:oldGVItem.bestGVAtProtoTRect bRect:protoRect] > 0.5f) return true;
                     }
                 }
                 return false;
@@ -1715,7 +1715,7 @@
     // 从复用池找旧有
     MapModel *findFromPool = [SMGUtils filterSingleFromArr:protoGVIndexPool checkValid:^BOOL(MapModel *item) {
         CGRect itemRect = VALTOOK(item.v1).CGRectValue;
-        return [SMGUtils rate4IntersectionRect:itemRect bRect:protoRect] > 0.9f;
+        return [SMGUtils rate4IntersectionRect:itemRect bRect:protoRect] > 0.4f;
     }];
     NSDictionary *protoGVIndex = nil;
     if (findFromPool) {
