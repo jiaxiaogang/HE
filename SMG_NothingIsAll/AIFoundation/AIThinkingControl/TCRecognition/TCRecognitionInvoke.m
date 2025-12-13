@@ -217,6 +217,11 @@
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ %p:RECT:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,model,Rect2Str(model.bestGVsAtProtoTRect));
+        
+        // TODOTOMORROW20251214: 经查重复的ST其Rect也很相似，比如有一条只是前后两次的Y差2，别的都一模一样。
+        NSLog(@"%@",[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return STRFORMAT(@"%ld %@",obj.assIndex,Rect2Str(obj.bestGVAtProtoTRect));
+        }]);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
         }];
