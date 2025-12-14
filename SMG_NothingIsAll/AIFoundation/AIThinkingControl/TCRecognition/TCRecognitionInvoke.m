@@ -398,6 +398,8 @@
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             
+            // TODOTOMORROW20251214: 用已知assRect和整体assRect，以及已知assRect对应的protoRect，求出整体protoRect（参考35105-TODO6.6）。
+            
             AIFeatureJvBuItem *beginBestGVItem = [self getBestGVItemFromPool:bestGVsPool assPId:assT.pId assIndex:beginAssIndex protoRect:lastProtoRect];
             if (!beginBestGVItem) {
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
@@ -417,7 +419,7 @@
             for (NSInteger i = 1; i < assT.count; i++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model protoGVIndexPool:protoGVIndexPool];
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model protoGVIndexPool:protoGVIndexPool bestGVsPool:bestGVsPool];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [model.bestGVs addObject:bestItem];

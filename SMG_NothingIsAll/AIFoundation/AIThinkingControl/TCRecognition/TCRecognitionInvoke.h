@@ -62,7 +62,8 @@
                   dataDicCache:(NSDictionary*)dataDicCache
                     vInfoCache:(NSDictionary*)vInfoCache
                          model:(AIFeatureJvBuModel*)model
-              protoGVIndexPool:(NSMutableArray*)protoGVIndexPool;
+              protoGVIndexPool:(NSMutableArray*)protoGVIndexPool
+                   bestGVsPool:(NSMutableDictionary*)bestGVsPool;
 
 +(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(NSMutableArray*)protoGVIndexPool protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds;
 
