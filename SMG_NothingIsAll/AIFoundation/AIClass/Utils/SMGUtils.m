@@ -679,6 +679,16 @@
     return CGPointMake((CGRectGetMinX(rect) + CGRectGetMaxX(rect)) / 2.0f, (CGRectGetMinY(rect) + CGRectGetMaxY(rect)) / 2.0f);
 }
 
+//两个rect的区域匹配度（度 = 交 / 并）
++(CGFloat) rate4IntersectionRectV0:(CGRect)oldRect newRect:(CGRect)newRect {
+    CGRect intersectsRect = CGRectIntersection(newRect, oldRect);
+    CGFloat intersectArea = intersectsRect.size.width * intersectsRect.size.height;
+    CGFloat newArea = newRect.size.width * newRect.size.height;
+    CGFloat oldArea = oldRect.size.width * oldRect.size.height;
+    CGFloat unionArea = newArea + oldArea - intersectArea;
+    return unionArea > 0 ? intersectArea / unionArea : 0;
+}
+
 // 求交集占比（交集rect占比小的那一个）。
 +(CGFloat) rate4IntersectionRect:(CGRect)aRect bRect:(CGRect)bRect {
     CGRect intersectionRect = CGRectIntersection(aRect, bRect);
@@ -687,6 +697,27 @@
     return abMaxArea > 0 ? intersectionArea / abMaxArea : 0.0f;
 }
 
+//已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
++(CGRect) convertBAtA:(CGRect)atA atB:(CGRect)atB B:(CGRect)B {
+    // 先把atB这边的rect全缩放成和在A那边一样的大小。
+    CGFloat xScale = atA.size.width / atB.size.width;
+    CGFloat yScale = atA.size.height / atB.size.height;
+    atB.origin.x *= xScale;
+    atB.origin.y *= yScale;
+    B.size.width *= xScale;
+    B.size.height *= yScale;
+    
+    // 再根据atA中的位置，把B也平移到A中。
+    B.origin.x = atA.origin.x - atB.origin.x;
+    B.origin.y = atA.origin.y - atB.origin.y;
+    // NSLog(@"convertBAtA: %@",Rect2Str(B));
+    return B;
+}
+
+//调用示例：（显然上面的convertBAtA方法更简单）。
+// 1. CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
+// 2. CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCPointFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
+// 3. CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
 // 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
 // 例子：多拉A梦带小B到它的宇宙C里玩，多拉A梦过去后长高了30%，小B原来是1米，过去后高多少？答：1.3米。
 +(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize {
@@ -700,7 +731,7 @@
 
 // 根据A在B的尺寸，以及A在C的尺寸，求出A在B的坐标。
 // 例子：多拉A梦带小B到它的宇宙C里玩，多拉A梦过去后长高了30%，多拉A梦原来在小B前1米，过去后在哪？答：多拉A梦在小B前1.3米。
-+(CGPoint) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoAAtBPoint:(CGPoint)protoAAtBPoint {
++(CGPoint) convertBAtCPointFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoAAtBPoint:(CGPoint)protoAAtBPoint {
     CGFloat cbWRate = aAtC.width / aAtB.width;
     CGFloat cbHRate = aAtC.height / aAtB.height;
     

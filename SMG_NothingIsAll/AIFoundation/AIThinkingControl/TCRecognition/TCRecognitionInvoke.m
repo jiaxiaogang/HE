@@ -366,6 +366,7 @@
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
             CGRect lastProtoRect = protoRect;
+            CGRect assSTRect = [SMGUtils convertArr2Rect:assT.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
             
             //13. 防重（同一个assT也可能有多个assIndex切入点，比如“8有四处下划线”的例子，可以让它多切入点分别自举）。
             //2025.05.12: 防重程度说明如下：
@@ -398,7 +399,9 @@
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             
-            // TODOTOMORROW20251214: 用已知assRect和整体assRect，以及已知assRect对应的protoRect，求出整体protoRect（参考35105-TODO6.6）。
+            // TODOTOMORROW20251214: 用已知gvs_AssRect和整体assSTRect，以及已知gvs_ProtoRect，求出assST_ProtoRect（参考35105-TODO6.6）。
+            CGRect assST_Proto = [SMGUtils convertBAtA:lastProtoRect atB:lastAtAssRect B:assSTRect];
+            
             
             AIFeatureJvBuItem *beginBestGVItem = [self getBestGVItemFromPool:bestGVsPool assPId:assT.pId assIndex:beginAssIndex protoRect:lastProtoRect];
             if (!beginBestGVItem) {

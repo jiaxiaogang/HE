@@ -394,22 +394,12 @@
     NSMutableArray *result = [NSMutableArray new];
     for (NSValue *key in gvRectExcept) {
         CGRect oldRect = key.CGRectValue;
-        CGFloat matchOfRect = [self matchOfRect:oldRect newRect:newRect];
+        CGFloat matchOfRect = [SMGUtils rate4IntersectionRectV0:oldRect newRect:newRect];
         if (matchOfRect > 0.3f) {
             [result addObjectsFromArray:[gvRectExcept objectForKey:key]];
         }
     }
     return result;
-}
-
-//两个rect的区域匹配度（度 = 交 / 并）
-+(CGFloat) matchOfRect:(CGRect)oldRect newRect:(CGRect)newRect {
-    CGRect intersectsRect = CGRectIntersection(newRect, oldRect);
-    CGFloat intersectArea = intersectsRect.size.width * intersectsRect.size.height;
-    CGFloat newArea = newRect.size.width * newRect.size.height;
-    CGFloat oldArea = oldRect.size.width * oldRect.size.height;
-    CGFloat unionArea = newArea + oldArea - intersectArea;
-    return unionArea > 0 ? intersectArea / unionArea : 0;
 }
 
 @end

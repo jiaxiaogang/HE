@@ -341,7 +341,7 @@ static AIThinkingControl *_instance;
     //    CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
     //
     //    // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
-    //    CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
+    //    CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCPointFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
     //
     //    // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
     //    CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
