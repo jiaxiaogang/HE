@@ -409,11 +409,9 @@
                 [self updateBestGVItemToPool:bestGVsPool assPId:assT.pId assIndex:beginAssIndex protoRect:lastProtoRect newItem:beginBestGVItem];
             }
             
-            // TODOTOMORROW20251215: bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过。
-            
             // 收集首条bestGV
             // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gModel.matchValue);
-            [model.bestGVs addObject:beginBestGVItem];
+            [model updateBestGVs:beginBestGVItem];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //21. 自举：每个assT一条条自举自身的gv。
@@ -423,7 +421,7 @@
                 AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model protoGVIndexPool:protoGVIndexPool bestGVsPool:bestGVsPool];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
-                [model.bestGVs addObject:bestItem];
+                [model updateBestGVs:bestItem];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
