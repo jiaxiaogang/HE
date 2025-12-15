@@ -66,6 +66,14 @@
     }
 }
 
+-(void) run4BestGvsAtAssTRect {
+    self.bestGVsAtAssTRect = CGRectNull;
+    for (AIFeatureJvBuItem *item in self.bestGVs) {
+        CGRect itemGV_AssSTRect = [self.assT rectByIndex:item.assIndex];
+        self.bestGVsAtAssTRect = CGRectUnion(self.bestGVsAtAssTRect, itemGV_AssSTRect);
+    }
+}
+
 //2025.08.14: 因为竞争浮现不明显，去掉色似度后ok了，如果以后因为去掉色似度导致bug，可以改回来，然后把匹配率改成2次方来强调它的作用试下（参考35064）。
 -(CGFloat) getSTMatch {
     // 说明：防止过度抽象或过度具象：显著度matchAssRatio可以防止过度具象，匹配数bestGVs.count可以防止过度抽象（二者互相制衡，动态平衡竞争）。

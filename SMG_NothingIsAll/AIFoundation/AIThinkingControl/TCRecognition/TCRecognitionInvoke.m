@@ -393,16 +393,13 @@
             if (aleardayHavSameJvBuModel) continue;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
-            //13. 把tMatchModel收集起来。
-            AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT];
-            
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             
-            // TODOTOMORROW20251214: 用已知gvs_AssRect和整体assSTRect，以及已知gvs_ProtoRect，求出assST_ProtoRect（参考35105-TODO6.6）。
-            CGRect assST_Proto = [SMGUtils convertBAtA:lastProtoRect atB:lastAtAssRect B:assSTRect];
+            // STModel防重复用池。
+            AIFeatureJvBuModel *model = [self getSTModelFromPoolOrCreate:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect beginProtoRect:lastProtoRect beginAssRect:lastAtAssRect];
             
-            
+            // bestGV防重复用池。
             AIFeatureJvBuItem *beginBestGVItem = [self getBestGVItemFromPool:bestGVsPool assPId:assT.pId assIndex:beginAssIndex protoRect:lastProtoRect];
             if (!beginBestGVItem) {
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
@@ -412,11 +409,12 @@
                 [self updateBestGVItemToPool:bestGVsPool assPId:assT.pId assIndex:beginAssIndex protoRect:lastProtoRect newItem:beginBestGVItem];
             }
             
+            // TODOTOMORROW20251215: bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过。
+            
             // 收集首条bestGV
             // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gModel.matchValue);
             [model.bestGVs addObject:beginBestGVItem];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-            //[decoratorJvBuModel.debug updateLogDic:1002 assPId:refPort.target_p.pointerId];
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < assT.count; i++) {
@@ -431,16 +429,13 @@
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //44. 单特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到单特征最低标准）。
-            //[decoratorJvBuModel.debug updateLogDic:1003 assPId:model.assT.pId];
-            if (model.bestGVs.count <= 4) continue;
-            
             //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
-            [result addObject:model];
-            //[decoratorJvBuModel.debug updateLogDic:1004 assPId:model.assT.pId];
+            // 2025.12.15：改为无论如何都先收集，后面还要合并防重呢，哪怕一次只匹配一个gv，也许慢慢合并就又ok了。
+            // if (model.bestGVs.count <= 4) continue;
             
-            //52. 有效单特征条目后，才计为防重（关掉，如果一张图有多个3也得能识别）。
-            //[excepts setObjectV2:@"" k1:refPort.target_p k2:@(beginAssIndex)];
-            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+            // 及时计算bestGVs_ProtoRect;
+            [model run4BestGvsAtProtoTRect];
+            [model run4BestGvsAtAssTRect];
             
             //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
             [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
@@ -1727,6 +1722,10 @@
     return best;
 }
 
+//MARK:===============================================================
+//MARK:  < ST识别缓存池（1、GVIndex切图缓存 2、GVItem缓存 3、STModel缓存 >
+//MARK:===============================================================
+
 //2025.12.11: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用（参考35105-TODO3.1）。
 //@result 有可能返回nil，因为切图切到空结果，也会复用到池子里，避免重复取空。
 +(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(NSMutableArray*)protoGVIndexPool protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
@@ -1763,6 +1762,35 @@
     // 从复用池找旧有
     NSString *key = STRFORMAT(@"%ld_%ld_%@",assPId,assIndex,Rect2Str(protoRect));
     [bestGVsPool setObject:newItem forKey:key];
+}
+
+/**
+ *  MARK:--------------------STModel缓存池--------------------
+ *  @desc 从stModels池中，找newAssST类似的旧结果，进行返回。
+ *  @param runingSTModelsPool 本次执行识别中的已有结果集
+ *  @param runedSTModelsPool 往次执行识别中的已有结果集
+ *  @param newAssST 新AssST（查这个assST可复用的结果返回）
+ *  @param newAssSTRect 新AssST的整个体rect。
+ *  @param beginProtoRect 切入点在proto上的rect。
+ *  @param beginAssRect 切入点在assST上的rect。
+ */
++(AIFeatureJvBuModel*) getSTModelFromPoolOrCreate:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSArray*)runedSTModelsPool newAssST:(AIFeatureNode*)newAssST newAssSTRect:(CGRect)newAssSTRect beginProtoRect:(CGRect)beginProtoRect beginAssRect:(CGRect)beginAssRect {
+    // 用已知gvs_AssRect和整体assSTRect，以及已知gvs_ProtoRect，求出assST_ProtoRect（参考35105-TODO6.6）。
+    CGRect newAssST_Proto = [SMGUtils convertBAtA:beginProtoRect atB:beginAssRect B:newAssSTRect];
+    NSArray *allPool = [SMGUtils collectArrA:runedSTModelsPool arrB:runingSTModelsPool];
+    
+    for (AIFeatureJvBuModel *oldModel in allPool) {
+        // 找出同一个pid且whxy类似的，即范围相似度 > 0.6（参考35105-TODO6.1）。
+        if (oldModel.assT.pId != newAssST.pId) continue;
+        CGRect oldAssST_Proto = [SMGUtils convertBAtA:oldModel.bestGVsAtProtoTRect atB:oldModel.bestGVsAtAssTRect B:newAssSTRect];
+        if ([SMGUtils rate4IntersectionRect:newAssST_Proto bRect:oldAssST_Proto] < 0.6f) continue;
+        return oldModel;
+    }
+    
+    // 没旧的，则新建，并收集到runingResult中。
+    AIFeatureJvBuModel *newModel = [AIFeatureJvBuModel new:newAssST];
+    [runingSTModelsPool addObject:newModel];
+    return newModel;
 }
 
 @end
