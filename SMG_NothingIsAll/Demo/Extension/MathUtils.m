@@ -88,4 +88,10 @@
     return cooledValue;
 }
 
+//取rect的中心点
++(CGPoint) getRectCenterPoint:(CGRect)rect {
+    return CGPointMake(CGRectGetMidX(rect), CGRectGetMidY(rect));
+    //return CGPointMake(rect.origin.x + rect.size.width / 2.0f, rect.origin.y + rect.size.height / 2.0f);
+}
+
 @end

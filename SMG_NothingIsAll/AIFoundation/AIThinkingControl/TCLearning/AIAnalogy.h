@@ -40,9 +40,10 @@
 /**
  *  MARK:--------------------特征类比--------------------
  */
-+(AIFeatureNode*) analogyGroupFeatureV3:(AIFeatureNode*)protoT ass:(AIFeatureNode*)assT zenTiModel:(AIFeatureZenTiModel*)zenTiModel;
-+(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT;
-+(AIFeatureNode*) analogyGroupFeatureV2:(AIGroupFeatureNode*)protoGT assModel:(AIFeatureZenTiModel*)assModel;
++(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc;
++(AIFeatureNode*) analogyGroupFeatureV4:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc;
++(AIFeatureNode*) analogyGroupFeatureV5:(AIFeatureNode*)protoGT zenTiModel:(AIFeatureZenTiModel*)zenTiModel;
++(AIFeatureNode*) analogyGroupFeatureV6:(AIFeatureNode*)protoGT gtModel:(GTModel*)gtModel;
 
 /**
  *  MARK:--------------------Canset类比 --------------------

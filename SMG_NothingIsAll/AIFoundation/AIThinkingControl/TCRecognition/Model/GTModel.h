@@ -1,0 +1,47 @@
+//
+//  GTModel.h
+//  SMG_NothingIsAll
+//
+//  Created by jia on 2025/9/23.
+//  Copyright © 2025 XiaoGang. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+
+/**
+ *  MARK:--------------------GT识别模型--------------------
+ */
+@interface GTModel : NSObject
+
++(id) new:(AIGroupFeatureNode*)assGT;
+
+@property (strong, nonatomic) NSMutableArray *items;
+@property (strong, nonatomic) AIGroupFeatureNode *assGT;
+
+/**
+ *  MARK:--------------------重新计算PinJun、Min、Max、Span存到以下WHXYModel中--------------------
+ */
+@property (strong, nonatomic) MapModel *wModel;
+@property (strong, nonatomic) MapModel *hModel;
+@property (strong, nonatomic) MapModel *xModel;
+@property (strong, nonatomic) MapModel *yModel;
+-(void) run4WHXYModelMatchDegree;
+
+/**
+ *  MARK:--------------------主因子：符合度，重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
+ */
+@property (assign, nonatomic) CGFloat modelMatchDegree;
+-(void) run4ModelMatchDegree;
+
+/**
+ *  MARK:--------------------辅因子：计算健全度（防过具：因为只有抽象的匹配数才会高）--------------------
+ */
+@property (assign, nonatomic) CGFloat modelMatchRatio;
+-(void) run4ModelMatchRatio;
+
+/**
+ *  MARK:--------------------辅因子：元素数归一化值（防过抽：因为只有具象的匹配数count才可能长）--------------------
+ */
+@property (assign, nonatomic) CGFloat modelCountRatio;
+
+@end

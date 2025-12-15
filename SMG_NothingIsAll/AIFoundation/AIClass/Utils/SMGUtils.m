@@ -661,6 +661,46 @@
     return result;
 }
 
++(CGRect) convertArr2Rect:(NSArray*)arr itemRectBlock:(CGRect(^)(id item))itemRectBlock {
+    //1. 数据准备。
+    CGRect resultRect = CGRectNull;
+    
+    //2. 把contentIndexes对应的每个组码取出来。
+    for (id item in arr) {
+        CGRect itemRect = itemRectBlock(item);
+        resultRect = CGRectUnion(resultRect, itemRect);
+    }
+    
+    //3. 将求得的范围并集返回。
+    return resultRect;
+}
+
++(CGPoint) convertRect2Center:(CGRect)rect {
+    return CGPointMake((CGRectGetMinX(rect) + CGRectGetMaxX(rect)) / 2.0f, (CGRectGetMinY(rect) + CGRectGetMaxY(rect)) / 2.0f);
+}
+
+// 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
+// 例子：多拉A梦带小B到它的宇宙C里玩，多拉A梦过去后长高了30%，小B原来是1米，过去后高多少？答：1.3米。
++(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize {
+    CGFloat cbWRate = aAtC.width / aAtB.width;
+    CGFloat cbHRate = aAtC.height / aAtB.height;
+    
+    // 统一放到C坐标系之：将放到C后的BSize的尺寸求出来。
+    CGSize resultBSize = CGSizeMake(protoBSize.width * cbWRate, protoBSize.height * cbHRate);
+    return resultBSize;
+}
+
+// 根据A在B的尺寸，以及A在C的尺寸，求出A在B的坐标。
+// 例子：多拉A梦带小B到它的宇宙C里玩，多拉A梦过去后长高了30%，多拉A梦原来在小B前1米，过去后在哪？答：多拉A梦在小B前1.3米。
++(CGPoint) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoAAtBPoint:(CGPoint)protoAAtBPoint {
+    CGFloat cbWRate = aAtC.width / aAtB.width;
+    CGFloat cbHRate = aAtC.height / aAtB.height;
+    
+    // 统一放到C坐标系之：将放到C后的A At B的xy坐标求出来。
+    CGPoint resultAAtBPoint = CGPointMake(protoAAtBPoint.x * cbWRate, protoAAtBPoint.y * cbHRate);
+    return resultAAtBPoint;
+}
+
 /**
  *  MARK:--------------------将arr转成dic--------------------
  */
@@ -1192,6 +1232,10 @@
 
 +(void) runByMainQueue:(dispatch_block_t)block {
     dispatch_async(dispatch_get_main_queue(), block);
+}
+
++(void) runAfter:(CGFloat)deltaTime block:(dispatch_block_t)block {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(deltaTime * NSEC_PER_SEC)), dispatch_get_current_queue(), block);
 }
 
 //从mDic中找mArr找到返回，没找到则新建。

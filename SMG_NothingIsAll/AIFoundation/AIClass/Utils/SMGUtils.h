@@ -176,6 +176,15 @@
 +(NSMutableArray*) convertArr:(NSArray*)arr convertBlock:(id(^)(id obj))convertBlock;
 +(NSMutableArray*) convertArr:(NSArray*)arr iConvertBlock:(id(^)(NSInteger i, id obj))iConvertBlock;
 +(NSMutableArray*) convertArr:(NSArray*)arr convertItemArrBlock:(NSArray*(^)(id obj))convertItemArrBlock;
++(CGRect) convertArr2Rect:(NSArray*)arr itemRectBlock:(CGRect(^)(id item))itemRectBlock;
++(CGPoint) convertRect2Center:(CGRect)rect;
+
+// 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
++(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize;
+
+// 根据A在B的尺寸，以及A在C的尺寸，求出A在B的坐标。
++(CGPoint) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoAAtBPoint:(CGPoint)protoAAtBPoint;
+
 //将arr转成dic
 +(NSDictionary*) convertArr2Dic:(NSArray*)objs kvBlock:(NSArray*(^)(id obj))kvBlock;
 //将dic转成dic
@@ -365,6 +374,7 @@
 +(int) convertDotSize2Level:(CGFloat)dotSize;
 
 +(void) runByMainQueue:(dispatch_block_t)block;
++(void) runAfter:(CGFloat)deltaTime block:(dispatch_block_t)block;
 
 //从mDic中找mArr找到返回，没找到则新建。
 +(NSArray*) findOrCreateArr:(NSMutableDictionary*)fromDic key:(id)key;

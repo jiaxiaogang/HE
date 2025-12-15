@@ -23,6 +23,21 @@
 @property (assign, nonatomic) NSInteger protoTHash;
 
 //存识别结果：List<AIFeatureJvBuModel>
-@property (strong, nonatomic) NSMutableArray *models;
+@property (strong, nonatomic) NSMutableArray *stModels;
+@property (strong, nonatomic) NSMutableArray *gtModels;
+
+@property (strong, nonatomic) GroupDebug *debug;
+
+// 分区竞争匹配度：计算每条item的rankScore和rankRatio。
+-(void) run4AreaRankRatioV2;
+
+// item.bestGVs.count防止过度抽象，归一化计算。
+-(void) run4BestGVsCountRatio;
+
+// item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
+-(void) run4AbsLevelRatio;
+
+// item.assT.conPort.strong强度，归一化计算竞争力（用于在稳定层里优先抽象层）。
+-(void) run4ConPortStrongRatio;
 
 @end

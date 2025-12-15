@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class AIAbsAlgNode,AINetAbsFoNode,AIAbsCMVNode,AISPStrong,AIGroupValueNode,AIFeatureNode;
+@class AIAbsAlgNode,AINetAbsFoNode,AIAbsCMVNode,AISPStrong,AIGroupValueNode,AIFeatureNode,AIValueInfo;
 @interface AINetUtils : NSObject
 
 //MARK:===============================================================
@@ -354,5 +354,16 @@
 
 //已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
 +(CGRect) getBAtA:(CGRect)atA atB:(CGRect)atB B:(CGRect)B;
+
+/**
+ *  MARK:--------------------取组码的diff值--------------------
+ *  @param tDS : 当前单特征的ds
+ */
++(AIKVPointer*) getDiffV:(AIKVPointer*)gv_p tDS:(NSString*)tDS;
+
+/**
+ *  MARK:--------------------根据protoDiff值和assDiff值，计算其匹配度--------------------
+ */
++(CGFloat) diffMatchValue:(CGFloat)protoDiffData assDiffV:(AIKVPointer*)assDiffV vInfo:(AIValueInfo*)vInfo;
 
 @end

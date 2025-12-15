@@ -38,13 +38,14 @@
 //Util
 #import "ThinkingUtils.h"
 #import "TOUtils.h"
-#import "TIUtils.h"
+#import "TCRecognitionInvoke.h"
 #import "TCSolutionUtil.h"
 #import "TCRecognitionUtil.h"
 #import "NVViewUtil.h"
 #import "MathUtils.h"
 #import "XGDebug.h"
 #import "TCDebug.h"
+#import "GroupDebug.h"
 #import "TVUtil_Short.h"
 #import "TVUtil.h"
 #import "HeLogUtil.h"
@@ -70,6 +71,9 @@
 #import "AIFeatureJvBuItem.h"
 #import "AIFeatureJvBuModel.h"
 #import "AIFeatureJvBuModels.h"
+#import "GTModels.h"
+#import "GTModel.h"
+#import "GTItem.h"
 
 //短时记忆
 #import "TOAlgModel.h"

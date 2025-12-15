@@ -40,6 +40,11 @@
     for (AIFeatureZenTiModel *assModel in self.models) {
         if ([assModel.assT isEqual:protoT]) continue;
         [assModel run4BestRemoveRepeat:protoModel];
+        
+        if (protoModel.rectItems.count == 0 || [STRFORMAT(@"%.2f",assModel.modelMatchDegree) isEqualToString:@"nan"]) {
+            //20250918: 因此处protoModel.rectItems.count=0,导致很多位置符合度计算成NaN。
+            NSLog(@"assModel.modelMatchDegree为NaN,导致计算错误的分母0来源：%ld 符合度：%.2f",protoModel.rectItems.count,assModel.modelMatchDegree);
+        }
     }
 }
 
@@ -78,6 +83,20 @@
     //1. 计算：每个model的显著度。
     for (AIFeatureZenTiModel *model in self.models) {
         [model run4StrongRatio];
+    }
+}
+
+-(void) run4MatchRatio {
+    // 计算健全度
+    for (AIFeatureZenTiModel *model in self.models) {
+        [model run4MatchRatio];
+    }
+}
+
+-(void) run4STMatch {
+    // 计算单特征综合竞争分
+    for (AIFeatureZenTiModel *model in self.models) {
+        [model run4STMatch];
     }
 }
 

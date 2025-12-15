@@ -15,7 +15,7 @@
 #define DebugingTC @"TCRecognition.m"
 
 //结果打印的TC名称们 (当前要打印哪些结果,就纳入哪些名称);
-#define LogingTCs @[@"TCRecognition.m", @"TIUtils.m",@"AINetUtils.m",@"SMGUtils.m"]
+#define LogingTCs @[@"TCRecognition.m", @"TCRecognitionInvoke.m",@"AINetUtils.m",@"SMGUtils.m"]
 
 //对最后多少条时间汇总分析
 #define DebugLastOperesNum 3

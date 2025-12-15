@@ -372,6 +372,7 @@
             AIPort *checkPort = ARR_INDEX(ports, checkIndex);
             return [SMGUtils comparePortA:findPort portB:checkPort];
         } startIndex:0 endIndex:ports.count - 1 success:^(NSInteger index) {
+            //NSArray *errorPorts = [SMGUtils filterArr:ports checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:findPort.target_p]; }];//复现此处警告时，打开该调试日志。
             NSLog(@"警告!!! bug:在第二序列的ports中发现了两次port目标___pointerId为:%ld",(long)findPort.target_p.pointerId);
         } failure:^(NSInteger index) {
             if (ARR_INDEXISOK(ports, index)) {
@@ -475,12 +476,24 @@
                 difStrong = [self getConMaxStrong:conNode];
             }
             
+            // 取出旧有conPort.params，用于具象指向防重。
+            AIPort *conPort = [AINetUtils getConPort:absNode con:conNode.p];
+            NSDictionary *findParams = conPort ? conPort.params : nil;
+            
             //2. hd_具象节点插"抽象端口";
             [AINetUtils insertPointer_Hd:absNode.pointer toPorts:conNode.absPorts findHeader:absNode.getHeaderNotNull difStrong:difStrong findParams:nil];//抽具象不需要params
             //3. hd_抽象节点插"具象端口";
-            [AINetUtils insertPointer_Hd:conNode.pointer toPorts:absConPorts findHeader:conNode.getHeaderNotNull difStrong:difStrong findParams:nil];//抽具象不需要params
+            [AINetUtils insertPointer_Hd:conNode.pointer toPorts:absConPorts findHeader:conNode.getHeaderNotNull difStrong:difStrong findParams:findParams];//具象需要rect
             //4. hd_存储
             [SMGUtils insertObject:conNode pointer:conNode.pointer fileName:kFNNode time:cRTNode(conNode.pointer)];
+            
+            if ([SMGUtils filterArr:conNode.absPorts checkValid:^BOOL(AIPort *item) {
+                return [item.target_p isEqual:absNode.p];
+            }].count > 1 || [SMGUtils filterArr:absConPorts checkValid:^BOOL(AIPort *item) {
+                return [item.target_p isEqual:conNode.p];
+            }].count > 1) {
+                ELog(@"查下conPorts或absPorts有重复的，抽具象关联不该有重复");
+            }
         }
         
         //7. 抽象节点的 关联&存储
@@ -1177,17 +1190,10 @@
     return [self convertPartOfFeatureContent2Rect:tNode contentIndexes:tNode.indexes];
 }
 +(CGRect) convertPartOfFeatureContent2Rect:(AIFeatureNode*)tNode contentIndexes:(NSArray*)contentIndexes {
-    //1. 数据准备。
-    CGRect resultRect = CGRectNull;
-    
-    //2. 把contentIndexes对应的每个组码取出来。
-    for (NSNumber *contentIndex in contentIndexes) {
+    return [SMGUtils convertArr2Rect:contentIndexes itemRectBlock:^CGRect(NSNumber *contentIndex) {
         CGRect itemRect = VALTOOK(ARR_INDEX(tNode.rects, contentIndex.integerValue)).CGRectValue;
-        resultRect = CGRectUnion(resultRect, itemRect);
-    }
-    
-    //3. 将求得的范围并集返回。
-    return resultRect;
+        return itemRect;
+    }];
 }
 
 /**
@@ -1242,8 +1248,27 @@
     // 再根据atA中的位置，把B也平移到A中。
     B.origin.x = atA.origin.x - atB.origin.x;
     B.origin.y = atA.origin.y - atB.origin.y;
-    NSLog(@"getBAtA: %@",Rect2Str(B));
+    // NSLog(@"getBAtA: %@",Rect2Str(B));
     return B;
+}
+
+/**
+ *  MARK:--------------------取组码的diff值--------------------
+ *  @param tDS : 当前单特征的ds
+ */
++(AIKVPointer*) getDiffV:(AIKVPointer*)gv_p tDS:(NSString*)tDS {
+    AIGroupValueNode *gv = [SMGUtils searchNode:gv_p];
+    return [SMGUtils filterSingleFromArr:gv.content_ps checkValid:^BOOL(AIKVPointer *item) {
+        return [item.dataSource isEqual:STRFORMAT(@"%@_diff",tDS)];
+    }];
+}
+
+/**
+ *  MARK:--------------------根据protoDiff值和assDiff值，计算其匹配度--------------------
+ */
++(CGFloat) diffMatchValue:(CGFloat)protoDiffData assDiffV:(AIKVPointer*)assDiffV vInfo:(AIValueInfo*)vInfo {
+    double assDiffData = [NUMTOOK([AINetIndex getData:assDiffV]) doubleValue];
+    return [AIAnalyst compareCansetValue:assDiffData protoV:protoDiffData at:assDiffV.algsType ds:assDiffV.dataSource isOut:assDiffV.isOut vInfo:vInfo];
 }
 
 @end

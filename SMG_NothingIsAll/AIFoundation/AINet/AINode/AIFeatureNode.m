@@ -36,6 +36,11 @@
     return -1;
 }
 
+-(CGRect) rectByIndex:(NSInteger)index {
+    NSValue *value = ARR_INDEX(self.rects, index);
+    return value.CGRectValue;
+}
+
 //MARK:===============================================================
 //MARK:             < 特征位置符合度（类似匹配度，持久化）>
 //MARK:===============================================================

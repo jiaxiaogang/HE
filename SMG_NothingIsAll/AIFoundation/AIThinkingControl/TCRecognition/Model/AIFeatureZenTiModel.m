@@ -162,8 +162,6 @@
         item.itemMatchDegree = item.scaleMatchValue * item.deltaXMatchValue * item.deltaYMatchValue;
     }
     
-    //TODOTOMORROW20250614: 测得此处modelMatchDegree经常NaN问题。
-    
     //=============== step6: 求当前assModel的综合位置符合度（参考34136-TODO6）===============
     self.modelMatchDegree = self.rectItems.count == 0 ? 0 : [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
         return obj.itemMatchDegree;
@@ -185,6 +183,7 @@
         AIFeatureNode *fromItemT = [SMGUtils searchNode:item.fromItemT_p];
         
         //3. assT与absT的匹配度 * assT与protoT的匹配度 = assT与protoT的匹配度。
+        //2025.09.19: absST和assGT之间，没有匹配度，所以这里是取不到值的，不过该方法目前并无地方调用，这个先放着不管。
         item.itemMatchValue = [fromItemT getConMatchValue:self.assT] * [fromItemT getConMatchValue:protoT];
     }
     
@@ -213,6 +212,19 @@
     self.modelMatchConStrongRatio = assT.count > 0 ? validStrong / (float)assT.count : 0;
 }
 
+-(void) run4MatchRatio {
+    AIFeatureNode *assT = [SMGUtils searchNode:self.assT];
+    self.matchRatio = assT.count > 0 ? self.rectItems.count / (float)assT.count : 0;
+}
+
+-(void) run4STMatch {
+    //4. 求出单特征综合竞争分。
+    self.modelSTMatch = self.rectItems.count == 0 ? 0 : [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *item) {
+        return item.fromItemT.getSTMatch;
+    }] / (float)self.rectItems.count;
+}
+
+
 //MARK:===============================================================
 //MARK:                     < PrivateMethod >
 //MARK:===============================================================
@@ -224,7 +236,7 @@
     CGRect conAssRect = rectItem.rect;
     
     //2. 计算缩放scale。
-    return protoRect.size.width == 0 ? : conAssRect.size.width / (float)protoRect.size.width;
+    return protoRect.size.width == 0 ? 0 : conAssRect.size.width / (float)protoRect.size.width;
 }
 
 //返回 rectItem 在 conAssT 与 protoT 的deltaX偏移量。

@@ -237,25 +237,42 @@
 }
 
 -(void) updateLogDescItem:(NSString*)newItem {
-    NSInteger count = NUMTOOK([self.logDesc objectForKey:newItem]).integerValue;
-    [self.logDesc setObject:@(count + 1) forKey:newItem];
+    [self updateLogDescItem:newItem rate:1];
+}
+
+-(void) updateLogDescItem:(NSString*)newItem rate:(CGFloat)rate {
+    if (rate > 1 || rate < 0) ELog(@"越界，rate只能0到1");
+    CGFloat count = NUMTOOK([self.logDesc objectForKey:newItem]).floatValue;
+    [self.logDesc setObject:@(count + rate) forKey:newItem];
     
     NSRange tabRange = [newItem rangeOfString:@"_"];
     if (tabRange.location == NSNotFound) return;
     
     NSString *newItemV2 = [newItem substringToIndex:tabRange.location];
-    NSInteger countV2 = NUMTOOK([self.logDesc objectForKey:newItemV2]).integerValue;
-    [self.logDesc setObject:@(countV2 + 1) forKey:newItemV2];
+    CGFloat countV2 = NUMTOOK([self.logDesc objectForKey:newItemV2]).floatValue;
+    [self.logDesc setObject:@(countV2 + rate) forKey:newItemV2];
 }
 
 -(void) updateLogDescDic:(NSDictionary*)newDic {
+    [self updateLogDescDic:newDic rate:1];
+}
+
+-(void) updateLogDescDic:(NSDictionary*)newDic rate:(CGFloat)rate {
     for (NSString *newItem in newDic.allKeys) {
         //计数只+1，因为如果加全部，相当于一直累加，一会就超int最大值了。
-        [self updateLogDescItem:newItem];
+        [self updateLogDescItem:newItem rate:rate];
     }
 }
 
 -(NSDictionary*) getLogDesc:(BOOL)simple {
+    // 精度只保留小数点后两位,并将v转为str类型。
+    return [SMGUtils convertDic:[self getLogDesc_Number:simple] kvBlock:^NSArray *(NSString *protoK, NSNumber *protoV) {
+        return @[protoK,STRFORMAT(@"%.2f",protoV.floatValue)];
+    }];
+}
+
+-(NSDictionary*) getLogDesc_Number:(BOOL)simple {
+    // 把要打印的筛选出来。
     return [SMGUtils filterDic:self.logDesc checkValid:^BOOL(NSString *key, id value) {
         NSRange tabRange = [key rangeOfString:@"_"];
         BOOL keyIsSimple = tabRange.location == NSNotFound;
@@ -289,6 +306,7 @@
         self.absIndexDDic = [aDecoder decodeObjectForKey:@"absIndexDDic"];
         self.conIndexDDic = [aDecoder decodeObjectForKey:@"conIndexDDic"];
         self.logDesc = [aDecoder decodeObjectForKey:@"logDesc"];
+        self.absLevel = [aDecoder decodeIntegerForKey:@"absLevel"];
     }
     return self;
 }
@@ -311,6 +329,7 @@
     [aCoder encodeObject:[self.absIndexDDic copy] forKey:@"absIndexDDic"];
     [aCoder encodeObject:[self.conIndexDDic copy] forKey:@"conIndexDDic"];
     [aCoder encodeObject:self.logDesc forKey:@"logDesc"];
+    [aCoder encodeInteger:self.absLevel forKey:@"absLevel"];
 }
 
 @end
