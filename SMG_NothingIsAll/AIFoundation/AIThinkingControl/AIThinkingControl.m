@@ -235,6 +235,8 @@ static AIThinkingControl *_instance;
     CGFloat dotSize = whSize / 3.0f;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     while (dotSize > 1) {
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
@@ -276,6 +278,8 @@ static AIThinkingControl *_instance;
         dotSize /= 1.3f;
         //[jvBuModel.debug printLogDic];
     }
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:AIThinkingControl.m281 计数:3 均耗:404.68 = 总耗:1214 读:0 写:0）
     
     //31. 单特征识别无结果则跳过。
     if (!ARRISOK(jvBuModel.stModels)) {

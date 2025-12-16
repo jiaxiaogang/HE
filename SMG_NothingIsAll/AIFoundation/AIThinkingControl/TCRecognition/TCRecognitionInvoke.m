@@ -217,11 +217,6 @@
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ %p:RECT:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,model,Rect2Str(model.bestGVsAtProtoTRect));
-        
-        // TODOTOMORROW20251214: 经查重复的ST其Rect也很相似，比如有一条只是前后两次的Y差2，别的都一模一样。
-        NSLog(@"%@",[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
-            return STRFORMAT(@"%ld %@",obj.assIndex,Rect2Str(obj.bestGVAtProtoTRect));
-        }]);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
         }];
@@ -283,12 +278,14 @@
         return STRFORMAT(@"%@_%.2f",obj.v1,value);
     }]);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:TCRecognitionInvoke.m285 计数:3081 均耗:1.41 = 总耗:4336 读:0 写:0）
     
     //4. 组码识别
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:TCRecognitionInvoke.m292 计数:3081 均耗:0.33 = 总耗:1024 读:0 写:0）
     
     //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
     //2025.05.21: 关掉，前面的beginRectExcept和assRectExcept已经把重复区的全过滤掉了，这里压根收集不到exceptGVs，并且防重exceptGVs反而会让那些原处边缘地带没什么竞争力的gvs有机会进行识别，这也不利于准确性。
@@ -318,9 +315,11 @@
         NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:isOut];
         return @[protoK,dataDic];
     }];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
         // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
         NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
@@ -328,15 +327,19 @@
             gvIdProtoRects = [NSMutableArray new];
             [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
         }
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:TCRecognitionInvoke.m334 计数:16411 均耗:0.10 = 总耗:1698 读:0 写:0）
         NSValue *aleardayBeginGV = [SMGUtils filterSingleFromArr:gvIdProtoRects checkValid:^BOOL(NSValue *item) {
             return [SMGUtils rate4IntersectionRect:item.CGRectValue bRect:protoRect] > 0.6f;
         }];
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         if (aleardayBeginGV) continue;
         [gvIdProtoRects addObject:@(protoRect)];
         
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
