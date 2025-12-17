@@ -10,7 +10,20 @@
 
 #define cDebugMode false
 
+#define mIndexPsPool [NSMutableDictionary new]
+
+
 @implementation TCRecognitionInvoke
+
+static const NSMutableDictionary *indexPsPool;
+static const NSMutableDictionary *vInfoCache;
+static const NSMutableDictionary *dataDicCache;
+
++(void) resetPool {
+    indexPsPool = [NSMutableDictionary new];
+    vInfoCache = [NSMutableDictionary new];
+    dataDicCache = [NSMutableDictionary new];
+}
 
 //MARK:===============================================================
 //MARK:                     < 稀疏码识别 >
@@ -38,16 +51,23 @@
 
 +(NSArray*) recognitionValue:(CGFloat)rate minLimit:(NSInteger)minLimit at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoData:(NSInteger)protoData {
     //1. 取索引序列 & 当前稀疏码值;
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSDictionary *cacheDataDic = [AINetIndexUtils searchDataDic:at ds:ds isOut:isOut];
-    NSArray *index_ps = [AINetIndex getIndex_ps:at ds:ds isOut:isOut];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.0s
+    NSString *key = STRFORMAT(@"%@_%@_%d",at,ds,isOut);
+    NSArray *index_ps = [indexPsPool objectForKey:STRFORMAT(@"%@_%@_%d",at,ds,isOut)];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     double max = [CortexAlgorithmsUtil maxOfLoopValue:at ds:ds itemIndex:GVIndexTypeOfDataSource];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.5s
     AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:ds isOut:isOut];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.6s
     
     //2. 按照相近度排序;
     NSArray *near_ps = [SMGUtils sortSmall2Big:index_ps compareBlock:^double(AIKVPointer *obj) {
         double objData = [NUMTOOK([AINetIndex getData:obj fromDataDic:cacheDataDic]) doubleValue];
         return [CortexAlgorithmsUtil nearDeltaOfValue:protoData assNum:objData max:max];
     }];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //3. 窄出,仅返回前NarrowLimit条 (最多narrowLimit条,最少1条);
     NSInteger limit = MAX(near_ps.count * rate, minLimit);
@@ -68,6 +88,7 @@
         model.matchValue = matchValue;
         return model;
     }];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     return result;
 }
 
@@ -78,40 +99,30 @@
 /**
  *  MARK:--------------------组码识别--------------------
  */
-+(NSArray*) recognitionGroupValueV3:(AIKVPointer*)groupValue_p rate:(CGFloat)rate minLimit:(NSInteger)minLimit {
-    AIGroupValueNode *protoGroupValue = [SMGUtils searchNode:groupValue_p];
-    NSArray *vModels = [SMGUtils convertArr:protoGroupValue.content_ps convertBlock:^id(AIKVPointer *item_p) {
-        double protoData = [NUMTOOK([AINetIndex getData:item_p]) doubleValue];
-        return [MapModel newWithV1:item_p.dataSource v2:@(protoData)];
-    }];
-    
-    //gv的at和isOut和v的一样，直接复用，ds不一样，用vModels传过去。
-    return [self recognitionGroupValueV4:vModels at:groupValue_p.algsType isOut:groupValue_p.isOut rate:rate minLimit:minLimit forProtoGV:groupValue_p];
-}
 +(NSArray*) recognitionGroupValueV4:(NSArray*)vModels at:(NSString*)at isOut:(BOOL)isOut rate:(CGFloat)rate minLimit:(NSInteger)minLimit forProtoGV:(AIKVPointer*)forProtoGV {
     //1. 数据准备
-    if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"31");
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSMutableDictionary *resultDic = [[NSMutableDictionary alloc] init];
-    if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"32");
     
     //2. 先把protoGV解读成索引值。
-    if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"33");
     for (NSInteger itemIndex = 0; itemIndex < vModels.count; itemIndex++) {
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
         //3. 取所有当前组码的itemIndex下的索引序列 & 当前码的索引值 & 当前码的最大值。
-        if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"34");
         MapModel *item = ARR_INDEX(vModels, itemIndex);
         NSString *ds = item.v1;
         CGFloat itemData = NUMTOOK(item.v2).floatValue;
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 2.5s
         NSArray *vMatchModels = [AIRecognitionCache getCache:STRFORMAT(@"%@_%.2f",item.v1,itemData) cacheBlock:^id{
             return [self recognitionValue:0.2 minLimit:10 at:at ds:ds isOut:isOut protoData:itemData];//v1单码特征
         }];
-        if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"37");
-        
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         //4. 每一个vMatchModel都向refPorts找结果。
         //重复性说明：此处每个vMatchModel都不同，所以它refPort.target也各不同，不会重复。
         for (AIMatchModel *vMatchModel in vMatchModels) {
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:57509 1.2s
             NSArray *refPorts = [AINetUtils refPorts_All:vMatchModel.match_p];
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:57509 1.1s
             //7. 每个refPort做两件事: (性能: 以下for循环耗150ms很正常);
             for (AIPort *refPort in refPorts) {
                 //2025.04.22: 性能注意!!! 此处尽量别加任何复杂代码，除了加减乘除和objectForKey外，最好contains和AddDebugCodeBlock_Key也别加，不然几万次循环足以卡慢。
@@ -125,10 +136,11 @@
                 model.matchValue *= vMatchModel.matchValue;
                 model.sumRefStrong += (int)refPort.strong.value;
             }
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:57509 1.0s（可见这里慢，只是因为循环次数太多）
         }
-        if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3d");
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     }
-    if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3e");
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //11. 过滤掉匹配度为0的 & 非全含的 & 不识别protoG自己。
     NSArray *gMatchModels = [SMGUtils filterArr:resultDic.allValues checkValid:^BOOL(AIMatchModel *item) {
@@ -139,28 +151,24 @@
     gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *obj) {
         return obj.matchValue;
     }];
-    if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3f");//循环圈:1 代码块:3e 计数:51 均耗:27.96 = 总耗:1426 读:481 写:0
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //24. 过滤不准确的结果。
     gMatchModels = ARR_SUB(gMatchModels, 0, MIN(30, MAX(5, gMatchModels.count * 0.2)));
     
     //25. 更新: ref强度 & 相似度 & 抽具象;
-    if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g1");
     for (AIMatchModel *matchModel in gMatchModels) {
-        if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g3");
         //2025.03.30: 这儿性能不太好，经查现在组码识别不需要单码索引强度做竞争，先关掉。
         //[AINetUtils insertRefPorts_General:assNode.p content_ps:assNode.content_ps difStrong:1 header:assNode.header];
         if (forProtoGV) {
             AIGroupValueNode *assNode = [SMGUtils searchNode:matchModel.match_p];//性能：起初需要IO时1ms/条，后面有缓存后均耗0.05ms 总22ms。
             AIGroupValueNode *protoGroupValue = [SMGUtils searchNode:forProtoGV];
             [protoGroupValue updateMatchValue:assNode matchValue:matchModel.matchValue];//性能均耗0.15ms 总65ms
-            if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g4");
             [AINetUtils relateGeneralAbs:assNode absConPorts:assNode.conPorts conNodes:@[protoGroupValue] isNew:false difStrong:1];//性能均耗0.25ms 总97ms
         }
-        if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g5");
         //NSLog(@"组码识别结果(%ld/%ld) GV%ld 匹配数:%ld 匹配度:%.2f",[gMatchModels indexOfObject:matchModel],gMatchModels.count,matchModel.match_p.pointerId,matchModel.matchCount,matchModel.matchValue);
     }
-    if (cDebugMode) AddDebugCodeBlock_Key(@"rfs1", @"3g6");
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     return gMatchModels;
 }
 
@@ -171,6 +179,25 @@
 //单通道
 //TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
 +(void) recognitionFeatureV2_Step0:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
+    // 初始化缓存池数据。
+    [self resetPool];
+    
+    // 加载稀疏码相关缓存池。
+    NSArray *gvIndexKeys = [AINetGroupValueIndex gvIndexKeys:ds];
+    for (NSString *valueDS in gvIndexKeys) {
+        // 初始化indexPsPool。
+        NSArray *index_ps = [AINetIndex getIndex_ps:at ds:valueDS isOut:false];
+        [indexPsPool setObject:index_ps forKey:STRFORMAT(@"%@_%@_%d",at,valueDS,false)];
+        
+        // 提前加载好vInfo缓存，后面复用。
+        AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:valueDS isOut:false];
+        [vInfoCache setObject:vInfo forKey:valueDS];
+        
+        // 提前加载好dataDic缓存，后面复用。
+        NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:valueDS isOut:false];
+        [dataDicCache setObject:dataDic forKey:valueDS];
+    }
+    
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
@@ -180,19 +207,6 @@
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     NSMutableArray *protoGVIndexPool = [NSMutableArray new]; // 从protoDic的类似切图只切一次，这是复用池。
     NSMutableDictionary *bestGVsPool = [NSMutableDictionary new]; // 构建bestGVs的元素的复用池 <K=assST.pId_assIndex_protoRect, V=bestGVItem>
-    
-    // 提前加载好vInfo缓存，后面复用。
-    NSArray *gvIndexKeys = [AINetGroupValueIndex gvIndexKeys:ds];
-    NSDictionary *vInfoCache = [SMGUtils convertArr2Dic:gvIndexKeys kvBlock:^NSArray *(NSString *protoK) {
-        AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:protoK isOut:false];
-        return @[protoK,vInfo];
-    }];
-    
-    // 提前加载好dataDic缓存，后面复用。
-    NSDictionary *dataDicCache = [SMGUtils convertArr2Dic:gvIndexKeys kvBlock:^NSArray *(NSString *protoK) {
-        NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:false];
-        return @[protoK,dataDic];
-    }];
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
@@ -241,7 +255,7 @@
         dotSize /= 1.3f;
         //[jvBuModel.debug printLogDic];
     }
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.5s
     // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:AIThinkingControl.m281 计数:3 均耗:404.68 = 总耗:1214 读:0 写:0）
     
     //31. 单特征识别无结果则跳过。
@@ -439,7 +453,7 @@
             gvIdProtoRects = [NSMutableArray new];
             [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
         }
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.4s
         // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:TCRecognitionInvoke.m334 计数:16411 均耗:0.10 = 总耗:1698 读:0 写:0）
         NSValue *aleardayBeginGV = [SMGUtils filterSingleFromArr:gvIdProtoRects checkValid:^BOOL(NSValue *item) {
             return [SMGUtils rate4IntersectionRect:item.CGRectValue bRect:protoRect] > 0.6f;
@@ -533,7 +547,7 @@
             for (NSInteger i = 1; i < assT.count; i++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model protoGVIndexPool:protoGVIndexPool bestGVsPool:bestGVsPool];
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds model:model protoGVIndexPool:protoGVIndexPool bestGVsPool:bestGVsPool];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [model updateBestGVs:bestItem];
@@ -1784,8 +1798,6 @@
                  lastAtAssRect:(CGRect)lastAtAssRect
                  protoColorDic:(NSDictionary*)protoColorDic
                             ds:(NSString*)ds
-                  dataDicCache:(NSDictionary*)dataDicCache
-                    vInfoCache:(NSDictionary*)vInfoCache
                          model:(AIFeatureJvBuModel*)model
               protoGVIndexPool:(NSMutableArray*)protoGVIndexPool
                    bestGVsPool:(NSMutableDictionary*)bestGVsPool {

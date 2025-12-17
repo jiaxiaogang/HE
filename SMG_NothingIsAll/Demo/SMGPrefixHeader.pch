@@ -97,7 +97,8 @@
  *  MARK:--------------------xgDebug调试代码块--------------------
  *  @注意事项: 为性能好,调用AddDebugCodeBlock后必须调用PrintDebugCodeBlock(),不然它会一直累计models直至系统变卡;
  *  @use 使用方法:
- *              1. 先在代码块之间调用AddDebugCodeBlock("自定义后辍");
+ *              1. V1: 先在代码块之间调用AddDebugCodeBlock("自定义后辍","代码块");
+ *                 V2: 使用AddDebugCodeBlock_KeyV2("自定义后辍)，自动会以代码行为代码块打印。
  *              2. 在末尾调用PrintDebugCodeBlock()将结果日志打出;
  *  @desc 前辍说明: 使用当前文件名+循环id;
  */

@@ -241,6 +241,10 @@ static AIThinkingControl *_instance;
     NSDictionary *colorDic = algsModel.bColors;
     BOOL isOut = false;
     
+    //6. 提前加载好vInfo & dataDic缓存，后面复用。
+    // [TCRecognitionInvoke resetPool];
+    // TODO: 随后此方法 要启用的话，需要先把那些resetPool然后valueDS的缓存池加载一下。
+    
     //3. 循环分别进行：自举识别：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < self.tempModels.count; i++) {
         AIFeatureNode *passedT = ARR_INDEX(self.tempModels, i);
@@ -255,18 +259,8 @@ static AIThinkingControl *_instance;
             NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:passedRect];
             NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
             
-            //6. 提前加载好vInfo & dataDic缓存，后面复用。
-            NSDictionary *vInfoCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
-                AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:protoK isOut:isOut];
-                return @[protoK,vInfo];
-            }];
-            NSDictionary *dataDicCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
-                NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:isOut];
-                return @[protoK,dataDic];
-            }];
-            
             //7. 收集起来自举算法结果。
-            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache model:model protoGVIndexPool:nil bestGVsPool:nil];
+            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds model:model protoGVIndexPool:nil bestGVsPool:nil];
             if (!bestItem) continue;
             [model.bestGVs addObject:bestItem];
         }

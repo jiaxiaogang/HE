@@ -15,7 +15,6 @@
 //MARK:                     < 单特征识别 >
 //MARK:===============================================================
 +(void) recognitionFeatureV2_Step0:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc;
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoGVIndexPool:(NSMutableArray*)protoGVIndexPool bestGVsPool:(NSMutableDictionary*)bestGVsPool;
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel;
 
 //MARK:===============================================================
@@ -60,8 +59,6 @@
                  lastAtAssRect:(CGRect)lastAtAssRect
                  protoColorDic:(NSDictionary*)protoColorDic
                             ds:(NSString*)ds
-                  dataDicCache:(NSDictionary*)dataDicCache
-                    vInfoCache:(NSDictionary*)vInfoCache
                          model:(AIFeatureJvBuModel*)model
               protoGVIndexPool:(NSMutableArray*)protoGVIndexPool
                    bestGVsPool:(NSMutableDictionary*)bestGVsPool;
