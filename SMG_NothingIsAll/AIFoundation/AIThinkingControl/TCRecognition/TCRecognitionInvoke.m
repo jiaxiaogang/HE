@@ -53,12 +53,11 @@ static const NSMutableDictionary *dataDicCache;
     //1. 取索引序列 & 当前稀疏码值;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSDictionary *cacheDataDic = [AINetIndexUtils searchDataDic:at ds:ds isOut:isOut];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.0s
-    NSString *key = STRFORMAT(@"%@_%@_%d",at,ds,isOut);
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSArray *index_ps = [indexPsPool objectForKey:STRFORMAT(@"%@_%@_%d",at,ds,isOut)];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     double max = [CortexAlgorithmsUtil maxOfLoopValue:at ds:ds itemIndex:GVIndexTypeOfDataSource];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.5s
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.8s
     AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:ds isOut:isOut];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.6s
     
