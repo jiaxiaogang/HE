@@ -168,66 +168,179 @@
 //MARK:                     < 特征识别 >
 //MARK:===============================================================
 
-/**
- *  MARK:--------------------单特征识别结果竞争--------------------
- *  @version
- *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
- */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel {
+//单通道
+//TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
++(void) recognitionFeatureV2_Step0:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
+    //1. 对未切粒度的color字典进行自适应粒度并识别。
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
+    DDic *excepts = [DDic new];
+    AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
+    jvBuModel.debug = [GroupDebug new];
+    NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
+    NSMutableArray *protoGVIndexPool = [NSMutableArray new]; // 从protoDic的类似切图只切一次，这是复用池。
+    NSMutableDictionary *bestGVsPool = [NSMutableDictionary new]; // 构建bestGVs的元素的复用池 <K=assST.pId_assIndex_protoRect, V=bestGVItem>
     
-    //43. 处理匹配度，符合度
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
-    }
-    
-    // 竞争因子计算：防止过度抽象匹配数。
-    [decoratorJvBuModel run4BestGVsCountRatio];
-    
-    // 竞争因子计算：在稳定层里，抽象优先。
-    [decoratorJvBuModel run4AbsLevelRatio];
-    [decoratorJvBuModel run4ConPortStrongRatio];
-    
-    // 竞争因子计算：分区竞争匹配度。
-    [decoratorJvBuModel run4AreaRankRatioV2];
-    
-    //53. 竞争与排序。
-    //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
-    NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.getSTMatch;
-    }];
-    
-    //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
-    //2025.07.23: 单特征不该防重，在一个手写8上面，有四处右下线，但防重后就只剩一个了，导致单特征识别结果不全面（实测过，很多单特征识别结果中同一个单特征，它们的rect其实也都是不一样的）。
-    //validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) { return obj.assT.p; }];
-    
-    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
-    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
-    //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
-    //2025.12.05: 此处应该是末尾淘汰，而不是只取最好的一部分，不然很容易合成ProtoGT后不成形（比如最优部分肯定不表示全部）（比如最优的全只保留了0的下半部分，因为0的下半部分太有规律了，前20名可能全是0的下半部分）。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.8f, 4), 100));
-    
-    //60. 更新赋值回去。
-    decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
-    
-    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+    //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
+    CGFloat dotSize = whSize / 3.0f;
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    while (dotSize > 1) {
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
-        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
-        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
+        //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
+        NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
+        NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
         
-        //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ %p:RECT:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,model,Rect2Str(model.bestGVsAtProtoTRect));
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
-        }];
+        //2025.05.20: 从粗到细，识别十条单特征即可。
+        //2025.05.20: BUG-protoGT经常不全：比如有时只识别了0的上半部分，没下半部分，因为这里达到限制条数中断导致的，先关掉，不然肯定有识别一半就中断的情况。
+        //if (jvBuModel.models.count >= 10) break;
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
+        int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
+        for (NSInteger startX = 0; startX < length; startX++) {
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+            for (NSInteger startY = 0; startY < length; startY++) {
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
+                //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在单特征识别算法中实现防重的）。
+                CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
+                
+                //14. 切出当前gv：九宫。
+                //2025.12.11: 切图复用（参考35105-TODO3.1）。
+                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImg:protoGVIndexPool protoRect:curRect protoColorDic:colorDic ds:ds];
+                if (!gvIndex) continue;
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                
+                //21. 单特征识别：通过组码识别。
+                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept protoGVIndexPool:protoGVIndexPool bestGVsPool:bestGVsPool];
+                [jvBuModel.stModels addObjectsFromArray:itemSTModels];
+                
+                //22. 组特征识别：通过单特征识别。
+                //NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV4_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize itemSTModels:itemSTModels];
+                //[jvBuModel.gtModels addObjectsFromArray:itemGTModels];
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+            }
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        }
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        
+        //22. 下一层粒度（再/1.3倍）。
+        dotSize /= 1.3f;
+        //[jvBuModel.debug printLogDic];
     }
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:AIThinkingControl.m281 计数:3 均耗:404.68 = 总耗:1214 读:0 写:0）
     
-    //61. debugLog
-    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+    //31. 单特征识别无结果则跳过。
+    if (!ARRISOK(jvBuModel.stModels)) {
+        NSLog(@"第1步、所有粒度层单特征识别总结果为0条。");
+        return;
+    }
+    NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
+    
+    // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
+    // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
+    // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
+    // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
+    // 2025.08.07: 废弃构建protoT，因为类比用不着，何必拼凑这个很多gvs元素的isGT出来呢（参考35062-TODO3）。
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel];
+    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    //[TCRecognitionInvoke recognitionGroupFeatureV4_Step2:jvBuModel];
+    //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
+    
+    // 单特征类比：借助bestGVs来类比。
+    for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
+        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
+    }
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    // debug
+    [TCRecognitionInvoke printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.getSTMatch;
     }];
+    
+    // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
+    // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
+    // 2025.11.07: 用assST构建protoGT（参考35091-TODO1）。
+    // 2025.11.28: 改回用absST构建ProtoGT（参考35102-方案2）。
+    NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
+    
+    // 方案1、========== 用assST来构建ProtoGT ==========
+    //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+    //    // 数据准备。
+    //    CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+    //        return item.bestGVAtProtoTRect;
+    //    }];
+    //    CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+    //        return [model.assT rectByIndex:item.assIndex];
+    //    }];
+    //    CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
+    //        return item.CGRectValue;
+    //    }];
+    //
+    //    // ========== 用bestGVs在protoGT和在assST中的rect，推断出整个assST在protoGT中的rect ==========
+    //
+    //    // 方式1 =============> 统一放到protoT坐标系之：现计算。
+    //    // CGFloat wRate = bestGVs_ProtoT.size.width / bestGVs_AssST.size.width;
+    //    // CGFloat hRate = bestGVs_ProtoT.size.height / bestGVs_AssST.size.height;
+    //    // CGSize assST_Proto_Size = CGSizeMake(assSTRect.size.width * wRate, assSTRect.size.height * hRate);
+    //    // CGPoint bestGVs_AssST_Point_ByProto = CGPointMake(bestGVs_AssST.origin.x * wRate, bestGVs_AssST.origin.y * hRate);
+    //
+    //    // 方式2 =============> 增强易读性，封装计算。
+    //    // 统一放到protoT坐标系之：将放到protoT后的assSTRect的尺寸求出来。
+    //    CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
+    //
+    //    // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
+    //    CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCPointFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
+    //
+    //    // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
+    //    CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
+    //    NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
+    //    return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
+    //}];
+    
+    // 方案2、========== 用absST来构建ProtoGT ==========
+    NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+        if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
+        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            return item.bestGVAtProtoTRect;
+        }];
+        // NSLog(@"%@",Rect2Str(model.bestGVsAtProtoTRect));
+        return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
+    }];
+    if (gtOrders.count == 0) return;
+    
+    // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
+    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    [protoGT updateLogDescItem:logDesc];
+    CGRect jvs_ProtoGTRect = [SMGUtils convertArr2Rect:gtOrders itemRectBlock:^CGRect(InputGroupFeatureModel *item) { return item.rect; }]; // ProtoGT不一定是全局，如果只是一部分，处理下显示时的marginTop和marginLeft。
+    NSLog(@"jvs_ProtoGTRect:%@",Rect2Str(jvs_ProtoGTRect));
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:jvs_ProtoGTRect.origin.x top:jvs_ProtoGTRect.origin.y tvId:2];
+    }];
+    NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
+    
+    // 组特征识别：GT识别V5。
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:protoGT.p];
+    NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
+    
+    // 组特征类比V5：用子元素assSTs来类比。
+    for (GTModel *assGT in assGTs) {
+        [AIAnalogy analogyGroupFeatureV6:protoGT gtModel:assGT];
+    }
+    
+    // debug
+    [TCRecognitionInvoke printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
+        return obj.assGT;
+    } convertMatchBlock:^float(GTModel *obj) {
+        return obj.modelMatchDegree * obj.modelMatchRatio;
+    }];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
 
 /**
@@ -450,6 +563,68 @@
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     return result;
+}
+
+/**
+ *  MARK:--------------------单特征识别结果竞争--------------------
+ *  @version
+ *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
+ */
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel {
+    
+    //43. 处理匹配度，符合度
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
+    }
+    
+    // 竞争因子计算：防止过度抽象匹配数。
+    [decoratorJvBuModel run4BestGVsCountRatio];
+    
+    // 竞争因子计算：在稳定层里，抽象优先。
+    [decoratorJvBuModel run4AbsLevelRatio];
+    [decoratorJvBuModel run4ConPortStrongRatio];
+    
+    // 竞争因子计算：分区竞争匹配度。
+    [decoratorJvBuModel run4AreaRankRatioV2];
+    
+    //53. 竞争与排序。
+    //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
+    NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.getSTMatch;
+    }];
+    
+    //54. 防重（同一个assT可能在多个错位时都识别到，导致其实是重影的，比如0的内圈和外圈就是两个0，所以要防重下）（参考35043-重影BUG）。
+    //2025.07.23: 单特征不该防重，在一个手写8上面，有四处右下线，但防重后就只剩一个了，导致单特征识别结果不全面（实测过，很多单特征识别结果中同一个单特征，它们的rect其实也都是不一样的）。
+    //validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) { return obj.assT.p; }];
+    
+    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
+    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
+    //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
+    //2025.12.05: 此处应该是末尾淘汰，而不是只取最好的一部分，不然很容易合成ProtoGT后不成形（比如最优部分肯定不表示全部）（比如最优的全只保留了0的下半部分，因为0的下半部分太有规律了，前20名可能全是0的下半部分）。
+    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.8f, 4), 100));
+    
+    //60. 更新赋值回去。
+    decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
+    
+    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        
+        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
+        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
+        
+        //52. debug (\t符合度:%.1f\t健全度:%.1f)
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ %p:RECT:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,model,Rect2Str(model.bestGVsAtProtoTRect));
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
+        }];
+    }
+    
+    //61. debugLog
+    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
+        return obj.assT;
+    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
+        return obj.getSTMatch;
+    }];
 }
 
 /**
