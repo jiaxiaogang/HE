@@ -10,6 +10,22 @@
 
 @implementation AINetGroupValueIndex
 
++(NSArray*) gvIndexKeys:(NSString*)ds {
+    return @[[self directionKey:ds], [self diffKey:ds], [self junKey:ds]];
+}
+
++(NSString*) directionKey:(NSString*)ds {
+    return STRFORMAT(@"%@_direction",ds);
+}
+
++(NSString*) diffKey:(NSString*)ds {
+    return STRFORMAT(@"%@_diff",ds);
+}
+
++(NSString*) junKey:(NSString*)ds {
+    return STRFORMAT(@"%@_jun",ds);
+}
+
 /**
  *  MARK:--------------------根据组节点取 三个索引的数据（参考34082-方案2）--------------------
  *  @param subDots MapModel类型: v1=colorValue v2=x(0-2) v3-y(0-2)
@@ -60,9 +76,9 @@
     
     //3. 如果纯色，直接返回三个索引：均值、差值=0、方向=0。
     if (smallIndexs.count == 0 || bigerIndexs.count == 0) {
-        return @{STRFORMAT(@"%@_direction",ds): @(0),
-                 STRFORMAT(@"%@_diff",ds): @(0),
-                 STRFORMAT(@"%@_jun",ds): @(pinJunNum)};
+        return @{[self directionKey:ds]: @(0),
+                 [self diffKey:ds]: @(0),
+                 [self junKey:ds]: @(pinJunNum)};
     }
     
     //4. 差值：求出大小区各自的均值（参考34082-TODO2）。
@@ -101,9 +117,9 @@
     float direction = roundf(protoParam * 360) / 360;//再然后保留10度精度
     
     //7. 创建三个索引的指针地址：均值、差值、方向。
-    return @{STRFORMAT(@"%@_direction",ds): @(direction),
-             STRFORMAT(@"%@_diff",ds): @(diffPinJunNum),
-             STRFORMAT(@"%@_jun",ds): @(pinJunNum)};
+    return @{[self directionKey:ds]: @(direction),
+             [self diffKey:ds]: @(diffPinJunNum),
+             [self junKey:ds]: @(pinJunNum)};
 }
 
 //把0-1转成0-9

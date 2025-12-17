@@ -181,6 +181,19 @@
     NSMutableArray *protoGVIndexPool = [NSMutableArray new]; // 从protoDic的类似切图只切一次，这是复用池。
     NSMutableDictionary *bestGVsPool = [NSMutableDictionary new]; // 构建bestGVs的元素的复用池 <K=assST.pId_assIndex_protoRect, V=bestGVItem>
     
+    // 提前加载好vInfo缓存，后面复用。
+    NSArray *gvIndexKeys = [AINetGroupValueIndex gvIndexKeys:ds];
+    NSDictionary *vInfoCache = [SMGUtils convertArr2Dic:gvIndexKeys kvBlock:^NSArray *(NSString *protoK) {
+        AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:protoK isOut:false];
+        return @[protoK,vInfo];
+    }];
+    
+    // 提前加载好dataDic缓存，后面复用。
+    NSDictionary *dataDicCache = [SMGUtils convertArr2Dic:gvIndexKeys kvBlock:^NSArray *(NSString *protoK) {
+        NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:false];
+        return @[protoK,dataDic];
+    }];
+    
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -398,7 +411,6 @@
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:TCRecognitionInvoke.m292 计数:3081 均耗:0.33 = 总耗:1024 读:0 写:0）
     
     //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
     //2025.05.21: 关掉，前面的beginRectExcept和assRectExcept已经把重复区的全过滤掉了，这里压根收集不到exceptGVs，并且防重exceptGVs反而会让那些原处边缘地带没什么竞争力的gvs有机会进行识别，这也不利于准确性。
@@ -416,19 +428,6 @@
     //    return [exceptGVs containsObject:item.match_p];
     //}];
     //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //6. 提前加载好vInfo缓存，后面复用。
-    NSDictionary *vInfoCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
-        AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:protoK isOut:isOut];
-        return @[protoK,vInfo];
-    }];
-    
-    //7. 提前加载好dataDic缓存，后面复用。
-    NSDictionary *dataDicCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
-        NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:isOut];
-        return @[protoK,dataDic];
-    }];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
