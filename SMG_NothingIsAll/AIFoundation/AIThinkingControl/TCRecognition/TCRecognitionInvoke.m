@@ -49,22 +49,26 @@ static const NSMutableDictionary *dataDicCache;
     return [self recognitionValue:rate minLimit:minLimit at:protoV_p.algsType ds:protoV_p.dataSource isOut:protoV_p.isOut protoData:protoData];
 }
 
-+(NSArray*) recognitionValue:(CGFloat)rate minLimit:(NSInteger)minLimit at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoData:(NSInteger)protoData {
+//TODOTOMORROW20251218: 调用9243次，是否可复用防重，不然这次数太多，再快也慢。
+// 比如比上个小的大，大的小，那就类似，允许同样返回（或差一两个位置，也可以返回一样的，精度差点，速度快很多），可以用排位下标下复用试下。
+
++(NSArray*) recognitionValue:(CGFloat)rate minLimit:(NSInteger)minLimit at:(NSString*)at ds:(NSString*)valueDS isOut:(BOOL)isOut protoData:(NSInteger)protoData {
     //1. 取索引序列 & 当前稀疏码值;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    NSDictionary *cacheDataDic = [AINetIndexUtils searchDataDic:at ds:ds isOut:isOut];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    NSArray *index_ps = [indexPsPool objectForKey:STRFORMAT(@"%@_%@_%d",at,ds,isOut)];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    double max = [CortexAlgorithmsUtil maxOfLoopValue:at ds:ds itemIndex:GVIndexTypeOfDataSource];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.8s
-    AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:ds isOut:isOut];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.6s
+    NSDictionary *cacheDataDic = [dataDicCache objectForKey:valueDS];
+    NSArray *index_ps = [indexPsPool objectForKey:valueDS];
+    double max = [CortexAlgorithmsUtil maxOfLoopValue:at ds:valueDS itemIndex:GVIndexTypeOfDataSource];
+    AIValueInfo *vInfo = [vInfoCache objectForKey:valueDS];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.2s
     
     //2. 按照相近度排序;
-    NSArray *near_ps = [SMGUtils sortSmall2Big:index_ps compareBlock:^double(AIKVPointer *obj) {
+    NSArray *indexPsMapModels = [SMGUtils convertArr:index_ps convertBlock:^id(AIKVPointer *obj) {
         double objData = [NUMTOOK([AINetIndex getData:obj fromDataDic:cacheDataDic]) doubleValue];
-        return [CortexAlgorithmsUtil nearDeltaOfValue:protoData assNum:objData max:max];
+        double nearDelta = [CortexAlgorithmsUtil nearDeltaOfValue:protoData assNum:objData max:max];
+        return [DoubleObjMapModel newWithDoubleValue:nearDelta obj:obj];
+    }];
+    NSArray *near_ps = [SMGUtils sortSmall2Big:indexPsMapModels compareBlock:^double(DoubleObjMapModel *obj) {
+        return obj.doubleValue;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -73,10 +77,10 @@ static const NSMutableDictionary *dataDicCache;
     near_ps = ARR_SUB(near_ps, 0, limit);
     
     //4. 转matchModel模型并返回，取上相近度。
-    NSArray *result = [SMGUtils convertArr:near_ps convertBlock:^id(AIKVPointer *near_p) {
-        
+    NSArray *result = [SMGUtils convertArr:near_ps convertBlock:^id(DoubleObjMapModel *indexMapModel) {
         //5. 第1_计算出nearV (参考25082-公式1) (性能:400次计算,耗100ms很正常);
         //2024.04.27: BUG_这里有nearV为0的,导致后面可能激活一些完全不准确的结果 (修复: 加上末尾淘汰: 相似度为0的就不收集了先,看下应该也不影响别的什么);
+        AIKVPointer *near_p = indexMapModel.obj;
         double nearData = [NUMTOOK([AINetIndex getData:near_p fromDataDic:cacheDataDic]) doubleValue];
         CGFloat matchValue = [AIAnalyst compareCansetValue:nearData protoV:protoData at:near_p.algsType ds:near_p.dataSource isOut:near_p.isOut vInfo:vInfo];
         if (matchValue <= 0) return nil;//把相近度为0的过滤掉。
@@ -186,7 +190,7 @@ static const NSMutableDictionary *dataDicCache;
     for (NSString *valueDS in gvIndexKeys) {
         // 初始化indexPsPool。
         NSArray *index_ps = [AINetIndex getIndex_ps:at ds:valueDS isOut:false];
-        [indexPsPool setObject:index_ps forKey:STRFORMAT(@"%@_%@_%d",at,valueDS,false)];
+        [indexPsPool setObject:index_ps forKey:valueDS];
         
         // 提前加载好vInfo缓存，后面复用。
         AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:valueDS isOut:false];
