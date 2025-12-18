@@ -18,11 +18,15 @@
 static const NSMutableDictionary *indexPsPool;
 static const NSMutableDictionary *vInfoCache;
 static const NSMutableDictionary *dataDicCache;
+static const NSMutableDictionary *valueGroupDataCache; // 稀疏码分一百组，每个组的稀疏码值。
+static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓存 <K=valueDS_分组下标，V=识别结果>
 
 +(void) resetPool {
     indexPsPool = [NSMutableDictionary new];
     vInfoCache = [NSMutableDictionary new];
     dataDicCache = [NSMutableDictionary new];
+    valueGroupDataCache = [NSMutableDictionary new];
+    valueResultPool = [NSMutableDictionary new];
 }
 
 //MARK:===============================================================
@@ -49,10 +53,15 @@ static const NSMutableDictionary *dataDicCache;
     return [self recognitionValue:rate minLimit:minLimit at:protoV_p.algsType ds:protoV_p.dataSource isOut:protoV_p.isOut protoData:protoData];
 }
 
-//TODOTOMORROW20251218: 调用9243次，是否可复用防重，不然这次数太多，再快也慢。
-// 比如比上个小的大，大的小，那就类似，允许同样返回（或差一两个位置，也可以返回一样的，精度差点，速度快很多），可以用排位下标下复用试下。
-
-+(NSArray*) recognitionValue:(CGFloat)rate minLimit:(NSInteger)minLimit at:(NSString*)at ds:(NSString*)valueDS isOut:(BOOL)isOut protoData:(NSInteger)protoData {
++(NSArray*) recognitionValue:(CGFloat)rate minLimit:(NSInteger)minLimit at:(NSString*)at ds:(NSString*)valueDS isOut:(BOOL)isOut protoData:(CGFloat)protoData {
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    // 优先从复用池取：单稀疏码识别结果复用池（参考35107-TODO3.2）。
+    NSString *poolKey = [self getPoolKeyOfProtoData:protoData valueDS:valueDS];
+    NSArray *poolResult = [valueResultPool objectForKey:poolKey];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    // 有复用直接返回，无复用，再进行识别。
+    if (poolResult) return poolResult;
+    
     //1. 取索引序列 & 当前稀疏码值;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSDictionary *cacheDataDic = [dataDicCache objectForKey:valueDS];
@@ -92,6 +101,9 @@ static const NSMutableDictionary *dataDicCache;
         return model;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+    
+    // 把结果添加到复用池（参考35107-TODO3.2）。
+    [valueResultPool setObject:result forKey:poolKey];
     return result;
 }
 
@@ -199,6 +211,18 @@ static const NSMutableDictionary *dataDicCache;
         // 提前加载好dataDic缓存，后面复用。
         NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:valueDS isOut:false];
         [dataDicCache setObject:dataDic forKey:valueDS];
+        
+        // 提前加载好单稀疏码分组（参考35107-TODO3.1）。
+        NSMutableArray *itemValueGroupDataCache = [NSMutableArray new];
+        NSArray *groupScores = [SMGUtils convertArr:index_ps convertBlock:^id(AIKVPointer *obj) { return [AINetIndex getData:obj fromDataDic:dataDic]; }];
+        groupScores = [SMGUtils sortSmall2Big:groupScores compareBlock:^double(NSNumber *obj) { return obj.doubleValue; }];
+        NSInteger groupCount = MIN(groupScores.count, 100);
+        CGFloat groupStep = groupCount > 0 ? groupScores.count / groupCount : 0;
+        for (int i = 1; i < groupCount + 1; i++) { // 1-100
+            NSInteger index = i == groupCount ? groupScores.count - 1 : (int)(i * groupStep) - 1; // 0-99（避免越界）（可能不包含0，但绝对包含最后一条）。
+            [itemValueGroupDataCache addObject:ARR_INDEX(groupScores, index)];
+        }
+        [valueGroupDataCache setObject:itemValueGroupDataCache forKey:valueDS];
     }
     
     //1. 对未切粒度的color字典进行自适应粒度并识别。
@@ -1981,6 +2005,27 @@ static const NSMutableDictionary *dataDicCache;
     AIFeatureJvBuModel *newModel = [AIFeatureJvBuModel new:newAssST];
     [runingSTModelsPool addObject:newModel];
     return newModel;
+}
+
+/**
+ *  MARK:--------------------稀疏码下标分组池（参考35107-TODO3.1）--------------------
+ *  @result 看protoData的值属于哪一组，把这组的下标返回，值范围为0-100（共101组，最后一组为超标组，即以前从未有过这么大值）。
+ */
++(NSString*) getPoolKeyOfProtoData:(CGFloat)protoData valueDS:(NSString*)valueDS {
+    NSInteger index = [self getIndexOfProtoData:protoData valueDS:valueDS];
+    return STRFORMAT(@"%@_%ld",valueDS,index);
+}
++(NSInteger) getIndexOfProtoData:(CGFloat)protoData valueDS:(NSString*)valueDS {
+    // 取当前valueDS的排序下标池（itemCache为从小到大的排列）。
+    NSArray *itemCache = [valueGroupDataCache objectForKey:valueDS];
+    
+    // 找出protoData所属的组下标。
+    for (NSNumber *groupData in itemCache) {
+        if (protoData <= groupData.doubleValue) return [itemCache indexOfObject:groupData];
+    }
+    
+    // 比最大的都大，直接全返回超标count值，这些超标值复用同一个识别结果。
+    return itemCache.count;
 }
 
 @end
