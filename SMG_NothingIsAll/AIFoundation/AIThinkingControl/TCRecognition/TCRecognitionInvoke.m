@@ -15,11 +15,13 @@
 
 @implementation TCRecognitionInvoke
 
-static const NSMutableDictionary *indexPsPool;
-static const NSMutableDictionary *vInfoCache;
-static const NSMutableDictionary *dataDicCache;
-static const NSMutableDictionary *valueGroupDataCache; // 稀疏码分一百组，每个组的稀疏码值。
-static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓存 <K=valueDS_分组下标，V=识别结果>
+static NSMutableDictionary *indexPsPool;
+static NSMutableDictionary *vInfoCache;
+static NSMutableDictionary *dataDicCache;
+static NSMutableDictionary *valueGroupDataCache; // 稀疏码分一百组，每个组的稀疏码值。
+static NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓存 <K=valueDS_分组下标，V=识别结果>
+static NSMutableDictionary *bestGVsPool; // 构建bestGVs的元素的复用池 <K=assST.itemGV.pId_protoRect, V=bestGVItem>
+static NSMutableArray *protoGVIndexPool; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
 
 +(void) resetPool {
     indexPsPool = [NSMutableDictionary new];
@@ -27,6 +29,8 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
     dataDicCache = [NSMutableDictionary new];
     valueGroupDataCache = [NSMutableDictionary new];
     valueResultPool = [NSMutableDictionary new];
+    bestGVsPool = [NSMutableDictionary new];
+    protoGVIndexPool = [NSMutableArray new];
 }
 
 //MARK:===============================================================
@@ -68,7 +72,7 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
     NSArray *index_ps = [indexPsPool objectForKey:valueDS];
     double max = [CortexAlgorithmsUtil maxOfLoopValue:at ds:valueDS itemIndex:GVIndexTypeOfDataSource];
     AIValueInfo *vInfo = [vInfoCache objectForKey:valueDS];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 0.2s
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     //2. 按照相近度排序;
     NSArray *indexPsMapModels = [SMGUtils convertArr:index_ps convertBlock:^id(AIKVPointer *obj) {
@@ -232,8 +236,6 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
-    NSMutableArray *protoGVIndexPool = [NSMutableArray new]; // 从protoDic的类似切图只切一次，这是复用池。
-    NSMutableDictionary *bestGVsPool = [NSMutableDictionary new]; // 构建bestGVs的元素的复用池 <K=assST.pId_assIndex_protoRect, V=bestGVItem>
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
     CGFloat dotSize = whSize / 3.0f;
@@ -261,12 +263,12 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
                 
                 //14. 切出当前gv：九宫。
                 //2025.12.11: 切图复用（参考35105-TODO3.1）。
-                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImg:protoGVIndexPool protoRect:curRect protoColorDic:colorDic ds:ds];
+                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImg:curRect protoColorDic:colorDic ds:ds];
                 if (!gvIndex) continue;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 单特征识别：通过组码识别。
-                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept protoGVIndexPool:protoGVIndexPool bestGVsPool:bestGVsPool];
+                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept];
                 [jvBuModel.stModels addObjectsFromArray:itemSTModels];
                 
                 //22. 组特征识别：通过单特征识别。
@@ -403,7 +405,6 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
  *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
  *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
  *  @param stModels 已收集的stModels（用于防重）。
- *  @param protoGVIndexPool 复用词，类似protoRect区域，直接复用切图计算protoGVIndex结果。
  *  @test 作用：此总结可方便该算法的测试与BUG分析。
  *        目标：需达成以下功能。
  *         1. 多样性（比如0的各个局部，都得有多个识别结果，使后续GT识别中，可以每元素contains判断到，以取交识别到更准确的GT）。
@@ -413,7 +414,7 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoGVIndexPool:(NSMutableArray*)protoGVIndexPool bestGVsPool:(NSMutableDictionary*)bestGVsPool {
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
@@ -556,13 +557,14 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
             AIFeatureJvBuModel *model = [self getSTModelFromPoolOrCreate:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect beginProtoRect:lastProtoRect beginAssRect:lastAtAssRect];
             
             // bestGV防重复用池。
-            AIFeatureJvBuItem *beginBestGVItem = [self getBestGVItemFromPool:bestGVsPool assPId:assT.pId assIndex:beginAssIndex protoRect:lastProtoRect];
+            AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
+            AIFeatureJvBuItem *beginBestGVItem = [self getBestGVItemFromPool:curAssGV_p.pointerId protoRect:lastProtoRect];
             if (!beginBestGVItem) {
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
-                AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:ARR_INDEX(assT.content_ps, beginAssIndex) tDS:ds];
+                AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                 CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
                 beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue];
-                [self updateBestGVItemToPool:bestGVsPool assPId:assT.pId assIndex:beginAssIndex protoRect:lastProtoRect newItem:beginBestGVItem];
+                [self updateBestGVItemToPool:curAssGV_p.pointerId protoRect:lastProtoRect newItem:beginBestGVItem];
             }
             
             // 收集首条bestGV
@@ -574,7 +576,7 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
             for (NSInteger i = 1; i < assT.count; i++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds model:model protoGVIndexPool:protoGVIndexPool bestGVsPool:bestGVsPool];
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds model:model];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [model updateBestGVs:bestItem];
@@ -1819,18 +1821,17 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
     }]));
 }
 
+// TODOTOMORROW20251219: 此方法调用次数太多，达到18722次，经过一定防重后，1887代码块有14139次，1895代码块有7823次。
+// 需要继续优化，几百次还差不多，几万次，什么操作都会慢死。
 +(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
                           assT:(AIFeatureNode*)assT
                  lastProtoRect:(CGRect)lastProtoRect
                  lastAtAssRect:(CGRect)lastAtAssRect
                  protoColorDic:(NSDictionary*)protoColorDic
                             ds:(NSString*)ds
-                         model:(AIFeatureJvBuModel*)model
-              protoGVIndexPool:(NSMutableArray*)protoGVIndexPool
-                   bestGVsPool:(NSMutableDictionary*)bestGVsPool {
+                         model:(AIFeatureJvBuModel*)model {
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
-    AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
     CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
@@ -1870,29 +1871,34 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
                                               (1 - scale) * anchorY + defaultCurProtoRect.origin.y * scale,
                                               defaultCurProtoRect.size.width * scale,
                                               defaultCurProtoRect.size.height * scale);
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:138677 均耗:0.05 = 总耗:6847 读:0 写:0
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:18685 均耗:0.17 = 总耗:3186 读:0 写:0
         
         // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
         // 2025.06.20：更提前转成int，因为在getSubDots的时候，就需要是正确的int值了。
         checkCurProtoRect = CGRectMake((int)(checkCurProtoRect.origin.x+0.5f), (int)(checkCurProtoRect.origin.y+0.5f), (int)(checkCurProtoRect.size.width+0.5f), (int)(checkCurProtoRect.size.height+0.5f));
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
         // 2025.06.20：如果到proto切范围为空，则直接跳过，判定为该itemGV未匹配到。
         if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) continue;
         
         // 池子复用。
-        AIFeatureJvBuItem *curBestGVItem = [self getBestGVItemFromPool:bestGVsPool assPId:assT.pId assIndex:curIndex protoRect:checkCurProtoRect];
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        AIFeatureJvBuItem *curBestGVItem = [self getBestGVItemFromPool:curAssGV_p.pointerId protoRect:checkCurProtoRect];
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         if (!curBestGVItem) {
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); //计数:14819 均耗:0.10 = 总耗:1535 读:0 写:0
             //33. 切出当前gv：九宫。
             //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
             //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
             //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
             //2025.12.11: 切图复用（参考35105-TODO3.1）。
-            NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImg:protoGVIndexPool protoRect:checkCurProtoRect protoColorDic:protoColorDic ds:ds];
+            NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImg:checkCurProtoRect protoColorDic:protoColorDic ds:ds];
             if (!protoGVIndex) continue;
-            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);//计数:80651 均耗:0.31 = 总耗:25330 读:0 写:0
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
             CGFloat curGMatchValue = 1, curDiffMatchValue = 0;
+            AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
             for (AIKVPointer *assV in curAssGV.content_ps) {
                 //[decoratorJvBuModel.debug updateLogDic:106 assPId:100];
                 CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
@@ -1908,9 +1914,11 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
             curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:curDiffMatchValue];
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             // 记录缓存池
-            [self updateBestGVItemToPool:bestGVsPool assPId:assT.pId assIndex:curIndex protoRect:checkCurProtoRect newItem:curBestGVItem];
+            [self updateBestGVItemToPool:curAssGV_p.pointerId protoRect:checkCurProtoRect newItem:curBestGVItem];
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         }
         
         //35. 保留最匹配的一条。
@@ -1942,7 +1950,7 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
 
 //2025.12.11: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用（参考35105-TODO3.1）。
 //@result 有可能返回nil，因为切图切到空结果，也会复用到池子里，避免重复取空。
-+(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(NSMutableArray*)protoGVIndexPool protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
++(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
     // 从复用池找旧有
     MapModel *findFromPool = [SMGUtils filterSingleFromArr:protoGVIndexPool checkValid:^BOOL(MapModel *item) {
         CGRect itemRect = VALTOOK(item.v1).CGRectValue;
@@ -1966,15 +1974,15 @@ static const NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓�
 /**
  *  MARK:--------------------bestGVsPool缓存池--------------------
  */
-+(AIFeatureJvBuItem*) getBestGVItemFromPool:(NSMutableDictionary*)bestGVsPool assPId:(NSInteger)assPId assIndex:(NSInteger)assIndex protoRect:(CGRect)protoRect {
++(AIFeatureJvBuItem*) getBestGVItemFromPool:(NSInteger)gvId protoRect:(CGRect)protoRect {
     // 从复用池找旧有
-    NSString *key = STRFORMAT(@"%ld_%ld_%@",assPId,assIndex,Rect2Str(protoRect));
+    NSString *key = STRFORMAT(@"%ld_%@",gvId,Rect2Str(protoRect));
     return [bestGVsPool objectForKey:key];
 }
 
-+(void) updateBestGVItemToPool:(NSMutableDictionary*)bestGVsPool assPId:(NSInteger)assPId assIndex:(NSInteger)assIndex protoRect:(CGRect)protoRect newItem:(AIFeatureJvBuItem*)newItem {
++(void) updateBestGVItemToPool:(NSInteger)gvId protoRect:(CGRect)protoRect newItem:(AIFeatureJvBuItem*)newItem {
     // 从复用池找旧有
-    NSString *key = STRFORMAT(@"%ld_%ld_%@",assPId,assIndex,Rect2Str(protoRect));
+    NSString *key = STRFORMAT(@"%ld_%@",gvId,Rect2Str(protoRect));
     [bestGVsPool setObject:newItem forKey:key];
 }
 

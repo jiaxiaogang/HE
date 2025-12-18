@@ -59,10 +59,6 @@
                  lastAtAssRect:(CGRect)lastAtAssRect
                  protoColorDic:(NSDictionary*)protoColorDic
                             ds:(NSString*)ds
-                         model:(AIFeatureJvBuModel*)model
-              protoGVIndexPool:(NSMutableArray*)protoGVIndexPool
-                   bestGVsPool:(NSMutableDictionary*)bestGVsPool;
-
-+(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(NSMutableArray*)protoGVIndexPool protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds;
+                         model:(AIFeatureJvBuModel*)model;
 
 @end
