@@ -20,9 +20,7 @@ static NSMutableDictionary *vInfoCache;
 static NSMutableDictionary *dataDicCache;
 static NSMutableDictionary *valueGroupDataCache; // 稀疏码分一百组，每个组的稀疏码值。
 static NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓存 <K=valueDS_分组下标，V=识别结果>
-static NSMutableDictionary *bestGVsPool; // 构建bestGVs的元素的复用池 <K=assST.itemGV.pId_protoRect, V=bestGVItem>
-static NSMutableArray *protoGVIndexPool; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
-static DDic *bestGVsPoolV2; // 构建bestGVs的元素的复用池 <K=assST.itemGV.pId_protoRect, V=bestGVItem>
+static DDic *bestGVsPoolV2; // 构建bestGVs的元素的复用池 <K=protoRect的分组索引 和 assST.itemGV.pId, V=bestGVItem>
 static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
 
 static int _curMaxSize; // 当前视觉输入的宽高尺寸。
@@ -33,8 +31,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     dataDicCache = [NSMutableDictionary new];
     valueGroupDataCache = [NSMutableDictionary new];
     valueResultPool = [NSMutableDictionary new];
-    bestGVsPool = [NSMutableDictionary new];
-    protoGVIndexPool = [NSMutableArray new];
     bestGVsPoolV2 = [DDic new];
     protoGVIndexPoolV2 = [DDic new];
 }
@@ -565,13 +561,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // bestGV防重复用池。
             AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
-            AIFeatureJvBuItem *beginBestGVItem = [self getBestGVItemFromPool:curAssGV_p.pointerId protoRect:lastProtoRect];
+            MapModel *bestGVPoolKey = [self getIndexsOfProtoRect:lastProtoRect];
+            AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
             if (!beginBestGVItem) {
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
                 AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                 CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
                 beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue];
-                [self updateBestGVItemToPool:curAssGV_p.pointerId protoRect:lastProtoRect newItem:beginBestGVItem];
+                [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
             }
             
             // 收集首条bestGV
@@ -1890,7 +1887,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // 池子复用。
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        AIFeatureJvBuItem *curBestGVItem = [self getBestGVItemFromPool:curAssGV_p.pointerId protoRect:checkCurProtoRect];
+        MapModel *bestGVPoolKey = [self getIndexsOfProtoRect:checkCurProtoRect];
+        AIFeatureJvBuItem *curBestGVItem = [bestGVsPoolV2 objectV5ForKey1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         if (!curBestGVItem) {
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); //计数:14819 均耗:0.10 = 总耗:1535 读:0 写:0
@@ -1924,7 +1922,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             // 记录缓存池
-            [self updateBestGVItemToPool:curAssGV_p.pointerId protoRect:checkCurProtoRect newItem:curBestGVItem];
+            [bestGVsPoolV2 setObjectV5:curBestGVItem k1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         }
         
@@ -1960,7 +1958,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //@result 有可能返回nil，因为切图切到空结果，也会复用到池子里，避免重复取空。
 +(NSDictionary*) getGVIndexFromPoolOrCutProtoImgV2:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
     // 取key取旧的。
-    MapModel *key = [self getIndexsOfProtoRect:protoRect maxSize:_curMaxSize];
+    MapModel *key = [self getIndexsOfProtoRect:protoRect];
     NSDictionary *protoGVIndex = [protoGVIndexPoolV2 objectV4ForKey1:key.v1 k2:key.v2 k3:key.v3 k4:key.v4];
     
     // 有旧的则直接复用
@@ -1971,23 +1969,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
     
     // 新增一条计算记录
-    [protoGVIndexPoolV2 setObjectV4:protoGVIndex k1:key.v1 k2:key.v2 k3:key.v3 v4:key.v4];
+    [protoGVIndexPoolV2 setObjectV4:protoGVIndex k1:key.v1 k2:key.v2 k3:key.v3 k4:key.v4];
     return protoGVIndex;
-}
-
-/**
- *  MARK:--------------------bestGVsPool缓存池--------------------
- */
-+(AIFeatureJvBuItem*) getBestGVItemFromPool:(NSInteger)gvId protoRect:(CGRect)protoRect {
-    // 从复用池找旧有
-    NSString *key = STRFORMAT(@"%ld_%@",gvId,Rect2Str(protoRect));
-    return [bestGVsPool objectForKey:key];
-}
-
-+(void) updateBestGVItemToPool:(NSInteger)gvId protoRect:(CGRect)protoRect newItem:(AIFeatureJvBuItem*)newItem {
-    // 从复用池找旧有
-    NSString *key = STRFORMAT(@"%ld_%@",gvId,Rect2Str(protoRect));
-    [bestGVsPool setObject:newItem forKey:key];
 }
 
 /**
@@ -2044,7 +2027,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  MARK:--------------------切图分组--------------------
  *  @desc 对protoRect计算复用字典的key索引（参考35121-TODO1.1）。
  */
-+(MapModel*) getIndexsOfProtoRect:(CGRect)protoRect maxSize:(CGFloat)maxSize {
++(MapModel*) getIndexsOfProtoRect:(CGRect)protoRect {
     // 结果
     int wIndex = -1, xIndex = -1, hIndex = -1, yIndex = -1;
     
@@ -2069,7 +2052,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (wIndex > -1 && xIndex > -1 && hIndex > -1 && yIndex > -1) break;
         
         // 大于最大则越界，也退出循环。
-        if (dotSize > maxSize) break;
+        if (dotSize > _curMaxSize) break;
         dotSize *= 1.3f;
         curIndex ++;
     }

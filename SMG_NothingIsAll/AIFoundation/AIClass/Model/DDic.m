@@ -43,6 +43,18 @@
     return [v3 objectForKey:k4];
 }
 
+-(id) objectV5ForKey1:(id)k1 k2:(id)k2 k3:(id)k3 k4:(id)k4 k5:(id)k5 {
+    DDic *v1 = [self.data objectForKey:k1];
+    if (!v1) return nil;
+    DDic *v2 = [v1 objectForKey:k2];
+    if (!v2) return nil;
+    DDic *v3 = [v2 objectForKey:k3];
+    if (!v3) return nil;
+    DDic *v4 = [v3 objectForKey:k4];
+    if (!v4) return nil;
+    return [v4 objectForKey:k5];
+}
+
 -(void) setObject:(id)value forKey:(id)key {
     [self.data setObject:value forKey:key];
 }
@@ -61,14 +73,26 @@
     [v2 setObject:v3 forKey:k3];
 }
 
--(void) setObjectV4:(id)v4 k1:(id)k1 k2:(id)k2 k3:(id)k3 v4:(id)k4 {
+-(void) setObjectV4:(id)v4 k1:(id)k1 k2:(id)k2 k3:(id)k3 k4:(id)k4 {
     DDic *v1 = [self.data objectForKey:k1];
     if (!v1) v1 = [self createSubDic:k1 base:self];
     DDic *v2 = [v1 objectForKey:k2];
     if (!v2) v2 = [self createSubDic:k2 base:v1];
-    DDic *v3 = [v1 objectForKey:k3];
+    DDic *v3 = [v2 objectForKey:k3];
     if (!v3) v3 = [self createSubDic:k3 base:v2];
     [v3 setObject:v4 forKey:k4];
+}
+
+-(void) setObjectV5:(id)v5 k1:(id)k1 k2:(id)k2 k3:(id)k3 k4:(id)k4 k5:(id)k5 {
+    DDic *v1 = [self.data objectForKey:k1];
+    if (!v1) v1 = [self createSubDic:k1 base:self];
+    DDic *v2 = [v1 objectForKey:k2];
+    if (!v2) v2 = [self createSubDic:k2 base:v1];
+    DDic *v3 = [v2 objectForKey:k3];
+    if (!v3) v3 = [self createSubDic:k3 base:v2];
+    DDic *v4 = [v3 objectForKey:k4];
+    if (!v4) v4 = [self createSubDic:k4 base:v3];
+    [v4 setObject:v5 forKey:k5];
 }
 
 /**
