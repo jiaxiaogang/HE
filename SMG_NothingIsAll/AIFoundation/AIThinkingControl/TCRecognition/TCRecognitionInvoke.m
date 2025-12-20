@@ -25,6 +25,8 @@ static NSMutableArray *protoGVIndexPool; // 从protoDic的类似切图只切一�
 static DDic *bestGVsPoolV2; // 构建bestGVs的元素的复用池 <K=assST.itemGV.pId_protoRect, V=bestGVItem>
 static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
 
+static int _curMaxSize; // 当前视觉输入的宽高尺寸。
+
 +(void) resetPool {
     indexPsPool = [NSMutableDictionary new];
     vInfoCache = [NSMutableDictionary new];
@@ -204,6 +206,7 @@ static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这
 +(void) recognitionFeatureV2_Step0:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 初始化缓存池数据。
     [self resetPool];
+    _curMaxSize = whSize;
     
     // 加载稀疏码相关缓存池。
     NSArray *gvIndexKeys = [AINetGroupValueIndex gvIndexKeys:ds];
@@ -267,7 +270,7 @@ static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这
                 
                 //14. 切出当前gv：九宫。
                 //2025.12.11: 切图复用（参考35105-TODO3.1）。
-                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImg:curRect protoColorDic:colorDic ds:ds];
+                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect protoColorDic:colorDic ds:ds];
                 if (!gvIndex) continue;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
@@ -1896,7 +1899,7 @@ static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这
             //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
             //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
             //2025.12.11: 切图复用（参考35105-TODO3.1）。
-            NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImg:checkCurProtoRect protoColorDic:protoColorDic ds:ds];
+            NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImgV2:checkCurProtoRect protoColorDic:protoColorDic ds:ds];
             if (!protoGVIndex) continue;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -1953,25 +1956,22 @@ static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这
 //MARK:===============================================================
 
 //2025.12.11: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用（参考35105-TODO3.1）。
+//2025.12.20: 升级v2-继续性能优化：用分组索引来直接取复用结果（参考35121-方案1）。
 //@result 有可能返回nil，因为切图切到空结果，也会复用到池子里，避免重复取空。
-+(NSDictionary*) getGVIndexFromPoolOrCutProtoImg:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
-    // 从复用池找旧有
-    MapModel *findFromPool = [SMGUtils filterSingleFromArr:protoGVIndexPool checkValid:^BOOL(MapModel *item) {
-        CGRect itemRect = VALTOOK(item.v1).CGRectValue;
-        return [SMGUtils rate4IntersectionRect:itemRect bRect:protoRect] > 0.4f;
-    }];
-    NSDictionary *protoGVIndex = nil;
-    if (findFromPool) {
-        // 有相似则直接复用
-        protoGVIndex = findFromPool.v2;
-    } else {
-        // 无相似则切图计算
-        NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:protoRect];
-        protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
++(NSDictionary*) getGVIndexFromPoolOrCutProtoImgV2:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
+    // 取key取旧的。
+    MapModel *key = [self getIndexsOfProtoRect:protoRect maxSize:_curMaxSize];
+    NSDictionary *protoGVIndex = [protoGVIndexPoolV2 objectV4ForKey1:key.v1 k2:key.v2 k3:key.v3 k4:key.v4];
+    
+    // 有旧的则直接复用
+    if (protoGVIndex) return protoGVIndex;
         
-        // 新增一条计算记录
-        [protoGVIndexPool insertObject:[MapModel newWithV1:@(protoRect) v2:protoGVIndex] atIndex:0];
-    }
+    // 无相似则切图计算
+    NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:protoRect];
+    protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
+    
+    // 新增一条计算记录
+    [protoGVIndexPoolV2 setObjectV4:protoGVIndex k1:key.v1 k2:key.v2 k3:key.v3 v4:key.v4];
     return protoGVIndex;
 }
 
