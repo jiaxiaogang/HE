@@ -22,6 +22,8 @@ static NSMutableDictionary *valueGroupDataCache; // 稀疏码分一百组，每�
 static NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓存 <K=valueDS_分组下标，V=识别结果>
 static NSMutableDictionary *bestGVsPool; // 构建bestGVs的元素的复用池 <K=assST.itemGV.pId_protoRect, V=bestGVItem>
 static NSMutableArray *protoGVIndexPool; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
+static DDic *bestGVsPoolV2; // 构建bestGVs的元素的复用池 <K=assST.itemGV.pId_protoRect, V=bestGVItem>
+static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
 
 +(void) resetPool {
     indexPsPool = [NSMutableDictionary new];
@@ -31,6 +33,8 @@ static NSMutableArray *protoGVIndexPool; // 从protoDic的类似切图只切一�
     valueResultPool = [NSMutableDictionary new];
     bestGVsPool = [NSMutableDictionary new];
     protoGVIndexPool = [NSMutableArray new];
+    bestGVsPoolV2 = [DDic new];
+    protoGVIndexPoolV2 = [DDic new];
 }
 
 //MARK:===============================================================
@@ -2038,12 +2042,40 @@ static NSMutableArray *protoGVIndexPool; // 从protoDic的类似切图只切一�
 
 /**
  *  MARK:--------------------切图分组--------------------
+ *  @desc 对protoRect计算复用字典的key索引（参考35121-TODO1.1）。
  */
-+(NSInteger) getIndexsOfProtoRect:(CGRect)protoRect maxWH:(CGFloat)maxWH {
++(MapModel*) getIndexsOfProtoRect:(CGRect)protoRect maxSize:(CGFloat)maxSize {
+    // 结果
+    int wIndex = -1, xIndex = -1, hIndex = -1, yIndex = -1;
     
-    while (<#condition#>) {
-        <#statements#>
+    // 循环找出wh在哪个粒度层，以及算出xy在这个粒度层属于第几份。
+    int dotSize = 1;
+    int curIndex = 0;
+    while (true) {
+        // 找出当前w属于哪一个粒度层，直接做为wIndex索引编号（参考35121-TODO1.2）。
+        // 每层按每个dotSize分五份，当前x属于哪一份，直接一除就得出了。比如：dotSize为10时，一份为2，则x=18时，xIndex=9（参考35121-TODO1.3）。
+        if (protoRect.size.width <= dotSize) {
+            wIndex = curIndex;
+            xIndex = (int)(protoRect.origin.x / (dotSize * 0.2));
+        }
+        
+        // 同上wxIndex计算方法。
+        if (protoRect.size.height <= dotSize) {
+            hIndex = curIndex;
+            yIndex = (int)(protoRect.origin.y / (dotSize * 0.2));
+        }
+        
+        // 四个index找完，则退出循环。
+        if (wIndex > -1 && xIndex > -1 && hIndex > -1 && yIndex > -1) break;
+        
+        // 大于最大则越界，也退出循环。
+        if (dotSize > maxSize) break;
+        dotSize *= 1.3f;
+        curIndex ++;
     }
+    
+    // 四个全返回（参考35121-TODO1.4）。
+    return [MapModel newWithV1:@(wIndex) v2:@(xIndex) v3:@(hIndex) v4:@(yIndex)];
 }
 
 @end
