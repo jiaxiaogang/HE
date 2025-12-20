@@ -2036,4 +2036,14 @@ static NSMutableArray *protoGVIndexPool; // 从protoDic的类似切图只切一�
     return itemCache.count;
 }
 
+/**
+ *  MARK:--------------------切图分组--------------------
+ */
++(NSInteger) getIndexsOfProtoRect:(CGRect)protoRect maxWH:(CGFloat)maxWH {
+    
+    while (<#condition#>) {
+        <#statements#>
+    }
+}
+
 @end
