@@ -267,7 +267,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //14. 切出当前gv：九宫。
                 //2025.12.11: 切图复用（参考35105-TODO3.1）。
                 NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect protoColorDic:colorDic ds:ds];
-                if (!gvIndex) continue;
+                if (!DICISOK(gvIndex)) continue;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 单特征识别：通过组码识别。
@@ -1827,6 +1827,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 // TODOTOMORROW20251219: 此方法调用次数太多，达到18722次，经过一定防重后，1887代码块有14139次，1895代码块有7823次。
 // 需要继续优化，几百次还差不多，几万次，什么操作都会慢死。
+// 改为v2缓存池后，经回测，还是那么多次，明天继续查下原因。
 +(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
                           assT:(AIFeatureNode*)assT
                  lastProtoRect:(CGRect)lastProtoRect
@@ -1898,7 +1899,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
             //2025.12.11: 切图复用（参考35105-TODO3.1）。
             NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImgV2:checkCurProtoRect protoColorDic:protoColorDic ds:ds];
-            if (!protoGVIndex) continue;
+            if (!DICISOK(protoGVIndex)) continue;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
@@ -1966,7 +1967,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
     // 无相似则切图计算
     NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:protoRect];
-    protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
+    protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : [NSDictionary new];
     
     // 新增一条计算记录
     [protoGVIndexPoolV2 setObjectV4:protoGVIndex k1:key.v1 k2:key.v2 k3:key.v3 k4:key.v4];
@@ -2032,7 +2033,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     int wIndex = -1, xIndex = -1, hIndex = -1, yIndex = -1;
     
     // 循环找出wh在哪个粒度层，以及算出xy在这个粒度层属于第几份。
-    int dotSize = 1;
+    float dotSize = 1;
     int curIndex = 0;
     while (true) {
         // 找出当前w属于哪一个粒度层，直接做为wIndex索引编号（参考35121-TODO1.2）。
