@@ -266,12 +266,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 //14. 切出当前gv：九宫。
                 //2025.12.11: 切图复用（参考35105-TODO3.1）。
-                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect protoColorDic:colorDic ds:ds];
+                MapModel *rectKey = [self getIndexsOfProtoRect:curRect];
+                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
                 if (!DICISOK(gvIndex)) continue;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 //21. 单特征识别：通过组码识别。
-                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept];
+                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept protoRectKey:rectKey];
                 [jvBuModel.stModels addObjectsFromArray:itemSTModels];
                 
                 //22. 组特征识别：通过单特征识别。
@@ -417,7 +418,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept {
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoRectKey:(MapModel*)protoRectKey {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
@@ -561,14 +562,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // bestGV防重复用池。
             AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
-            MapModel *bestGVPoolKey = [self getIndexsOfProtoRect:lastProtoRect];
-            AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
+            AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
             if (!beginBestGVItem) {
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
                 AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                 CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
                 beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue];
-                [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
+                [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
             }
             
             // 收集首条bestGV
@@ -1826,8 +1826,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 }
 
 // TODOTOMORROW20251219: 此方法调用次数太多，达到18722次，经过一定防重后，1887代码块有14139次，1895代码块有7823次。
-// 需要继续优化，几百次还差不多，几万次，什么操作都会慢死。
-// 改为v2缓存池后，经回测，还是那么多次，明天继续查下原因。
+// 1、需要继续优化，几百次还差不多，几万次，什么操作都会慢死。
+// 2、改为v2缓存池后，经回测，次数还是多，经测数据：bestGVs复用率47%（其中isNull占18%），切图复用率77%（其中isNull占35%）。
 +(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
                           assT:(AIFeatureNode*)assT
                  lastProtoRect:(CGRect)lastProtoRect
@@ -1840,7 +1840,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
     CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
-    //[decoratorJvBuModel.debug updateLogDic:104 assPId:100];
     
     //22. 根据比例估算下一条protoGV的取值范围。
     //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
@@ -1861,7 +1860,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
     //2025.06.12：调整成只有1测试先，现在废弃组特征后，刚开始测bug应该还比较多，单纯1都测不过来，加更多更难测修bug了。
-    //NSArray *scales = @[@(1),@(1.2),@(0.8),@(1.56),@(0.62),@(2.0),@(0.5)];
     //NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)];
     NSArray *scales = @[@(1)];
     AIFeatureJvBuItem *best = nil;
@@ -1876,7 +1874,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                                               (1 - scale) * anchorY + defaultCurProtoRect.origin.y * scale,
                                               defaultCurProtoRect.size.width * scale,
                                               defaultCurProtoRect.size.height * scale);
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:18685 均耗:0.17 = 总耗:3186 读:0 写:0
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
         // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
         // 2025.06.20：更提前转成int，因为在getSubDots的时候，就需要是正确的int值了。
@@ -1887,20 +1885,25 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) continue;
         
         // 池子复用。
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        MapModel *bestGVPoolKey = [self getIndexsOfProtoRect:checkCurProtoRect];
-        AIFeatureJvBuItem *curBestGVItem = [bestGVsPoolV2 objectV5ForKey1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:19018 均耗:0.02 = 总耗:415 读:0 写:0
+        MapModel *rectKey = [self getIndexsOfProtoRect:checkCurProtoRect];
+        AIFeatureJvBuItem *curBestGVItem = [bestGVsPoolV2 objectV5ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(curAssGV_p.pointerId)];
+        if ([@"isNull" isEqual:curBestGVItem]) continue; //占位空，则说明上次已经失败过，还按失败处理（此处防重掉18%）。
+        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:15492 均耗:0.02 = 总耗:335 读:0 写:0
         if (!curBestGVItem) {
-            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); //计数:14819 均耗:0.10 = 总耗:1535 读:0 写:0
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:10864 均耗:0.02 = 总耗:233 读:0 写:0（可见有47%的bestGVPool取到了缓存，其中isNull的18%）。
             //33. 切出当前gv：九宫。
             //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
             //  方案1、用assT的解析来填充，不然就没对局部显示的进行识别了。
             //  方案2、可以出界的不做判断，最后计算匹配度时是要除掉bestGVs.count，所以不做判断并不会影响匹配度。
             //2025.12.11: 切图复用（参考35105-TODO3.1）。
-            NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImgV2:checkCurProtoRect protoColorDic:protoColorDic ds:ds];
-            if (!DICISOK(protoGVIndex)) continue;
-            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+            NSDictionary *protoGVIndex = [self getGVIndexFromPoolOrCutProtoImgV2:checkCurProtoRect rectKey:rectKey protoColorDic:protoColorDic ds:ds];
+            if (!protoGVIndex || [@"isNull" isEqual:protoGVIndex]) {
+                //这里切到null，也应该存到bestGVsPoolV2中：占位空，如果失败，失败也缓存上。
+                [bestGVsPoolV2 setObjectV5:@"isNull" k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(curAssGV_p.pointerId)];
+                continue;
+            }
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:7069 均耗:0.02 = 总耗:163 读:0 写:0（可见3800次切图isNull，占10864条的35%）。
             
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
             CGFloat curGMatchValue = 1, curDiffMatchValue = 0;
@@ -1923,7 +1926,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             // 记录缓存池
-            [bestGVsPoolV2 setObjectV5:curBestGVItem k1:bestGVPoolKey.v1 k2:bestGVPoolKey.v2 k3:bestGVPoolKey.v3 k4:bestGVPoolKey.v4 k5:@(curAssGV_p.pointerId)];
+            [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(curAssGV_p.pointerId)];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         }
         
@@ -1957,20 +1960,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //2025.12.11: 此处对checkCurProtoRect从protoColorDic切图做复用，如果和曾切过的rect有90%区域相似，则直接复用（参考35105-TODO3.1）。
 //2025.12.20: 升级v2-继续性能优化：用分组索引来直接取复用结果（参考35121-方案1）。
 //@result 有可能返回nil，因为切图切到空结果，也会复用到池子里，避免重复取空。
-+(NSDictionary*) getGVIndexFromPoolOrCutProtoImgV2:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
-    // 取key取旧的。
-    MapModel *key = [self getIndexsOfProtoRect:protoRect];
-    NSDictionary *protoGVIndex = [protoGVIndexPoolV2 objectV4ForKey1:key.v1 k2:key.v2 k3:key.v3 k4:key.v4];
++(NSDictionary*) getGVIndexFromPoolOrCutProtoImgV2:(CGRect)protoRect rectKey:(MapModel*)rectKey protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:16372 均耗:0.02 = 总耗:344 读:0 写:0 // 复用率77%
+    NSDictionary *protoGVIndex = [protoGVIndexPoolV2 objectV4ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 有旧的则直接复用
     if (protoGVIndex) return protoGVIndex;
         
     // 无相似则切图计算
     NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:protoRect];
-    protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : [NSDictionary new];
+    protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
     
-    // 新增一条计算记录
-    [protoGVIndexPoolV2 setObjectV4:protoGVIndex k1:key.v1 k2:key.v2 k3:key.v3 k4:key.v4];
+    // 新增一条计算记录（如果为空，则存一条空结果占位符。
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:3807 均耗:0.02 = 总耗:79 读:0 写:0
+    [protoGVIndexPoolV2 setObjectV4:protoGVIndex ? protoGVIndex : @"isNull" k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4];
+    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     return protoGVIndex;
 }
 
