@@ -22,6 +22,7 @@ static NSMutableDictionary *valueGroupDataCache; // 稀疏码分一百组，每�
 static NSMutableDictionary *valueResultPool; // 稀疏码识别结果缓存 <K=valueDS_分组下标，V=识别结果>
 static DDic *bestGVsPoolV2; // 构建bestGVs的元素的复用池 <K=protoRect的分组索引 和 assST.itemGV.pId, V=bestGVItem>
 static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
+static int bestGVsPoolTotalCount = 0, bestGVsPoolMissCount = 0, cutImgPoolTotalCount = 0, cutImgPoolMissCount = 0;
 
 static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
@@ -33,6 +34,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     valueResultPool = [NSMutableDictionary new];
     bestGVsPoolV2 = [DDic new];
     protoGVIndexPoolV2 = [DDic new];
+    bestGVsPoolTotalCount = 0;
+    bestGVsPoolMissCount = 0;
+    cutImgPoolTotalCount = 0;
+    cutImgPoolMissCount = 0;
 }
 
 //MARK:===============================================================
@@ -290,10 +295,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.5s
     // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:AIThinkingControl.m281 计数:3 均耗:404.68 = 总耗:1214 读:0 写:0）
+    NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
+    NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
     
     //31. 单特征识别无结果则跳过。
     if (!ARRISOK(jvBuModel.stModels)) {
-        NSLog(@"第1步、所有粒度层单特征识别总结果为0条。");
+        NSLog(@"ST识别结果0条：所有粒度层单特征识别总结果为0条。");
         return;
     }
     NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
@@ -563,7 +570,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // bestGV防重复用池。
             AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
             AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
+            bestGVsPoolTotalCount ++;
             if (!beginBestGVItem) {
+                bestGVsPoolMissCount ++;
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
                 AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                 CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
@@ -1828,6 +1837,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 // TODOTOMORROW20251219: 此方法调用次数太多，达到18722次，经过一定防重后，1887代码块有14139次，1895代码块有7823次。
 // 1、需要继续优化，几百次还差不多，几万次，什么操作都会慢死。
 // 2、改为v2缓存池后，经回测，次数还是多，经测数据：bestGVs复用率47%（其中isNull占18%），切图复用率77%（其中isNull占35%）。
+// 测缓存池复用率:
+// 1.3一个粒度层，0.20一份xy间隔时：切图池复用率：9115 / 11892 = 0.77    BestGV池复用率：8080 / 19342 = 0.42
+// 1.5一个粒度层，0.33一份xy间隔时：切图池复用率：7667 / 9408 = 0.81     BestGV池复用率：8066 / 16758 = 0.48
+// 1.5一个粒度层，0.50一份xy间隔时：切图池复用率：5778 / 6700 = 0.86     BestGV池复用率：7659 / 13528 = 0.57
+// 分析：如上可见，切图复用率高，但BestGV的复用率却总是在50%左右，可以具体查下，都是哪些复用率低？打出来看下是哪些粒度上复用率低？还是assGV太多样了，导致的？
+// 思路：如果是assGV太多样导致的，那bestGVModel可以只存每个一样的值结果，取出复用后，再计算匹配度这些各自不同的数据。
 +(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
                           assT:(AIFeatureNode*)assT
                  lastProtoRect:(CGRect)lastProtoRect
@@ -1888,9 +1903,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:19018 均耗:0.02 = 总耗:415 读:0 写:0
         MapModel *rectKey = [self getIndexsOfProtoRect:checkCurProtoRect];
         AIFeatureJvBuItem *curBestGVItem = [bestGVsPoolV2 objectV5ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(curAssGV_p.pointerId)];
+        bestGVsPoolTotalCount ++;
         if ([@"isNull" isEqual:curBestGVItem]) continue; //占位空，则说明上次已经失败过，还按失败处理（此处防重掉18%）。
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:15492 均耗:0.02 = 总耗:335 读:0 写:0
         if (!curBestGVItem) {
+            bestGVsPoolMissCount ++;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:10864 均耗:0.02 = 总耗:233 读:0 写:0（可见有47%的bestGVPool取到了缓存，其中isNull的18%）。
             //33. 切出当前gv：九宫。
             //2025.05.10: 出界处理：如checkCurProtoRect出界到视角之外，比如<0或者>max（采用方案2，直接continue）。
@@ -1963,10 +1980,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(NSDictionary*) getGVIndexFromPoolOrCutProtoImgV2:(CGRect)protoRect rectKey:(MapModel*)rectKey protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:16372 均耗:0.02 = 总耗:344 读:0 写:0 // 复用率77%
     NSDictionary *protoGVIndex = [protoGVIndexPoolV2 objectV4ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4];
+    cutImgPoolTotalCount ++;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
     // 有旧的则直接复用
     if (protoGVIndex) return protoGVIndex;
+    cutImgPoolMissCount ++;
         
     // 无相似则切图计算
     NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:protoRect];
