@@ -1925,17 +1925,34 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
             CGFloat curGMatchValue = 1, curDiffMatchValue = 0;
             AIGroupValueNode *curAssGV = [SMGUtils searchNode:curAssGV_p];
+            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             for (AIKVPointer *assV in curAssGV.content_ps) {
-                //[decoratorJvBuModel.debug updateLogDic:106 assPId:100];
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                // TODOTOMORROW20251223：这里切图结果就是公共可用的复用结果，没法对bestGVModel结果再公共复用了。
+                // 可以先调试下这里，看哪些可以移到循环外执行。
+                // 然后查下这里哪行代码慢，针对再优化，比如计算vMatchValue与checkCurProtoRect的相似度，如果能复用，直接复用一下。省得一次次计算。
+                // 因为：无论怎么优化，只要计算匹配度，一张大图，怎么也少不得上万次比较，最终都会变成，一点小小的加减乘除，都要变成很耗能的事。
+                // 所以：直接上大招，用空间换时间。
+                //      1. 把rectIndex直接存到长时记忆中，然后以后用这个来索引激活。
+                //      2. 把这个匹配度必须存到AIPort中，看来网络结构和算法得大改。
+                //      3. 明天把这些手稿整理下，然后回顾下代码分析下，看这块怎么改网络比较好。
+                
                 CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 AIValueInfo *vInfo = [vInfoCache objectForKey:assV.dataSource];
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 计数:21144 均耗:0.18 = 总耗:3884 读:0 写:0（这个最慢，不过都是+-*/，也没法优化了，只能加池子了）。
                 CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 curGMatchValue *= vMatchValue;
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 
                 // 记录diff匹配度。
                 if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
