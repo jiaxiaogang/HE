@@ -1834,15 +1834,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }]));
 }
 
-// TODOTOMORROW20251219: 此方法调用次数太多，达到18722次，经过一定防重后，1887代码块有14139次，1895代码块有7823次。
-// 1、需要继续优化，几百次还差不多，几万次，什么操作都会慢死。
-// 2、改为v2缓存池后，经回测，次数还是多，经测数据：bestGVs复用率47%（其中isNull占18%），切图复用率77%（其中isNull占35%）。
-// 测缓存池复用率:
-// 1.3一个粒度层，0.20一份xy间隔时：切图池复用率：9115 / 11892 = 0.77    BestGV池复用率：8080 / 19342 = 0.42
-// 1.5一个粒度层，0.33一份xy间隔时：切图池复用率：7667 / 9408 = 0.81     BestGV池复用率：8066 / 16758 = 0.48
-// 1.5一个粒度层，0.50一份xy间隔时：切图池复用率：5778 / 6700 = 0.86     BestGV池复用率：7659 / 13528 = 0.57
-// 分析：如上可见，切图复用率高，但BestGV的复用率却总是在50%左右，可以具体查下，都是哪些复用率低？打出来看下是哪些粒度上复用率低？还是assGV太多样了，导致的？
-// 思路：如果是assGV太多样导致的，那bestGVModel可以只存每个一样的值结果，取出复用后，再计算匹配度这些各自不同的数据。
 +(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
                           assT:(AIFeatureNode*)assT
                  lastProtoRect:(CGRect)lastProtoRect
@@ -1928,15 +1919,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             for (AIKVPointer *assV in curAssGV.content_ps) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                // TODOTOMORROW20251223：这里切图结果就是公共可用的复用结果，没法对bestGVModel结果再公共复用了。
-                // 可以先调试下这里，看哪些可以移到循环外执行。
-                // 然后查下这里哪行代码慢，针对再优化，比如计算vMatchValue与checkCurProtoRect的相似度，如果能复用，直接复用一下。省得一次次计算。
-                // 因为：无论怎么优化，只要计算匹配度，一张大图，怎么也少不得上万次比较，最终都会变成，一点小小的加减乘除，都要变成很耗能的事。
-                // 所以：直接上大招，用空间换时间。
-                //      1. 把rectIndex直接存到长时记忆中，然后以后用这个来索引激活。
-                //      2. 把这个匹配度必须存到AIPort中，看来网络结构和算法得大改。
-                //      3. 明天把这些手稿整理下，然后回顾下代码分析下，看这块怎么改网络比较好。
-                
                 CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
