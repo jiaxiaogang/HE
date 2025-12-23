@@ -580,6 +580,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
             }
             
+            
+            // TODOTOMORROW20251224: 这里改成，如果有重复，干脆就不做判断了，或限制条数，只做三个，
+            
             // 收集首条bestGV
             // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gModel.matchValue);
             [model updateBestGVs:beginBestGVItem];
