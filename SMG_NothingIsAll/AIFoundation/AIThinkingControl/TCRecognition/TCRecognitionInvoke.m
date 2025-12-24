@@ -551,8 +551,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if (oldSTModel.assT.pId != assT.pId) return false;
                 
                 // 切入assIndex的gv是同一个，才需防重。
-                for (AIFeatureJvBuItem *oldGVItem in oldSTModel.bestGVs) {
-                    if (oldGVItem.assIndex == beginAssIndex) {
+                for (NSNumber *assIndex in oldSTModel.bestGVs.allKeys) {
+                    if (assIndex.integerValue == beginAssIndex) {
+                        AIFeatureJvBuItem *oldGVItem = [oldSTModel.bestGVs objectForKey:assIndex];
                         // 切入的protoRect有80%以上的匹配度（交集面积 在 二者面积中 都占80%以上），则需防重。
                         if ([SMGUtils rate4IntersectionRect:oldGVItem.bestGVAtProtoTRect bRect:protoRect] > 0.5f) return true;
                     }
@@ -580,12 +581,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
                     AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                     CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
-                    beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue];
+                    beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue];
                     [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
                 }
                 
                 // 收集首条bestGV
-                [model updateBestGVs:beginBestGVItem];
+                [model updateBestGVs:beginBestGVItem assIndex:beginAssIndex];
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -601,7 +602,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds model:model];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
-                [model updateBestGVs:bestItem];
+                [model updateBestGVs:bestItem assIndex:curIndex];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -616,7 +617,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [model run4BestGvsAtAssTRect];
             
             //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
-            [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
+            [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
                 return @(obj.bestGVAtProtoTRect);
             }]];
             
@@ -1947,7 +1948,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree assIndex:curIndex diffValue:curDiffMatchValue];
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             // 记录缓存池

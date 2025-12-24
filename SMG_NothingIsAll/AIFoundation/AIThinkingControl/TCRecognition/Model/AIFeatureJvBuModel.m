@@ -16,19 +16,19 @@
     return result;
 }
 
--(NSMutableArray *)bestGVs {
-    if (!_bestGVs) _bestGVs = [NSMutableArray new];
+-(NSMutableDictionary *)bestGVs {
+    if (!_bestGVs) _bestGVs = [NSMutableDictionary new];
     return _bestGVs;
 }
 
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio {
     //1. 匹配度。
-    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
+    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.matchValue;
     }] / self.bestGVs.count;
     
     //2. 符合度。
-    self.matchDegree = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
+    self.matchDegree = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.matchDegree;
     }] / self.bestGVs.count;
     //2025.05.21: 符合度乘积版：改成求乘积，因为看日志，感觉竞争结果中，符合度太弱了，都差不多都很高（后发现类比时定责总是不准，先回滚回用平均值）。
@@ -45,13 +45,14 @@
     self.matchAssRatio = self.bestGVs.count / (float)self.assT.count;
     
     //5. 色似度
-    self.matchDiffValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
+    self.matchDiffValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.diffValue;
     }] / self.bestGVs.count;
     
     //6. 视角匹配度。
-    self.matchRectValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs convertBlock:^double(AIFeatureJvBuItem *obj) {
-        NSValue *assRect = ARR_INDEX(self.assT.rects, obj.assIndex);
+    self.matchRectValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allKeys convertBlock:^double(NSNumber *assIndex) {
+        AIFeatureJvBuItem *obj = [self.bestGVs objectForKey:assIndex];
+        NSValue *assRect = ARR_INDEX(self.assT.rects, assIndex.integerValue);
         return obj.bestGVAtProtoTRect.size.width / assRect.CGRectValue.size.width;
     }] / self.bestGVs.count;
     
@@ -61,15 +62,15 @@
 
 -(void) run4BestGvsAtProtoTRect {
     self.bestGVsAtProtoTRect = CGRectNull;
-    for (AIFeatureJvBuItem *item in self.bestGVs) {
+    for (AIFeatureJvBuItem *item in self.bestGVs.allValues) {
         self.bestGVsAtProtoTRect = CGRectUnion(self.bestGVsAtProtoTRect, item.bestGVAtProtoTRect);
     }
 }
 
 -(void) run4BestGvsAtAssTRect {
     self.bestGVsAtAssTRect = CGRectNull;
-    for (AIFeatureJvBuItem *item in self.bestGVs) {
-        CGRect itemGV_AssSTRect = [self.assT rectByIndex:item.assIndex];
+    for (NSNumber *assIndex in self.bestGVs.allKeys) {
+        CGRect itemGV_AssSTRect = [self.assT rectByIndex:assIndex.integerValue];
         self.bestGVsAtAssTRect = CGRectUnion(self.bestGVsAtAssTRect, itemGV_AssSTRect);
     }
 }
@@ -162,22 +163,17 @@
 
 -(AIFeatureJvBuItem*) getBestGVByAssIndex:(NSInteger)assIndex {
     // 找有没旧的
-    return [SMGUtils filterSingleFromArr:self.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
-        return item.assIndex == assIndex;
-    }];
+    return [self.bestGVs objectForKey:@(assIndex)];
 }
 
 // bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过（参考35105-TODO6.2 & TODO6.4）。
--(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV {
+-(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV assIndex:(NSInteger)assIndex {
     // 找有没旧的
-    AIFeatureJvBuItem *old = [self getBestGVByAssIndex:newBestGV.assIndex];
-    if (!old) {
-        // 没旧的，直接收集。
-        [self.bestGVs addObject:newBestGV];
-    } else if (newBestGV.matchValue > old.matchValue) {
-        // 有旧的，更好时才收集（参考35105-TODO6.4）。
-        [self.bestGVs removeObject:old];
-        [self.bestGVs addObject:newBestGV];
+    AIFeatureJvBuItem *old = [self getBestGVByAssIndex:assIndex];
+    
+    // 没旧的 或 有旧的但更好 => 则收集（参考35105-TODO6.4）。
+    if (!old || newBestGV.matchValue > old.matchValue) {
+        [self.bestGVs setObject:newBestGV forKey:@(assIndex)];
     }
 }
 

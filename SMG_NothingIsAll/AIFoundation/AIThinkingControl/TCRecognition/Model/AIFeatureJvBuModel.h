@@ -21,8 +21,9 @@
 @property (assign, nonatomic) CGRect bestGVsAtProtoTRect;
 //每个bestGVs在ass中的rect。
 @property (assign, nonatomic) CGRect bestGVsAtAssTRect;
-//每条最佳gv的数据：List<AIFeatureJvBuItem>
-@property (strong, nonatomic) NSMutableArray *bestGVs;
+// 每条最佳gv的数据：Dic<assIndex,AIFeatureJvBuItem>
+// 2025.12.25: 复用时，bestGV可能在别的assST 与 当前assST中的assIndex不同，所以改成jvBuModel直接用字典的key来存assIndex（参考35124）。
+@property (strong, nonatomic) NSMutableDictionary *bestGVs;
 
 //在ST类比后，把构建absST的bestGVs存下来，后面构建protoGT时要用。
 @property (strong, nonatomic) NSArray *bestGVs4NoZeRen;
@@ -70,6 +71,6 @@
 
 -(AIFeatureJvBuItem*) getBestGVByAssIndex:(NSInteger)assIndex;
 // bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过（参考35105-TODO6.2 & TODO6.4）。
--(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV;
+-(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV assIndex:(NSInteger)assIndex;
 
 @end

@@ -13,10 +13,8 @@
  */
 @interface AIFeatureJvBuItem : NSObject
 
-+(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree assIndex:(NSInteger)assIndex diffValue:(CGFloat)diffValue;
++(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree diffValue:(CGFloat)diffValue;
 
-//记录当前gv是assT的哪个下标。
-@property (assign, nonatomic) NSInteger assIndex;
 //每一条bestGV都可以把rect存下来（可用于计算bestGVsAtProtoTRect）。
 @property (assign, nonatomic) CGRect bestGVAtProtoTRect;
 //每个bestGV的匹配度。

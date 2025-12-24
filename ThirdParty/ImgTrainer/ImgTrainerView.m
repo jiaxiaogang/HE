@@ -209,18 +209,15 @@
 
 //仅对匹配上itemGV进行可视化。
 -(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
-    NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
-        return @(obj.assIndex);
-    }];
-    [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:jvBuModel.assT indexes:jvBuModel.bestGVs.allKeys lab:lab left:left top:top tvId:tvId];
     [[self getPreviewTV:tvId] reloadData];
 }
 
 //把jvBuModel中的index下标的gv可视化出来。
 //调用示例（把某个st的某元素gv可视化出来）：[SMGUtils runByMainQueue:^{ for (NSInteger i = 0; i < model.bestGVs.count; i++) [theApp.imgTrainerView setDataForJvBuModelV3:model lab:STRFORMAT(@"ST%ld.%ld",model.assT.pId,i) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:2 gvIndex:i]; }];
 -(void) setDataForJvBuModelV3:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId gvIndex:(NSInteger)gvIndex {
-    AIFeatureJvBuItem *gvItem = ARR_INDEX(jvBuModel.bestGVs, gvIndex);
-    [self addFeatureToPreview:jvBuModel.assT indexes:@[@(gvItem.assIndex)] lab:lab left:left top:top tvId:tvId];
+    NSNumber *assIndex = ARR_INDEX(jvBuModel.bestGVs.allKeys, gvIndex);
+    [self addFeatureToPreview:jvBuModel.assT indexes:@[assIndex] lab:lab left:left top:top tvId:tvId];
     [[self getPreviewTV:tvId] reloadData];
 }
 
@@ -237,10 +234,7 @@
 //单特征识别结果数组，应该一个个元素显示，而不是一下把所有的显示到一个画布上。
 -(void) setDataForJvBuModelsV2:(NSArray*)jvBuModels lab:(NSString*)lab tvId:(NSInteger)tvId {
     for (AIFeatureJvBuModel *jvBuModel in jvBuModels) {
-        NSArray *indexes = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
-            return @(obj.assIndex);
-        }];
-        [self addFeatureToPreview:jvBuModel.assT indexes:indexes lab:lab left:0 top:0 tvId:tvId];
+        [self addFeatureToPreview:jvBuModel.assT indexes:jvBuModel.bestGVs.allKeys lab:lab left:0 top:0 tvId:tvId];
     }
     [[self getPreviewTV:tvId] reloadData];
 }
@@ -248,8 +242,9 @@
 //有BUG，可视化像一块块分裂着。
 -(void) setDataForJvBuModelsV3:(NSArray*)jvBuModels lab:(NSString*)lab tvId:(NSInteger)tvId {
     for (AIFeatureJvBuModel *jvBuModel in jvBuModels) {
-        NSArray *gvModels = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
-            return [InputGroupValueModel new:ARR_INDEX(jvBuModel.assT.content_ps, obj.assIndex) rect:obj.bestGVAtProtoTRect];
+        NSArray *gvModels = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *assIndex) {
+            AIFeatureJvBuItem *obj = [jvBuModel.bestGVs objectForKey:assIndex];
+            return [InputGroupValueModel new:ARR_INDEX(jvBuModel.assT.content_ps, assIndex.integerValue) rect:obj.bestGVAtProtoTRect];
         }];
         [self addFeatureToPreview:jvBuModel.assT gvModels:gvModels lab:lab tvId:tvId];
     }

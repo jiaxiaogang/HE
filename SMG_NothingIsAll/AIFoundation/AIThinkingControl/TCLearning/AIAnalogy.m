@@ -395,7 +395,11 @@
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
     // 2025.06.13: 先关掉，其实局部特征识别时已经充分竞争了，此处不再另行剔除。
     // 2025.08.06: 打开，单特征识别时充分竞争，不表示不类比中再抽象了，并且组特征现在也需要这里抽象一下，并且是在无protoT的情况下就要实现抽象（参考35062-TODO2）。
-    NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:jvBuModel.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
+    NSArray *models = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
+        return [MapModel newWithV1:key v2:[jvBuModel.bestGVs objectForKey:key]];
+    }];
+    NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:models checkValid:^BOOL(MapModel *model) {
+        AIFeatureJvBuItem *item = model.v2;
         return [TCLearningUtil noZeRenForPingJun:item.matchValue * item.matchDegree * item.diffValue bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree * jvBuModel.matchDiffValue];
     }]];
     // 2025.11.04: 把noZeRenForPingJun改成竞争后保留80%进行增强类比激烈度测试。
@@ -406,20 +410,22 @@
     // NSLog(@"ST类比条数：%ld -> %ld",jvBuModel.bestGVs.count,validBestGVs.count);
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
-    NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.assIndex;
+    NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(MapModel *obj) {
+        NSNumber *assIndex = obj.v1;
+        return assIndex.integerValue;
     }];
-    NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
-        return @(obj.assIndex);
+    NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(MapModel *obj) {
+        return obj.v1;
     }];
     CGRect bestGVs_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
     //15. 转为List<InputGroupValueModel>模型。
-    NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(AIFeatureJvBuItem *obj) {
-        AIKVPointer *assGV_p = ARR_INDEX(jvBuModel.assT.content_ps, obj.assIndex);
+    NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(MapModel *obj) {
+        NSNumber *assIndex = obj.v1;
+        AIKVPointer *assGV_p = ARR_INDEX(jvBuModel.assT.content_ps, assIndex.integerValue);
         
         //16A. 方案1、采用bestGV at assT的位置，做absT的元素位置分布：将gvRect在assT的范围，转成在newAbsT中的位置。
-        CGRect assGVRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, obj.assIndex)).CGRectValue;
+        CGRect assGVRect = VALTOOK(ARR_INDEX(jvBuModel.assT.rects, assIndex.integerValue)).CGRectValue;
         CGRect bestGV_assT = CGRectMake(assGVRect.origin.x - bestGVs_AssT.origin.x, assGVRect.origin.y - bestGVs_AssT.origin.y, assGVRect.size.width, assGVRect.size.height);
         if (bestGV_assT.size.width != bestGV_assT.size.height || bestGV_assT.size.width == 0 || bestGV_assT.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
         //16B. 方案2、采用bestGV at protoT的位置，做absT的元素位置分布：此方案优点在于构建protoGT时，尺寸及位置可以更准确，缺点是类比这里本来就应该以assT为准，不关protoT的事，所以先采用方案1。
@@ -477,7 +483,7 @@
     //                           absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
 
     // 把后面会用到的一些数据存下来。
-    jvBuModel.bestGVs4NoZeRen = validBestGVs;
+    jvBuModel.bestGVs4NoZeRen = [SMGUtils convertArr:validBestGVs convertBlock:^id(MapModel *obj) { return obj.v2; }];
     jvBuModel.abs_p = absT.p;
     return absT;
 }
@@ -547,10 +553,6 @@
                                assT.pId,assT.count,CLEANSTR([assT getLogDesc:false]),FeatureDesc(assT.p,1),
                                absGT.pId,absGT.count,CLEANSTR([absGT getLogDesc:false]),FeatureDesc(absGT.p,1));
     return absGT;
-}
-
-+(AIFeatureNode*) analogyGroupFeatureV4:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc {
-    return [self analogyFeature_General:jvBuModel protoT:nil protoTLogDesc:protoTLogDesc isGT:true];
 }
 
 /**
