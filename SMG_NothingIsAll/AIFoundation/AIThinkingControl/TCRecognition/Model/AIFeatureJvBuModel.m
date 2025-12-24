@@ -160,13 +160,17 @@
 }
 
 
+-(AIFeatureJvBuItem*) getBestGVByAssIndex:(NSInteger)assIndex {
+    // 找有没旧的
+    return [SMGUtils filterSingleFromArr:self.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
+        return item.assIndex == assIndex;
+    }];
+}
+
 // bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过（参考35105-TODO6.2 & TODO6.4）。
 -(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV {
     // 找有没旧的
-    AIFeatureJvBuItem *old = [SMGUtils filterSingleFromArr:self.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
-        return item.assIndex == newBestGV.assIndex;
-    }];
-    
+    AIFeatureJvBuItem *old = [self getBestGVByAssIndex:newBestGV.assIndex];
     if (!old) {
         // 没旧的，直接收集。
         [self.bestGVs addObject:newBestGV];

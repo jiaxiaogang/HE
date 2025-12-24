@@ -115,4 +115,4 @@
 #define TCDebugRMPrefixV2(blockKey) STRFORMAT(@"DEBUG匹配 => 代码块:%@",blockKey) //用于删除所有的prefixKey,不限循环数;
 
 #define TCCurDebugKey @"自适应粒度"
-#define TCDebugKey4AutoSplit @"自适应粒度"
+#define TCDebugKey4AutoSplit @""

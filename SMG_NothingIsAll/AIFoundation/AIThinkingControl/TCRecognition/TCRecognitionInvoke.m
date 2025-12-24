@@ -531,6 +531,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
             if (beginAssIndex == -1) continue;
+            
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
             CGRect lastProtoRect = protoRect;
@@ -544,7 +545,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             //2025.05.21: 去掉，如果一张图里有多个3呢，不能暴力的全过滤掉。
             //if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
             
-            // 防重：对相近区域的protoRect的同一个assST的同gvIndex进行防重（参考35104-方案1）。
+            // 防重：对相近区域的protoRect的同一个assST的同gvIndex进行防重（参考35104-方案1）（注：下面的bestGV只保留一条，防重更彻底，这里应该已经没必要了，测试确定下，这里可删掉）。
             AIFeatureJvBuModel *aleardayHavSameJvBuModel = [SMGUtils filterSingleFromArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *oldSTModel) {
                 // 切入assST是同一个，才需防重。
                 if (oldSTModel.assT.pId != assT.pId) return false;
@@ -567,31 +568,36 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // STModel防重复用池。
             AIFeatureJvBuModel *model = [self getSTModelFromPoolOrCreate:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect beginProtoRect:lastProtoRect beginAssRect:lastAtAssRect];
             
-            // bestGV防重复用池。
-            AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
-            AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
-            bestGVsPoolTotalCount ++;
-            if (!beginBestGVItem) {
-                bestGVsPoolMissCount ++;
-                // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
-                AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
-                CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
-                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue];
-                [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
+            // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
+            BOOL havOld = false;//[model getBestGVByAssIndex:beginAssIndex];
+            if (!havOld) {
+                // bestGV防重复用池。
+                AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
+                AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
+                bestGVsPoolTotalCount ++;
+                if (!beginBestGVItem) {
+                    bestGVsPoolMissCount ++;
+                    // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
+                    AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
+                    CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
+                    beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 assIndex:beginAssIndex diffValue:beginDiffMatchValue];
+                    [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
+                }
+                
+                // 收集首条bestGV
+                [model updateBestGVs:beginBestGVItem];
             }
-            
-            
-            // TODOTOMORROW20251224: 这里改成，如果有重复，干脆就不做判断了，或限制条数，只做三个，
-            
-            // 收集首条bestGV
-            // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f begin ==>",model,assT.pId,beginAssIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gModel.matchValue);
-            [model updateBestGVs:beginBestGVItem];
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < assT.count; i++) {
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
+                
+                // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
+                BOOL havOld = false;//[model getBestGVByAssIndex:curIndex];
+                if (havOld) continue;
+                
                 AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds model:model];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
