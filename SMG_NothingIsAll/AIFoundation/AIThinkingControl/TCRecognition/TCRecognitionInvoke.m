@@ -294,7 +294,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //[jvBuModel.debug printLogDic];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.5s
-    // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:AIThinkingControl.m281 计数:3 均耗:404.68 = 总耗:1214 读:0 写:0）
     NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
     NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
     
@@ -457,7 +456,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return STRFORMAT(@"%@_%.2f",obj.v1,value);
     }]);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:TCRecognitionInvoke.m285 计数:3081 均耗:1.41 = 总耗:4336 读:0 写:0）
     
     //4. 组码识别
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
@@ -493,7 +491,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
         }
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.4s
-        // TODOTOMORROW20251217: 优化性能（DEBUG匹配 => 代码块:自适应粒度 循环圈:0 代码块:TCRecognitionInvoke.m334 计数:16411 均耗:0.10 = 总耗:1698 读:0 写:0）
         NSValue *aleardayBeginGV = [SMGUtils filterSingleFromArr:gvIdProtoRects checkValid:^BOOL(NSValue *item) {
             return [SMGUtils rate4IntersectionRect:item.CGRectValue bRect:protoRect] > 0.6f;
         }];
@@ -2026,13 +2023,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 找出同一个pid且whxy类似的，即范围相似度 > 0.6（参考35105-TODO6.1）。
         if (oldModel.assT.pId != newAssST.pId) continue;
         CGRect oldAssST_Proto = [SMGUtils convertBAtA:oldModel.bestGVsAtProtoTRect atB:oldModel.bestGVsAtAssTRect B:newAssSTRect];
+        NSLog(@"查为什么这里没合并1：%p %@ : %@",oldModel,Rect2Str(oldAssST_Proto),Rect2Str(newAssST_Proto));
         if ([SMGUtils rate4IntersectionRect:newAssST_Proto bRect:oldAssST_Proto] < 0.6f) continue;
+        NSLog(@"查为什么这里没合并3：returnold");
         return oldModel;
     }
     
     // 没旧的，则新建，并收集到runingResult中。
     AIFeatureJvBuModel *newModel = [AIFeatureJvBuModel new:newAssST];
     [runingSTModelsPool addObject:newModel];
+    NSLog(@"查为什么这里没合并2：%p %@",newModel,Rect2Str(newAssST_Proto));
+    // TODOTOMORROW20251226: 起初时，都没那么匹配，后面才随着收集慢慢变匹配的。
+    // 比如：A: 0x600003a96be0 开始时为：<x8 y-6 w27 h27> 最终: <x-5 y-2 w32 h30>
+    // 而此时：B: 0x600003a82560 已经最终为：<x-5 y-1 w32 h27>，它与A开始时并不匹配，但最终时却是很匹配的。
     return newModel;
 }
 
