@@ -586,14 +586,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 收集首条bestGV
                 [model updateBestGVs:beginBestGVItem assIndex:beginAssIndex];
                 
-                
-                // TODOTOMORROW20251226: 起初时，都没那么匹配，后面才随着收集慢慢变匹配的。
-                // 比如：A: 0x600003a96be0 开始时为：<x8 y-6 w27 h27> 最终: <x-5 y-2 w32 h30>
-                // 而此时：B: 0x600003a82560 已经最终为：<x-5 y-1 w32 h27>，它与A开始时并不匹配，但最终时却是很匹配的。
-                // 每次收集bestGV后，更新计算bestGVs_ProtoRect，然后找下有重复的合并下。
-                [model run4BestGvsAtProtoTRect];
-                [model run4BestGvsAtAssTRect];
-                [self getSTModelFromPool:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newBestGVsAtProtoTRect:model.bestGVsAtProtoTRect newBestGVsAtAssRect:model.bestGVsAtAssTRect];
+                // 每次收集bestGV后，更新计算bestGVs_ProtoRect，然后找下有重复的合并下（参考35125-BUG1）。
+                [self checkAndMergeSTModel:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newST:model];
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -611,6 +605,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if (!bestItem) continue;
                 [model updateBestGVs:bestItem assIndex:curIndex];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                
+                // 每次收集bestGV后，更新计算bestGVs_ProtoRect，然后找下有重复的合并下（参考35125-BUG1）。
+                [self checkAndMergeSTModel:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newST:model];
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -2030,14 +2027,32 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 找出同一个pid且whxy类似的，即范围相似度 > 0.6（参考35105-TODO6.1）。
         if (oldModel.assT.pId != newAssST.pId) continue;
         CGRect oldAssST_Proto = [SMGUtils convertBAtA:oldModel.bestGVsAtProtoTRect atB:oldModel.bestGVsAtAssTRect B:newAssSTRect];
-        NSLog(@"查为什么这里没合并1：%p %@ : %@",oldModel,Rect2Str(oldAssST_Proto),Rect2Str(newAssST_Proto));
         if ([SMGUtils rate4IntersectionRect:newAssST_Proto bRect:oldAssST_Proto] < 0.6f) continue;
-        NSLog(@"查为什么这里没合并3：returnold");
         [runingSTModelsPool removeObject:oldModel];
         [runedSTModelsPool removeObject:oldModel];
         return oldModel;
     }
     return nil;
+}
+
+/**
+ *  MARK:--------------------检查新STModel是否有可合并的合并下--------------------
+ */
++(void) checkAndMergeSTModel:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSMutableArray*)runedSTModelsPool newAssST:(AIFeatureNode*)newAssST newAssSTRect:(CGRect)newAssSTRect newST:(AIFeatureJvBuModel*)newST {
+    [newST run4BestGvsAtProtoTRect];
+    [newST run4BestGvsAtAssTRect];
+    AIFeatureJvBuModel *old = [self getSTModelFromPool:runingSTModelsPool runedSTModelsPool:runedSTModelsPool newAssST:newAssST newAssSTRect:newAssSTRect newBestGVsAtProtoTRect:newST.bestGVsAtProtoTRect newBestGVsAtAssRect:newST.bestGVsAtAssTRect];
+    if (old) [self mergeOldSTModel:old toNewST:newST];
+}
+
+/**
+ *  MARK:--------------------把旧stModel的bestGVs合并到新stModel中--------------------
+ */
++(void) mergeOldSTModel:(AIFeatureJvBuModel*)oldST toNewST:(AIFeatureJvBuModel*)newST {
+    for (NSNumber *key in oldST.bestGVs.allKeys) {
+        AIFeatureJvBuItem *oldBestGV = [oldST.bestGVs objectForKey:key];
+        [newST updateBestGVs:oldBestGV assIndex:key.integerValue];
+    }
 }
 
 /**
