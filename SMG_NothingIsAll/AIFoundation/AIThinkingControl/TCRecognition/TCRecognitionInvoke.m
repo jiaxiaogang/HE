@@ -424,7 +424,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoRectKey:(MapModel*)protoRectKey {
++(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoRectKey:(MapModel*)protoRectKey {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
@@ -563,8 +563,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             
-            // STModel防重复用池。
-            AIFeatureJvBuModel *model = [self getSTModelFromPoolOrCreate:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect beginProtoRect:lastProtoRect beginAssRect:lastAtAssRect];
+            // STModel防重复用池 & 无复用时新建。
+            AIFeatureJvBuModel *model = [self getSTModelFromPool:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newBestGVsAtProtoTRect:lastProtoRect newBestGVsAtAssRect:lastAtAssRect];
+            if (!model) model = [AIFeatureJvBuModel new:assT];
             
             // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
             BOOL havOld = false;//[model getBestGVByAssIndex:beginAssIndex];
@@ -584,6 +585,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 // 收集首条bestGV
                 [model updateBestGVs:beginBestGVItem assIndex:beginAssIndex];
+                
+                
+                // TODOTOMORROW20251226: 起初时，都没那么匹配，后面才随着收集慢慢变匹配的。
+                // 比如：A: 0x600003a96be0 开始时为：<x8 y-6 w27 h27> 最终: <x-5 y-2 w32 h30>
+                // 而此时：B: 0x600003a82560 已经最终为：<x-5 y-1 w32 h27>，它与A开始时并不匹配，但最终时却是很匹配的。
+                // 每次收集bestGV后，更新计算bestGVs_ProtoRect，然后找下有重复的合并下。
+                [model run4BestGvsAtProtoTRect];
+                [model run4BestGvsAtAssTRect];
+                [self getSTModelFromPool:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newBestGVsAtProtoTRect:model.bestGVsAtProtoTRect newBestGVsAtAssRect:model.bestGVsAtAssTRect];
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -609,10 +619,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 2025.12.15：改为无论如何都先收集，后面还要合并防重呢，哪怕一次只匹配一个gv，也许慢慢合并就又ok了。
             // if (model.bestGVs.count <= 4) continue;
             
-            // 及时计算bestGVs_ProtoRect;
-            [model run4BestGvsAtProtoTRect];
-            [model run4BestGvsAtAssTRect];
-            
             //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
             [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
                 return @(obj.bestGVAtProtoTRect);
@@ -620,6 +626,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             //54. 有效单特征条目后，该切入点beginRectExcept防重（参考35042-TODO4）。
             [beginRectExcept addObject:@(protoRect)];
+            [result addObject:model];
         }
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     }
@@ -2011,12 +2018,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @param runedSTModelsPool 往次执行识别中的已有结果集
  *  @param newAssST 新AssST（查这个assST可复用的结果返回）
  *  @param newAssSTRect 新AssST的整个体rect。
- *  @param beginProtoRect 切入点在proto上的rect。
- *  @param beginAssRect 切入点在assST上的rect。
+ *  @param newBestGVsAtProtoTRect 切入点在proto上的rect。
+ *  @param newBestGVsAtAssRect 切入点在assST上的rect。
  */
-+(AIFeatureJvBuModel*) getSTModelFromPoolOrCreate:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSArray*)runedSTModelsPool newAssST:(AIFeatureNode*)newAssST newAssSTRect:(CGRect)newAssSTRect beginProtoRect:(CGRect)beginProtoRect beginAssRect:(CGRect)beginAssRect {
++(AIFeatureJvBuModel*) getSTModelFromPool:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSMutableArray*)runedSTModelsPool newAssST:(AIFeatureNode*)newAssST newAssSTRect:(CGRect)newAssSTRect newBestGVsAtProtoTRect:(CGRect)newBestGVsAtProtoTRect newBestGVsAtAssRect:(CGRect)newBestGVsAtAssRect {
     // 用已知gvs_AssRect和整体assSTRect，以及已知gvs_ProtoRect，求出assST_ProtoRect（参考35105-TODO6.6）。
-    CGRect newAssST_Proto = [SMGUtils convertBAtA:beginProtoRect atB:beginAssRect B:newAssSTRect];
+    CGRect newAssST_Proto = [SMGUtils convertBAtA:newBestGVsAtProtoTRect atB:newBestGVsAtAssRect B:newAssSTRect];
     NSArray *allPool = [SMGUtils collectArrA:runedSTModelsPool arrB:runingSTModelsPool];
     
     for (AIFeatureJvBuModel *oldModel in allPool) {
@@ -2026,17 +2033,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSLog(@"查为什么这里没合并1：%p %@ : %@",oldModel,Rect2Str(oldAssST_Proto),Rect2Str(newAssST_Proto));
         if ([SMGUtils rate4IntersectionRect:newAssST_Proto bRect:oldAssST_Proto] < 0.6f) continue;
         NSLog(@"查为什么这里没合并3：returnold");
+        [runingSTModelsPool removeObject:oldModel];
+        [runedSTModelsPool removeObject:oldModel];
         return oldModel;
     }
-    
-    // 没旧的，则新建，并收集到runingResult中。
-    AIFeatureJvBuModel *newModel = [AIFeatureJvBuModel new:newAssST];
-    [runingSTModelsPool addObject:newModel];
-    NSLog(@"查为什么这里没合并2：%p %@",newModel,Rect2Str(newAssST_Proto));
-    // TODOTOMORROW20251226: 起初时，都没那么匹配，后面才随着收集慢慢变匹配的。
-    // 比如：A: 0x600003a96be0 开始时为：<x8 y-6 w27 h27> 最终: <x-5 y-2 w32 h30>
-    // 而此时：B: 0x600003a82560 已经最终为：<x-5 y-1 w32 h27>，它与A开始时并不匹配，但最终时却是很匹配的。
-    return newModel;
+    return nil;
 }
 
 /**
