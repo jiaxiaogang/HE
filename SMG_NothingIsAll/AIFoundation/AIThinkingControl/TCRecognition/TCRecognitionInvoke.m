@@ -309,7 +309,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
     // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
     // 2025.08.07: 废弃构建protoT，因为类比用不着，何必拼凑这个很多gvs元素的isGT出来呢（参考35062-TODO3）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -600,7 +600,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 BOOL havOld = [model getBestGVByAssIndex:curIndex];
                 if (havOld) continue;
                 
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds model:model];
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [model updateBestGVs:bestItem assIndex:curIndex];
@@ -636,7 +636,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
     
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
@@ -686,10 +686,33 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (model.bestGVs.count > 25 && model.bestGVsAtProtoTRect.origin.x > 8) {
             // TODOTOMORROW20251227: 可以把这个model.assST按第一个为切入点，与protoImg进行匹配下，然后调试下，错位这么多，是怎么匹配上这么高匹配率的。
             // 可疑：还是说，切入点够多，每个只有一点点准的都切进来了，切入点又全合并了，导致一个个不准确全被合并进来的？
+            // 可疑：还是合并时，没重新计算AtProtoRect，导致bestGVs之间，切ProtoRect时切的位置本来就互有位置：改下stModel合并方法，看这些bestGVs互相之间不兼容时怎么弄，或者查下可视化，按AtProtoRect来显示试下）。
+            
+            AIFeatureJvBuModel *testST = [AIFeatureJvBuModel new:model.assT];
+            
+            //21. 自举：每个assT一条条自举自身的gv。
+            for (NSInteger i = 1; i < model.assT.count; i++) {
+                NSNumber *beginAssIndex = ARR_INDEX(model.bestGVs.allKeys, 0);
+                NSValue *beginAssRect = ARR_INDEX(model.assT.rects, beginAssIndex.integerValue);
+                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
+                NSInteger curIndex = (beginAssIndex.integerValue + i) % model.assT.count;
+                AIFeatureJvBuItem *curBestGV = [model getBestGVByAssIndex:beginAssIndex.integerValue];
+                
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:model.assT lastProtoRect:curBestGV.bestGVAtProtoTRect lastAtAssRect:beginAssRect.CGRectValue protoColorDic:protoColorDic ds:ds];
+                //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
+                if (!bestItem) continue;
+                [testST updateBestGVs:bestItem assIndex:curIndex];
+            }
+            
+            
             NSLog(@"debugaaaa %ld atAss:%@ atProto:%@",model.assT.pId,Rect2Str(model.bestGVsAtAssTRect),Rect2Str(model.bestGVsAtProtoTRect));
             for (AIFeatureJvBuItem *bestGV in model.bestGVs.allValues) {
                 NSLog(@"%@",Rect2Str(bestGV.bestGVAtProtoTRect));
             }
+            
+            
+            // 调试下再次跑自举算法的数据情况。
+            NSLog(@"");
         }
     }
     
@@ -1114,7 +1137,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
                 //a. 通过组码做单特征识别。
                 AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel];
+                [self recognitionFeatureV2_Step2:jvBuModel protoColorDic:nil ds:nil];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = nil;//[self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.stModels dotSize:1];
@@ -1858,8 +1881,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                  lastProtoRect:(CGRect)lastProtoRect
                  lastAtAssRect:(CGRect)lastAtAssRect
                  protoColorDic:(NSDictionary*)protoColorDic
-                            ds:(NSString*)ds
-                         model:(AIFeatureJvBuModel*)model {
+                            ds:(NSString*)ds {
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);

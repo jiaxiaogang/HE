@@ -260,7 +260,7 @@ static AIThinkingControl *_instance;
             NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
             
             //7. 收集起来自举算法结果。
-            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds model:model];
+            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds];
             if (!bestItem) continue;
             [model.bestGVs setObject:bestItem forKey:@(j)];
         }

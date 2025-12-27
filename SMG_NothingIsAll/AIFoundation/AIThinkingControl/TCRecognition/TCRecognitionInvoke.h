@@ -58,7 +58,6 @@
                  lastProtoRect:(CGRect)lastProtoRect
                  lastAtAssRect:(CGRect)lastAtAssRect
                  protoColorDic:(NSDictionary*)protoColorDic
-                            ds:(NSString*)ds
-                         model:(AIFeatureJvBuModel*)model;
+                            ds:(NSString*)ds;
 
 @end
