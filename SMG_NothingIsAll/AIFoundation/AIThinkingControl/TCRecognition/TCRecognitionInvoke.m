@@ -568,7 +568,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             if (!model) model = [AIFeatureJvBuModel new:assT];
             
             // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
-            BOOL havOld = false;//[model getBestGVByAssIndex:beginAssIndex];
+            BOOL havOld = [model getBestGVByAssIndex:beginAssIndex];
             if (!havOld) {
                 // bestGV防重复用池。
                 AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
@@ -597,7 +597,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 NSInteger curIndex = (beginAssIndex + i) % assT.count;
                 
                 // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
-                BOOL havOld = false;//[model getBestGVByAssIndex:curIndex];
+                BOOL havOld = [model getBestGVByAssIndex:curIndex];
                 if (havOld) continue;
                 
                 AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds model:model];
@@ -681,8 +681,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ %p:RECT:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,model,Rect2Str(model.bestGVsAtProtoTRect));
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:1];
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
+        if (model.bestGVs.count > 25 && model.bestGVsAtProtoTRect.origin.x > 8) {
+            // TODOTOMORROW20251227: 可以把这个model.assST按第一个为切入点，与protoImg进行匹配下，然后调试下，错位这么多，是怎么匹配上这么高匹配率的。
+            // 可疑：还是说，切入点够多，每个只有一点点准的都切进来了，切入点又全合并了，导致一个个不准确全被合并进来的？
+            NSLog(@"debugaaaa %ld atAss:%@ atProto:%@",model.assT.pId,Rect2Str(model.bestGVsAtAssTRect),Rect2Str(model.bestGVsAtProtoTRect));
+            for (AIFeatureJvBuItem *bestGV in model.bestGVs.allValues) {
+                NSLog(@"%@",Rect2Str(bestGV.bestGVAtProtoTRect));
+            }
+        }
     }
     
     //61. debugLog
