@@ -15,13 +15,10 @@
 //MARK:                     < 单特征识别 >
 //MARK:===============================================================
 +(void) recognitionFeatureV2_Step0:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc;
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel;
 
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >
 //MARK:===============================================================
-+(void) recognitionGroupFeatureV4_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel;
-+(NSArray*) recognitionGroupFeatureV5:(AIKVPointer*)protoFeature_p matchModels:(NSArray*)matchModels;
 +(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p;
 
 //MARK:===============================================================

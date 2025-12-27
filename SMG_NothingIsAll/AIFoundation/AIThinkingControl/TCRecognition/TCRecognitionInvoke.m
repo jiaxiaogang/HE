@@ -692,7 +692,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < model.assT.count; i++) {
-                NSNumber *beginAssIndex = ARR_INDEX(model.bestGVs.allKeys, 0);
+                NSArray *sortKeys = [SMGUtils sortSmall2Big:model.bestGVs.allKeys compareBlock:^double(NSNumber *obj) {
+                    return obj.integerValue;
+                }];
+                NSNumber *beginAssIndex = ARR_INDEX(sortKeys, 0);
                 NSValue *beginAssRect = ARR_INDEX(model.assT.rects, beginAssIndex.integerValue);
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
                 NSInteger curIndex = (beginAssIndex.integerValue + i) % model.assT.count;
@@ -702,16 +705,36 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [testST updateBestGVs:bestItem assIndex:curIndex];
+                [testST run4BestGvsAtAssTRect];
+                [testST run4BestGvsAtProtoTRect];
+                [testST run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
             }
             
             
             NSLog(@"debugaaaa %ld atAss:%@ atProto:%@",model.assT.pId,Rect2Str(model.bestGVsAtAssTRect),Rect2Str(model.bestGVsAtProtoTRect));
-            for (AIFeatureJvBuItem *bestGV in model.bestGVs.allValues) {
-                NSLog(@"%@",Rect2Str(bestGV.bestGVAtProtoTRect));
+            for (NSNumber *key in model.bestGVs.allKeys) {
+                AIFeatureJvBuItem *bestGV = [model getBestGVByAssIndex:key.integerValue];
+                NSLog(@"aaaa.%ld %@",key.integerValue,Rect2Str(bestGV.bestGVAtProtoTRect));
+            }
+            
+            NSLog(@"debugbbbb %ld atAss:%@ atProto:%@",testST.assT.pId,Rect2Str(testST.bestGVsAtAssTRect),Rect2Str(testST.bestGVsAtProtoTRect));
+            for (NSNumber *key in testST.bestGVs.allKeys) {
+                AIFeatureJvBuItem *bestGV = [testST getBestGVByAssIndex:key.integerValue];
+                NSLog(@"bbbb.%ld %@",key.integerValue,Rect2Str(bestGV.bestGVAtProtoTRect));
             }
             
             
             // 调试下再次跑自举算法的数据情况。
+            // debugaaaa 111 atAss:<x0 y0 w18 h27> atProto:<x13 y0 w13 h26>
+            // debugbbbb 111 atAss:<x0 y6 w18 h21> atProto:<x3 y6 w19 h22>
+            // 分析：经查，34条重跑后，还有20条能匹配上，并且位置确实都有变化，重跑后，生成的是<3,6,19,22>。
+            // 疑点1：合并确实导致了atProtoRect的兼容性问题。
+            // 疑点2：ziJvItem每次curIndex更新了，但lastProtoRect并没有更新，相当于全是用beginAssIndex来推算的，不是一个个相邻推算。
+            // 思路：这个得系统性的分析一下，像这种合并时，AtProtoRect该怎么更新一下比较好？
+            // 方案1：两个同质化较高的部门要合并，那旧的大致别动，新来的职位没重复就适配性的加入，重复就直接淘汰掉。
+            // 方案2：两个同质化较高的部门要合并，先PK一下哪个好，然后坏的往好的里面并。
+            // 方案3：两个同质化较高的部门要合并，每个职位有重复的分别两两PK，留下好的（现做法即如此，有兼容性问题）。
+            // 方案4：两个同质化较高的部门要合并，直接综合PK一个，把坏的部门全淘汰掉，留下好的。
             NSLog(@"");
         }
     }
@@ -721,54 +744,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.getSTMatch;
-    }];
-}
-
-/**
- *  MARK:--------------------组特征自举识别算法之组特征竞争（参考35061-TODO1）--------------------
- *  @desc Step2 尽可能照顾特征的整体性，通过交层向下找似层结果（参考34135-TODO2）。
- */
-+(void) recognitionGroupFeatureV4_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel {
-    
-    //43. 处理匹配度，符合度
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.gtModels) {
-        [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
-    }
-    
-    //53. 排序
-    NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.getGTMatch;
-    }];
-    
-    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.3f, 2), 30));
-    
-    //60. 更新赋值回去。
-    decoratorJvBuModel.gtModels = [[NSMutableArray alloc] initWithArray:validModels];
-    
-    //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.gtModels) {
-        //[AINetUtils relateGeneralAbs:model.assT absConPorts:model.assT.conPorts conNodes:@[protoT] isNew:false difStrong:1];//assGT和protoGT的抽具关联（写的时候参考单特征类比算法中代码）。
-        //[AINetUtils updateConPortRect:model.assT conT:protoT.p rect:ass_Proto];//assGT在protoGT中的rect（写的时候参考单特征类比算法中代码）。
-        //[protoT updateMatchValue:model.assT matchValue:model.matchValue * model.matchAssRatio];
-        //[protoT updateMatchDegree:model.assT matchDegree:model.matchDegree * model.matchAssRatio];
-        
-        //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
-        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
-        
-        //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        if (Log4RecogDesc || decoratorJvBuModel.gtModels.count > 0) NSLog(@"%ld. 组特征识别结果:GT%ld%@\t 匹配条数:%ld/ass%ld %@",
-                                         [decoratorJvBuModel.gtModels indexOfObject:model],model.assT.pId,CLEANSTR([model.assT getLogDesc:true]),model.bestGVs.count,model.assT.count,model.getGTMatchDesc);
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别组GT%ld(%ld/%ld)",[decoratorJvBuModel.gtModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:3];
-        }];
-    }
-    
-    //61. debugLog
-    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.gtModels protoLogDesc:nil prefix:@"组特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
-    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getGTMatch;
     }];
 }
 
