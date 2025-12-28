@@ -10,9 +10,11 @@
 
 @implementation AIFeatureJvBuModel
 
-+(id) new:(AIFeatureNode*)assT {
++(id) new:(AIFeatureNode*)assT beginAssIndex:(NSInteger)beginAssIndex beginGV_ProtoRect:(CGRect)beginGV_ProtoRect {
     AIFeatureJvBuModel *result = [AIFeatureJvBuModel new];
     result.assT = assT;
+    result.beginAssIndex = beginAssIndex;
+    result.beginGV_ProtoRect = beginGV_ProtoRect;
     return result;
 }
 
@@ -175,6 +177,14 @@
     if (!old || newBestGV.matchValue > old.matchValue) {
         [self.bestGVs setObject:newBestGV forKey:@(assIndex)];
     }
+}
+
+// 计算assIndex对应的ProtoRect中范围（用beginIndex来推算）。
+-(CGRect) checkGV_ProtoRect:(NSInteger)checkAssIndex {
+    NSValue *beginGV_AssRect = ARR_INDEX(self.assT.rects, self.beginAssIndex);
+    NSValue *checkGV_AssRect = ARR_INDEX(self.assT.rects, checkAssIndex);
+    CGRect checkGV_ProtoRect = [SMGUtils convertBAtA:self.beginGV_ProtoRect atB:beginGV_AssRect.CGRectValue B:checkGV_AssRect.CGRectValue];
+    return checkGV_ProtoRect;
 }
 
 @end

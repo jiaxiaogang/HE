@@ -13,10 +13,14 @@
  */
 @interface AIFeatureJvBuModel : NSObject
 
-+(id) new:(AIFeatureNode*)assT;
++(id) new:(AIFeatureNode*)assT beginAssIndex:(NSInteger)beginAssIndex beginGV_ProtoRect:(CGRect)beginGV_ProtoRect;
 
 //refPort.target。
 @property (weak, nonatomic) AIFeatureNode *assT;
+// 切入帧
+@property (assign, nonatomic) NSInteger beginAssIndex;
+// 切入帧对应ProtoRect
+@property (assign, nonatomic) CGRect beginGV_ProtoRect;
 //每个assT在proto中的rect（用于组特征识别）。
 @property (assign, nonatomic) CGRect bestGVsAtProtoTRect;
 //每个bestGVs在ass中的rect。
@@ -72,5 +76,8 @@
 -(AIFeatureJvBuItem*) getBestGVByAssIndex:(NSInteger)assIndex;
 // bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过（参考35105-TODO6.2 & TODO6.4）。
 -(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV assIndex:(NSInteger)assIndex;
+
+// 计算assIndex对应的ProtoRect中范围（用beginIndex来推算）。
+-(CGRect) checkGV_ProtoRect:(NSInteger)checkAssIndex;
 
 @end

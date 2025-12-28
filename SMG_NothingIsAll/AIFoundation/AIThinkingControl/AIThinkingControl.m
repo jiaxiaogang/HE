@@ -248,7 +248,8 @@ static AIThinkingControl *_instance;
     //3. 循环分别进行：自举识别：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < self.tempModels.count; i++) {
         AIFeatureNode *passedT = ARR_INDEX(self.tempModels, i);
-        AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:passedT];
+        NSValue *beginRectV = ARR_INDEX(passedT.rects, 0);
+        AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:passedT beginAssIndex:0 beginGV_ProtoRect:beginRectV.CGRectValue];
         for (NSInteger j = 0; j < passedT.count; j++) {
             //4. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
             //4. 从passedT中一个个gv与protoColorDic做自举。

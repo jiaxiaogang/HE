@@ -565,7 +565,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // STModel防重复用池 & 无复用时新建。
             AIFeatureJvBuModel *model = [self getSTModelFromPool:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newBestGVsAtProtoTRect:lastProtoRect newBestGVsAtAssRect:lastAtAssRect];
-            if (!model) model = [AIFeatureJvBuModel new:assT];
+            if (!model) model = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
             
             // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
             BOOL havOld = [model getBestGVByAssIndex:beginAssIndex];
@@ -688,20 +688,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 可疑：还是说，切入点够多，每个只有一点点准的都切进来了，切入点又全合并了，导致一个个不准确全被合并进来的？
             // 可疑：还是合并时，没重新计算AtProtoRect，导致bestGVs之间，切ProtoRect时切的位置本来就互有位置：改下stModel合并方法，看这些bestGVs互相之间不兼容时怎么弄，或者查下可视化，按AtProtoRect来显示试下）。
             
-            AIFeatureJvBuModel *testST = [AIFeatureJvBuModel new:model.assT];
+            AIFeatureJvBuModel *testST = [AIFeatureJvBuModel new:model.assT beginAssIndex:model.beginAssIndex beginGV_ProtoRect:model.beginGV_ProtoRect];
             
             //21. 自举：每个assT一条条自举自身的gv。
             for (NSInteger i = 1; i < model.assT.count; i++) {
-                NSArray *sortKeys = [SMGUtils sortSmall2Big:model.bestGVs.allKeys compareBlock:^double(NSNumber *obj) {
-                    return obj.integerValue;
-                }];
-                NSNumber *beginAssIndex = ARR_INDEX(sortKeys, 0);
-                NSValue *beginAssRect = ARR_INDEX(model.assT.rects, beginAssIndex.integerValue);
-                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                NSInteger curIndex = (beginAssIndex.integerValue + i) % model.assT.count;
-                AIFeatureJvBuItem *curBestGV = [model getBestGVByAssIndex:beginAssIndex.integerValue];
-                
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:model.assT lastProtoRect:curBestGV.bestGVAtProtoTRect lastAtAssRect:beginAssRect.CGRectValue protoColorDic:protoColorDic ds:ds];
+                NSValue *beginAssRect = ARR_INDEX(testST.assT.rects, testST.beginAssIndex);
+                NSInteger curIndex = (testST.beginAssIndex + i) % testST.assT.count;
+                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:model.assT lastProtoRect:testST.beginGV_ProtoRect lastAtAssRect:beginAssRect.CGRectValue protoColorDic:protoColorDic ds:ds];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [testST updateBestGVs:bestItem assIndex:curIndex];
@@ -737,7 +730,17 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 方案4：两个同质化较高的部门要合并，直接综合PK一个，把坏的部门全淘汰掉，留下好的。
             // 方案5：既然都是切入点来计算的，那每个jvBuModel都记录一下切入点：判断是否可合并时，都转成切入点之后直接对比匹配60%，不必再等自举收集过程中每一步都做判断了。
             // 方案6：既然加了rectToKeys来切片分组，那这种反推肯定会有很多错位偏移，比如小像素的3,3和2,3别看只差了1格，但放大到27时，就能差9格。所以把每个AtProtoRect单独记录一下，不要记录在jvBuModel中（不然来回复用都错位了）。
-            // 方案7：那合并时呢？保留哪个AtProtoRect？或者每个gvAtProtoRect都根据切入点实时推算？而只记录切入点即可。合并时只要pk下哪个综合匹配度高，就保留认证的切入点值。
+            //      关键：这里最大的问题就是，如果微观上差30%，那宏观上就会差太多，合并后，宏观上自然就错位偏移。
+            //      所以1：同一个3x3的GV中，差一格，dotSize27时就能差9，那复用哪一个？复用到第1格，第2格，第3格，最后会导致整个assST综合匹配度有很大差异。
+            //      所以2：有个方法是微观3x3这种太小的，不做切入点，因为它最耗能（微观太多切入点多循环多），但所得的效果却最差（差一丝就会导致宏观差太多）。
+            // 方案7：那合并时呢？保留哪个AtProtoRect？或者每个gvAtProtoRect都根据切入点实时推算？而只记录切入点即可。
+            //      因为：如果合并了，beginIndex和beginGV_ProtoRect一样了，那么每个itemGV_ProtoRect也都一样了，没必要再跑一遍，所以可以直接防重掉。
+            //      那么：合并时只要pk下哪个综合匹配度高，就保留认证的切入点值（因为切入时就能判断是否可合并，切入时就判断了，就不用合并了，因为一个已经完成，一个还没开始，没必要合并，直接防重即可）。
+            // TODO1：把切入下标beginAssIndex和切入时beginGV_ProtoRect存到jvBuModel中 `T`。
+            // TODO2：别的itemAssIndex对应的itemGV_ProtoRect都通过方法实时计算 `T`。
+            // TODO3：自举算法调用时，都通过调用TODO2的方法来计算itemGV_ProtoRect。
+            // TODO4：废弃jvBuModel合并算法，通过checkItemGV_ProtoRect()方法来判断匹配度，可合并则直接防重掉，不用重跑了。
+            // TODO5：现在的分组切片是20%，所以dotSize<5时这种太微观的gv就不必切入识别算法了，直接用>5的来切入即可。
             NSLog(@"");
         }
     }
