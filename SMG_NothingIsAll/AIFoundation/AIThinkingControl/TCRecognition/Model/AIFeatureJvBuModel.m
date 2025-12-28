@@ -179,12 +179,12 @@
     }
 }
 
-// 计算assIndex对应的ProtoRect中范围（用beginIndex来推算）。
--(CGRect) checkGV_ProtoRect:(NSInteger)checkAssIndex {
+// 计算assIndex对应的ProtoRect中范围（用beginIndex来推算）（参考35126-TODO2）。
+-(CGRect) getItemGV_ProtoRect:(NSInteger)itemAssIndex {
     NSValue *beginGV_AssRect = ARR_INDEX(self.assT.rects, self.beginAssIndex);
-    NSValue *checkGV_AssRect = ARR_INDEX(self.assT.rects, checkAssIndex);
-    CGRect checkGV_ProtoRect = [SMGUtils convertBAtA:self.beginGV_ProtoRect atB:beginGV_AssRect.CGRectValue B:checkGV_AssRect.CGRectValue];
-    return checkGV_ProtoRect;
+    NSValue *itemGV_AssRect = ARR_INDEX(self.assT.rects, itemAssIndex);
+    CGRect itemGV_ProtoRect = [SMGUtils convertBAtA:self.beginGV_ProtoRect atB:beginGV_AssRect.CGRectValue B:itemGV_AssRect.CGRectValue];
+    return itemGV_ProtoRect;
 }
 
 @end

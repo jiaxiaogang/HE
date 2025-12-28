@@ -246,9 +246,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     
     //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
+    // 2025.12.29: 小于5时，切片分组20%不足了，会导致误差变大，微观有误差，宏观就更错位偏移，并且dotSize太小性能也拖累（参考35126-方案2 & TODO5）。
     CGFloat dotSize = whSize / 3.0f;
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    while (dotSize > 1) {
+    while (dotSize > 5) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
@@ -563,9 +564,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
             lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
             
-            // STModel防重复用池 & 无复用时新建。
-            AIFeatureJvBuModel *model = [self getSTModelFromPool:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newBestGVsAtProtoTRect:lastProtoRect newBestGVsAtAssRect:lastAtAssRect];
-            if (!model) model = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
+            // STModel防重复用池。
+            AIFeatureJvBuModel *oldModel = [self getSTModelFromPoolV2:result runedSTModelsPool:stModels newBeginGV_ProtoRect:lastProtoRect newBeginAssIndex:beginAssIndex assST:assT];
+            if (oldModel) continue;
+            
+            // 无复用时新建并识别。
+            AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
             
             // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
             BOOL havOld = [model getBestGVByAssIndex:beginAssIndex];
@@ -585,9 +589,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 // 收集首条bestGV
                 [model updateBestGVs:beginBestGVItem assIndex:beginAssIndex];
-                
-                // 每次收集bestGV后，更新计算bestGVs_ProtoRect，然后找下有重复的合并下（参考35125-BUG1）。
-                [self checkAndMergeSTModel:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newST:model];
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -605,9 +606,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if (!bestItem) continue;
                 [model updateBestGVs:bestItem assIndex:curIndex];
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                
-                // 每次收集bestGV后，更新计算bestGVs_ProtoRect，然后找下有重复的合并下（参考35125-BUG1）。
-                [self checkAndMergeSTModel:result runedSTModelsPool:stModels newAssST:assT newAssSTRect:assSTRect newST:model];
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
@@ -684,9 +682,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
         if (model.bestGVs.count > 25 && model.bestGVsAtProtoTRect.origin.x > 8) {
-            // TODOTOMORROW20251227: 可以把这个model.assST按第一个为切入点，与protoImg进行匹配下，然后调试下，错位这么多，是怎么匹配上这么高匹配率的。
-            // 可疑：还是说，切入点够多，每个只有一点点准的都切进来了，切入点又全合并了，导致一个个不准确全被合并进来的？
-            // 可疑：还是合并时，没重新计算AtProtoRect，导致bestGVs之间，切ProtoRect时切的位置本来就互有位置：改下stModel合并方法，看这些bestGVs互相之间不兼容时怎么弄，或者查下可视化，按AtProtoRect来显示试下）。
+            // TODOTOMORROW20251229：回测下错位问题。
             
             AIFeatureJvBuModel *testST = [AIFeatureJvBuModel new:model.assT beginAssIndex:model.beginAssIndex beginGV_ProtoRect:model.beginGV_ProtoRect];
             
@@ -716,31 +712,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 NSLog(@"bbbb.%ld %@",key.integerValue,Rect2Str(bestGV.bestGVAtProtoTRect));
             }
             
-            
-            // 调试下再次跑自举算法的数据情况。
-            // debugaaaa 111 atAss:<x0 y0 w18 h27> atProto:<x13 y0 w13 h26>
-            // debugbbbb 111 atAss:<x0 y6 w18 h21> atProto:<x3 y6 w19 h22>
-            // 分析：经查，34条重跑后，还有20条能匹配上，并且位置确实都有变化，重跑后，生成的是<3,6,19,22>。
-            // 疑点1：合并确实导致了atProtoRect的兼容性问题。
-            // 疑点2：ziJvItem每次curIndex更新了，但lastProtoRect并没有更新，相当于全是用beginAssIndex来推算的，不是一个个相邻推算。
-            // 思路：这个得系统性的分析一下，像这种合并时，AtProtoRect该怎么更新一下比较好？
-            // 方案1：两个同质化较高的部门要合并，那旧的大致别动，新来的职位没重复就适配性的加入，重复就直接淘汰掉。
-            // 方案2：两个同质化较高的部门要合并，先PK一下哪个好，然后坏的往好的里面并。
-            // 方案3：两个同质化较高的部门要合并，每个职位有重复的分别两两PK，留下好的（现做法即如此，有兼容性问题）。
-            // 方案4：两个同质化较高的部门要合并，直接综合PK一个，把坏的部门全淘汰掉，留下好的。
-            // 方案5：既然都是切入点来计算的，那每个jvBuModel都记录一下切入点：判断是否可合并时，都转成切入点之后直接对比匹配60%，不必再等自举收集过程中每一步都做判断了。
-            // 方案6：既然加了rectToKeys来切片分组，那这种反推肯定会有很多错位偏移，比如小像素的3,3和2,3别看只差了1格，但放大到27时，就能差9格。所以把每个AtProtoRect单独记录一下，不要记录在jvBuModel中（不然来回复用都错位了）。
-            //      关键：这里最大的问题就是，如果微观上差30%，那宏观上就会差太多，合并后，宏观上自然就错位偏移。
-            //      所以1：同一个3x3的GV中，差一格，dotSize27时就能差9，那复用哪一个？复用到第1格，第2格，第3格，最后会导致整个assST综合匹配度有很大差异。
-            //      所以2：有个方法是微观3x3这种太小的，不做切入点，因为它最耗能（微观太多切入点多循环多），但所得的效果却最差（差一丝就会导致宏观差太多）。
-            // 方案7：那合并时呢？保留哪个AtProtoRect？或者每个gvAtProtoRect都根据切入点实时推算？而只记录切入点即可。
-            //      因为：如果合并了，beginIndex和beginGV_ProtoRect一样了，那么每个itemGV_ProtoRect也都一样了，没必要再跑一遍，所以可以直接防重掉。
-            //      那么：合并时只要pk下哪个综合匹配度高，就保留认证的切入点值（因为切入时就能判断是否可合并，切入时就判断了，就不用合并了，因为一个已经完成，一个还没开始，没必要合并，直接防重即可）。
-            // TODO1：把切入下标beginAssIndex和切入时beginGV_ProtoRect存到jvBuModel中 `T`。
-            // TODO2：别的itemAssIndex对应的itemGV_ProtoRect都通过方法实时计算 `T`。
-            // TODO3：自举算法调用时，都通过调用TODO2的方法来计算itemGV_ProtoRect。
-            // TODO4：废弃jvBuModel合并算法，通过checkItemGV_ProtoRect()方法来判断匹配度，可合并则直接防重掉，不用重跑了。
-            // TODO5：现在的分组切片是20%，所以dotSize<5时这种太微观的gv就不必切入识别算法了，直接用>5的来切入即可。
             NSLog(@"");
         }
     }
@@ -2022,48 +1993,36 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 /**
  *  MARK:--------------------STModel缓存池--------------------
  *  @desc 从stModels池中，找newAssST类似的旧结果，进行返回。
+ *  @version
+ *      2025.12.29: V2迭代，每个stModel都用beginAssIndex下的gv_ProtoRect来判断同组（参考35126-方案1 & TODO4）。
  *  @param runingSTModelsPool 本次执行识别中的已有结果集
  *  @param runedSTModelsPool 往次执行识别中的已有结果集
- *  @param newAssST 新AssST（查这个assST可复用的结果返回）
- *  @param newAssSTRect 新AssST的整个体rect。
- *  @param newBestGVsAtProtoTRect 切入点在proto上的rect。
- *  @param newBestGVsAtAssRect 切入点在assST上的rect。
+ *  _param newAssST 新AssST（查这个assST可复用的结果返回）
+ *  _param newAssSTRect 新AssST的整个体rect。
+ *  _param newBestGVsAtProtoTRect 切入点在proto上的rect。
+ *  _param newBestGVsAtAssRect 切入点在assST上的rect。
  */
-+(AIFeatureJvBuModel*) getSTModelFromPool:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSMutableArray*)runedSTModelsPool newAssST:(AIFeatureNode*)newAssST newAssSTRect:(CGRect)newAssSTRect newBestGVsAtProtoTRect:(CGRect)newBestGVsAtProtoTRect newBestGVsAtAssRect:(CGRect)newBestGVsAtAssRect {
-    // 用已知gvs_AssRect和整体assSTRect，以及已知gvs_ProtoRect，求出assST_ProtoRect（参考35105-TODO6.6）。
-    CGRect newAssST_Proto = [SMGUtils convertBAtA:newBestGVsAtProtoTRect atB:newBestGVsAtAssRect B:newAssSTRect];
++(AIFeatureJvBuModel*) getSTModelFromPoolV2:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSMutableArray*)runedSTModelsPool newBeginGV_ProtoRect:(CGRect)newBeginGV_ProtoRect newBeginAssIndex:(NSInteger)newBeginAssIndex assST:(AIFeatureNode*)assST {
+    MapModel *newIndexKeys = [self getIndexsOfProtoRect:newBeginGV_ProtoRect];
     NSArray *allPool = [SMGUtils collectArrA:runedSTModelsPool arrB:runingSTModelsPool];
     
     for (AIFeatureJvBuModel *oldModel in allPool) {
-        // 找出同一个pid且whxy类似的，即范围相似度 > 0.6（参考35105-TODO6.1）。
-        if (oldModel.assT.pId != newAssST.pId) continue;
-        CGRect oldAssST_Proto = [SMGUtils convertBAtA:oldModel.bestGVsAtProtoTRect atB:oldModel.bestGVsAtAssTRect B:newAssSTRect];
-        if ([SMGUtils rate4IntersectionRect:newAssST_Proto bRect:oldAssST_Proto] < 0.6f) continue;
-        [runingSTModelsPool removeObject:oldModel];
-        [runedSTModelsPool removeObject:oldModel];
-        return oldModel;
+        // 找出同一个pid（参考35105-TODO6.1）。
+        if (oldModel.assT.pId != assST.pId) continue;
+        
+        // 取旧模型中，同样切入index的gv_ProtoRect。
+        CGRect oldBeginGV_ProtoRect = [oldModel getItemGV_ProtoRect:newBeginAssIndex];
+        MapModel *oldIndexKeys = [self getIndexsOfProtoRect:oldBeginGV_ProtoRect];
+        
+        // 索引一样则可用同一个。
+        if (NUMTOOK(newIndexKeys.v1).intValue == NUMTOOK(oldIndexKeys.v1).intValue &&
+            NUMTOOK(newIndexKeys.v2).intValue == NUMTOOK(oldIndexKeys.v2).intValue &&
+            NUMTOOK(newIndexKeys.v3).intValue == NUMTOOK(oldIndexKeys.v3).intValue &&
+            NUMTOOK(newIndexKeys.v4).intValue == NUMTOOK(oldIndexKeys.v4).intValue) {
+            return oldModel;
+        }
     }
     return nil;
-}
-
-/**
- *  MARK:--------------------检查新STModel是否有可合并的合并下--------------------
- */
-+(void) checkAndMergeSTModel:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSMutableArray*)runedSTModelsPool newAssST:(AIFeatureNode*)newAssST newAssSTRect:(CGRect)newAssSTRect newST:(AIFeatureJvBuModel*)newST {
-    [newST run4BestGvsAtProtoTRect];
-    [newST run4BestGvsAtAssTRect];
-    AIFeatureJvBuModel *old = [self getSTModelFromPool:runingSTModelsPool runedSTModelsPool:runedSTModelsPool newAssST:newAssST newAssSTRect:newAssSTRect newBestGVsAtProtoTRect:newST.bestGVsAtProtoTRect newBestGVsAtAssRect:newST.bestGVsAtAssTRect];
-    if (old) [self mergeOldSTModel:old toNewST:newST];
-}
-
-/**
- *  MARK:--------------------把旧stModel的bestGVs合并到新stModel中--------------------
- */
-+(void) mergeOldSTModel:(AIFeatureJvBuModel*)oldST toNewST:(AIFeatureJvBuModel*)newST {
-    for (NSNumber *key in oldST.bestGVs.allKeys) {
-        AIFeatureJvBuItem *oldBestGV = [oldST.bestGVs objectForKey:key];
-        [newST updateBestGVs:oldBestGV assIndex:key.integerValue];
-    }
 }
 
 /**
