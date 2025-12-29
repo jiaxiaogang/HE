@@ -29,11 +29,19 @@
 /**
  *  MARK:--------------------平均匹配度中的单码责任占比（个体责任 > 平均责任 x 2则突显其有责任）--------------------
  *  @result true无责 false有责
+ *  _param fanForce 反强度，越小强度越大，越大强度越小：取值范围一般为（1-2），如果1则低于平均值的都有责任，如果2则低于平均两倍才有责（默认2）。
+ *      比如：2可用于一共没几条元素，想排除一两个的情况。
+ *      比如：1.5可用于一共很多元素，并且每个都多少有点责任时，想过滤掉20%左右就传1.5。
+ *      比如：1可用于一共不管多少元素，想直接过滤掉50%左右。
  */
 +(BOOL) noZeRenForPingJun:(CGFloat)curMatchValue bigerMatchValue:(CGFloat)bigerMatchValue {
+    return [self noZeRenForPingJun:curMatchValue bigerMatchValue:bigerMatchValue fanForce:2.0f];
+}
+
++(BOOL) noZeRenForPingJun:(CGFloat)curMatchValue bigerMatchValue:(CGFloat)bigerMatchValue fanForce:(CGFloat)fanForce {
     CGFloat bigerZeRen = 1 - bigerMatchValue;//整体的责任
     CGFloat subZeRen = 1 - curMatchValue;//个体的责任。
-    return subZeRen == 0 || subZeRen < bigerZeRen * 2;
+    return subZeRen == 0 || subZeRen < bigerZeRen * fanForce;
 }
 
 @end

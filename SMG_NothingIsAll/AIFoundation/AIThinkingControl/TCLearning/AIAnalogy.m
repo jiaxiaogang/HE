@@ -395,19 +395,21 @@
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
     // 2025.06.13: 先关掉，其实局部特征识别时已经充分竞争了，此处不再另行剔除。
     // 2025.08.06: 打开，单特征识别时充分竞争，不表示不类比中再抽象了，并且组特征现在也需要这里抽象一下，并且是在无protoT的情况下就要实现抽象（参考35062-TODO2）。
+    // 2025.12.29: 40个GV，几乎每个多多少少都有责任，把过滤加敏感一些，不然一个都过滤不掉（增强过滤强度）。
     NSArray *models = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
         return [MapModel newWithV1:key v2:[jvBuModel.bestGVs objectForKey:key]];
     }];
     NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:models checkValid:^BOOL(MapModel *model) {
         AIFeatureJvBuItem *item = model.v2;
-        return [TCLearningUtil noZeRenForPingJun:item.matchValue * item.matchDegree * item.diffValue bigerMatchValue:jvBuModel.matchValue * jvBuModel.matchDegree * jvBuModel.matchDiffValue];
+        return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:jvBuModel.matchValue fanForce:1.2f];
     }]];
+    
     // 2025.11.04: 把noZeRenForPingJun改成竞争后保留80%进行增强类比激烈度测试。
-    // NSArray *validBestGVs = [SMGUtils sortBig2Small:jvBuModel.bestGVs compareBlock:^double(AIFeatureJvBuItem *obj) {
-    //    return obj.matchValue;
-    // }];
-    // validBestGVs = ARR_SUB(validBestGVs, 0, validBestGVs.count * 0.8f);
-    // NSLog(@"ST类比条数：%ld -> %ld",jvBuModel.bestGVs.count,validBestGVs.count);
+    //validBestGVs = [SMGUtils sortBig2Small:validBestGVs compareBlock:^double(MapModel *model) {
+    //    AIFeatureJvBuItem *item = model.v2;
+    //    return item.matchValue;
+    //}];
+    //validBestGVs = ARR_SUB(validBestGVs, 0, validBestGVs.count * 0.5f);
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
     NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(MapModel *obj) {
@@ -474,7 +476,7 @@
     //41. debugLog
     [SMGUtils runByMainQueue:^{
         // [theApp.imgTrainerView setDataForFeature:jvBuModel.assT lab:STRFORMAT(@"AssST%ld (%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count) left:0 top:0];
-        // [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"ST%ld->AbsST%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:3];
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"具%ld->抽%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:3];
     }];
     
     // NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);

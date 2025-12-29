@@ -681,39 +681,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
-        if (model.bestGVs.count > 25 && model.bestGVsAtProtoTRect.origin.x > 8) {
-            // TODOTOMORROW20251229：回测下错位问题。
-            
-            AIFeatureJvBuModel *testST = [AIFeatureJvBuModel new:model.assT beginAssIndex:model.beginAssIndex beginGV_ProtoRect:model.beginGV_ProtoRect];
-            
-            //21. 自举：每个assT一条条自举自身的gv。
-            for (NSInteger i = 1; i < model.assT.count; i++) {
-                NSValue *beginAssRect = ARR_INDEX(testST.assT.rects, testST.beginAssIndex);
-                NSInteger curIndex = (testST.beginAssIndex + i) % testST.assT.count;
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:model.assT lastProtoRect:testST.beginGV_ProtoRect lastAtAssRect:beginAssRect.CGRectValue protoColorDic:protoColorDic ds:ds];
-                //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
-                if (!bestItem) continue;
-                [testST updateBestGVs:bestItem assIndex:curIndex];
-                [testST run4BestGvsAtAssTRect];
-                [testST run4BestGvsAtProtoTRect];
-                [testST run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
-            }
-            
-            
-            NSLog(@"debugaaaa %ld atAss:%@ atProto:%@",model.assT.pId,Rect2Str(model.bestGVsAtAssTRect),Rect2Str(model.bestGVsAtProtoTRect));
-            for (NSNumber *key in model.bestGVs.allKeys) {
-                AIFeatureJvBuItem *bestGV = [model getBestGVByAssIndex:key.integerValue];
-                NSLog(@"aaaa.%ld %@",key.integerValue,Rect2Str(bestGV.bestGVAtProtoTRect));
-            }
-            
-            NSLog(@"debugbbbb %ld atAss:%@ atProto:%@",testST.assT.pId,Rect2Str(testST.bestGVsAtAssTRect),Rect2Str(testST.bestGVsAtProtoTRect));
-            for (NSNumber *key in testST.bestGVs.allKeys) {
-                AIFeatureJvBuItem *bestGV = [testST getBestGVByAssIndex:key.integerValue];
-                NSLog(@"bbbb.%ld %@",key.integerValue,Rect2Str(bestGV.bestGVAtProtoTRect));
-            }
-            
-            NSLog(@"");
-        }
     }
     
     //61. debugLog

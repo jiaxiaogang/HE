@@ -22,5 +22,6 @@
  *  @result true无责 false有责
  */
 +(BOOL) noZeRenForPingJun:(CGFloat)curMatchValue bigerMatchValue:(CGFloat)bigerMatchValue;
++(BOOL) noZeRenForPingJun:(CGFloat)curMatchValue bigerMatchValue:(CGFloat)bigerMatchValue fanForce:(CGFloat)fanForce;
 
 @end
