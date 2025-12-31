@@ -376,12 +376,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
             return item.bestGVAtProtoTRect;
         }];
-        // TODOTOMORROW20251231: 查GT识别结果太少甚至几乎一直是0条的问题。
-        // 1. 回顾下这里为什么要用absST构建ProtoGT，这会导致如果每次都能成功抽象出新abs的话，这里就永远是新节点，是激活不到GT的。
-        // 2. 要么降下类比力度，要么就把这里改成由assST来构建。
-        // 3. 其实assST已经足够抽象了，且在快速找到稳定的抽象ST结果，如果是这样这里就应该由assST构建ProtoGT。
-        
-        // NSLog(@"%@",Rect2Str(model.bestGVsAtProtoTRect));
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
     if (gtOrders.count == 0) return;

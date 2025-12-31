@@ -395,13 +395,13 @@
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
     // 2025.06.13: 先关掉，其实局部特征识别时已经充分竞争了，此处不再另行剔除。
     // 2025.08.06: 打开，单特征识别时充分竞争，不表示不类比中再抽象了，并且组特征现在也需要这里抽象一下，并且是在无protoT的情况下就要实现抽象（参考35062-TODO2）。
-    // 2025.12.29: 40个GV，几乎每个多多少少都有责任，把过滤加敏感一些，不然一个都过滤不掉（增强过滤强度）。
+    // 2025.12.29: 40个GV，几乎每个多多少少都有责任，把过滤加敏感一些，不然一个都过滤不掉（增强过滤强度）（但也不能太敏感，不然每次都有剔除，这会导致稳抽象的稳不下来，导致总是新absST，从而导致absST.ref不到GT，进而导致GT识别困难）。
     NSArray *models = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
         return [MapModel newWithV1:key v2:[jvBuModel.bestGVs objectForKey:key]];
     }];
     NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:models checkValid:^BOOL(MapModel *model) {
         AIFeatureJvBuItem *item = model.v2;
-        return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:jvBuModel.matchValue fanForce:1.2f];
+        return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:jvBuModel.matchValue fanForce:1.5f];
     }]];
     
     // 2025.11.04: 把noZeRenForPingJun改成竞争后保留80%进行增强类比激烈度测试。
