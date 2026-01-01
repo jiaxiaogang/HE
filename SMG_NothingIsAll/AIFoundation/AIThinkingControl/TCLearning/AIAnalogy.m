@@ -377,39 +377,14 @@
 +(AIFeatureNode*) analogyFeature_General:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc isGT:(BOOL)isGT {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     
-    // 2025.06.14: 如果一致，即不必类比抽象，因为内容一致时：抽象就是assT本身。
-    // 2025.10.02: 一致也抽象，只是absST就是assST自己而已，不然这里return的太早了，下面还可能判责后，再是需要抽象的，并且即使不抽象也要给absST赋值，不然会构建出无法可视化的无效protoGT。
-    //if (jvBuModel.bestGVs.count >= jvBuModel.assT.count) return nil;
-    
-    //1. 类比前可视化
-    //[jvBuModel run4BestGvsAtProtoTRect];
-    //NSArray *assContentIndexes_Log = [SMGUtils convertArr:jvBuModel.bestGVs convertBlock:^id(AIFeatureJvBuItem *obj) {
-    //    return @(obj.assIndex);
-    //}];
-    //CGRect bestGVs_AssT_Log = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes_Log];
-    //[SMGUtils runByMainQueue:^{
-    //    //jvBuModel.bestGVsAtProtoTRect
-    //    [theApp.imgTrainerView setDataForJvBuModelV2:jvBuModel lab:STRFORMAT(@"%ld类比前(GV%ld ass%ld)%p",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count,jvBuModel) left:jvBuModel.bestGVsAtProtoTRect.origin.x - bestGVs_AssT_Log.origin.x top:jvBuModel.bestGVsAtProtoTRect.origin.y - bestGVs_AssT_Log.origin.y];
-    //}];
-    
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
-    // 2025.06.13: 先关掉，其实局部特征识别时已经充分竞争了，此处不再另行剔除。
-    // 2025.08.06: 打开，单特征识别时充分竞争，不表示不类比中再抽象了，并且组特征现在也需要这里抽象一下，并且是在无protoT的情况下就要实现抽象（参考35062-TODO2）。
-    // 2025.12.29: 40个GV，几乎每个多多少少都有责任，把过滤加敏感一些，不然一个都过滤不掉（增强过滤强度）（但也不能太敏感，不然每次都有剔除，这会导致稳抽象的稳不下来，导致总是新absST，从而导致absST.ref不到GT，进而导致GT识别困难）。
     NSArray *models = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
         return [MapModel newWithV1:key v2:[jvBuModel.bestGVs objectForKey:key]];
     }];
     NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:models checkValid:^BOOL(MapModel *model) {
         AIFeatureJvBuItem *item = model.v2;
-        return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:jvBuModel.matchValue fanForce:1.5f];
+        return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:jvBuModel.matchValue fanForce:2.0f];
     }]];
-    
-    // 2025.11.04: 把noZeRenForPingJun改成竞争后保留80%进行增强类比激烈度测试。
-    //validBestGVs = [SMGUtils sortBig2Small:validBestGVs compareBlock:^double(MapModel *model) {
-    //    AIFeatureJvBuItem *item = model.v2;
-    //    return item.matchValue;
-    //}];
-    //validBestGVs = ARR_SUB(validBestGVs, 0, validBestGVs.count * 0.5f);
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
     NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(MapModel *obj) {
