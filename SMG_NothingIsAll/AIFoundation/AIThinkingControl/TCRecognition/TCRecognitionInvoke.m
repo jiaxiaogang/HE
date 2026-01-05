@@ -336,48 +336,26 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 2025.11.28: 改回用absST构建ProtoGT（参考35102-方案2）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
     
-    // 方案1、========== 用assST来构建ProtoGT ==========
-    //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-    //    // 数据准备。
-    //    CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-    //        return item.bestGVAtProtoTRect;
-    //    }];
-    //    CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-    //        return [model.assT rectByIndex:item.assIndex];
-    //    }];
-    //    CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
-    //        return item.CGRectValue;
-    //    }];
-    //
-    //    // ========== 用bestGVs在protoGT和在assST中的rect，推断出整个assST在protoGT中的rect ==========
-    //
-    //    // 方式1 =============> 统一放到protoT坐标系之：现计算。
-    //    // CGFloat wRate = bestGVs_ProtoT.size.width / bestGVs_AssST.size.width;
-    //    // CGFloat hRate = bestGVs_ProtoT.size.height / bestGVs_AssST.size.height;
-    //    // CGSize assST_Proto_Size = CGSizeMake(assSTRect.size.width * wRate, assSTRect.size.height * hRate);
-    //    // CGPoint bestGVs_AssST_Point_ByProto = CGPointMake(bestGVs_AssST.origin.x * wRate, bestGVs_AssST.origin.y * hRate);
-    //
-    //    // 方式2 =============> 增强易读性，封装计算。
-    //    // 统一放到protoT坐标系之：将放到protoT后的assSTRect的尺寸求出来。
-    //    CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
-    //
-    //    // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
-    //    CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCPointFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
-    //
-    //    // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
-    //    CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
-    //    NSLog(@"item在ProtoGT中范围(ST%ld)：BestGVs = %@ AssST = %@",model.assT.pId,Rect2Str(model.bestGVsAtProtoTRect),Rect2Str(assST_ProtoT));
-    //    return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
-    //}];
+    // 方案1、========== 用assST来构建ProtoGT（参考35136）==========
+    NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+        CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs.allKeys itemRectBlock:^CGRect(NSNumber *item) {
+            return [model.assT rectByIndex:item.integerValue];
+        }];
+        CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
+            return item.CGRectValue;
+        }];
+        CGRect assST_Proto = [SMGUtils convertBAtA:model.bestGVsAtProtoTRect atB:bestGVs_AssST B:assSTRect];
+        return [InputGroupFeatureModel new:model.assT.p rect:assST_Proto];
+    }];
     
     // 方案2、========== 用absST来构建ProtoGT ==========
-    NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-        if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
-        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return item.bestGVAtProtoTRect;
-        }];
-        return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
-    }];
+    //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+    //    if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
+    //    CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+    //        return item.bestGVAtProtoTRect;
+    //    }];
+    //    return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
+    //}];
     if (gtOrders.count == 0) return;
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
@@ -676,7 +654,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ %p:RECT:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,model,Rect2Str(model.bestGVsAtProtoTRect));
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ bestGVs_Proto:%@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.getSTMatchDesc,Rect2Str(model.bestGVsAtProtoTRect));
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -813,7 +791,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (AIKVPointer *curAssST_p in protoGT.content_ps) {
         NSArray *refPorts = [AINetUtils refPorts_All:curAssST_p];
         totalRefPortsNum += refPorts.count;
-        NSLog(@"组特征识别索引：ST%ld.refPorts + %ld = %ld",curAssST_p.pointerId,refPorts.count,totalRefPortsNum);
+        NSLog(@"组特征识别索引：ST%ld.refPorts + %ld = %ld %@",curAssST_p.pointerId,refPorts.count,totalRefPortsNum,CLEANSTR([SMGUtils convertArr:ARR_SUB(refPorts, 0, 20) convertBlock:^id(AIPort *obj) {
+            return STRFORMAT(@"GT%ld",obj.target_p.pointerId);
+        }]));
         
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
