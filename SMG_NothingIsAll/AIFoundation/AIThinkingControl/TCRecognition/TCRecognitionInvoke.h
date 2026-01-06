@@ -19,7 +19,7 @@
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >
 //MARK:===============================================================
-+(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p;
++(NSArray*) recognitionGroupFeatureV6:(NSArray*)stModels logDesc:(NSString*)logDesc;
 
 //MARK:===============================================================
 //MARK:                     < 概念识别 >

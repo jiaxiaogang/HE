@@ -187,4 +187,15 @@
     return itemGV_ProtoRect;
 }
 
+// 计算整个assST_ProtoRect
+-(void) run4AssST_ProtoRect {
+    CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:self.bestGVs.allKeys itemRectBlock:^CGRect(NSNumber *item) {
+        return [self.assT rectByIndex:item.integerValue];
+    }];
+    CGRect assSTRect = [SMGUtils convertArr2Rect:self.assT.rects itemRectBlock:^CGRect(NSValue *item) {
+        return item.CGRectValue;
+    }];
+    self.assST_ProtoRect = [SMGUtils convertBAtA:self.bestGVsAtProtoTRect atB:bestGVs_AssST B:assSTRect];
+}
+
 @end

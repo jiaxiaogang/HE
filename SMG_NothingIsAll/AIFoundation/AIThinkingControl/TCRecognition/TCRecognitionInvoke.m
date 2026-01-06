@@ -337,25 +337,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
     
     // 方案1、========== 用assST来构建ProtoGT（参考35136）==========
-    NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-        CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs.allKeys itemRectBlock:^CGRect(NSNumber *item) {
-            return [model.assT rectByIndex:item.integerValue];
-        }];
-        CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
-            return item.CGRectValue;
-        }];
-        CGRect assST_Proto = [SMGUtils convertBAtA:model.bestGVsAtProtoTRect atB:bestGVs_AssST B:assSTRect];
-        return [InputGroupFeatureModel new:model.assT.p rect:assST_Proto];
-    }];
+    //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+    //    return [InputGroupFeatureModel new:model.assT.p rect:model.assST_ProtoRect];
+    //}];
     
     // 方案2、========== 用absST来构建ProtoGT ==========
-    //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-    //    if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
-    //    CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-    //        return item.bestGVAtProtoTRect;
-    //    }];
-    //    return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
-    //}];
+    NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+        if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
+        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            return item.bestGVAtProtoTRect;
+        }];
+        return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
+    }];
     if (gtOrders.count == 0) return;
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
@@ -369,7 +362,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:protoGT.p];
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:jvBuModel.stModels logDesc:logDesc];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。
@@ -647,6 +640,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
     
+    // run4AssST_ProtoRect
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [model run4AssST_ProtoRect];
+    }
+    
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         
@@ -780,24 +778,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return resultModels;
 }
 
-+(NSArray*) recognitionGroupFeatureV6:(AIKVPointer*)protoFeature_p {
++(NSArray*) recognitionGroupFeatureV6:(NSArray*)stModels logDesc:(NSString*)logDesc {
     //1. 数据准备
-    AIFeatureNode *protoGT = [SMGUtils searchNode:protoFeature_p];
     GTModels *gtModels = [GTModels new]; // 初始化gtModels
     NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
     
     // 直接用assST取refPorts（参考35091-TODO2）。
     NSInteger totalRefPortsNum = 0;
-    for (AIKVPointer *curAssST_p in protoGT.content_ps) {
-        NSArray *refPorts = [AINetUtils refPorts_All:curAssST_p];
+    for (AIFeatureJvBuModel *stModel in stModels) {
+        NSArray *refPorts = [AINetUtils refPorts_All:stModel.assT.p];
         totalRefPortsNum += refPorts.count;
-        NSLog(@"组特征识别索引：ST%ld.refPorts + %ld = %ld %@",curAssST_p.pointerId,refPorts.count,totalRefPortsNum,CLEANSTR([SMGUtils convertArr:ARR_SUB(refPorts, 0, 20) convertBlock:^id(AIPort *obj) {
+        NSLog(@"组特征识别索引：ST%ld.refPorts + %ld = %ld %@",stModel.assT.pId,refPorts.count,totalRefPortsNum,CLEANSTR([SMGUtils convertArr:ARR_SUB(refPorts, 0, 20) convertBlock:^id(AIPort *obj) {
             return STRFORMAT(@"GT%ld",obj.target_p.pointerId);
         }]));
         
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
-            if ([refPort.target_p isEqual:protoFeature_p]) continue;
             
             // 以下assIndex要用rect来计算，用assT.p不行，因为有重复元素。
             AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
@@ -834,18 +830,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
                 // 正据：不同的refPort可能指向不同的切入点，那这里要进行多个竞争吗？应当是要的，这里表示的是assST识别结果可能重复，这里确实应该选最好的一条，与上面的refPort的多个切入点没有关系。
                 // 找bestGTItem：最终只收集最好的一条（不包含该元素，则完全不匹配）。
-                for (NSInteger curProtoIndex = 0; curProtoIndex < protoGT.count; curProtoIndex++) {
+                for (NSInteger curProtoIndex = 0; curProtoIndex < stModels.count; curProtoIndex++) {
                     
                     // 找出protoGT中的assST，并对比，找出best一条。
-                    AIKVPointer *findAssSTFromProto = ARR_INDEX(protoGT.content_ps, curProtoIndex);
+                    AIFeatureJvBuModel *findAssST = ARR_INDEX(stModels, curProtoIndex);
+                    AIKVPointer *findAssSTFromProto = findAssST.assT.p;
                     if (![findAssSTFromProto isEqual:curAssST_p]) continue;
                     
                     // 计算两个用于计算位置符合度的rect：curAssST_ProtoGT & curAssST_AssGT。
-                    CGRect curAssST_ProtoGT = [protoGT rectByIndex:curProtoIndex];
                     CGRect curAssST_AssGT = [assGT rectByIndex:curAssIndex];
                     
                     // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
-                    GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex curST_ProtoGT:curAssST_ProtoGT curST_AssGT:curAssST_AssGT];
+                    GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex curST_ProtoGT:findAssST.assST_ProtoRect curST_AssGT:curAssST_AssGT];
                     
                     // 保留最匹配的一条。
                     GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
@@ -913,12 +909,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTModel *model in resultModels) {
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         //[AINetUtils insertRefPorts_General:assFeature.p content_ps:assFeature.content_ps difStrong:1 header:assFeature.header];
+        
         // 目前不支持refPort存匹配度，先注掉。
         //[protoFeature updateMatchValue:assFeature matchValue:matchModel.modelMatchValue];
-        [protoGT updateMatchDegree:model.assGT matchDegree:model.modelMatchDegree];
+        
+        // 目前构建protoGT用absST，而识别GT用了assST，先注掉。
+        // [protoGT updateMatchDegree:model.assGT matchDegree:model.modelMatchDegree];
         
         // 从protoT更新logDesc到assGT。
-        [model.assGT updateLogDescDic:protoGT.logDesc rate:model.modelMatchDegree * model.modelMatchRatio];
+        [model.assGT updateLogDescItem:logDesc rate:model.modelMatchDegree * model.modelMatchRatio];
         
         //43. debug
         if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t符合度:%.2f \t防过具(健全度):%.2f(%ld/%ld) \t防过抽(匹配数):%.2f =\t综合得分:%.3f",
@@ -926,9 +925,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                                          model.modelMatchDegree,model.modelMatchRatio,model.items.count,model.assGT.count,model.modelCountRatio,
                                          model.modelMatchDegree * model.modelMatchRatio * model.modelCountRatio);
         
+        // 构建protoGT用absST，而识别GT用assST，先注掉。
+        // [AINetUtils relateGeneralAbs:model.assGT absConPorts:model.assGT.conPorts conNodes:@[protoGT] isNew:false difStrong:1];
+        
         //44. 综合求rect: 方案1-通过absT找出综合indexDic然后精确计算出rect，方案2-通过rectItems的每个rect来估算，方案3-这种整体对组特征没必要存rect，也没必要存抽具象关联。
-        //> 抉择：暂选定方案3，因为看了下代码，确实也用不着，像类比analogyFeature_ZenTi()算法，都是通过zenTiModel来的。
-        [AINetUtils relateGeneralAbs:model.assGT absConPorts:model.assGT.conPorts conNodes:@[protoGT] isNew:false difStrong:1];
         //[AINetUtils updateConPortRect:assFeature conT:protoFeature_p rect:matchModel.rectItems];
         
         //45. 组特征识别结果可视化（参考34176）。

@@ -79,5 +79,8 @@
 
 // 计算assIndex对应的ProtoRect中范围（用beginIndex来推算）（参考35126-TODO2）。
 -(CGRect) getItemGV_ProtoRect:(NSInteger)itemAssIndex;
+// 计算整个assST_ProtoRect
+@property (assign, nonatomic) CGRect assST_ProtoRect;
+-(void) run4AssST_ProtoRect;
 
 @end
