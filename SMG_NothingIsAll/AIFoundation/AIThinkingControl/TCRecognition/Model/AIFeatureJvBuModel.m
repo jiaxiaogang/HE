@@ -25,9 +25,7 @@
 
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio {
     //1. 匹配度。
-    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.matchValue;
-    }] / self.bestGVs.count;
+    [self run4MatchValue];
     
     //2. 符合度。
     self.matchDegree = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
@@ -60,6 +58,13 @@
     
     //7. 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
     [self run4BestGvsAtProtoTRect];
+}
+
+-(void) run4MatchValue {
+    //1. 匹配度。
+    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        return obj.matchValue;
+    }] / self.bestGVs.count;
 }
 
 -(void) run4BestGvsAtProtoTRect {
@@ -196,6 +201,24 @@
         return item.CGRectValue;
     }];
     self.assST_ProtoRect = [SMGUtils convertBAtA:self.bestGVsAtProtoTRect atB:bestGVs_AssST B:assSTRect];
+}
+
+// bestGVs根据匹配度末尾淘汰20%（参考35138-TODO1）。
+-(void) filter4MatchValue {
+    // 方案1：竞争末尾淘汰20%（参考35138-TODO1）。
+    //NSArray *sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+    //    AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+    //    return value.matchValue;
+    //}];
+    //NSArray *invalidKeys = ARR_SUB(sort, 0, sort.count * 0.2f);
+    
+    // 方案2：直接把matchValue<0.6的过滤掉（参考35138-TODO1）。
+    NSArray *invalidKeys = [SMGUtils filterArr:self.bestGVs.allKeys checkValid:^BOOL(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.matchValue < 0.6f;
+    }];
+    [self.bestGVs removeObjectsForKeys:invalidKeys];
+    
 }
 
 @end

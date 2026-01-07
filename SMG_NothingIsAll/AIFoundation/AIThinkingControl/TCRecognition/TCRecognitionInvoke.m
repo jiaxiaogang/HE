@@ -605,6 +605,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
+    // bestGVs根据匹配度末尾淘汰20%。
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [model filter4MatchValue];
+    }
     
     //43. 处理匹配度，符合度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {

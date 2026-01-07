@@ -371,12 +371,7 @@
 }
 
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc {
-    return [self analogyFeature_General:jvBuModel protoT:protoT protoTLogDesc:protoTLogDesc isGT:false];
-}
-
-+(AIFeatureNode*) analogyFeature_General:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc isGT:(BOOL)isGT {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
-    
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
     NSArray *models = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
         return [MapModel newWithV1:key v2:[jvBuModel.bestGVs objectForKey:key]];
@@ -421,7 +416,7 @@
     
     //31. 外类比构建
     NSArray *conNodes = protoT ? @[jvBuModel.assT,protoT] : @[jvBuModel.assT];
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:conNodes at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:isGT];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:conNodes at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
     
     // 如果abs的抽象层数少于当前proto或ass加1，则赋新抽象层数值（未达到abs本来就有的层级，则不变）。
     absT.absLevel = MAX(MAX(jvBuModel.assT.absLevel, protoT ? protoT.absLevel : 0) + 1, absT.absLevel);
