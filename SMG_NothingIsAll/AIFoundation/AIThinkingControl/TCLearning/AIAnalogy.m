@@ -444,15 +444,14 @@
     }
     
     //41. debugLog
-    [SMGUtils runByMainQueue:^{
-        // [theApp.imgTrainerView setDataForFeature:jvBuModel.assT lab:STRFORMAT(@"AssST%ld (%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count) left:0 top:0];
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"具%ld->抽%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:3];
-    }];
+    //[SMGUtils runByMainQueue:^{
+    //    [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"具%ld->抽%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:3];
+    //}];
     
-    // NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
-    //if (Log4Ana || true) NSLog(@"\n%@特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",isGT?@"组":@"单",jvBuModel.assT.ds,
-    //                           jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
-    //                           absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
+     NSLog(@"单特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
+    if (Log4Ana || true) NSLog(@"\n单特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,
+                               jvBuModel.assT.pId,jvBuModel.assT.count,CLEANSTR([jvBuModel.assT getLogDesc:false]),FeatureDesc(jvBuModel.assT.p,1),
+                               absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
 
     // 把后面会用到的一些数据存下来。
     jvBuModel.bestGVs4NoZeRen = [SMGUtils convertArr:validBestGVs convertBlock:^id(MapModel *obj) { return obj.v2; }];

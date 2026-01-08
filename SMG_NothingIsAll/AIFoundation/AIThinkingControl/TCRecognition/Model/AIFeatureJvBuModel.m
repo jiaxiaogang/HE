@@ -218,7 +218,6 @@
         return value.matchValue < 0.6f;
     }];
     [self.bestGVs removeObjectsForKeys:invalidKeys];
-    
 }
 
 @end
