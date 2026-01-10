@@ -10,12 +10,12 @@
 
 @implementation GTItem
 
-+(id) new:(NSInteger)protoIndex assIndex:(NSInteger)assIndex curST_ProtoGT:(CGRect)curST_ProtoGT curST_AssGT:(CGRect)curST_AssGT {
++(id) new:(NSInteger)assIndex curST_ProtoGT:(CGRect)curST_ProtoGT curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue {
     GTItem *result = [GTItem new];
-    result.protoIndex = protoIndex;
     result.assIndex = assIndex;
     result.curST_ProtoGT = curST_ProtoGT;
     result.curST_AssGT = curST_AssGT;
+    result.itemMatchValue = itemMatchValue;
     return result;
 }
 

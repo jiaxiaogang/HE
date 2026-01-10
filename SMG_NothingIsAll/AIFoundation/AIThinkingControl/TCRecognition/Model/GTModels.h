@@ -11,8 +11,13 @@
 @interface GTModels : NSObject
 
 @property (strong, nonatomic) NSMutableArray *models;
-
+@property (assign, nonatomic) CGFloat modelsMatchValue;
 @property (assign, nonatomic) CGFloat modelsMatchDegree;
+
+/**
+ *  MARK:--------------------主因子：匹配度--------------------
+ */
+-(void) run4ModelsMatchValue;
 
 /**
  *  MARK:--------------------主因子：符合度--------------------

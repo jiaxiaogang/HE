@@ -28,6 +28,12 @@
 -(void) run4WHXYModelMatchDegree;
 
 /**
+ *  MARK:--------------------主因子：匹配度度--------------------
+ */
+@property (assign, nonatomic) CGFloat modelMatchValue; // 2026.01.10: 加上匹配度因子（参考35139-方案1 & TODO3）。
+-(void) run4ModelMatchValue;
+
+/**
  *  MARK:--------------------主因子：符合度，重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
  */
 @property (assign, nonatomic) CGFloat modelMatchDegree;

@@ -726,12 +726,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //25. 计算：综合单特征竞争分。
     [zenTiModel run4STMatch];
     
-    //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
-    //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
-    //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
-    //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
-    //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
-    //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
+    // 竞争
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:zenTiModel.models compareBlock:^double(AIFeatureZenTiModel *obj) {
         return obj.modelMatchDegree * obj.matchRatio * obj.modelSTMatch;
     }], 0, zenTiModel.models.count * 0.5);
@@ -829,23 +824,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 // 计算curAssIndex 取curAssST。
                 NSInteger curAssIndex = (assIndex + i) % assGT.count;
-                AIKVPointer *curAssST_p = ARR_INDEX(assGT.content_ps, curAssIndex);
+                AIKVPointer *curGTItem_p = ARR_INDEX(assGT.content_ps, curAssIndex);
                 
                 // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
                 // 正据：不同的refPort可能指向不同的切入点，那这里要进行多个竞争吗？应当是要的，这里表示的是assST识别结果可能重复，这里确实应该选最好的一条，与上面的refPort的多个切入点没有关系。
                 // 找bestGTItem：最终只收集最好的一条（不包含该元素，则完全不匹配）。
-                for (NSInteger curProtoIndex = 0; curProtoIndex < stModels.count; curProtoIndex++) {
+                NSArray *validSTModels = [SMGUtils filterArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *stModel) {
+                    return [TOUtils mIsC_1:stModel.assT.p c:curGTItem_p]; // stModel抽象指向gtItem则都算可匹配（参考35139-方案1 & 子解答1）。
+                }];
+                for (AIFeatureJvBuModel *validSTModel in validSTModels) {
                     
-                    // 找出protoGT中的assST，并对比，找出best一条。
-                    AIFeatureJvBuModel *findAssST = ARR_INDEX(stModels, curProtoIndex);
-                    AIKVPointer *findAssSTFromProto = findAssST.assT.p;
-                    if (![findAssSTFromProto isEqual:curAssST_p]) continue;
-                    
-                    // 计算两个用于计算位置符合度的rect：curAssST_ProtoGT & curAssST_AssGT。
+                    // 计算两个用于计算位置符合度的rect：curGTItem_ProtoGT & curGTItem_AssGT。
                     CGRect curAssST_AssGT = [assGT rectByIndex:curAssIndex];
                     
                     // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
-                    GTItem *newGTItem = [GTItem new:curProtoIndex assIndex:curAssIndex curST_ProtoGT:findAssST.assST_ProtoRect curST_AssGT:curAssST_AssGT];
+                    CGFloat itemMatchValue = [validSTModel.assT getAbsMatchValue:curGTItem_p];
+                    GTItem *newGTItem = [GTItem new:curAssIndex curST_ProtoGT:validSTModel.assST_ProtoRect curST_AssGT:curAssST_AssGT itemMatchValue:itemMatchValue];
                     
                     // 保留最匹配的一条。
                     GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
@@ -879,8 +873,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
     }
     
-    //23. 计算：每个model的显著度。
-    //[gtModels run4StrongRatio];
+    // 计算匹配度。
+    [gtModels run4ModelsMatchValue];
     
     //24. 计算：健全度（即匹配率）。
     [gtModels run4ModelsMatchRatio];
@@ -892,16 +886,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //[gtModels run4STMatch];
     
     // 最后进行综合竞争，把最符合的找出来。
-    //32. 末尾淘汰过滤器：根据位置符合度末尾淘汰（参考34135-TODO4）。
-    //2025.04.26: 加上显著度：matchConStrongRatio（参考34175-方案3）。
-    //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
-    //2025.06.25: 去掉显著度：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
-    //2025.07.21: 单特征的竞争值，也作用于组特征，避免很不准的影响（为了尝试提升识别准确度，因为此时有把0识别到1的BUG）。
-    //2025.09.09: 组特征竞争要只计算了位置符合度，和匹配率（参考35072-TODO3-竞争因子）。
-    //2025.10.05: 加上obj.assGT.count，避免assGT的长度普遍太短问题。
-    //2025.11.14: 防过抽assGTCountRatio支持归一化（归一化处理，避免count权重优势影响）。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchRatio * obj.modelCountRatio;
+        return obj.modelMatchDegree * obj.modelMatchRatio * obj.modelCountRatio * obj.modelMatchValue;
     }], 0, MAX(5, gtModels.models.count * 0.5));
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。

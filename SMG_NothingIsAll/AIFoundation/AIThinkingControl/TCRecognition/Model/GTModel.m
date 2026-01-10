@@ -37,6 +37,15 @@
 }
 
 /**
+ *  MARK:--------------------主因子：匹配度度--------------------
+ */
+-(void) run4ModelMatchValue {
+    self.modelMatchValue = self.items.count == 0 ? 0 : [SMGUtils sumOfArr:self.items convertBlock:^double(GTItem *obj) {
+        return obj.itemMatchValue;
+    }] / self.items.count;
+}
+
+/**
  *  MARK:--------------------主因子：符合度，重新计算itemMatchDegree、modelMatchDegree值（执行前需保证whxyModel已计算）--------------------
  */
 -(void) run4ModelMatchDegree {
@@ -55,6 +64,7 @@
  *  MARK:--------------------辅因子：计算健全度（防过具：因为只有抽象的匹配数才会高）--------------------
  */
 -(void) run4ModelMatchRatio {
+    //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
     self.modelMatchRatio = self.assGT.count > 0 ? self.items.count / (float)self.assGT.count : 0;
 }
 

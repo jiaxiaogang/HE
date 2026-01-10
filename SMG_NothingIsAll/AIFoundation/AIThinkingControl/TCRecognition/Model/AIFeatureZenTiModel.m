@@ -205,7 +205,9 @@
 -(void) run4StrongRatio {
     AIFeatureNode *assT = [SMGUtils searchNode:self.assT];
     //24. 显著度公式（参考34175-公式3）。
+    //2025.04.26：计算显著度（参考34175-方案3）。
     //2025.05.13: contentPorts没有存强度，所以此处改为用assT.count做分母，实测下应该没问题（这应该会容易激活抽象组特征，后续看边测再边调整这些参数竞争公式）。
+    //2025.06.25: 废弃：因为识别时原则上还是都以准确为重（加上显著度，会使最近来的无法公平竞争）。
     NSInteger validStrong = [SMGUtils sumOfArr:self.rectItems convertBlock:^double(AIFeatureZenTiItem_Rect *obj) {
         return obj.itemToAssStrong;
     }];
