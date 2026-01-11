@@ -10,13 +10,17 @@
 
 @implementation GTItem
 
-+(id) new:(NSInteger)assIndex curST_ProtoGT:(CGRect)curST_ProtoGT curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue {
++(id) new:(NSInteger)assIndex stModel:(AIFeatureJvBuModel*)stModel curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue {
     GTItem *result = [GTItem new];
     result.assIndex = assIndex;
-    result.curST_ProtoGT = curST_ProtoGT;
+    result.stModel = stModel;
     result.curST_AssGT = curST_AssGT;
     result.itemMatchValue = itemMatchValue;
     return result;
+}
+
+-(CGRect) curST_ProtoGT {
+    return self.stModel.assST_ProtoRect;
 }
 
 // 根据conST分别在：assGT和protoGT的rect，计算切入点的wh比例。

@@ -839,7 +839,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     
                     // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
                     CGFloat itemMatchValue = [validSTModel.assT getAbsMatchValue:curGTItem_p];
-                    GTItem *newGTItem = [GTItem new:curAssIndex curST_ProtoGT:validSTModel.assST_ProtoRect curST_AssGT:curAssST_AssGT itemMatchValue:itemMatchValue];
+                    GTItem *newGTItem = [GTItem new:curAssIndex stModel:validSTModel curST_AssGT:curAssST_AssGT itemMatchValue:itemMatchValue];
                     
                     // 保留最匹配的一条。
                     GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
@@ -887,7 +887,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchRatio * obj.modelCountRatio * obj.modelMatchValue;
+        return obj.modelMatchDegree * obj.modelMatchValue * obj.modelMatchRatio * obj.modelCountRatio;
     }], 0, MAX(5, gtModels.models.count * 0.5));
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -910,10 +910,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assGT updateLogDescItem:logDesc rate:model.modelMatchDegree * model.modelMatchRatio];
         
         //43. debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t符合度:%.2f \t防过具(健全度):%.2f(%ld/%ld) \t防过抽(匹配数):%.2f =\t综合得分:%.3f",
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t符合度:%.2f \t匹配度:%.2f \t防过具(健全度):%.2f(%ld/%ld) \t防过抽(匹配数):%.2f =\t综合得分:%.3f",
                                          [resultModels indexOfObject:model],model.assGT.pId,
-                                         model.modelMatchDegree,model.modelMatchRatio,model.items.count,model.assGT.count,model.modelCountRatio,
-                                         model.modelMatchDegree * model.modelMatchRatio * model.modelCountRatio);
+                                         model.modelMatchDegree,model.modelMatchValue,model.modelMatchRatio,model.items.count,model.assGT.count,model.modelCountRatio,
+                                         model.modelMatchDegree * model.modelMatchValue * model.modelMatchRatio * model.modelCountRatio);
         
         // 构建protoGT用absST，而识别GT用assST，先注掉。
         // [AINetUtils relateGeneralAbs:model.assGT absConPorts:model.assGT.conPorts conNodes:@[protoGT] isNew:false difStrong:1];

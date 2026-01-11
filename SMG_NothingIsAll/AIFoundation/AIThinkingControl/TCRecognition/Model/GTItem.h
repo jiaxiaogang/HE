@@ -13,10 +13,11 @@
  */
 @interface GTItem : NSObject
 
-+(id) new:(NSInteger)assIndex curST_ProtoGT:(CGRect)curST_ProtoGT curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue;
++(id) new:(NSInteger)assIndex stModel:(AIFeatureJvBuModel*)stModel curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue;
 @property (assign, nonatomic) NSInteger assIndex;
-@property (assign, nonatomic) CGRect curST_ProtoGT;
+@property (strong, nonatomic) AIFeatureJvBuModel *stModel; // 对应的stModel
 @property (assign, nonatomic) CGRect curST_AssGT;
+-(CGRect) curST_ProtoGT;
 
 -(CGFloat) wRate;
 -(CGFloat) hRate;
