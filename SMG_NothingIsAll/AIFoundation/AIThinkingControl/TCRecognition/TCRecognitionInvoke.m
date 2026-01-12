@@ -400,19 +400,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *result = [NSMutableArray new];
     NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
     
-    //1. 过滤器：被成功识别过的区域，防重不再做为切入识别。
-    //2025.05.20：改为>0就行，所有区域都给机会，但所有区域都不能太占注意力，只分配一些之后，就触发防重，不然循环就太多性能差。
-    //if ([SMGUtils filterSingleFromArr:assRectExcept checkValid:^BOOL(NSValue *item) {
-    //    return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
-    //}]) return result;
-    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //2. 过滤器2：被切入点成功识别过的相近区域，防重不再做为切入识别。
-    //if ([SMGUtils filterSingleFromArr:beginRectExcept checkValid:^BOOL(NSValue *item) {
-    //    return [ThinkingUtils matchOfRect:item.CGRectValue newRect:protoRect] > 0.0f;
-    //}]) return result;
-    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
     //1. 单码排序。
     NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
         return [XGRedisUtil compareStrA:obj1 strB:obj2];
@@ -434,23 +421,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
-    //5. beginRectExcept防重 & 更新（参考35041-TODO4）。
-    //2025.05.21: 关掉，前面的beginRectExcept和assRectExcept已经把重复区的全过滤掉了，这里压根收集不到exceptGVs，并且防重exceptGVs反而会让那些原处边缘地带没什么竞争力的gvs有机会进行识别，这也不利于准确性。
-    //NSArray *exceptGVs = [ThinkingUtils getGVRectExceptGV_ps:protoRect gvRectExcept:gvRectExcept];
-    //gMatchModels = [SMGUtils filterArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
-    //    return ![exceptGVs containsObject:item.match_p];
-    //}];
-    //if (gMatchModels.count <= 0) return;
-    //[gvRectExcept setObject:[SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *obj) {
-    //    return obj.match_p;
-    //}] forKey:@(protoRect)];
-    //
-    //6. 把exceptGVs防重下。
-    //gMatchModels = [SMGUtils removeArr:gMatchModels checkValid:^BOOL(AIMatchModel *item) {
-    //    return [exceptGVs containsObject:item.match_p];
-    //}];
-    //AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
@@ -462,11 +432,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
         }
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); // 1.4s
-        NSValue *aleardayBeginGV = [SMGUtils filterSingleFromArr:gvIdProtoRects checkValid:^BOOL(NSValue *item) {
-            return [SMGUtils rate4IntersectionRect:item.CGRectValue bRect:protoRect] > 0.6f;
-        }];
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        if (aleardayBeginGV) continue;
         [gvIdProtoRects addObject:@(protoRect)];
         
         //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
@@ -504,31 +469,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
             CGRect lastProtoRect = protoRect;
             CGRect assSTRect = [SMGUtils convertArr2Rect:assT.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
-            
-            //13. 防重（同一个assT也可能有多个assIndex切入点，比如“8有四处下划线”的例子，可以让它多切入点分别自举）。
-            //2025.05.12: 防重程度说明如下：
-            //说明1：同一个assT有多处局部，protoRect也有多处可能调用它，它俩识别匹配时，必然是多对多的关系。
-            //说明2：而防重很难应对这种多对多的情况，最多是邻近防重，即相邻protoRect与相邻assRect只做一次有效匹配，总之这里切不可轻易过度防重。
-            //说明3：也可能这里的防重，是一个博弈平衡，过于放开性能就不佳，过于防重识别结果就片面。
-            //2025.05.21: 去掉，如果一张图里有多个3呢，不能暴力的全过滤掉。
-            //if ([excepts objectV2ForKey1:refPort.target_p k2:@(beginAssIndex)]) continue;
-            
-            // 防重：对相近区域的protoRect的同一个assST的同gvIndex进行防重（参考35104-方案1）（注：下面的bestGV只保留一条，防重更彻底，这里应该已经没必要了，测试确定下，这里可删掉）。
-            AIFeatureJvBuModel *aleardayHavSameJvBuModel = [SMGUtils filterSingleFromArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *oldSTModel) {
-                // 切入assST是同一个，才需防重。
-                if (oldSTModel.assT.pId != assT.pId) return false;
-                
-                // 切入assIndex的gv是同一个，才需防重。
-                for (NSNumber *assIndex in oldSTModel.bestGVs.allKeys) {
-                    if (assIndex.integerValue == beginAssIndex) {
-                        AIFeatureJvBuItem *oldGVItem = [oldSTModel.bestGVs objectForKey:assIndex];
-                        // 切入的protoRect有80%以上的匹配度（交集面积 在 二者面积中 都占80%以上），则需防重。
-                        if ([SMGUtils rate4IntersectionRect:oldGVItem.bestGVAtProtoTRect bRect:protoRect] > 0.5f) return true;
-                    }
-                }
-                return false;
-            }];
-            if (aleardayHavSameJvBuModel) continue;
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             
             // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
@@ -783,13 +723,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
     
     // 直接用assST取refPorts（参考35091-TODO2）。
-    NSInteger totalRefPortsNum = 0;
     for (AIFeatureJvBuModel *stModel in stModels) {
         NSArray *refPorts = [AINetUtils refPorts_All:stModel.assT.p];
-        totalRefPortsNum += refPorts.count;
-        NSLog(@"组特征识别索引：ST%ld.refPorts + %ld = %ld %@",stModel.assT.pId,refPorts.count,totalRefPortsNum,CLEANSTR([SMGUtils convertArr:ARR_SUB(refPorts, 0, 20) convertBlock:^id(AIPort *obj) {
-            return STRFORMAT(@"GT%ld",obj.target_p.pointerId);
-        }]));
         
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
