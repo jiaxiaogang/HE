@@ -138,6 +138,9 @@
         return whValid && CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
     }];
     
+    // TODOTOMORROW20260114: 查下此处明明只有2条gv，但防抽0.71分太高了，导致过抽象。
+    // 0. 单特征识别结果:T213     (2/4)     匹配度:1.00     防抽:0.71     防具:0.25 =     区域竞争力:1.00     (143/13=11) bestGVs_Proto:<x0 y0 w27 h27>
+    
     // 给区域内的stModels排名 & 并计分 & 计次（排名越大越好）。
     // 方案1、区域综合竞争后，打分时，对防抽防具最后30%名进行降权（参考36096-TODO3.3）。
     zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
