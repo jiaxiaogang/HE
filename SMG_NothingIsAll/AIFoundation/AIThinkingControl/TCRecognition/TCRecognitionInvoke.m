@@ -306,16 +306,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
-    // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
-    // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
-    // 2025.08.07: 废弃构建protoT，因为类比用不着，何必拼凑这个很多gvs元素的isGT出来呢（参考35062-TODO3）。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //[TCRecognitionInvoke recognitionGroupFeatureV4_Step2:jvBuModel];
-    //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
@@ -330,10 +323,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return obj.getSTMatch;
     }];
     
-    // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
-    // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
-    // 2025.11.07: 用assST构建protoGT（参考35091-TODO1）。
-    // 2025.11.28: 改回用absST构建ProtoGT（参考35102-方案2）。
+    // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
     
     // 方案1、========== 用assST来构建ProtoGT（参考35136）==========
@@ -448,11 +438,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
         AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
         for (AIPort *refPort in validRefPorts) {
-            //2025.06.11: 过滤掉GT，局部特征不识别整体结果。
-            //2025.07.26: bugfix-单特征识别到GT结果，会导致匹配率超低，经查此处交层的GT还是会识别到（但交层可能还是太整体了assT.count>100了都），去掉。
-            //2025.08.08: 现在固定粒度构建isGT=true了，只有单特征类比结果才为false，那这里冷启也需要，也就得识别所有结果了（先识别isGT，才能类比出抽象单特征，所以不能只识别单特征，不然死循环了）。
-            //if (refPort.target_p.isGT) continue;
-            
             // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
             CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
             if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
@@ -518,11 +503,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
             }
             AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-            
-            //44. 单特征最少gv数：如果收集bestGVs太少，则直接判定失败（太少gv达不到单特征最低标准）。
-            //51. 全通过了，才收集它（因为同一个assT可能因入protoRect位置不同，导致有时能识别成功有时不能，因为gv是可以重复的，只是位置不同罢了，比如：8有四处下划线，除了第1处下滑切入可以自举全匹配到，别的都不行）。
-            // 2025.12.15：改为无论如何都先收集，后面还要合并防重呢，哪怕一次只匹配一个gv，也许慢慢合并就又ok了。
-            // if (model.bestGVs.count <= 4) continue;
             
             //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
             [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
