@@ -82,31 +82,19 @@
     }
 }
 
-//2025.08.14: 因为竞争浮现不明显，去掉色似度后ok了，如果以后因为去掉色似度导致bug，可以改回来，然后把匹配率改成2次方来强调它的作用试下（参考35064）。
+// 2025.08.14: 支持防过抽、防过具（防抽具二者互相制衡，动态平衡竞争）、分区竞争、归一化，即：分区匹配度 * 防过具象 * 防过抽象（参考35064 & 35082-方案3 & 方案4）。
 -(CGFloat) getSTMatch {
-    // 说明：防止过度抽象或过度具象：显著度matchAssRatio可以防止过度具象，匹配数bestGVs.count可以防止过度抽象（二者互相制衡，动态平衡竞争）。
-    // xxxx.xx.xx: 防止过度具象：加上matchAssRatio (bestGVs.count/assST.count)，如果过度具象bestGVs肯定不达标，这样就能让它没竞争力（缺点是越抽象越显著，它可能过度抽象）。
-    // 2025.10.20: 防止过度抽象：加上bestGVs.count，因为这样就可以防止过度抽象，因为过度抽象的bestGVs.count会越来越接近1条（缺点是越具象匹配数越大，它可能过度具象）。
-    // 2025.10.28: 加上分区竞争后，bestGVs.count太重了，会导致识别的st全是过度具象的，进而导致GT识别时取交对撞不到结果（参考35082-方案3）。
-    // 2025.10.29: 改为归一化之后的：分区匹配度 * 防过具象 * 防过抽象（参考35082-方案4）。
-    // 2025.10.31: 稳定结果中，越抽象的越好：加上absLevelRatio。
-    // return self.areaRankRatio * self.matchAssRatio * self.bestGVsCountRatio * self.conPortStrongRatio;// * self.bestGVs.count;// * self.matchDiffValue;
-    // return self.areaRankRatio * (1-self.absLevelRatio) * self.conPortStrongRatio;// * self.bestGVs.count;// * self.matchDiffValue;
     return self.areaRankRatio;// * self.bestGVs.count;// * self.matchDiffValue;
 }
 
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
 -(CGFloat) getGTMatch {
     return self.matchValue * self.matchAssRatio * self.matchAssRatio;// * self.matchDiffValue;
-    //return self.matchValue;
 }
 
 -(NSString*) getSTMatchDesc {
-    // return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
-    // return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f\t稳中取抽象:%.1f = 综合:%.2f",self.areaRankRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.conPortStrongRatio,self.areaRankRatio*self.matchAssRatio*self.bestGVsCountRatio*self.conPortStrongRatio);
-    // return STRFORMAT(@"\t匹配数:(%ld/%ld) 区度:%.1f x 防抽:%.1f x 防具:%.1f = 综合:%.2f",self.bestGVs.count,self.assT.count,self.areaRankRatio,(1-self.absLevelRatio),self.conPortStrongRatio,self.areaRankRatio*self.conPortStrongRatio*self.absLevelRatio);
-    return STRFORMAT(@"匹配度:%.2f \t防抽:%.2f \t防具:%.2f = \t区域竞争力:%.2f \t(%.0f/%ld=%.0f)",
-                     self.matchValue,self.absLevelRatio,self.conPortStrongRatio,self.areaRankRatio,
+    return STRFORMAT(@"匹配度:%.2f \t防抽(抽象等级%ld):%.2f \t防具:%.2f = \t区域竞争力:%.2f \t(%.0f/%ld=%.0f)",
+                     self.matchValue,self.assT.absLevel,self.absLevelRatio,self.conPortStrongRatio,self.areaRankRatio,
                      self.areaRankSum,self.areaRankNum,self.areaRankScore);
 }
 
@@ -138,8 +126,12 @@
         return whValid && CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
     }];
     
-    // TODOTOMORROW20260114: 查下此处明明只有2条gv，但防抽0.71分太高了，导致过抽象。
+    // TODOTOMORROW20260114:
+    // 待查1、查下此处明明只有2条gv，但防抽0.71分太高了，导致过抽象。
     // 0. 单特征识别结果:T213     (2/4)     匹配度:1.00     防抽:0.71     防具:0.25 =     区域竞争力:1.00     (143/13=11) bestGVs_Proto:<x0 y0 w27 h27>
+    // 经查、现在防过抽是根据抽象等级来计算的，而有时从40条抽象到2条需要7次，有时只需要2次，assST的长度与absLevel并不线性正相关，因为ST匹配数决定了absST的长度，所以受此干扰很严重。
+    // 所以、absLevel不适合做为计算“防过抽”的因素唯一，assST长度更直观可考虑替代之。
+    
     // 待查：查下那么多ST经历，为什么还能识别这么不准确，是不是广入有问题？
     // 待查：为什么ST结果全几乎是全屏显示，难道每个0,0,27,27都匹配度很高，实在淘汰不了它？
     

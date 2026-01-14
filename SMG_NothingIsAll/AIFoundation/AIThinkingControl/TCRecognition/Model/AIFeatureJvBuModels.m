@@ -63,6 +63,7 @@
     NSInteger maxLevel = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
         return item.assT.absLevel;
     }];
+    NSLog(@"最高抽象级：%ld",maxLevel);
     
     // 归一化每一条：越抽象的越好，越具象的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
