@@ -93,8 +93,8 @@
 }
 
 -(NSString*) getSTMatchDesc {
-    return STRFORMAT(@"匹配度:%.2f \t防抽(抽象等级%ld):%.2f \t防具:%.2f = \t区域竞争力:%.2f \t(%.0f/%ld=%.0f)",
-                     self.matchValue,self.assT.absLevel,self.absLevelRatio,self.conPortStrongRatio,self.areaRankRatio,
+    return STRFORMAT(@"匹配度:%.2f \t防抽:%.2f \t防具:%.2f = \t区域竞争力:%.2f \t(%.0f/%ld=%.0f)",
+                     self.matchValue,self.absLevelRatio,self.conPortStrongRatio,self.areaRankRatio,
                      self.areaRankSum,self.areaRankNum,self.areaRankScore);
 }
 
@@ -127,11 +127,6 @@
     }];
     
     // TODOTOMORROW20260114:
-    // 待查1、查下此处明明只有2条gv，但防抽0.71分太高了，导致过抽象。
-    // 0. 单特征识别结果:T213     (2/4)     匹配度:1.00     防抽:0.71     防具:0.25 =     区域竞争力:1.00     (143/13=11) bestGVs_Proto:<x0 y0 w27 h27>
-    // 经查、现在防过抽是根据抽象等级来计算的，而有时从40条抽象到2条需要7次，有时只需要2次，assST的长度与absLevel并不线性正相关，因为ST匹配数决定了absST的长度，所以受此干扰很严重。
-    // 所以、absLevel不适合做为计算“防过抽”的因素唯一，assST长度更直观可考虑替代之。
-    
     // 待查：查下那么多ST经历，为什么还能识别这么不准确，是不是广入有问题？
     // 待查：为什么ST结果全几乎是全屏显示，难道每个0,0,27,27都匹配度很高，实在淘汰不了它？
     

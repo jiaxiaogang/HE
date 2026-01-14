@@ -57,17 +57,17 @@
     }
 }
 
-// item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
+// 用匹配数计算归一化防过抽竞争力（参考35141-方案1）。
 -(void) run4AbsLevelRatio {
     // 找出最高抽象级。
-    NSInteger maxLevel = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
-        return item.assT.absLevel;
+    NSInteger max = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return item.bestGVs.count;
     }];
-    NSLog(@"最高抽象级：%ld",maxLevel);
+    NSLog(@"最高抽象级：%ld",max);
     
     // 归一化每一条：越抽象的越好，越具象的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
-        item.absLevelRatio = 1 - (float)item.assT.absLevel / maxLevel;
+        item.absLevelRatio = (float)item.bestGVs.count / max;
     }
 }
 
