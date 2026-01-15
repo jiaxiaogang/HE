@@ -71,7 +71,7 @@
 
 // item.assT.conPorts.sum(strong) 计算总强度，和归一化后的强度竞争力。
 @property (assign, nonatomic) NSInteger sumConPortStrong;
-@property (assign, nonatomic) CGFloat conPortStrongRatio;
+@property (assign, nonatomic) CGFloat modelMatchRatio;
 
 -(AIFeatureJvBuItem*) getBestGVByAssIndex:(NSInteger)assIndex;
 // bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过（参考35105-TODO6.2 & TODO6.4）。

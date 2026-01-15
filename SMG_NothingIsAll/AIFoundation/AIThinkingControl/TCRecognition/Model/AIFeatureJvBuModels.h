@@ -37,7 +37,7 @@
 // 用assT.count计算归一化防过抽竞争力（参考35141-方案1）。
 -(void) run4AbsLevelRatio;
 
-// item.assT.conPort.strong强度，归一化计算竞争力（用于在稳定层里优先抽象层）。
--(void) run4ConPortStrongRatio;
+// 匹配率（健全度），归一化防过具竞争力（参考35141-方案3）。
+-(void) run4ModelMatchRatio;
 
 @end

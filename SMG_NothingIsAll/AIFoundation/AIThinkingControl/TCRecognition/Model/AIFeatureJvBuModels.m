@@ -70,27 +70,18 @@
     }
 }
 
-// item.assT.conPort.strong强度，归一化计算竞争力（用于在稳定层里优先抽象层）。
--(void) run4ConPortStrongRatio {
-    // 计算每个assST的总强度值。
-    for (AIFeatureJvBuModel *item in self.stModels) {
-        NSArray *conPorts = [AINetUtils conPorts_All:item.assT];
-        item.sumConPortStrong = [SMGUtils sumOfArr:conPorts convertBlock:^double(AIPort *obj) {
-            return obj.strong.value;
-        }];
-    }
-    
+// 匹配率（健全度），归一化防过具竞争力（参考35141-方案3）。
+-(void) run4ModelMatchRatio {
     // 找出最高抽象级。
-    NSInteger maxStrong = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
-        return item.sumConPortStrong;
+    NSInteger max = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return (float)item.bestGVs.count / item.assT.count;
     }];
-    NSLog(@"最高具象强度：%ld 最多具象数：%.0f",maxStrong,[SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
-        return [AINetUtils conPorts_All:item.assT].count;
-    }]);
+    NSLog(@"最高匹配率：%ld",max);
     
     // 归一化每一条：强度越大越好，越小越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
-        item.conPortStrongRatio = (float)item.sumConPortStrong / maxStrong;
+        float itemMatchRatio = (float)item.bestGVs.count / item.assT.count;
+        item.modelMatchRatio = (float)itemMatchRatio / max;
     }
 }
 
