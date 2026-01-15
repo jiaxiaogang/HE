@@ -34,10 +34,10 @@
 // item.bestGVs.count防止过度抽象，归一化计算。
 -(void) run4BestGVsCountRatio;
 
-// 用assT.count计算归一化防过抽竞争力（参考35141-方案1）。
--(void) run4AbsLevelRatio;
+// 匹配数，归一化防过抽（参考35141-方案1）。
+-(void) run4ModelMatchCountScore;
 
 // 匹配率（健全度），归一化防过具竞争力（参考35141-方案3）。
--(void) run4ModelMatchRatio;
+-(void) run4ModelMatchRatioScore;
 
 @end

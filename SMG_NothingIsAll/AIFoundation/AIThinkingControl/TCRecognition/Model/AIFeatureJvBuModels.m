@@ -57,8 +57,8 @@
     }
 }
 
-// 用匹配数计算归一化防过抽竞争力（参考35141-方案1）。
--(void) run4AbsLevelRatio {
+// 匹配数，归一化防过抽（参考35141-方案1）。
+-(void) run4ModelMatchCountScore {
     // 找出最高抽象级。
     NSInteger max = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
         return item.bestGVs.count;
@@ -66,12 +66,12 @@
     
     // 归一化每一条：越抽象的越好，越具象的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
-        item.absLevelRatio = (float)item.bestGVs.count / max;
+        item.modelMatchCountScore = (float)item.bestGVs.count / max;
     }
 }
 
 // 匹配率（健全度），归一化防过具竞争力（参考35141-方案3）。
--(void) run4ModelMatchRatio {
+-(void) run4ModelMatchRatioScore {
     // 找出最高抽象级。
     NSInteger max = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
         return (float)item.bestGVs.count / item.assT.count;
@@ -81,7 +81,7 @@
     // 归一化每一条：强度越大越好，越小越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
         float itemMatchRatio = (float)item.bestGVs.count / item.assT.count;
-        item.modelMatchRatio = (float)itemMatchRatio / max;
+        item.modelMatchRatioScore = (float)itemMatchRatio / max;
     }
 }
 

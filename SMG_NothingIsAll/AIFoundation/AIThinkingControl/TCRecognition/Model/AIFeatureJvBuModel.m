@@ -94,7 +94,7 @@
 
 -(NSString*) getSTMatchDesc {
     return STRFORMAT(@"匹配度:%.2f \t匹配数防抽:%.2f \t匹配率防具:%.2f = \t区域竞争力:%.2f \t(%.0f/%ld=%.0f)",
-                     self.matchValue,self.absLevelRatio,self.modelMatchRatio,self.areaRankRatio,
+                     self.matchValue,self.modelMatchCountScore,self.modelMatchRatioScore,self.areaRankRatio,
                      self.areaRankSum,self.areaRankNum,self.areaRankScore);
 }
 
@@ -133,13 +133,13 @@
     // 给区域内的stModels排名 & 并计分 & 计次（排名越大越好）。
     // 方案1、区域综合竞争后，打分时，对防抽防具最后30%名进行降权（参考36096-TODO3.3）。
     zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * self.absLevelRatio * self.modelMatchRatio;
+        return obj.matchValue * self.modelMatchCountScore * self.modelMatchRatioScore;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
         
         // 对于防抽防具值<0.3的，进行权重打压（避免从平均学渣中选出劣币）。
-        CGFloat daYaValue = MIN(obj.absLevelRatio, obj.modelMatchRatio);
+        CGFloat daYaValue = MIN(obj.modelMatchCountScore, obj.modelMatchRatioScore);
         CGFloat daYaWeight = daYaValue < 0.3f ? daYaValue / 0.3f : 1;
         
         obj.areaRankSum += (i * daYaWeight); // 累计名次（参考35076-TODO2.2）;
@@ -154,7 +154,7 @@
     //    AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
     //
     //    // 对于防抽防具进行权重打压（避免从平均学渣中选出劣币）。
-    //    obj.areaRankSum += i * obj.absLevelRatio * obj.modelMatchRatio; // 累计名次（参考35076-TODO2.2）;
+    //    obj.areaRankSum += i * obj.modelMatchCountScore * obj.modelMatchRatio; // 累计名次（参考35076-TODO2.2）;
     //    obj.areaRankNum += 1;
     //}
 }

@@ -539,8 +539,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [decoratorJvBuModel run4BestGVsCountRatio];
     
     // 竞争因子计算：在稳定层里，抽象优先。
-    [decoratorJvBuModel run4AbsLevelRatio];
-    [decoratorJvBuModel run4ModelMatchRatio];
+    [decoratorJvBuModel run4ModelMatchCountScore];
+    [decoratorJvBuModel run4ModelMatchRatioScore];
     
     // 竞争因子计算：分区竞争匹配度。
     [decoratorJvBuModel run4AreaRankRatioV2];
