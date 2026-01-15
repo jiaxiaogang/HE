@@ -63,7 +63,6 @@
     NSInteger max = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
         return item.bestGVs.count;
     }];
-    NSLog(@"最高抽象级：%ld",max);
     
     // 归一化每一条：越抽象的越好，越具象的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
@@ -85,6 +84,9 @@
     NSInteger maxStrong = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
         return item.sumConPortStrong;
     }];
+    NSLog(@"最高具象强度：%ld 最多具象数：%.0f",maxStrong,[SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return [AINetUtils conPorts_All:item.assT].count;
+    }]);
     
     // 归一化每一条：强度越大越好，越小越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
