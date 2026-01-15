@@ -126,10 +126,6 @@
         return whValid && CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
     }];
     
-    // TODOTOMORROW20260114:
-    // 待查：查下那么多ST经历，为什么还能识别这么不准确，是不是广入有问题？
-    // 待查：为什么ST结果全几乎是全屏显示，难道每个0,0,27,27都匹配度很高，实在淘汰不了它？
-    
     // 给区域内的stModels排名 & 并计分 & 计次（排名越大越好）。
     // 方案1、区域综合竞争后，打分时，对防抽防具最后30%名进行降权（参考36096-TODO3.3）。
     zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
