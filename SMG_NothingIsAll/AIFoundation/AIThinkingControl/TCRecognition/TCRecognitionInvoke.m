@@ -598,9 +598,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     GTModels *gtModels = [GTModels new]; // 初始化gtModels
     NSMutableDictionary *exceptGTs = [NSMutableDictionary new];
     
+    // 取每个stModel的有效absPorts。
+    for (AIFeatureJvBuModel *stModel in stModels) {
+        [stModel run4ValidAbsPorts];
+    }
+    
     // 直接用assST取refPorts（参考35091-TODO2）。
     for (AIFeatureJvBuModel *stModel in stModels) {
-        NSArray *refPorts = [AINetUtils refPorts_All:stModel.assT.p];
+        
+        // 每个有效absST都进行refGT（参考35151-TODO3.1）。
+        NSArray *refPorts = [SMGUtils convertArr:stModel.validAbsPorts convertItemArrBlock:^NSArray *(AIPort *obj) {
+            return [AINetUtils refPorts_All:obj.target_p];
+        }];
         
         // 将每个refPort先收集到zenTiModel。
         for (AIPort *refPort in refPorts) {
@@ -641,6 +650,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 计算两个用于计算位置符合度的rect：curGTItem_ProtoGT & curGTItem_AssGT。
                 CGRect curAssST_AssGT = [assGT rectByIndex:curAssIndex];
                 
+                // TODOTOMORROW20260117: 继续写这儿，下面不是用mIsC，而是用validAbsPorts.contains来判断。
+                
                 // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
                 // 正据：不同的refPort可能指向不同的切入点，那这里要进行多个竞争吗？应当是要的，这里表示的是assST识别结果可能重复，这里确实应该选最好的一条，与上面的refPort的多个切入点没有关系。
                 // 找bestGTItem：最终只收集最好的一条（不包含该元素，则完全不匹配）。
@@ -657,9 +668,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
                         return item.assIndex == curAssIndex;
                     }];
-                    
-                    // TODOTOMORROW20260117: 继续查证下GT识别不准确的原因。
-                    
                     
                     // 首条直接收集。
                     if (!oldGTItem) {

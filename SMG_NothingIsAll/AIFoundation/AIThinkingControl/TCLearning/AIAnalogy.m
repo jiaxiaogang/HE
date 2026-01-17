@@ -391,8 +391,13 @@
     }];
     CGRect bestGVs_AssT = [AINetUtils convertPartOfFeatureContent2Rect:jvBuModel.assT contentIndexes:assContentIndexes];
     
+    // 收集indexDic。
+    NSMutableDictionary *indexDic0 = [NSMutableDictionary new]; // 需要先收集每个abs的元素对应的con的下标。
+    NSMutableDictionary *indexDic = [NSMutableDictionary new]; // 然后再把这个转成absIndex对应conIndex的字典。
+    
     //15. 转为List<InputGroupValueModel>模型。
-    NSMutableArray *absGVModels = [SMGUtils convertArr:sortValidItems convertBlock:^id(MapModel *obj) {
+    NSMutableArray *absGVModels = [NSMutableArray new];
+    for (MapModel *obj in sortValidItems) {
         NSNumber *assIndex = obj.v1;
         AIKVPointer *assGV_p = ARR_INDEX(jvBuModel.assT.content_ps, assIndex.integerValue);
         
@@ -404,8 +409,12 @@
         //CGRect bestGV_protoT = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
         //NSLog(@"bestGV的Rect：atAss=%@ atProto=%@",Rect2Str(bestGV_assT),Rect2Str(bestGV_protoT));
         
-        return [InputGroupValueModel new:assGV_p rect:bestGV_assT];
-    }];
+        InputGroupValueModel *newGVModel = [InputGroupValueModel new:assGV_p rect:bestGV_assT];
+        [absGVModels addObject:newGVModel];
+        
+        // indexDic第1步：先收集每个abs元素对应的conIndex。
+        [indexDic0 setObject:newGVModel forKey:assIndex];
+    }
     if (jvBuModel.matchValue == 1 && absGVModels.count == 0) {
         ELog(@"如果匹配度为1，会导致所有indexDic的GV全有责，导致最后absGVModels为0条，如果停此处时，查下来源，这个匹配度1是哪来的");
     }
@@ -413,6 +422,13 @@
     
     //21. 为增加特征content_ps的有序性：对groupModels进行排序（特征的content是有序的，所以要先排下序）。
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:absGVModels];
+    
+    // indexDic第2步：再转成每个absIndex对应conIndex的正式映射。
+    for (NSInteger absIndex = 0; absIndex < sortGroupModels.count; absIndex++) {
+        InputGroupValueModel *itemGVModel = ARR_INDEX(sortGroupModels, absIndex);
+        NSNumber *assIndex = ARR_INDEX([indexDic0 allKeysForObject:itemGVModel], 0);
+        [indexDic setObject:assIndex forKey:@(absIndex)];
+    }
     
     //31. 外类比构建
     NSArray *conNodes = protoT ? @[jvBuModel.assT,protoT] : @[jvBuModel.assT];
@@ -441,6 +457,7 @@
         [jvBuModel.assT updateMatchValue:absT matchValue:jvBuModel.matchValue];
         [AINetUtils updateConPortRect:absT conT:jvBuModel.assT.p rect:bestGVs_AssT];
         [jvBuModel.assT updateMatchDegree:absT matchDegree:1];
+        [jvBuModel.assT updateIndexDic:absT indexDic:indexDic];
     }
     
     //41. debugLog
