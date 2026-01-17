@@ -444,9 +444,9 @@
     }
     
     //41. debugLog
-    //[SMGUtils runByMainQueue:^{
-    //    [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"具%ld->抽%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:3];
-    //}];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"具%ld->抽%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:2];
+    }];
     
      NSLog(@"单特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
     if (Log4Ana || true) NSLog(@"\n单特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",jvBuModel.assT.ds,

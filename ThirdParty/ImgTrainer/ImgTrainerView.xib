@@ -16,6 +16,8 @@
                 <outlet property="previewTableView2" destination="DpS-MA-zVy" id="1Tv-f8-rY2"/>
                 <outlet property="previewTableView3" destination="o0M-Vl-tm1" id="CYU-cJ-eOq"/>
                 <outlet property="previewTableView4" destination="Ygs-G0-Ykc" id="mub-Qk-DCH"/>
+                <outlet property="previewTableView5" destination="PzY-E3-SXz" id="jLJ-kC-aUq"/>
+                <outlet property="previewTableView6" destination="JN6-DC-RHl" id="pfD-8c-GPM"/>
                 <outlet property="tv" destination="J0T-BF-EyM" id="jfC-e8-Qi4"/>
             </connections>
         </placeholder>
@@ -34,7 +36,7 @@
                     <rect key="frame" x="0.0" y="26" width="1228" height="327"/>
                     <subviews>
                         <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="J0T-BF-EyM">
-                            <rect key="frame" x="400" y="0.0" width="828" height="327"/>
+                            <rect key="frame" x="600" y="0.0" width="628" height="327"/>
                             <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         </tableView>
                         <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" contentViewInsetsToSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="DpS-MA-zVy">
@@ -58,6 +60,20 @@
                                 <constraint firstAttribute="width" constant="100" id="2mY-7c-1bf"/>
                             </constraints>
                         </tableView>
+                        <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" contentViewInsetsToSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="PzY-E3-SXz">
+                            <rect key="frame" x="400" y="0.0" width="100" height="327"/>
+                            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="100" id="TVh-Kf-zBk"/>
+                            </constraints>
+                        </tableView>
+                        <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" contentViewInsetsToSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JN6-DC-RHl">
+                            <rect key="frame" x="500" y="0.0" width="100" height="327"/>
+                            <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="100" id="5oA-za-UU4"/>
+                            </constraints>
+                        </tableView>
                         <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="0kP-oB-7eL">
                             <rect key="frame" x="1048" y="20" width="150" height="150"/>
                             <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.5" colorSpace="custom" customColorSpace="calibratedRGB"/>
@@ -78,22 +94,28 @@
                     <constraints>
                         <constraint firstAttribute="bottom" secondItem="moJ-Qi-VT8" secondAttribute="bottom" id="0td-AP-eHB"/>
                         <constraint firstItem="Ygs-G0-Ykc" firstAttribute="leading" secondItem="o0M-Vl-tm1" secondAttribute="trailing" id="4DJ-Id-RzX"/>
+                        <constraint firstItem="J0T-BF-EyM" firstAttribute="leading" secondItem="JN6-DC-RHl" secondAttribute="trailing" id="4eG-BJ-DgW"/>
                         <constraint firstAttribute="trailing" secondItem="J0T-BF-EyM" secondAttribute="trailing" id="4oS-MH-JMh"/>
                         <constraint firstAttribute="bottom" secondItem="DpS-MA-zVy" secondAttribute="bottom" id="Ddl-sM-98e"/>
                         <constraint firstItem="moJ-Qi-VT8" firstAttribute="leading" secondItem="mWz-Zx-VC5" secondAttribute="leading" id="Ezq-Q1-uXn"/>
                         <constraint firstItem="o0M-Vl-tm1" firstAttribute="leading" secondItem="DpS-MA-zVy" secondAttribute="trailing" id="G3g-tP-m1n"/>
+                        <constraint firstAttribute="bottom" secondItem="JN6-DC-RHl" secondAttribute="bottom" id="H9L-mX-hRu"/>
                         <constraint firstAttribute="trailing" secondItem="0kP-oB-7eL" secondAttribute="trailing" constant="30" id="NX7-bG-a2P"/>
                         <constraint firstAttribute="bottom" secondItem="Ygs-G0-Ykc" secondAttribute="bottom" id="NcO-2F-nZQ"/>
                         <constraint firstItem="DpS-MA-zVy" firstAttribute="leading" secondItem="moJ-Qi-VT8" secondAttribute="trailing" id="OOr-dP-pqc"/>
                         <constraint firstItem="moJ-Qi-VT8" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="OZ6-rl-SSC"/>
                         <constraint firstItem="J0T-BF-EyM" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="QJH-Vz-cVb"/>
                         <constraint firstAttribute="bottom" secondItem="o0M-Vl-tm1" secondAttribute="bottom" id="Wm5-4C-Fvv"/>
+                        <constraint firstItem="JN6-DC-RHl" firstAttribute="leading" secondItem="PzY-E3-SXz" secondAttribute="trailing" id="cRc-vx-oSf"/>
                         <constraint firstItem="0kP-oB-7eL" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" constant="20" id="dcm-XK-BRI"/>
                         <constraint firstItem="DpS-MA-zVy" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="j51-hk-oXd"/>
-                        <constraint firstItem="J0T-BF-EyM" firstAttribute="leading" secondItem="Ygs-G0-Ykc" secondAttribute="trailing" id="lE4-Vi-wya"/>
+                        <constraint firstItem="JN6-DC-RHl" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="jG2-Sa-m0H"/>
                         <constraint firstAttribute="bottom" secondItem="J0T-BF-EyM" secondAttribute="bottom" id="lkQ-m1-fGD"/>
+                        <constraint firstItem="PzY-E3-SXz" firstAttribute="leading" secondItem="Ygs-G0-Ykc" secondAttribute="trailing" id="loN-sh-yn0"/>
                         <constraint firstItem="o0M-Vl-tm1" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="t8x-od-jXW"/>
                         <constraint firstItem="Ygs-G0-Ykc" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="uXK-7v-xKE"/>
+                        <constraint firstAttribute="bottom" secondItem="PzY-E3-SXz" secondAttribute="bottom" id="yvQ-PM-Jwk"/>
+                        <constraint firstItem="PzY-E3-SXz" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="zW6-Re-4t4"/>
                     </constraints>
                 </view>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="ITu-N6-C9k">
