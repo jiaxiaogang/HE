@@ -679,7 +679,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                         
                         // 新的更好，则替掉旧的。
                         // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
-                        if (oldGTItem.itemMatchDegree < newGTItem.itemMatchDegree) {
+                        if (oldGTItem.itemMatchDegree * oldGTItem.itemMatchValue < newGTItem.itemMatchDegree * newGTItem.itemMatchValue) {
                             [gtModel.items removeObject:oldGTItem];
                             [gtModel.items addObject:newGTItem];
                             [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。
