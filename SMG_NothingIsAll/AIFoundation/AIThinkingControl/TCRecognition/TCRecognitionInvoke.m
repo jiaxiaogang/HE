@@ -600,14 +600,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 取每个stModel的有效absPorts。
     for (AIFeatureJvBuModel *stModel in stModels) {
-        [stModel run4ValidAbsPorts];
+        [stModel run4ValidAbsST_ps];
     }
     
     // 直接用assST取refPorts（参考35091-TODO2）。
     for (AIFeatureJvBuModel *stModel in stModels) {
         
         // 每个有效absST都进行refGT（参考35151-TODO3.1）。
-        NSArray *refPorts = [SMGUtils convertArr:stModel.validAbsPorts convertItemArrBlock:^NSArray *(AIPort *obj) {
+        NSArray *refPorts = [SMGUtils convertArr:stModel.validAbsST_ps convertItemArrBlock:^NSArray *(AIPort *obj) {
             return [AINetUtils refPorts_All:obj.target_p];
         }];
         
@@ -650,13 +650,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 计算两个用于计算位置符合度的rect：curGTItem_ProtoGT & curGTItem_AssGT。
                 CGRect curAssST_AssGT = [assGT rectByIndex:curAssIndex];
                 
-                // TODOTOMORROW20260117: 继续写这儿，下面不是用mIsC，而是用validAbsPorts.contains来判断。
-                
                 // 当前assST元素可能被ST识别到多次，所以此处应该能找出多条结果，我们要竞争判断出最best一条进行收集。
                 // 正据：不同的refPort可能指向不同的切入点，那这里要进行多个竞争吗？应当是要的，这里表示的是assST识别结果可能重复，这里确实应该选最好的一条，与上面的refPort的多个切入点没有关系。
                 // 找bestGTItem：最终只收集最好的一条（不包含该元素，则完全不匹配）。
                 NSArray *validSTModels = [SMGUtils filterArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *stModel) {
-                    return [TOUtils mIsC_1:stModel.assT.p c:curGTItem_p]; // stModel抽象指向gtItem则都算可匹配（参考35139-方案1 & 子解答1）。
+                    // stModel抽象有效部分 包含 gtItem算匹配（参考35139-方案1-子解答1 & 35151-TODO3.2）。
+                    return [stModel.validAbsST_ps containsObject:curGTItem_p];
                 }];
                 for (AIFeatureJvBuModel *validSTModel in validSTModels) {
                     

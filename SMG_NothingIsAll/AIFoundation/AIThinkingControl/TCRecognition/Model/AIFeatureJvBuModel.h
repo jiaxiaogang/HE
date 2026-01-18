@@ -87,7 +87,7 @@
 -(void) filter4MatchValue;
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
-@property (strong, nonatomic) NSArray *validAbsPorts;
--(void) run4ValidAbsPorts;
+@property (strong, nonatomic) NSArray *validAbsST_ps;
+-(void) run4ValidAbsST_ps;
 
 @end
