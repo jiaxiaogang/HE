@@ -312,7 +312,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
+        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc prefixIndex:[jvBuModel.stModels indexOfObject:model] + 1];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     
@@ -357,7 +357,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 组特征类比V5：用子元素assSTs来类比。
     for (GTModel *assGT in assGTs) {
-        [AIAnalogy analogyGroupFeatureV6:protoGT gtModel:assGT];
+        [AIAnalogy analogyGroupFeatureV6:protoGT gtModel:assGT prefixIndex:[assGTs indexOfObject:assGT] + 1];
     }
     
     // debug
@@ -607,8 +607,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (AIFeatureJvBuModel *stModel in stModels) {
         
         // 每个有效absST都进行refGT（参考35151-TODO3.1）。
-        NSArray *refPorts = [SMGUtils convertArr:stModel.validAbsST_ps convertItemArrBlock:^NSArray *(AIPort *obj) {
-            return [AINetUtils refPorts_All:obj.target_p];
+        NSArray *refPorts = [SMGUtils convertArr:stModel.validAbsST_ps convertItemArrBlock:^NSArray *(AIKVPointer *obj) {
+            return [AINetUtils refPorts_All:obj];
         }];
         
         // 将每个refPort先收集到zenTiModel。

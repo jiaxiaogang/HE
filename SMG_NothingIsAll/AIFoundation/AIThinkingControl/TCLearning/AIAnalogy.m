@@ -370,7 +370,7 @@
     return absT;
 }
 
-+(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc {
++(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
     NSArray *models = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
@@ -462,7 +462,7 @@
     
     //41. debugLog
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"具%ld->抽%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:2];
+        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld-T%ld->抽%ld(%ld)",prefixIndex,jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:2];
     }];
     
      NSLog(@"单特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
@@ -562,7 +562,7 @@
     return [MapModel newWithV1:assG_p v2:@(curMatchValue) v3:@(curDegree)];
 }
 
-+(AIFeatureNode*) analogyGroupFeatureV6:(AIFeatureNode*)protoGT gtModel:(GTModel*)gtModel {
++(AIFeatureNode*) analogyGroupFeatureV6:(AIFeatureNode*)protoGT gtModel:(GTModel*)gtModel prefixIndex:(NSInteger)prefixIndex {
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
     NSArray *sameItems = [SMGUtils filterArr:gtModel.items checkValid:^BOOL(GTItem *obj) {
         return [TCLearningUtil noZeRenForPingJun:obj.itemMatchDegree bigerMatchValue:gtModel.modelMatchDegree];
@@ -604,7 +604,7 @@
     
     //51. debug
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"GT%ld_Abs%ld(%ld)",gtModel.assGT.pId,absGT.pId,absGT.count) left:0 top:0 tvId:4];
+        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"%ld-GT%ld_Abs%ld(%ld)",prefixIndex,gtModel.assGT.pId,absGT.pId,absGT.count) left:0 top:0 tvId:4];
     }];
     if (Log4Ana) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
                                protoGT.pId,protoGT.count,CLEANSTR([protoGT getLogDesc:false]),FeatureDesc(protoGT.p,1),

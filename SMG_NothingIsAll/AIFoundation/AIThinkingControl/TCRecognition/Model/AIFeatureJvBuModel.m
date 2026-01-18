@@ -209,11 +209,11 @@
 }
 
 -(void) run4ValidAbsST_ps {
-    NSArray *allAbsPorts = [AINetUtils absPorts_All:self.assT];
+    NSArray *allAbsST_ps = Ports2Pits([AINetUtils absPorts_All:self.assT]);
     
     // 方案1、用抽具象的indexDic映射，来判断它是否全含（前提：需要存上抽具象特征的indexDic映射）。
-    self.validAbsST_ps = [SMGUtils filterArr:allAbsPorts checkValid:^BOOL(AIPort *item) {
-        NSDictionary *indexDic = [self.assT getAbsIndexDic:item.target_p];
+    self.validAbsST_ps = [SMGUtils filterArr:allAbsST_ps checkValid:^BOOL(AIKVPointer *item) {
+        NSDictionary *indexDic = [self.assT getAbsIndexDic:item];
         // bestGVs了全含absST，则这条absST有效，收集它。
         return ![SMGUtils filterSingleFromArr:indexDic.allValues checkValid:^BOOL(id item) {
             return ![self.bestGVs.allKeys containsObject:item];
