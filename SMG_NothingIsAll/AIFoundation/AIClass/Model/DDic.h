@@ -18,8 +18,11 @@
 -(id) objectForKey:(id)key;
 -(id) objectV2ForKey1:(id)k1 k2:(id)k2;
 -(id) objectV3ForKey1:(id)k1 k2:(id)k2 k3:(id)k3;
+-(id) objectV4ForKey1:(id)k1 k2:(id)k2 k3:(id)k3 k4:(id)k4;
+
 -(void) setObject:(id)value forKey:(id)key;
 -(void) setObjectV2:(id)v2 k1:(id)k1 k2:(id)k2;
 -(void) setObjectV3:(id)v3 k1:(id)k1 k2:(id)k2 k3:(id)k3;
+-(void) setObjectV4:(id)v4 k1:(id)k1 k2:(id)k2 k3:(id)k3 v4:(id)k4;
 
 @end

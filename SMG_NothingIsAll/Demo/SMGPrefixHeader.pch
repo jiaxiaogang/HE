@@ -97,7 +97,8 @@
  *  MARK:--------------------xgDebug调试代码块--------------------
  *  @注意事项: 为性能好,调用AddDebugCodeBlock后必须调用PrintDebugCodeBlock(),不然它会一直累计models直至系统变卡;
  *  @use 使用方法:
- *              1. 先在代码块之间调用AddDebugCodeBlock("自定义后辍");
+ *              1. V1: 先在代码块之间调用AddDebugCodeBlock("自定义后辍","代码块");
+ *                 V2: 使用AddDebugCodeBlock_KeyV2("自定义后辍)，自动会以代码行为代码块打印。
  *              2. 在末尾调用PrintDebugCodeBlock()将结果日志打出;
  *  @desc 前辍说明: 使用当前文件名+循环id;
  */
@@ -113,5 +114,5 @@
 #define TCDebugPrefixV2(blockKey) STRFORMAT(@"DEBUG匹配 => 代码块:%@ 循环圈:%lld",blockKey,theTC.getLoopId) //TCDebug的前辍=文件名用来匹配的前部分+循环Id
 #define TCDebugRMPrefixV2(blockKey) STRFORMAT(@"DEBUG匹配 => 代码块:%@",blockKey) //用于删除所有的prefixKey,不限循环数;
 
-#define TCCurDebugKey @"不调试"
+#define TCCurDebugKey @"自适应粒度"
 #define TCDebugKey4AutoSplit @"自适应粒度"

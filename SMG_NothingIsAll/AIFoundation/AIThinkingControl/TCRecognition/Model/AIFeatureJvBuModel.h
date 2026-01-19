@@ -19,6 +19,8 @@
 @property (weak, nonatomic) AIFeatureNode *assT;
 //每个assT在proto中的rect（用于组特征识别）。
 @property (assign, nonatomic) CGRect bestGVsAtProtoTRect;
+//每个bestGVs在ass中的rect。
+@property (assign, nonatomic) CGRect bestGVsAtAssTRect;
 //每条最佳gv的数据：List<AIFeatureJvBuItem>
 @property (strong, nonatomic) NSMutableArray *bestGVs;
 
@@ -42,12 +44,13 @@
 
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;
+-(void) run4BestGvsAtAssTRect;
 -(CGFloat) getSTMatch;
 -(CGFloat) getGTMatch;
 -(NSString*) getSTMatchDesc;
 -(NSString*) getGTMatchDesc;
 
-@property (assign, nonatomic) NSInteger areaRankSum; // 考试名次之和（越大越好）。
+@property (assign, nonatomic) CGFloat areaRankSum; // 考试名次之和（越大越好）。
 @property (assign, nonatomic) NSInteger areaRankNum; // 考试次数（用于计算均排名）。
 -(CGFloat) areaRankScore; // 平均名次（越大越好）。
 -(void) run4ItemAreaRankScore:(NSArray*)stModels;
@@ -64,5 +67,8 @@
 // item.assT.conPorts.sum(strong) 计算总强度，和归一化后的强度竞争力。
 @property (assign, nonatomic) NSInteger sumConPortStrong;
 @property (assign, nonatomic) CGFloat conPortStrongRatio;
+
+// bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过（参考35105-TODO6.2 & TODO6.4）。
+-(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV;
 
 @end

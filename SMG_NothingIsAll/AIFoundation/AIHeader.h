@@ -34,6 +34,7 @@
 #import "ImgTrainerView.h"
 #import "XGRedisUtil.h"
 #import "DDic.h"
+#import "DoubleObjMapModel.h"
 
 //Util
 #import "ThinkingUtils.h"

@@ -15,6 +15,8 @@
 
 @interface AINetGroupValueIndex : NSObject
 
++(NSArray*) gvIndexKeys:(NSString*)ds;
+
 /**
  *  MARK:--------------------根据组节点取 三个索引的数据（参考34082-方案2）--------------------
  */

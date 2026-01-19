@@ -66,6 +66,14 @@
     }
 }
 
+-(void) run4BestGvsAtAssTRect {
+    self.bestGVsAtAssTRect = CGRectNull;
+    for (AIFeatureJvBuItem *item in self.bestGVs) {
+        CGRect itemGV_AssSTRect = [self.assT rectByIndex:item.assIndex];
+        self.bestGVsAtAssTRect = CGRectUnion(self.bestGVsAtAssTRect, itemGV_AssSTRect);
+    }
+}
+
 //2025.08.14: 因为竞争浮现不明显，去掉色似度后ok了，如果以后因为去掉色似度导致bug，可以改回来，然后把匹配率改成2次方来强调它的作用试下（参考35064）。
 -(CGFloat) getSTMatch {
     // 说明：防止过度抽象或过度具象：显著度matchAssRatio可以防止过度具象，匹配数bestGVs.count可以防止过度抽象（二者互相制衡，动态平衡竞争）。
@@ -89,7 +97,7 @@
     // return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f\t色似度:%.1f",self.matchValue,self.matchAssRatio,self.matchDiffValue);
     // return STRFORMAT(@"\t区匹配度:%.1f\t防过具象:%.1f(%ld/%ld)\t防过抽象:%.1f\t稳中取抽象:%.1f = 综合:%.2f",self.areaRankRatio,self.matchAssRatio,self.bestGVs.count,self.assT.count,self.bestGVsCountRatio,self.conPortStrongRatio,self.areaRankRatio*self.matchAssRatio*self.bestGVsCountRatio*self.conPortStrongRatio);
     // return STRFORMAT(@"\t匹配数:(%ld/%ld) 区度:%.1f x 防抽:%.1f x 防具:%.1f = 综合:%.2f",self.bestGVs.count,self.assT.count,self.areaRankRatio,(1-self.absLevelRatio),self.conPortStrongRatio,self.areaRankRatio*self.conPortStrongRatio*self.absLevelRatio);
-    return STRFORMAT(@"匹配度:%.2f \t防抽:%.2f \t防具:%.2f = \t区域竞争力:%.2f(%ld/%ld=%.0f)",
+    return STRFORMAT(@"匹配度:%.2f \t防抽:%.2f \t防具:%.2f = \t区域竞争力:%.2f \t(%.0f/%ld=%.0f)",
                      self.matchValue,self.absLevelRatio,self.conPortStrongRatio,self.areaRankRatio,
                      self.areaRankSum,self.areaRankNum,self.areaRankScore);
 }
@@ -101,7 +109,7 @@
 
 // 平均名次（越大越好）（求平均原因：参考35076-TODO2.3）。
 -(CGFloat) areaRankScore {
-    return self.areaRankNum > 0 ? self.areaRankSum / (float)self.areaRankNum : 0;
+    return self.areaRankNum > 0 ? self.areaRankSum / self.areaRankNum : 0.0f;
 }
 
 // ST分区均衡竞争算法：分别对每个stModel所在的区域进行竞争排名计分。
@@ -112,20 +120,60 @@
     CGPoint centP = [MathUtils getRectCenterPoint:protoR];
     
     // 缩放大1.3倍区域，找出所有在这个区域里的stModels（参考35076-TODO2）。
+    // 2025.12.07: BUG：查训练多个0后，ST识别的前20名会有严重的同质化问题（全是0的下半部分），所以：此处改成，不仅包含，还得宽高相近（不然最大的那个GV全包含，所有gv都得先把它这个老大干掉才行）。
     CGFloat scale = 1.3f;
     CGRect zoneRect = CGRectMake(centP.x - protoR.size.width * scale * 0.5f, centP.y - protoR.size.height * scale * 0.5f, protoR.size.width * scale, protoR.size.height * scale);
     NSArray *zoneSTModels = [SMGUtils filterArr:stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
-        return CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
+        CGFloat wRate = item.bestGVsAtProtoTRect.size.width / protoR.size.width;
+        CGFloat hRate = item.bestGVsAtProtoTRect.size.height / protoR.size.height;
+        BOOL whValid = wRate > 0.77f && wRate < 1.3f && hRate > 0.77f && hRate < 1.3f;
+        return whValid && CGRectContainsRect(zoneRect, item.bestGVsAtProtoTRect);
     }];
     
     // 给区域内的stModels排名 & 并计分 & 计次（排名越大越好）。
+    // 方案1、区域综合竞争后，打分时，对防抽防具最后30%名进行降权（参考36096-TODO3.3）。
     zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         return obj.matchValue * self.absLevelRatio * self.conPortStrongRatio;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
-        obj.areaRankSum += i; // 累计名次（参考35076-TODO2.2）;
+        
+        // 对于防抽防具值<0.3的，进行权重打压（避免从平均学渣中选出劣币）。
+        CGFloat daYaValue = MIN(obj.absLevelRatio, obj.conPortStrongRatio);
+        CGFloat daYaWeight = daYaValue < 0.3f ? daYaValue / 0.3f : 1;
+        
+        obj.areaRankSum += (i * daYaWeight); // 累计名次（参考35076-TODO2.2）;
         obj.areaRankNum += 1;
+    }
+    
+    // 方案2、如果方案1有问题，可以考虑此方案，区域只按匹配度竞争，防抽防具单纯用做权重。
+    //zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+    //    return obj.matchValue;
+    //}];
+    //for (NSInteger i = 0; i < zoneSTModels.count; i++) {
+    //    AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
+    //
+    //    // 对于防抽防具进行权重打压（避免从平均学渣中选出劣币）。
+    //    obj.areaRankSum += i * obj.absLevelRatio * obj.conPortStrongRatio; // 累计名次（参考35076-TODO2.2）;
+    //    obj.areaRankNum += 1;
+    //}
+}
+
+
+// bestGVs新收集一条时，都要先判断下是否比旧的更best，再收集，如果没旧的好，则直接跳过（参考35105-TODO6.2 & TODO6.4）。
+-(void) updateBestGVs:(AIFeatureJvBuItem*)newBestGV {
+    // 找有没旧的
+    AIFeatureJvBuItem *old = [SMGUtils filterSingleFromArr:self.bestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
+        return item.assIndex == newBestGV.assIndex;
+    }];
+    
+    if (!old) {
+        // 没旧的，直接收集。
+        [self.bestGVs addObject:newBestGV];
+    } else if (newBestGV.matchValue > old.matchValue) {
+        // 有旧的，更好时才收集（参考35105-TODO6.4）。
+        [self.bestGVs removeObject:old];
+        [self.bestGVs addObject:newBestGV];
     }
 }
 

@@ -468,7 +468,7 @@
     //41. debugLog
     [SMGUtils runByMainQueue:^{
         // [theApp.imgTrainerView setDataForFeature:jvBuModel.assT lab:STRFORMAT(@"AssST%ld (%ld/%ld)",jvBuModel.assT.pId,jvBuModel.bestGVs.count,jvBuModel.assT.count) left:0 top:0];
-        // [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"Abs%@T%ld (%ld/%ld)",isGT?@"G":@"S",absT.pId,absT.count,jvBuModel.bestGVs.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y];
+        // [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"ST%ld->AbsST%ld(%ld)",jvBuModel.assT.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:3];
     }];
     
     // NSLog(@"%@特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",isGT?@"组":@"单",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
@@ -614,7 +614,7 @@
     
     //51. debug
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"GT%ld_Abs%ld(%ld)",gtModel.assGT.pId,absGT.pId,absGT.count) left:0 top:0 tvId:3];
+        [theApp.imgTrainerView setDataForFeature:absGT lab:STRFORMAT(@"GT%ld_Abs%ld(%ld)",gtModel.assGT.pId,absGT.pId,absGT.count) left:0 top:0 tvId:4];
     }];
     if (Log4Ana) NSLog(@"\n组特征类比结果(%@) ======================> \nprotoGT%ld（长:%ld）%@\n%@assGT%ld（长:%ld）%@\n%@absGT%ld（长:%ld）：%@\n%@",protoGT.ds,
                                protoGT.pId,protoGT.count,CLEANSTR([protoGT getLogDesc:false]),FeatureDesc(protoGT.p,1),

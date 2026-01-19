@@ -40,7 +40,7 @@
     
     // 归一化每一条：越多的越好，越少的越孬（参考35082-方案4）。
     for (AIFeatureJvBuModel *item in self.stModels) {
-        item.areaRankRatio = (float)item.areaRankScore / max;
+        item.areaRankRatio = max > 0 ? (float)item.areaRankScore / max : 0.0f;
     }
 }
 

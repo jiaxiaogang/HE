@@ -209,165 +209,13 @@ static AIThinkingControl *_instance;
         NSArray *hsbGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:ds logDesc:logDesc];
         
         //2025.10.18: 自动改成有内容的(hsbGroupModels.count > 5)再跑识别类比等。
-        if (hsbGroupModels.count > 5) [self commitInputWithSplitV2_Single_TonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc];
+        if (hsbGroupModels.count > 5) [TCRecognitionInvoke recognitionFeatureV2_Step0:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc];
         
         //3、构建具象特征。
         //3. 异步构建一下默认三分粒度的protoT，不过不用于识别，只用于以后被识别。
         //TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）。
         [self createSplitFor9BlockV2_Step2:hsbGroupModels at:algsType ds:ds logDesc:logDesc];
     }
-}
-
-//单通道
--(void) commitInputWithSplitV2_Single_TonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
-    //1. 对未切粒度的color字典进行自适应粒度并识别。
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
-    DDic *excepts = [DDic new];
-    AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
-    jvBuModel.debug = [GroupDebug new];
-    
-    //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
-    CGFloat dotSize = whSize / 3.0f;
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    while (dotSize > 1) {
-        //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
-        NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
-        NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
-        
-        //2025.05.20: 从粗到细，识别十条单特征即可。
-        //2025.05.20: BUG-protoGT经常不全：比如有时只识别了0的上半部分，没下半部分，因为这里达到限制条数中断导致的，先关掉，不然肯定有识别一半就中断的情况。
-        //if (jvBuModel.models.count >= 10) break;
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
-        int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
-        for (NSInteger startX = 0; startX < length; startX++) {
-            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-            for (NSInteger startY = 0; startY < length; startY++) {
-                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
-                //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在单特征识别算法中实现防重的）。
-                CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
-                
-                //14. 切出当前gv：九宫。
-                NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3)];
-                if (!ARRISOK(subDots)) continue;
-                NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-                
-                //21. 单特征识别：通过组码识别。
-                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize];
-                [jvBuModel.stModels addObjectsFromArray:itemSTModels];
-                
-                //22. 组特征识别：通过单特征识别。
-                //NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV4_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize itemSTModels:itemSTModels];
-                //[jvBuModel.gtModels addObjectsFromArray:itemGTModels];
-                AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-            }
-            AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        }
-        AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-        
-        //22. 下一层粒度（再/1.3倍）。
-        dotSize /= 1.3f;
-        //[jvBuModel.debug printLogDic];
-    }
-    
-    //31. 单特征识别无结果则跳过。
-    if (!ARRISOK(jvBuModel.stModels)) {
-        NSLog(@"第1步、所有粒度层单特征识别总结果为0条。");
-        return;
-    }
-    NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
-    
-    // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    // 局部特征识别：step2过滤和竞争部分 & step3构建protoT和抽具象关联。
-    // 2025.05.xx: ref找组特征版本：生成protoGT版本但不生成protoT，用itemAbsTs来组成protoGT。
-    // 2025.06.10: con找组特征版本：生成protoT废弃protoGT，用itemAbsTs的gvs收集成protoT。
-    // 2025.08.07: 废弃构建protoT，因为类比用不着，何必拼凑这个很多gvs元素的isGT出来呢（参考35062-TODO3）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel];
-    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    //[TCRecognitionInvoke recognitionGroupFeatureV4_Step2:jvBuModel];
-    //NSLog(@"第3步、组特征竞争后条数:%ld",jvBuModel.gtModels.count);
-    
-    // 单特征类比：借助bestGVs来类比。
-    for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc];
-    }
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    // debug
-    [TCRecognitionInvoke printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
-    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getSTMatch;
-    }];
-    
-    // 收集用于构建gt的内容（参考35074-方案v3 & TODOv4）。
-    // 2025.09.18: 收集absAtProtoRect为实际坐标范围（如果坐标系未统一，会有重影，所以必须统一到此次输入图像的proto坐标系）。
-    // 2025.11.07: 用assST构建protoGT（参考35091-TODO1）。
-    NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
-    NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-        // 数据准备。
-        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return item.bestGVAtProtoTRect;
-        }];
-        CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:model.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return [model.assT rectByIndex:item.assIndex];
-        }];
-        CGRect assSTRect = [SMGUtils convertArr2Rect:model.assT.rects itemRectBlock:^CGRect(NSValue *item) {
-            return item.CGRectValue;
-        }];
-        
-        // ========== 用bestGVs在protoGT和在assST中的rect，推断出整个assST在protoGT中的rect ==========
-        
-        // 方式1 =============> 统一放到protoT坐标系之：现计算。
-        // CGFloat wRate = bestGVs_ProtoT.size.width / bestGVs_AssST.size.width;
-        // CGFloat hRate = bestGVs_ProtoT.size.height / bestGVs_AssST.size.height;
-        // CGSize assST_Proto_Size = CGSizeMake(assSTRect.size.width * wRate, assSTRect.size.height * hRate);
-        // CGPoint bestGVs_AssST_Point_ByProto = CGPointMake(bestGVs_AssST.origin.x * wRate, bestGVs_AssST.origin.y * hRate);
-        
-        // 方式2 =============> 增强易读性，封装计算。
-        // 统一放到protoT坐标系之：将放到protoT后的assSTRect的尺寸求出来。
-        CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
-        
-        // 统一放到protoT坐标系之：将放到protoT后的bestGVs_AssST的xy坐标求出来。
-        CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。
-        
-        // 统一放到protoT坐标系之：求出AssST在ProtoT中的Rect。
-        CGRect assST_ProtoT = CGRectMake(bestGVs_ProtoT.origin.x - bestGVs_AssST_Point_ByProto.x, bestGVs_ProtoT.origin.y - bestGVs_AssST_Point_ByProto.y, assST_Proto_Size.width, assST_Proto_Size.height);
-        return [InputGroupFeatureModel new:model.assT.p rect:assST_ProtoT];
-
-    }];
-    if (gtOrders.count == 0) return;
-    
-    // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
-    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
-    [protoGT updateLogDescItem:logDesc];
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:0 top:0 tvId:2];
-    }];
-    NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
-    
-    // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:protoGT.p];
-    NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
-    
-    // 组特征类比V5：用子元素assSTs来类比。
-    for (GTModel *assGT in assGTs) {
-        [AIAnalogy analogyGroupFeatureV6:protoGT gtModel:assGT];
-    }
-    
-    // debug
-    [TCRecognitionInvoke printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
-        return obj.assGT;
-    } convertMatchBlock:^float(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchRatio;
-    }];
-    AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
 }
 
 //自举算法的单元测试。
@@ -393,6 +241,10 @@ static AIThinkingControl *_instance;
     NSDictionary *colorDic = algsModel.bColors;
     BOOL isOut = false;
     
+    //6. 提前加载好vInfo & dataDic缓存，后面复用。
+    // [TCRecognitionInvoke resetPool];
+    // TODO: 随后此方法 要启用的话，需要先把那些resetPool然后valueDS的缓存池加载一下。
+    
     //3. 循环分别进行：自举识别：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < self.tempModels.count; i++) {
         AIFeatureNode *passedT = ARR_INDEX(self.tempModels, i);
@@ -407,18 +259,8 @@ static AIThinkingControl *_instance;
             NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:passedRect];
             NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
             
-            //6. 提前加载好vInfo & dataDic缓存，后面复用。
-            NSDictionary *vInfoCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
-                AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:protoK isOut:isOut];
-                return @[protoK,vInfo];
-            }];
-            NSDictionary *dataDicCache = [SMGUtils convertDic:gvIndex kvBlock:^NSArray *(NSString *protoK, id protoV) {
-                NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:protoK isOut:isOut];
-                return @[protoK,dataDic];
-            }];
-            
             //7. 收集起来自举算法结果。
-            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds dataDicCache:dataDicCache vInfoCache:vInfoCache];
+            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke ziJvItem:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds model:model];
             if (!bestItem) continue;
             [model.bestGVs addObject:bestItem];
         }
