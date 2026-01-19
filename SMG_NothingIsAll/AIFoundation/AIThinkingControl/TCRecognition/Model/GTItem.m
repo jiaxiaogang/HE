@@ -10,12 +10,13 @@
 
 @implementation GTItem
 
-+(id) new:(NSInteger)assIndex stModel:(AIFeatureJvBuModel*)stModel curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue {
++(id) new:(NSInteger)assIndex stModel:(AIFeatureJvBuModel*)stModel curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue itemMatchRatio:(CGFloat)itemMatchRatio {
     GTItem *result = [GTItem new];
     result.assIndex = assIndex;
     result.stModel = stModel;
     result.curST_AssGT = curST_AssGT;
     result.itemMatchValue = itemMatchValue;
+    result.itemMatchRatio = itemMatchRatio;
     return result;
 }
 

@@ -661,7 +661,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     
                     // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
                     CGFloat itemMatchValue = [validSTModel.assT getAbsMatchValue:curGTItem_p];
-                    GTItem *newGTItem = [GTItem new:curAssIndex stModel:validSTModel curST_AssGT:curAssST_AssGT itemMatchValue:itemMatchValue];
+                    CGFloat itemMatchRatio = [validSTModel.assT getAbsIndexDic:curGTItem_p].count / (float)validSTModel.assT.count;
+                    GTItem *newGTItem = [GTItem new:curAssIndex stModel:validSTModel curST_AssGT:curAssST_AssGT itemMatchValue:itemMatchValue itemMatchRatio:itemMatchRatio];
                     
                     // 保留最匹配的一条。
                     GTItem *oldGTItem = [SMGUtils filterSingleFromArr:gtModel.items checkValid:^BOOL(GTItem *item) {
@@ -679,7 +680,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                         
                         // 新的更好，则替掉旧的。
                         // 算一下gtModel已经收集到的该元素匹配，如果没这个好，就仅保留最好的一条。
-                        if (oldGTItem.itemMatchDegree * oldGTItem.itemMatchValue < newGTItem.itemMatchDegree * newGTItem.itemMatchValue) {
+                        if (oldGTItem.itemMatchDegree * oldGTItem.itemMatchValue * oldGTItem.itemMatchRatio < newGTItem.itemMatchDegree * newGTItem.itemMatchValue * newGTItem.itemMatchRatio) {
                             [gtModel.items removeObject:oldGTItem];
                             [gtModel.items addObject:newGTItem];
                             [gtModel run4WHXYModelMatchDegree];// 每一条newItem收集后：及时计算itemMatchDegree。

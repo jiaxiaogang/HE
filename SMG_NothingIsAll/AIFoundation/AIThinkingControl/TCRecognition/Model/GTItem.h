@@ -13,7 +13,7 @@
  */
 @interface GTItem : NSObject
 
-+(id) new:(NSInteger)assIndex stModel:(AIFeatureJvBuModel*)stModel curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue;
++(id) new:(NSInteger)assIndex stModel:(AIFeatureJvBuModel*)stModel curST_AssGT:(CGRect)curST_AssGT itemMatchValue:(CGFloat)itemMatchValue itemMatchRatio:(CGFloat)itemMatchRatio;
 @property (assign, nonatomic) NSInteger assIndex;
 @property (strong, nonatomic) AIFeatureJvBuModel *stModel; // 对应的stModel
 @property (assign, nonatomic) CGRect curST_AssGT;
@@ -27,5 +27,7 @@
 @property (assign, nonatomic) CGFloat itemMatchValue;
 @property (assign, nonatomic) CGFloat itemMatchDegree;
 -(void) run4ItemMatchDegree:(GTModel*)baseGTModel;
+
+@property (assign, nonatomic) CGFloat itemMatchRatio; //item匹配率（就是ST的匹配率）。
 
 @end
