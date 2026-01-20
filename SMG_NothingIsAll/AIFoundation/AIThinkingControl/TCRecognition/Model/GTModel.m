@@ -65,13 +65,13 @@
  */
 -(void) run4ModelMatchRatio {
     //2025.06.18: 加上健全度（避免识别到的组特征越来越抽象，有效的内容却很少）。
-    CGFloat stMatchRatio = self.assGT.count > 0 ? self.items.count / (float)self.assGT.count : 0;
+    CGFloat gtMatchRatio = self.assGT.count > 0 ? self.items.count / (float)self.assGT.count : 0;
     
     // 为避免每个局部特征都太轮廓，把st的匹配率也计入进来（参考35152-TODO2）。
-    for (GTItem *item in self.items) {
-        stMatchRatio *= item.itemMatchRatio;
-    }
-    self.modelMatchRatio = stMatchRatio;
+    CGFloat stMatchRatio = self.items.count == 0 ? 0 : [SMGUtils sumOfArr:self.items convertBlock:^double(GTItem *obj) {
+        return obj.itemMatchRatio;
+    }] / self.items.count;
+    self.modelMatchRatio = stMatchRatio * gtMatchRatio;
 }
 
 //MARK:===============================================================

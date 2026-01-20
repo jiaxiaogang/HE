@@ -128,14 +128,15 @@
     
     // 给区域内的stModels排名 & 并计分 & 计次（排名越大越好）。
     // 方案1、区域综合竞争后，打分时，对防抽防具最后30%名进行降权（参考36096-TODO3.3）。
+    // 2026.01.21: 去掉防过具，改为准确中取具象（因为很难对撞上，所有有效全含的抽象全算识别结果）（参考35152-TODO1 & 35153）。
     zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * self.modelMatchCountScore * self.modelMatchRatioScore;
+        return obj.matchValue * self.modelMatchCountScore/* * self.modelMatchRatioScore*/;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
         
         // 对于防抽防具值<0.3的，进行权重打压（避免从平均学渣中选出劣币）。
-        CGFloat daYaValue = MIN(obj.modelMatchCountScore, obj.modelMatchRatioScore);
+        CGFloat daYaValue = obj.modelMatchCountScore; // MIN(obj.modelMatchCountScore, obj.modelMatchRatioScore);
         CGFloat daYaWeight = daYaValue < 0.3f ? daYaValue / 0.3f : 1;
         
         obj.areaRankSum += (i * daYaWeight); // 累计名次（参考35076-TODO2.2）;
@@ -212,13 +213,15 @@
     NSArray *allAbsST_ps = Ports2Pits([AINetUtils absPorts_All:self.assT]);
     
     // 方案1、用抽具象的indexDic映射，来判断它是否全含（前提：需要存上抽具象特征的indexDic映射）。
-    self.validAbsST_ps = [SMGUtils filterArr:allAbsST_ps checkValid:^BOOL(AIKVPointer *item) {
+    NSMutableArray *validAbsST_ps = [SMGUtils filterArr:allAbsST_ps checkValid:^BOOL(AIKVPointer *item) {
         NSDictionary *indexDic = [self.assT getAbsIndexDic:item];
         // bestGVs了全含absST，则这条absST有效，收集它。
         return ![SMGUtils filterSingleFromArr:indexDic.allValues checkValid:^BOOL(id item) {
             return ![self.bestGVs.allKeys containsObject:item];
         }];
     }];
+    [validAbsST_ps insertObject:self.abs_p atIndex:0];
+    self.validAbsST_ps = validAbsST_ps;
     
     // 方案2、直接取出absST.content判断是否被全含。
     // 更难判断，因为不止得判断指针包含，还得判断rect也对应着，因为st.content中的itemGV是可能重复的（所以还是先用方案1吧）。
