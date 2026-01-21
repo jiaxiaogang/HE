@@ -364,7 +364,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [TCRecognitionInvoke printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchRatio;
+        return obj.modelMatchDegree * obj.modelMatchValue;
     }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
@@ -708,7 +708,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchValue * obj.modelMatchRatio * obj.modelCountRatio;
+        return obj.modelMatchDegree * obj.modelMatchValue /* obj.modelMatchRatio*/ * obj.modelCountRatio;
     }], 0, MAX(5, gtModels.models.count * 0.5));
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -728,7 +728,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // [protoGT updateMatchDegree:model.assGT matchDegree:model.modelMatchDegree];
         
         // 从protoT更新logDesc到assGT。
-        [model.assGT updateLogDescItem:logDesc rate:model.modelMatchDegree * model.modelMatchRatio];
+        [model.assGT updateLogDescItem:logDesc rate:model.modelMatchDegree * model.modelMatchValue];
         
         //43. debug
         if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t符合度:%.2f \t匹配度:%.2f \t防过具(健全度):%.2f(%ld/%ld) \t防过抽(匹配数):%.2f =\t综合得分:%.3f",
@@ -752,7 +752,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModel *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchRatio;
+        return obj.modelMatchDegree * obj.modelMatchValue;
     }];
     return resultModels;
 }

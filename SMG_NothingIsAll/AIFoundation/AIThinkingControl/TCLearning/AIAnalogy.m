@@ -589,7 +589,7 @@
     
     //41. 更新logDesc。
     [absGT updateLogDescDic:protoGT.logDesc];
-    [absGT updateLogDescDic:gtModel.assGT.logDesc rate:gtModel.modelMatchDegree * gtModel.modelMatchRatio];
+    [absGT updateLogDescDic:gtModel.assGT.logDesc rate:gtModel.modelMatchDegree * gtModel.modelMatchValue];
     
     //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。
     //2025.09.11: 不记录protoGT与absGT的匹配度，位置符合度，范围rect（参考上面方案2-TODO3）。
