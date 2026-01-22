@@ -661,7 +661,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     
                     // 写数据模型，把以上的结果（两个rect等数据）全收集起来。
                     CGFloat itemMatchValue = [validSTModel.assT getAbsMatchValue:curGTItem_p];
-                    CGFloat itemMatchRatio = [validSTModel.assT getAbsIndexDic:curGTItem_p].count / (float)validSTModel.assT.count;
+                    CGFloat itemMatchRatio = [validSTModel.assT getAbsIndexDic:curGTItem_p].count / (float)validSTModel.bestGVs.count; // 匹配率 = 当前匹配数 / 当前匹配上的bestGVs数。
                     GTItem *newGTItem = [GTItem new:curAssIndex stModel:validSTModel curST_AssGT:curAssST_AssGT itemMatchValue:itemMatchValue itemMatchRatio:itemMatchRatio];
                     
                     // 保留最匹配的一条。
