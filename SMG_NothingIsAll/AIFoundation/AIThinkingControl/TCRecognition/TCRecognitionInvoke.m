@@ -300,7 +300,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     //31. 单特征识别无结果则跳过。
     if (!ARRISOK(jvBuModel.stModels)) {
-        NSLog(@"ST识别结果0条：所有粒度层单特征识别总结果为0条。");
+        NSLog(@"第1步、所有粒度层ST识别结果0条 finish ------------------------------------------------");
         return;
     }
     NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
@@ -315,13 +315,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc prefixIndex:[jvBuModel.stModels indexOfObject:model] + 1];
     }
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
-    
-    // debug
-    [TCRecognitionInvoke printLogDescRate:jvBuModel.stModels protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 单特征",logDesc) convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
-    } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.getSTMatch;
-    }];
     
     // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
@@ -339,13 +332,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }];
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
-    if (gtOrders.count == 0) return;
+    if (gtOrders.count == 0) {
+        NSLog(@"第3步、单特征识别类比 finish ------------------------------------------------");
+        return;
+    }
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
     [protoGT updateLogDescItem:logDesc];
     CGRect jvs_ProtoGTRect = [SMGUtils convertArr2Rect:gtOrders itemRectBlock:^CGRect(InputGroupFeatureModel *item) { return item.rect; }]; // ProtoGT不一定是全局，如果只是一部分，处理下显示时的marginTop和marginLeft。
-    NSLog(@"jvs_ProtoGTRect:%@",Rect2Str(jvs_ProtoGTRect));
     [SMGUtils runByMainQueue:^{
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:jvs_ProtoGTRect.origin.x top:jvs_ProtoGTRect.origin.y tvId:5];
     }];
@@ -359,15 +354,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTModel *assGT in assGTs) {
         [AIAnalogy analogyGroupFeatureV6:protoGT gtModel:assGT prefixIndex:[assGTs indexOfObject:assGT] + 1];
     }
-    
-    // debug
-    [TCRecognitionInvoke printLogDescRate:assGTs protoLogDesc:nil prefix:STRFORMAT(@"Input:%@ 组特征",logDesc) convertNodeBlock:^id(GTModel *obj) {
-        return obj.assGT;
-    } convertMatchBlock:^float(GTModel *obj) {
-        return obj.modelMatchDegree * obj.modelMatchValue;
-    }];
     AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit);
     PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
+    NSLog(@"第5步、特征识别类比 finish ------------------------------------------------");
 }
 
 /**
@@ -551,11 +540,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return obj.getSTMatch;
     }];
     
-    //55. 末尾淘汰xx%匹配度低的、匹配度强度过滤器 (参考28109-todo2 & 34091-5提升准确)。
-    //2025.04.23: 加上健全度：matchAssProtoRatio（参考34165-方案）。
-    //2025.07.21: 单特征结果必须保底量，不然无法保证联想到组特征。
+    // ============== 方案1：保留80%（缺点：易导致后续性能差）==============
     //2025.12.05: 此处应该是末尾淘汰，而不是只取最好的一部分，不然很容易合成ProtoGT后不成形（比如最优部分肯定不表示全部）（比如最优的全只保留了0的下半部分，因为0的下半部分太有规律了，前20名可能全是0的下半部分）。
     validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.8f, 4), 100));
+
+    // ============== 方案2：保留20%（缺点：易导致ProtoT不成形）==============
+    // 5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
+    //NSInteger count = validModels.count;
+    //float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
+    //validModels = ARR_SUB(validModels, 0, MIN(20, validModels.count * needRate));
     
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
@@ -707,14 +700,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [gtModels run4ModelCountRatio];
     
     // 最后进行综合竞争，把最符合的找出来。
-    NSArray *resultModels = ARR_SUB([SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
+    NSArray *resultModels = [SMGUtils sortBig2Small:gtModels.models compareBlock:^double(GTModel *obj) {
         return obj.modelMatchDegree * obj.modelMatchValue /* obj.modelMatchRatio*/ * obj.modelCountRatio;
-    }], 0, MAX(5, gtModels.models.count * 0.5));
+    }];
     
     //33. 防重过滤器2、此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTModel *obj) {
         return @(obj.assGT.pId);
     }];
+    
+    // 5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
+    NSInteger count = gtModels.models.count;
+    float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
+    resultModels = ARR_SUB(resultModels, 0, MIN(20, gtModels.models.count * needRate));
     
     //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModel *model in resultModels) {
@@ -731,10 +729,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assGT updateLogDescItem:logDesc rate:model.modelMatchDegree * model.modelMatchValue];
         
         //43. debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t符合度:%.2f \t匹配度:%.2f \t防过具(健全度):%.2f(%ld/%ld) \t防过抽(匹配数):%.2f =\t综合得分:%.3f",
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t符合度:%.2f \t匹配度:%.2f \t匹配数防抽:%.2f =\t综合得分:%.3f",
                                          [resultModels indexOfObject:model],model.assGT.pId,
-                                         model.modelMatchDegree,model.modelMatchValue,model.modelMatchRatio,model.items.count,model.assGT.count,model.modelCountRatio,
-                                         model.modelMatchDegree * model.modelMatchValue * model.modelMatchRatio * model.modelCountRatio);
+                                         model.modelMatchDegree,model.modelMatchValue,model.modelCountRatio,
+                                         model.modelMatchDegree * model.modelMatchValue * model.modelCountRatio);
         
         // 构建protoGT用absST，而识别GT用assST，先注掉。
         // [AINetUtils relateGeneralAbs:model.assGT absConPorts:model.assGT.conPorts conNodes:@[protoGT] isNew:false difStrong:1];
@@ -1575,16 +1573,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [allLogDic setObject:@(oldCount + newCount * match) forKey:key];
         }
     }
-    CGFloat sum = [SMGUtils sumOfArr:allLogDic.allValues convertBlock:^double(NSNumber *obj) {
+    CGFloat max = [SMGUtils filterBestScore:allLogDic.allValues scoreBlock:^CGFloat(NSNumber *obj) {
         return obj.floatValue;
     }];
     NSArray *allLogKeys = [SMGUtils sortBig2Small:allLogDic.allKeys compareBlock:^double(NSString *key) {
         CGFloat itemCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
-        return itemCount / sum;
+        return itemCount / max;
     }];
     NSLog(@"%@%@识别结果总结：%@",protoLogDesc?protoLogDesc:@"",prefix,CLEANSTR([SMGUtils convertArr:allLogKeys convertBlock:^id(NSString *key) {
         CGFloat itemCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
-        return STRFORMAT(@"%@=%.2f ",key,itemCount / sum);
+        return STRFORMAT(@"%@=%.0f%% ",key,max > 0 ? itemCount / max * 100 : 0);
     }]));
 }
 
