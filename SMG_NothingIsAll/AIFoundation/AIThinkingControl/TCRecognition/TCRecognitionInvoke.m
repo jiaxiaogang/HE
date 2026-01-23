@@ -540,15 +540,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return obj.getSTMatch;
     }];
     
-    // ============== 方案1：保留80%（缺点：易导致后续性能差）==============
-    //2025.12.05: 此处应该是末尾淘汰，而不是只取最好的一部分，不然很容易合成ProtoGT后不成形（比如最优部分肯定不表示全部）（比如最优的全只保留了0的下半部分，因为0的下半部分太有规律了，前20名可能全是0的下半部分）。
-    validModels = ARR_SUB(validModels, 0, MIN(MAX(validModels.count * 0.8f, 4), 100));
-
-    // ============== 方案2：保留20%（缺点：易导致ProtoT不成形）==============
-    // 5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
-    //NSInteger count = validModels.count;
-    //float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
-    //validModels = ARR_SUB(validModels, 0, MIN(20, validModels.count * needRate));
+    // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
+    NSInteger count = validModels.count;
+    float needRate = count < 5 ? 1 : count < 15 ? 0.8 : count < 30 ? 0.6 : count < 60 ? 0.4 : 0.2;
+    validModels = ARR_SUB(validModels, 0, MIN(30, validModels.count * needRate));
     
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
