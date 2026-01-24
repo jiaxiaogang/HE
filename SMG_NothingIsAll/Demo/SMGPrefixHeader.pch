@@ -114,5 +114,7 @@
 #define TCDebugPrefixV2(blockKey) STRFORMAT(@"DEBUG匹配 => 代码块:%@ 循环圈:%lld",blockKey,theTC.getLoopId) //TCDebug的前辍=文件名用来匹配的前部分+循环Id
 #define TCDebugRMPrefixV2(blockKey) STRFORMAT(@"DEBUG匹配 => 代码块:%@",blockKey) //用于删除所有的prefixKey,不限循环数;
 
+// 用法1、AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); & PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
+// 用法2、AddDebugCodeBlock_Key(@"a", @"3"); & PrintDebugCodeBlock_Key(@"a");
 #define TCCurDebugKey @"自适应粒度"
 #define TCDebugKey4AutoSplit @""
