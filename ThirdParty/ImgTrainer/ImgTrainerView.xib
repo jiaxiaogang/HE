@@ -11,6 +11,7 @@
             <connections>
                 <outlet property="containerView" destination="xD5-aX-3Xj" id="nFR-9Q-WMS"/>
                 <outlet property="curImgView" destination="0kP-oB-7eL" id="qiB-Df-I1O"/>
+                <outlet property="picNumLab" destination="Ec9-Dc-68N" id="ob8-mo-yUT"/>
                 <outlet property="playBtn" destination="ITu-N6-C9k" id="IrR-UY-DGB"/>
                 <outlet property="previewTableView1" destination="moJ-Qi-VT8" id="XIU-il-gki"/>
                 <outlet property="previewTableView2" destination="DpS-MA-zVy" id="1Tv-f8-rY2"/>
@@ -89,6 +90,14 @@
                                 <constraint firstAttribute="width" constant="100" id="CEY-4w-uAz"/>
                             </constraints>
                         </tableView>
+                        <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="指定第x张" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Ec9-Dc-68N">
+                            <rect key="frame" x="1073" y="174" width="100" height="34"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="100" id="Sim-v1-2Hb"/>
+                            </constraints>
+                            <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                            <textInputTraits key="textInputTraits"/>
+                        </textField>
                     </subviews>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     <constraints>
@@ -112,7 +121,9 @@
                         <constraint firstItem="JN6-DC-RHl" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="jG2-Sa-m0H"/>
                         <constraint firstAttribute="bottom" secondItem="J0T-BF-EyM" secondAttribute="bottom" id="lkQ-m1-fGD"/>
                         <constraint firstItem="PzY-E3-SXz" firstAttribute="leading" secondItem="Ygs-G0-Ykc" secondAttribute="trailing" id="loN-sh-yn0"/>
+                        <constraint firstItem="Ec9-Dc-68N" firstAttribute="centerX" secondItem="0kP-oB-7eL" secondAttribute="centerX" id="s0L-PH-xlk"/>
                         <constraint firstItem="o0M-Vl-tm1" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="t8x-od-jXW"/>
+                        <constraint firstItem="Ec9-Dc-68N" firstAttribute="top" secondItem="0kP-oB-7eL" secondAttribute="bottom" constant="4" id="uUr-ez-G4l"/>
                         <constraint firstItem="Ygs-G0-Ykc" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="uXK-7v-xKE"/>
                         <constraint firstAttribute="bottom" secondItem="PzY-E3-SXz" secondAttribute="bottom" id="yvQ-PM-Jwk"/>
                         <constraint firstItem="PzY-E3-SXz" firstAttribute="top" secondItem="mWz-Zx-VC5" secondAttribute="top" id="zW6-Re-4t4"/>

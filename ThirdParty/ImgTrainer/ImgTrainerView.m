@@ -29,6 +29,7 @@
 @property (weak, nonatomic) IBOutlet UIImageView *curImgView;
 @property (strong, nonatomic) NSMutableArray *tvDatas;
 @property (assign, nonatomic) NSInteger curSelectRow;
+@property (weak, nonatomic) IBOutlet UITextField *picNumLab;
 
 @property (strong, nonatomic) NSArray *previewTVs;
 @property (strong, nonatomic) NSMutableArray *previewDatas;
@@ -389,6 +390,10 @@
     //NSIndexPath *selected = [self.tv indexPathForSelectedRow];
     ImgTrainerItemModel *model = ARR_INDEX(self.tvDatas, self.curSelectRow);
     if (model) {
+        // 指定哪一张。
+        NSInteger picNum = self.picNumLab.text.integerValue;
+        if (picNum != 0) model.imgIndex = picNum - 1;
+        
         //1. 取图
         NSArray *tryExts = @[@"JPEG",@"png",@"jpg"];
         UIImage *img = nil;
