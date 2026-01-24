@@ -30,6 +30,7 @@
 @property (strong, nonatomic) NSMutableArray *tvDatas;
 @property (assign, nonatomic) NSInteger curSelectRow;
 @property (weak, nonatomic) IBOutlet UITextField *picNumLab;
+@property (weak, nonatomic) IBOutlet UISwitch *autoNextSwitch;
 
 @property (strong, nonatomic) NSArray *previewTVs;
 @property (strong, nonatomic) NSMutableArray *previewDatas;
@@ -90,7 +91,7 @@
 
 -(void) initData{
     self.previewDatas = [NSMutableArray new];
-    for (id tv in self.previewTVs) {
+    for (NSInteger i = 0; i < self.previewTVs.count; i++) {
         [self.previewDatas addObject:[NSMutableArray new]];
     }
 }
@@ -393,6 +394,14 @@
         // 指定哪一张。
         NSInteger picNum = self.picNumLab.text.integerValue;
         if (picNum != 0) model.imgIndex = picNum - 1;
+        
+        // 自动跳到下一张。
+        if (self.autoNextSwitch.isOn) {
+            self.curSelectRow ++;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self.tv selectRowAtIndexPath:[NSIndexPath indexPathForRow:self.curSelectRow inSection:0] animated:false scrollPosition:UITableViewScrollPositionNone];
+            });
+        }
         
         //1. 取图
         NSArray *tryExts = @[@"JPEG",@"png",@"jpg"];
