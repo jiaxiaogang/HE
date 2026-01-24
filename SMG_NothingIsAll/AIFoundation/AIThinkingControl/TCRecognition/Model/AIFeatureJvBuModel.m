@@ -93,7 +93,7 @@
 }
 
 -(NSString*) getSTMatchDesc {
-    return STRFORMAT(@"匹配度:%.2f \t匹配数防抽:%.2f = \t区域竞争力:%.2f (总分%.0f/科数%ld=均分%.0f)",
+    return STRFORMAT(@"匹配度:%.2f \t匹配数防抽:%.2f = 区域竞争力:%.2f (总分%.0f/科数%ld=均分%.0f)",
                      self.matchValue,self.modelMatchCountScore,self.areaRankRatio,
                      self.areaRankSum,self.areaRankNum,self.areaRankScore);
 }
