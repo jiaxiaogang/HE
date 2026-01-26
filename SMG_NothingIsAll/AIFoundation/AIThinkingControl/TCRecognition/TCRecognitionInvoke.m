@@ -576,6 +576,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 计算curAssIndex 取curAssST。
                 NSInteger curAssIndex = (assIndex + i) % assGT.count;
                 AIKVPointer *curGTItem_p = ARR_INDEX(assGT.content_ps, curAssIndex);
+                AINodeBase *curGTItem = [SMGUtils searchNode:curGTItem_p];
+                NSArray *curGTItem_Abs = [SMGUtils collectArrA:Ports2Pits([AINetUtils absPorts_All:curGTItem]) arrB:@[curGTItem_p]];
                 
                 // 计算两个用于计算位置符合度的rect：curGTItem_ProtoGT & curGTItem_AssGT。
                 CGRect curAssST_AssGT = [assGT rectByIndex:curAssIndex];
