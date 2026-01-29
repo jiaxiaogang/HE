@@ -177,7 +177,7 @@
 -(CGRect) getItemGV_ProtoRect:(NSInteger)itemAssIndex {
     NSValue *beginGV_AssRect = ARR_INDEX(self.assT.rects, self.beginAssIndex);
     NSValue *itemGV_AssRect = ARR_INDEX(self.assT.rects, itemAssIndex);
-    CGRect itemGV_ProtoRect = [SMGUtils convertBAtA:self.beginGV_ProtoRect atB:beginGV_AssRect.CGRectValue B:itemGV_AssRect.CGRectValue];
+    CGRect itemGV_ProtoRect = [SMGUtils convertBAtAWithCAtA:self.beginGV_ProtoRect cAtB:beginGV_AssRect.CGRectValue B:itemGV_AssRect.CGRectValue];
     return itemGV_ProtoRect;
 }
 
@@ -189,7 +189,7 @@
     CGRect assSTRect = [SMGUtils convertArr2Rect:self.assT.rects itemRectBlock:^CGRect(NSValue *item) {
         return item.CGRectValue;
     }];
-    self.assST_ProtoRect = [SMGUtils convertBAtA:self.bestGVsAtProtoTRect atB:bestGVs_AssST B:assSTRect];
+    self.assST_ProtoRect = [SMGUtils convertBAtAWithCAtA:self.bestGVsAtProtoTRect cAtB:bestGVs_AssST B:assSTRect];
 }
 
 // bestGVs根据匹配度末尾淘汰20%（参考35138-TODO1）。

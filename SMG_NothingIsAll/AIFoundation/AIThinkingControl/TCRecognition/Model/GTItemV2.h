@@ -14,12 +14,13 @@
  */
 @interface GTItemV2 : NSObject
 
+@property (strong, nonatomic) AIFeatureJvBuModel *baseSTModel; // 对应的stModel
+@property (strong, nonatomic) AIFeatureNode *baseAbsST;
 @property (assign, nonatomic) NSInteger itemSTIndex;
-@property (strong, nonatomic) AIFeatureJvBuModel *stModel; // 对应的stModel
 @property (assign, nonatomic) CGRect itemST_AssGT;
 
--(CGRect) assST_ProtoGT;
--(CGRect) absST_ProtoGT;
--(CGRect) itemST_ProtoGT;
+-(CGRect) assST_ProtoT;
+-(CGRect) absST_ProtoT;
+-(CGRect) itemST_ProtoT;
 
 @end

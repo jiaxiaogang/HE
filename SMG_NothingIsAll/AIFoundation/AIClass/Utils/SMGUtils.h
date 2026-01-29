@@ -182,8 +182,11 @@
 // 求交集占比（交集rect占比小的那一个）。
 +(CGFloat) rate4IntersectionRect:(CGRect)aRect bRect:(CGRect)bRect;
 
-//已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
-+(CGRect) convertBAtA:(CGRect)atA atB:(CGRect)atB B:(CGRect)B;
+//C在A & C在B：已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
++(CGRect) convertBAtAWithCAtA:(CGRect)cAtA cAtB:(CGRect)cAtB B:(CGRect)B;
+
+//A在B & B在C：已知A在B的Rect，以及B在C的rect，以及B的原始尺寸protoBSize，计算A在C中的Rect。
++(CGRect) convertAAtCWithAAtB:(CGRect)aAtB bAtC:(CGRect)bAtC protoBSize:(CGSize)protoBSize;
 
 // 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
 +(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize;

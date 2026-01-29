@@ -697,21 +697,32 @@
     return abMaxArea > 0 ? intersectionArea / abMaxArea : 0.0f;
 }
 
-//已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
-+(CGRect) convertBAtA:(CGRect)atA atB:(CGRect)atB B:(CGRect)B {
+//C在A & C在B：已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
++(CGRect) convertBAtAWithCAtA:(CGRect)cAtA cAtB:(CGRect)cAtB B:(CGRect)B {
     // 先把atB这边的rect全缩放成和在A那边一样的大小。
-    CGFloat xScale = atA.size.width / atB.size.width;
-    CGFloat yScale = atA.size.height / atB.size.height;
-    atB.origin.x *= xScale;
-    atB.origin.y *= yScale;
+    CGFloat xScale = cAtA.size.width / cAtB.size.width;
+    CGFloat yScale = cAtA.size.height / cAtB.size.height;
+    cAtB.origin.x *= xScale;
+    cAtB.origin.y *= yScale;
     B.size.width *= xScale;
     B.size.height *= yScale;
     
     // 再根据atA中的位置，把B也平移到A中。
-    B.origin.x = atA.origin.x - atB.origin.x;
-    B.origin.y = atA.origin.y - atB.origin.y;
+    B.origin.x = cAtA.origin.x - cAtB.origin.x;
+    B.origin.y = cAtA.origin.y - cAtB.origin.y;
     // NSLog(@"convertBAtA: %@",Rect2Str(B));
     return B;
+}
+
+//A在B & B在C：已知A在B的Rect，以及B在C的rect，以及B的原始尺寸protoBSize，计算A在C中的Rect。
++(CGRect) convertAAtCWithAAtB:(CGRect)aAtB bAtC:(CGRect)bAtC protoBSize:(CGSize)protoBSize {
+    // B坐标系和C坐标系的比例：B在C中的范围，可能与原始B尺寸有缩放，所以需要处理缩放比例。
+    CGFloat scaleX = bAtC.size.width / protoBSize.width;
+    CGFloat scaleY = bAtC.size.height / protoBSize.height;
+
+    // 应用缩放转换到result的C坐标系计算aAtC：坐标位移和尺寸大小都要乘以相应的缩放系数。
+    CGRect aAtC = CGRectMake(bAtC.origin.x + (aAtB.origin.x * scaleX),bAtC.origin.y + (aAtB.origin.y * scaleY),aAtB.size.width * scaleX,aAtB.size.height * scaleY);
+    return aAtC;
 }
 
 //调用示例：（显然上面的convertBAtA方法更简单）。
