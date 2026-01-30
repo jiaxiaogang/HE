@@ -75,6 +75,7 @@
 #import "GTModels.h"
 #import "GTModel.h"
 #import "GTItem.h"
+#import "GTItemV2.h"
 
 //短时记忆
 #import "TOAlgModel.h"

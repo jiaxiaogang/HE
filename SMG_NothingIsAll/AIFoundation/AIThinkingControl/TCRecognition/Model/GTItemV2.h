@@ -10,17 +10,23 @@
 
 /**
  *  MARK:--------------------AssGT.itemST模型--------------------
- *  @desc 用于GT识别V7算法：在v7中itemST其实就是assST的broST（参考36013-示图）。
+ *  @desc 用于GT识别V7算法：在v7中broST其实就是assGT的元素（参考36013-示图）。
  */
 @interface GTItemV2 : NSObject
 
 @property (strong, nonatomic) AIFeatureJvBuModel *baseSTModel; // 对应的stModel
 @property (strong, nonatomic) AIFeatureNode *baseAbsST;
-@property (assign, nonatomic) NSInteger itemSTIndex;
-@property (assign, nonatomic) CGRect itemST_AssGT;
+@property (strong, nonatomic) AIGroupFeatureNode *baseAssGT;
+@property (assign, nonatomic) NSInteger broSTIndex;
 
 -(CGRect) assST_ProtoT;
+
+-(CGRect) broST_AssGT;
+
 -(CGRect) absST_ProtoT;
--(CGRect) itemST_ProtoT;
+@property (assign, nonatomic) CGRect absST_ProtoTCache;
+
+-(CGRect) broST_ProtoT;
+@property (assign, nonatomic) CGRect broST_ProtoTCache;
 
 @end
