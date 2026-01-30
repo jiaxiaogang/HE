@@ -694,6 +694,35 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return resultModels;
 }
 
++(NSArray*) recognitionGroupFeatureV7:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
+    //1. 数据准备
+    GTModels *gtModels = [GTModels new]; // 初始化gtModels
+    
+    // 取每个stModel的有效absPorts。
+    for (AIFeatureJvBuModel *stModel in stModels) {
+        [stModel run4ValidAbsST_ps];
+    }
+    
+    // 有效abs取bro。
+    
+    // bro取refGT。
+    
+    // assGT自举算法。
+    
+    // 用rectIndex来防重。
+    
+    // 收集成GTItemV2模型。
+    
+    // 竞争因子：匹配度 & 匹配数（防过抽）。
+    
+    // 综合竞争。
+    
+    //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
+    
+    //61. debugLog
+    return nil;
+}
+
 //MARK:===============================================================
 //MARK:                     < 概念识别 >
 //MARK:===============================================================
