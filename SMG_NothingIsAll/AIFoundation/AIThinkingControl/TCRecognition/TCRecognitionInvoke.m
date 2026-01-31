@@ -732,14 +732,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // gt自举算法。
             for (NSInteger i = 1; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
-                [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
+                GTItemV2 *gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
+                
+                // 收集成GTItemV2模型。
+                
+                // TODOTOMORROW20260201: 建GTModel模型，收集gtItem。
+                
+                
             }
         }
     }
     
-    // 用rectIndex来防重。
     
-    // 收集成GTItemV2模型。
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。
     
@@ -755,7 +759,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  MARK:--------------------GT自举算法--------------------
  *  @param sourceDic 需要从broST -> absST -> assST 及baseSTModel的反向路径映射，方便用于GT自举中竞争best结果。
  */
-+(id) gtZiJv:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic {
++(GTItemV2*) gtZiJv:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic {
     // 反取bro层
     AIKVPointer *broST_p = ARR_INDEX(assGT.content_ps, curIndex);
     GTItemV2 *bestResult = nil;
@@ -768,41 +772,39 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         DDic *assSTDic = [absSTDic objectForKey:absST_p];
         for (AIFeatureJvBuModel *stModel in assSTDic.data.allKeys) {
             
-            GTItemV2 *gtItem = [GTItemV2 new];
-            gtItem.baseSTModel = stModel;
-            gtItem.baseAbsST = [SMGUtils searchNode:absST_p];
-            gtItem.baseAssGT = assGT;
-            gtItem.broSTIndex = curIndex;
+            // 防重：用assST_ProtoT、对应的assST、absST、broST，四个条件来进行防重。
+            // 说明：防重的好处在于，同一个ass->abs->bro通路，投射在同一个protoRectIndex上时，直接复用，其broST_ProtoRect也只需计算一次。
+            MapModel *rectKey = [self getIndexsOfProtoRect:stModel.assST_ProtoRect];
+            GTItemV2 *findGTItem = [bestSTsPool objectV7ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId) k7:@(broST_p.pointerId)];
             
-            // TODOTOMORROW20260131: 计算rectIndex用于范围匹配及防重，然后计算匹配度，竞争出best。
+            // 占位空，则说明上次已经失败过，还按失败处理（此处防重掉18%）。
+            if ([@"isNull" isEqual:findGTItem]) continue;
             
-            // 2. 初次自举时防重：用每个assGT的同一个index，对应的rectIndex也一样时，可以防重（仅保留best一条）。
-            // 3. 后续再来时防重：如果当前assGT.curIndex.protoRectIndex都一样，则直接防重（不用判断best，因为当时它肯定已经在自举时失败了）。
-            
-            // TODO: 这个复用方式不对，因为broST_ProtoT都算出来了，复用就省不了多少算力了，应该是算broST_ProtoT之前能不能触发复用？比如assST_ProtoT已经确定了，然后对应的assST,absST,broST全确定了。
-            MapModel *rectKey = [self getIndexsOfProtoRect:gtItem.broST_ProtoT];
-            GTItemV2 *curBestItem = [bestSTsPool objectV5ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(broST_p.pointerId)];
-            if ([@"isNull" isEqual:curBestItem]) continue; //占位空，则说明上次已经失败过，还按失败处理（此处防重掉18%）。
-            if (!curBestItem) {
-                curBestItem = gtItem;
-                // 计算匹配度（assST的匹配度 x abs的匹配率。
-                // abs匹配率 = abs.count / max(assST.count,broST.count)。
+            // 空则新建并计算匹配度等。
+            if (!findGTItem) {
+                findGTItem = [GTItemV2 new];
+                findGTItem.baseSTModel = stModel;
+                findGTItem.baseAbsST = [SMGUtils searchNode:absST_p];
+                findGTItem.baseAssGT = assGT;
+                findGTItem.broSTIndex = curIndex;
+                
+                // 计算匹配度 = assST的匹配度 x abs的匹配率。
+                // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
+                AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
+                AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
+                findGTItem.matchValue = stModel.matchValue * ((float)absST.count / MAX(stModel.assT.count, broST.count));
                 
                 // 记录缓存池
-                [bestGVsPoolV2 setObjectV5:curBestItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(broST_p.pointerId)];
+                [bestGVsPoolV2 setObjectV7:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId) k7:@(broST_p.pointerId)];
             }
             
-            //35. 保留最匹配的一条。
-            if (!bestResult || bestResult.matchValue < curBestItem.matchValue) {
-                bestResult = curBestItem;
+            // 保留最匹配的一条。
+            if (!bestResult || bestResult.matchValue < findGTItem.matchValue) {
+                bestResult = findGTItem;
             }
-            
-            
         }
     }
-    
-    return nil;
-    
+    return bestResult;
 }
 
 //MARK:===============================================================
