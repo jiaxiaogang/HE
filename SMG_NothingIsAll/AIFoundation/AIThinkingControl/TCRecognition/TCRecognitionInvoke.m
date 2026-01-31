@@ -697,6 +697,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(NSArray*) recognitionGroupFeatureV7:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
     // 数据准备
     GTModels *gtModels = [GTModels new];
+    DDic *sourceDic = [DDic new];
     
     // assST层。
     for (AIFeatureJvBuModel *stModel in stModels) {
@@ -710,18 +711,25 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSArray *bro_ps = Ports2Pits([AINetUtils conPorts_All:absST]);
             for (AIKVPointer *bro_p in bro_ps) {
                 
-                // assGT。
-                NSArray *refPorts = [AINetUtils refPorts_All:bro_p];
-                for (AIPort *refPort in refPorts) {
-                    AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
-                    NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
-                    
-                    // gt自举算法。
-                    for (NSInteger i = 1; i < assGT.count; i++) {
-                        NSInteger curIndex = (beginIndex + i) % assGT.count;
-                        [self gtZiJv:assGT curIndex:curIndex];
-                    }
-                }
+                // bro来源路径记录到sourceDic。
+                [sourceDic setObjectV3:@"" k1:bro_p k2:absST_p k3:stModel];
+            }
+        }
+    }
+    
+    // 用sourceDic逐个求refGT。
+    for (AIKVPointer *bro_p in sourceDic.data.allKeys) {
+        NSArray *refPorts = [AINetUtils refPorts_All:bro_p];
+        for (AIPort *refPort in refPorts) {
+            
+            // assGT。
+            AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+            NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
+            
+            // gt自举算法。
+            for (NSInteger i = 1; i < assGT.count; i++) {
+                NSInteger curIndex = (beginIndex + i) % assGT.count;
+                [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
             }
         }
     }
@@ -740,9 +748,34 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return nil;
 }
 
-// GT自举算法。
-+(id) gtZiJv:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex {
-    // 需要bro到stModel的映射，方便取来竞争best结果。
+/**
+ *  MARK:--------------------GT自举算法--------------------
+ *  @param sourceDic 需要从broST -> absST -> assST 及baseSTModel的反向路径映射，方便用于GT自举中竞争best结果。
+ */
++(id) gtZiJv:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic {
+    // 反取bro层
+    AIKVPointer *broST_p = ARR_INDEX(assGT.content_ps, curIndex);
+    
+    // 反取abs层
+    DDic *absSTDic = [sourceDic objectForKey:broST_p];
+    for (AIKVPointer *absST_p in absSTDic.data.allKeys) {
+        
+        // 反取ass层
+        DDic *assSTDic = [absSTDic objectForKey:absST_p];
+        for (AIFeatureJvBuModel *stModel in assSTDic.data.allKeys) {
+            
+            GTItemV2 *gtItem = [GTItemV2 new];
+            gtItem.baseSTModel = stModel;
+            gtItem.baseAbsST = [SMGUtils searchNode:absST_p];
+            gtItem.baseAssGT = assGT;
+            gtItem.broSTIndex = curIndex;
+            
+            // TODOTOMORROW20260131: 计算rectIndex用于范围匹配及防重，然后计算匹配度，竞争出best。
+            
+            
+            
+        }
+    }
     
     return nil;
     
