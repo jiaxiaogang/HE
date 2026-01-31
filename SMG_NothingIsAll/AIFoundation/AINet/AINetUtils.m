@@ -243,7 +243,7 @@
                 //2025.03.18: 支持多码特征后，概念由特征组成，而不是单码。
                 AINodeBase *item = [SMGUtils searchNode:item_p];
                 
-                //4. 如果是特征时，记录上level,x,y值到refPort中。
+                //4. 如果是特征时，记录上rect值到refPort中。
                 NSDictionary *findParams = nil;
                 if (PitIsFeature(biger_p) || PitIsGroupFeature(biger_p)) {
                     AIFeatureNode *feature = [SMGUtils searchNode:biger_p];

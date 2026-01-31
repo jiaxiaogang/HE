@@ -220,7 +220,7 @@
             return ![self.bestGVs.allKeys containsObject:item];
         }];
     }];
-    [validAbsST_ps insertObject:self.abs_p atIndex:0];
+    // [validAbsST_ps insertObject:self.abs_p atIndex:0];
     self.validAbsST_ps = validAbsST_ps;
     
     // 方案2、直接取出absST.content判断是否被全含。

@@ -695,19 +695,36 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 }
 
 +(NSArray*) recognitionGroupFeatureV7:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
-    //1. 数据准备
-    GTModels *gtModels = [GTModels new]; // 初始化gtModels
+    // 数据准备
+    GTModels *gtModels = [GTModels new];
     
-    // 取每个stModel的有效absPorts。
+    // assST层。
     for (AIFeatureJvBuModel *stModel in stModels) {
+        
+        // absST层：有效（全含）absST。
         [stModel run4ValidAbsST_ps];
+        for (AIKVPointer *absST_p in stModel.validAbsST_ps) {
+            AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
+            
+            // broST层。
+            NSArray *bro_ps = Ports2Pits([AINetUtils conPorts_All:absST]);
+            for (AIKVPointer *bro_p in bro_ps) {
+                
+                // assGT。
+                NSArray *refPorts = [AINetUtils refPorts_All:bro_p];
+                for (AIPort *refPort in refPorts) {
+                    AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+                    NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
+                    
+                    // gt自举算法。
+                    for (NSInteger i = 1; i < assGT.count; i++) {
+                        NSInteger curIndex = (beginIndex + i) % assGT.count;
+                        [self gtZiJv:assGT curIndex:curIndex];
+                    }
+                }
+            }
+        }
     }
-    
-    // 有效abs取bro。
-    
-    // bro取refGT。
-    
-    // assGT自举算法。
     
     // 用rectIndex来防重。
     
@@ -721,6 +738,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     //61. debugLog
     return nil;
+}
+
+// GT自举算法。
++(id) gtZiJv:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex {
+    // 需要bro到stModel的映射，方便取来竞争best结果。
+    
+    return nil;
+    
 }
 
 //MARK:===============================================================
