@@ -772,6 +772,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // TODOTOMORROW20260131: 计算rectIndex用于范围匹配及防重，然后计算匹配度，竞争出best。
             
+            // 1. 兼容：同一个assGT的不同index，如果预测另一个index的atProtoRect。。。 （不需要兼容合并，因为自举时，这个assGT已经处理完成了）。
+            // 2. 初次自举时防重：用每个assGT的同一个index，对应的rectIndex也一样时，可以防重（仅保留best一条）。
+            // 3. 后续再来时防重：如果当前assGT.curIndex.protoRectIndex都一样，则直接防重（不用判断best，因为当时它肯定已经在自举时失败了）。
+            
             
             
         }
