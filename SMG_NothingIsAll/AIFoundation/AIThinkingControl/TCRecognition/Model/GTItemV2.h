@@ -18,6 +18,7 @@
 @property (strong, nonatomic) AIFeatureNode *baseAbsST;
 @property (strong, nonatomic) AIGroupFeatureNode *baseAssGT;
 @property (assign, nonatomic) NSInteger broSTIndex;
+@property (assign, nonatomic) CGFloat matchValue;
 
 -(CGRect) assST_ProtoT;
 

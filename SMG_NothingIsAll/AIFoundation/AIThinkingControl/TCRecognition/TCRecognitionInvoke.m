@@ -24,6 +24,8 @@ static DDic *bestGVsPoolV2; // 构建bestGVs的元素的复用池 <K=protoRect�
 static DDic *protoGVIndexPoolV2; // 从protoDic的类似切图只切一次，这是复用池（类似protoRect区域，直接复用切图计算protoGVIndex结果）。
 static int bestGVsPoolTotalCount = 0, bestGVsPoolMissCount = 0, cutImgPoolTotalCount = 0, cutImgPoolMissCount = 0;
 
+static DDic *bestSTsPool; // 构建bestSTs的元素的复用池 <K=protoRect的分组索引 和 assGT.itemST.pId, V=bestSTItem>
+
 static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 +(void) resetPool {
@@ -38,6 +40,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     bestGVsPoolMissCount = 0;
     cutImgPoolTotalCount = 0;
     cutImgPoolMissCount = 0;
+    bestSTsPool = [DDic new];
 }
 
 //MARK:===============================================================
@@ -755,6 +758,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(id) gtZiJv:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic {
     // 反取bro层
     AIKVPointer *broST_p = ARR_INDEX(assGT.content_ps, curIndex);
+    GTItemV2 *bestResult = nil;
     
     // 反取abs层
     DDic *absSTDic = [sourceDic objectForKey:broST_p];
@@ -772,10 +776,26 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // TODOTOMORROW20260131: 计算rectIndex用于范围匹配及防重，然后计算匹配度，竞争出best。
             
-            // 1. 兼容：同一个assGT的不同index，如果预测另一个index的atProtoRect。。。 （不需要兼容合并，因为自举时，这个assGT已经处理完成了）。
             // 2. 初次自举时防重：用每个assGT的同一个index，对应的rectIndex也一样时，可以防重（仅保留best一条）。
             // 3. 后续再来时防重：如果当前assGT.curIndex.protoRectIndex都一样，则直接防重（不用判断best，因为当时它肯定已经在自举时失败了）。
             
+            // TODO: 这个复用方式不对，因为broST_ProtoT都算出来了，复用就省不了多少算力了，应该是算broST_ProtoT之前能不能触发复用？比如assST_ProtoT已经确定了，然后对应的assST,absST,broST全确定了。
+            MapModel *rectKey = [self getIndexsOfProtoRect:gtItem.broST_ProtoT];
+            GTItemV2 *curBestItem = [bestSTsPool objectV5ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(broST_p.pointerId)];
+            if ([@"isNull" isEqual:curBestItem]) continue; //占位空，则说明上次已经失败过，还按失败处理（此处防重掉18%）。
+            if (!curBestItem) {
+                curBestItem = gtItem;
+                // 计算匹配度（assST的匹配度 x abs的匹配率。
+                // abs匹配率 = abs.count / max(assST.count,broST.count)。
+                
+                // 记录缓存池
+                [bestGVsPoolV2 setObjectV5:curBestItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(broST_p.pointerId)];
+            }
+            
+            //35. 保留最匹配的一条。
+            if (!bestResult || bestResult.matchValue < curBestItem.matchValue) {
+                bestResult = curBestItem;
+            }
             
             
         }
