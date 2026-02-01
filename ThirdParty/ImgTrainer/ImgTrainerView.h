@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@class AIFeatureNode,AIFeatureJvBuModel,AIFeatureZenTiModel,GTModel;
+@class AIFeatureNode,AIFeatureJvBuModel,AIFeatureZenTiModel,GTModel,GTModelV2;
 @interface ImgTrainerView : UIView
 
 -(void) open;

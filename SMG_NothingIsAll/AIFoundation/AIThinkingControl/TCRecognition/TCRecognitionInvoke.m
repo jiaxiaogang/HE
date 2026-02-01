@@ -312,11 +312,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV6:jvBuModel.stModels logDesc:logDesc protoGT:protoGT];
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV7:jvBuModel.stModels logDesc:logDesc protoGT:protoGT];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。
-    for (GTModel *assGT in assGTs) {
+    for (GTModelV2 *assGT in assGTs) {
         [AIAnalogy analogyGroupFeatureV6:protoGT gtModel:assGT prefixIndex:[assGTs indexOfObject:assGT] + 1];
     }
     NSLog(@"第5步、特征识别类比 finish ------------------------------------------------");
@@ -828,6 +828,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 findGTItem.baseAbsST = [SMGUtils searchNode:absST_p];
                 findGTItem.baseAssGT = assGT;
                 findGTItem.broSTIndex = curIndex;
+                
+                // TODOTOMORROW20260201: 根据broST_ProtoT来复用，可是即使broST_ProtoT一样，其ass->abs->bro通路不同，也没法复用，想想broST_ProtoT还有什么用。
                 
                 // 计算匹配度 = assST的匹配度 x abs的匹配率。
                 // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
