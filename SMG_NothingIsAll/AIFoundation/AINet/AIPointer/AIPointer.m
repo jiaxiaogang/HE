@@ -61,7 +61,7 @@
  *  MARK:--------------------NSCopying--------------------
  */
 - (id)copyWithZone:(NSZone __unused *)zone {
-    AIPointer *copy = [[AIPointer alloc] init];
+    AIPointer *copy = [[self.class allocWithZone:zone] init];
     copy.pointerId = self.pointerId;
     copy.params = self.params;
     copy.isJiao = self.isJiao;

@@ -715,7 +715,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             for (AIKVPointer *bro_p in bro_ps) {
                 
                 // bro来源路径记录到sourceDic。
-                [sourceDic setObjectV3:@"" k1:bro_p k2:absST_p k3:stModel];
+                NSMutableArray *collectedSTModels = [sourceDic objectV2ForKey1:bro_p k2:absST_p];
+                if (!collectedSTModels) collectedSTModels = [[NSMutableArray alloc] init];
+                [collectedSTModels addObject:stModel];
+                [sourceDic setObjectV2:collectedSTModels k1:bro_p k2:absST_p];
             }
         }
     }
@@ -810,8 +813,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (AIKVPointer *absST_p in absSTDic.data.allKeys) {
         
         // 反取ass层
-        DDic *assSTDic = [absSTDic objectForKey:absST_p];
-        for (AIFeatureJvBuModel *stModel in assSTDic.data.allKeys) {
+        NSMutableArray *collectedSTModels = [absSTDic objectForKey:absST_p];
+        for (AIFeatureJvBuModel *stModel in collectedSTModels) {
             
             // 防重：用assST_ProtoT、对应的assST、absST、broST，四个条件来进行防重。
             // 说明：防重的好处在于，同一个ass->abs->bro通路，投射在同一个protoRectIndex上时，直接复用，其broST_ProtoRect也只需计算一次。

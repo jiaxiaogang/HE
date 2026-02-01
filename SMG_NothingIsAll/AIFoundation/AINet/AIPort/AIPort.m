@@ -146,7 +146,7 @@
  *  MARK:--------------------NSCopying--------------------
  */
 - (id)copyWithZone:(NSZone __unused *)zone {
-    AISPStrong *copy = [[AISPStrong alloc] init];
+    AISPStrong *copy = [[self.class allocWithZone:zone] init];
     copy.sStrong = self.sStrong;
     copy.pStrong = self.pStrong;
     return copy;
