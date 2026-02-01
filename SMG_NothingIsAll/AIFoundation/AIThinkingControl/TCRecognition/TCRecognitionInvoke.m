@@ -734,7 +734,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // gt自举算法。
             GTModelV2 *gtModel = [GTModelV2 new:assGT];
-            for (NSInteger i = 1; i < assGT.count; i++) {
+            for (NSInteger i = 0; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
                 GTItemV2 *gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
                 if (!gtItem) {

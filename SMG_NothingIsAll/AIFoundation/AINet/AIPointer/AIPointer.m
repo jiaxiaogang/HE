@@ -32,6 +32,14 @@
     return STRFORMAT(@"%@",self.params);
 }
 
+-(NSUInteger) hash {
+    // hash用核心识别字段来计算：pointerId 和 params。
+    NSUInteger hash = self.pointerId;
+    hash = hash ^ [self.params hash];
+    hash = hash ^ (self.isJiao ? 1231 : 1237); // 布尔哈希质数
+    return hash;
+}
+
 /**
  *  MARK:--------------------NSCoding--------------------
  */
