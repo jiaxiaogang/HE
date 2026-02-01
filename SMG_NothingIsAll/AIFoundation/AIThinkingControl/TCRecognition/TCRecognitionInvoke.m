@@ -434,7 +434,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 BOOL havOld = [model getBestGVByAssIndex:curIndex];
                 if (havOld) continue;
                 
-                AIFeatureJvBuItem *bestItem = [self ziJvItem:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds];
+                AIFeatureJvBuItem *bestItem = [self stZiJv:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds];
                 //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
                 if (!bestItem) continue;
                 [model updateBestGVs:bestItem assIndex:curIndex];
@@ -699,7 +699,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 +(NSArray*) recognitionGroupFeatureV7:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
     // 数据准备
-    GTModels *gtModels = [GTModels new];
+    NSMutableArray *gtModels = [NSMutableArray new];
     DDic *sourceDic = [DDic new];
     
     // assST层。
@@ -730,29 +730,70 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
             
             // gt自举算法。
+            GTModelV2 *gtModel = [GTModelV2 new:assGT];
             for (NSInteger i = 1; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
                 GTItemV2 *gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
+                if (!gtItem) continue;
                 
                 // 收集成GTItemV2模型。
+                [gtModel.bestSTDic setObject:gtItem forKey:@(curIndex)];
                 
-                // TODOTOMORROW20260201: 建GTModel模型，收集gtItem。
-                
+                // 避免同一个位置的同一个assGT多次处理浪费性能：同一个assGT，同一个broST_ProtoRect.rectIndex，进行防重。
+                // TODOTOMORROW20260201: 如果计算三条后，发现与已收集的gtModels中，有broST_ProtoRect和assGT都重复的，直接continue。
                 
             }
+            [gtModels addObject:gtModel];
         }
     }
     
-    
-    
     // 竞争因子：匹配度 & 匹配数（防过抽）。
+    NSInteger maxMatchCount = [SMGUtils filterBestScore:gtModels scoreBlock:^CGFloat(GTModelV2 *item) {
+        return item.bestSTDic.count;
+    }];
+    for (GTModelV2 *gtModel in gtModels) {
+        [gtModel run4MatchValue];
+        [gtModel run4MatchCountRatio:maxMatchCount];
+    }
     
-    // 综合竞争。
+    // 最后进行综合竞争，把最符合的找出来。
+    NSArray *resultModels = [SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModelV2 *obj) {
+        return obj.matchValue * obj.matchCountRatio;
+    }];
     
-    //41. 更新: ref强度 & 相似度 & 抽具象 & 映射;
+    // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
+    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTModel *obj) {
+        return @(obj.assGT.pId);
+    }];
     
-    //61. debugLog
-    return nil;
+    // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
+    NSInteger count = resultModels.count;
+    float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
+    resultModels = ARR_SUB(resultModels, 0, MIN(20, count * needRate));
+    
+    // 更新: ref强度 & 相似度 & 抽具象 & 映射;
+    for (GTModelV2 *model in resultModels) {
+        
+        // 从protoT更新logDesc到assGT。
+        [model.assGT updateLogDescItem:logDesc rate:model.matchValue];
+        
+        // debug
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f =\t综合得分:%.3f",[resultModels indexOfObject:model],model.assGT.pId,
+                                         model.matchValue,model.matchCountRatio,model.matchValue * model.matchCountRatio);
+        
+        // 组特征识别结果可视化（参考34176）。
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForGTModelV2:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.bestSTDic.count,model.assGT.count) left:0 top:0 tvId:3];
+        }];
+    }
+    
+    // debugLog
+    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
+        return obj.assGT;
+    } convertMatchBlock:^float(GTModelV2 *obj) {
+        return obj.matchValue;
+    }];
+    return resultModels;
 }
 
 /**
@@ -1638,12 +1679,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }]));
 }
 
-+(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
-                          assT:(AIFeatureNode*)assT
-                 lastProtoRect:(CGRect)lastProtoRect
-                 lastAtAssRect:(CGRect)lastAtAssRect
-                 protoColorDic:(NSDictionary*)protoColorDic
-                            ds:(NSString*)ds {
++(AIFeatureJvBuItem*) stZiJv:(NSInteger)curIndex assT:(AIFeatureNode*)assT lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
+    // 数据准备
     AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
     NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
     CGRect curAtAssRect = curAtAssRectValue.CGRectValue;

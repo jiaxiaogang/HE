@@ -31,6 +31,7 @@
 
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
 -(void) setDataForGTModel:(GTModel*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
+-(void) setDataForGTModelV2:(GTModelV2*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
 -(void) setDataForAlg:(AINodeBase*)algNode lab:(NSString*)lab tvId:(NSInteger)tvId;
 
 @end

@@ -50,11 +50,6 @@
 
 +(void) printLogDescRate:(NSArray*)asses protoLogDesc:(NSString*)protoLogDesc prefix:(NSString*)prefix convertNodeBlock:(id(^)(id obj))convertNodeBlock convertMatchBlock:(float(^)(id obj))convertMatchBlock;
 
-+(AIFeatureJvBuItem*) ziJvItem:(NSInteger)curIndex
-                          assT:(AIFeatureNode*)assT
-                 lastProtoRect:(CGRect)lastProtoRect
-                 lastAtAssRect:(CGRect)lastAtAssRect
-                 protoColorDic:(NSDictionary*)protoColorDic
-                            ds:(NSString*)ds;
++(AIFeatureJvBuItem*) stZiJv:(NSInteger)curIndex assT:(AIFeatureNode*)assT lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds;
 
 @end

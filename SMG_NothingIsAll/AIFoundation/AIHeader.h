@@ -74,6 +74,7 @@
 #import "AIFeatureJvBuModels.h"
 #import "GTModels.h"
 #import "GTModel.h"
+#import "GTModelV2.h"
 #import "GTItem.h"
 #import "GTItemV2.h"
 

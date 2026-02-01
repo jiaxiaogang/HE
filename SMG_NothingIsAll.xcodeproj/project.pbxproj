@@ -217,6 +217,7 @@
 		08EA48C7202929A40038B982 /* ImvAlgsModelBase.m in Sources */ = {isa = PBXBuildFile; fileRef = 08EA48C6202929A40038B982 /* ImvAlgsModelBase.m */; };
 		08EA48CE202932B80038B982 /* CustomAlgsChargeModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08EA48CD202932B80038B982 /* CustomAlgsChargeModel.m */; };
 		08EA48D1202932E70038B982 /* AICustomAlgs.m in Sources */ = {isa = PBXBuildFile; fileRef = 08EA48D0202932E70038B982 /* AICustomAlgs.m */; };
+		08EF604E2F2EE89600E1AE3B /* GTModelV2.m in Sources */ = {isa = PBXBuildFile; fileRef = 08EF604D2F2EE89600E1AE3B /* GTModelV2.m */; };
 		08EF706421E5743F009B5194 /* OutputModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08EF706321E5743F009B5194 /* OutputModel.m */; };
 		08F27D6E29ED8FC60063E71B /* TCTransfer.m in Sources */ = {isa = PBXBuildFile; fileRef = 08F27D6D29ED8FC60063E71B /* TCTransfer.m */; };
 		08F27D7229ED92660063E71B /* TCScene.m in Sources */ = {isa = PBXBuildFile; fileRef = 08F27D7129ED92660063E71B /* TCScene.m */; };
@@ -671,6 +672,8 @@
 		08EA48CD202932B80038B982 /* CustomAlgsChargeModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CustomAlgsChargeModel.m; sourceTree = "<group>"; };
 		08EA48CF202932E70038B982 /* AICustomAlgs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AICustomAlgs.h; sourceTree = "<group>"; };
 		08EA48D0202932E70038B982 /* AICustomAlgs.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AICustomAlgs.m; sourceTree = "<group>"; };
+		08EF604C2F2EE89600E1AE3B /* GTModelV2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTModelV2.h; sourceTree = "<group>"; };
+		08EF604D2F2EE89600E1AE3B /* GTModelV2.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTModelV2.m; sourceTree = "<group>"; };
 		08EF706221E5743F009B5194 /* OutputModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OutputModel.h; sourceTree = "<group>"; };
 		08EF706321E5743F009B5194 /* OutputModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OutputModel.m; sourceTree = "<group>"; };
 		08F27D6C29ED8FC60063E71B /* TCTransfer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCTransfer.h; sourceTree = "<group>"; };
@@ -1525,6 +1528,8 @@
 				08690E2B2E82DC9F00D52FFD /* GTItem.m */,
 				081A3B842F2B7660003084E8 /* GTItemV2.h */,
 				081A3B852F2B7660003084E8 /* GTItemV2.m */,
+				08EF604C2F2EE89600E1AE3B /* GTModelV2.h */,
+				08EF604D2F2EE89600E1AE3B /* GTModelV2.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -2147,6 +2152,7 @@
 				0819F4F427583AA9007396D0 /* TCFeedback.m in Sources */,
 				080DF6A22DBB1273000EC837 /* ImgTrainerItemModel.m in Sources */,
 				081E3A352DD2338700897ED0 /* InputGroupFeatureModel.m in Sources */,
+				08EF604E2F2EE89600E1AE3B /* GTModelV2.m in Sources */,
 				086D93371F8CA782002BAF3F /* RuntimeInvoker.m in Sources */,
 				08D471DE1FEB3FFF00C61322 /* AIImvAlgs.m in Sources */,
 				08BB986F2C87E2D800DA4029 /* HEResult.m in Sources */,
