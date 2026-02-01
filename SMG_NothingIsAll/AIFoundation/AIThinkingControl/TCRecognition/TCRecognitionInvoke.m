@@ -711,7 +711,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
             
             // broST层。
-            NSArray *bro_ps = Ports2Pits([AINetUtils conPorts_All:absST]);
+            NSArray *bro_ps = [SMGUtils collectArrA:Ports2Pits([AINetUtils conPorts_All:absST]) arrB:@[absST_p]];
             for (AIKVPointer *bro_p in bro_ps) {
                 
                 // bro来源路径记录到sourceDic。
@@ -737,6 +737,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             for (NSInteger i = 1; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
                 GTItemV2 *gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
+                if (!gtItem) {
+                    NSLog(@"TODOTOMORROW20260201: 查为什么有匹配数为0的AssGT结果");
+                    gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
+                    NSLog(@"");
+                }
                 if (!gtItem) continue;
                 
                 // 收集成GTItemV2模型。
