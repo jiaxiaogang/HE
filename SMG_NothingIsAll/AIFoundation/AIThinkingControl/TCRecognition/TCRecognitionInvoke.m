@@ -746,9 +746,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 GTModelV2 *sameOldGTModel = [SMGUtils filterSingleFromArr:gtModels checkValid:^BOOL(GTModelV2 *oldGTModel) {
                     // 不是同一个assGT为false
                     if (![oldGTModel.assGT isEqual:assGT]) return false;
-                    // 没对应收集的broST为false
+                    // 新旧都得收集到同一个broST，否则为false
                     GTItemV2 *oldGTItem = [oldGTModel.bestSTDic objectForKey:@(curIndex)];
                     if (!oldGTItem) return false;
+                    // 没对应同样的assST为false
+                    if (![oldGTItem.baseSTModel.assT isEqual:gtItem.baseSTModel.assT]) return false;
                     // 新旧复用了同一个GTItem模型，则一模一样，为true
                     if ([oldGTItem isEqual:gtItem]) return true;
                     // 对比rectIndex一致，为true
