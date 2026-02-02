@@ -27,4 +27,12 @@
     return result;
 }
 
+-(BOOL)isEqual:(MapModel*)object {
+    if (self.v1 && object.v1 && ![self.v1 isEqual:object.v1]) return false;
+    if (self.v2 && object.v2 && ![self.v2 isEqual:object.v2]) return false;
+    if (self.v3 && object.v3 && ![self.v3 isEqual:object.v3]) return false;
+    if (self.v4 && object.v4 && ![self.v4 isEqual:object.v4]) return false;
+    return true;
+}
+
 @end

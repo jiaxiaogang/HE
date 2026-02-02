@@ -737,21 +737,34 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             for (NSInteger i = 0; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
                 GTItemV2 *gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
-                if (!gtItem) {
-                    NSLog(@"TODOTOMORROW20260201: 查为什么有匹配数为0的AssGT结果");
-                    gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
-                    NSLog(@"");
-                }
                 if (!gtItem) continue;
                 
                 // 收集成GTItemV2模型。
                 [gtModel.bestSTDic setObject:gtItem forKey:@(curIndex)];
                 
-                // 避免同一个位置的同一个assGT多次处理浪费性能：同一个assGT，同一个broST_ProtoRect.rectIndex，进行防重。
-                // TODOTOMORROW20260201: 如果计算三条后，发现与已收集的gtModels中，有broST_ProtoRect和assGT都重复的，直接continue。
-                
+                // 避免多次处理浪费性能：发现与已收集的gtModels中：有同一个assGT & 同一个broST_ProtoRect.rectIndex，进行防重。
+                GTModelV2 *sameOldGTModel = [SMGUtils filterSingleFromArr:gtModels checkValid:^BOOL(GTModelV2 *oldGTModel) {
+                    // 不是同一个assGT为false
+                    if (![oldGTModel.assGT isEqual:assGT]) return false;
+                    // 没对应收集的broST为false
+                    GTItemV2 *oldGTItem = [oldGTModel.bestSTDic objectForKey:@(curIndex)];
+                    if (!oldGTItem) return false;
+                    // 新旧复用了同一个GTItem模型，则一模一样，为true
+                    if ([oldGTItem isEqual:gtItem]) return true;
+                    // 对比rectIndex一致，为true
+                    MapModel *oldRectKey = [self getIndexsOfProtoRect:oldGTItem.baseSTModel.assST_ProtoRect];
+                    MapModel *newRectKey = [self getIndexsOfProtoRect:gtItem.baseSTModel.assST_ProtoRect];
+                    if ([oldRectKey isEqual:newRectKey]) return true;
+                    return false;
+                }];
+                if (sameOldGTModel) {
+                    gtModel = nil;
+                    break;
+                }
             }
-            [gtModels addObject:gtModel];
+            if (gtModel && gtModel.bestSTDic.count > 0) {
+                [gtModels addObject:gtModel];
+            }
         }
     }
     
@@ -836,8 +849,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 findGTItem.baseAbsST = [SMGUtils searchNode:absST_p];
                 findGTItem.baseAssGT = assGT;
                 findGTItem.broSTIndex = curIndex;
-                
-                // TODOTOMORROW20260201: 根据broST_ProtoT来复用，可是即使broST_ProtoT一样，其ass->abs->bro通路不同，也没法复用，想想broST_ProtoT还有什么用。
                 
                 // 计算匹配度 = assST的匹配度 x abs的匹配率。
                 // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
