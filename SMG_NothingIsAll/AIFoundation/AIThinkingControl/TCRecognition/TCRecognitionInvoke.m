@@ -641,7 +641,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // debugLog
-    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
+    [TCRecognitionInvoke printLogDescRate:ARR_SUB(resultModels, 0, 1) protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModelV2 *obj) {
         return obj.matchValue * obj.matchCountRatio;
