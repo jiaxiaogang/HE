@@ -30,7 +30,7 @@
  *  MARK:--------------------辅因子：元素数归一化值（防过抽：因为只有具象的匹配数count才可能长）--------------------
  */
 -(void) run4MatchCountRatio:(NSInteger)max {
-    self.matchCountRatio = max == 0 ? 0 : self.bestSTDic.count / max;
+    self.matchCountRatio = max == 0 ? 0 : (float)self.bestSTDic.count / max;
 }
 
 @end
