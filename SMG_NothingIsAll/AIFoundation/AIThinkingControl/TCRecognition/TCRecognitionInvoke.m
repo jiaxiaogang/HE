@@ -557,6 +557,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (AIKVPointer *bro_p in sourceDic.data.allKeys) {
         NSArray *refPorts = [AINetUtils refPorts_All:bro_p];
         for (AIPort *refPort in refPorts) {
+            if ([refPort.target_p isEqual:protoGT.p]) continue;
             
             // assGT。
             AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
