@@ -440,9 +440,9 @@
     //2025.08.24: protoT为空时，也要记录protoLogDesc+1，避免一些抽象特征明明很广泛了，还是只记录着最初的那个logDesc（比如通过识别1触发的多次抽象，仅因最具象时是0，最后还只认为它是0是不对的）。
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
     if (protoT) {
-        [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
+        [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue];
     } else {
-        [absT updateLogDescItem:protoTLogDesc rate:jvBuModel.matchValue * jvBuModel.matchDegree];
+        [absT updateLogDescItem:protoTLogDesc rate:jvBuModel.matchValue];
     }
     
     // 只有不同时，才存各种匹配度等。
@@ -588,8 +588,8 @@
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.assGT] at:protoGT.at ds:protoGT.ds isOut:protoGT.isOut isJiao:true];
     
     //41. 更新logDesc。
-    [absGT updateLogDescDic:protoGT.logDesc];
-    [absGT updateLogDescDic:gtModel.assGT.logDesc rate:gtModel.matchValue * gtModel.matchCountRatio];
+    [absGT updateLogDescDic:protoGT.logDesc rate:gtModel.matchValue];
+    [absGT updateLogDescDic:gtModel.assGT.logDesc];
     
     //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。
     //2025.09.11: 不记录protoGT与absGT的匹配度，位置符合度，范围rect（参考上面方案2-TODO3）。

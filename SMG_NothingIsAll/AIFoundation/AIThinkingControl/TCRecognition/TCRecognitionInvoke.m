@@ -627,10 +627,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
-        
-        // 从protoT更新logDesc到assGT。
-        [model.assGT updateLogDescItem:logDesc rate:model.matchValue * model.matchCountRatio];
-        
         // debug
         if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f =\t综合得分:%.3f",[resultModels indexOfObject:model],model.assGT.pId,
                                          model.matchValue,model.matchCountRatio,model.matchValue * model.matchCountRatio);
@@ -642,7 +638,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // debugLog
-    [TCRecognitionInvoke printLogDescRate:ARR_SUB(resultModels, 0, 1) protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
+    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModelV2 *obj) {
         return obj.matchValue * obj.matchCountRatio;
