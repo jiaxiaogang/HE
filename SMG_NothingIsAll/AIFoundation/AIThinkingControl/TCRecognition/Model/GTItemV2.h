@@ -30,4 +30,16 @@
 -(CGRect) broST_ProtoT;
 @property (assign, nonatomic) CGRect broST_ProtoTCache;
 
+//MARK:===============================================================
+//MARK: < 显著度：因为通路是ass,abs,bro，所以显著度有两个值（参考36019-步骤2&3）>
+//MARK:===============================================================
+
+// 对于assST的显著程度（参考36021-TODO1）。
+-(CGFloat) beAssSTStrongRatio;
+@property (assign, nonatomic) CGFloat beAssSTStrongRatioCache;
+
+// 对于broST的显著程度（参考36021-TODO2）。
+-(CGFloat) beBroSTStrongRatio;
+@property (assign, nonatomic) CGFloat beBroSTStrongRatioCache;
+
 @end

@@ -608,11 +608,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTModelV2 *gtModel in gtModels) {
         [gtModel run4MatchValue];
         [gtModel run4MatchCountRatio:maxMatchCount];
+        [gtModel run4StrongRatio];
     }
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio;
+        return obj.matchValue * obj.matchCountRatio * obj.strongRatio;
     }];
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -628,8 +629,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f =\t综合得分:%.3f",[resultModels indexOfObject:model],model.assGT.pId,
-                                         model.matchValue,model.matchCountRatio,model.matchValue * model.matchCountRatio);
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f \t显著度:%.2f =\t综合得分:%.3f",
+                                         [resultModels indexOfObject:model],model.assGT.pId,
+                                         model.matchValue,model.matchCountRatio,model.strongRatio,
+                                         model.matchValue * model.matchCountRatio * model.strongRatio);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -641,7 +644,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio;
+        return obj.matchValue * obj.matchCountRatio * obj.strongRatio;
     }];
     return resultModels;
 }
@@ -685,12 +688,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
                 findGTItem.matchValue = stModel.matchValue * ((float)absST.count / MAX(stModel.assT.count, broST.count));
                 
+                // 计算显著度（参考36021-TODO1 & TODO2）。
+                [findGTItem beAssSTStrongRatio];
+                [findGTItem beBroSTStrongRatio];
+                
                 // 记录缓存池
                 [bestGVsPoolV2 setObjectV7:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId) k7:@(broST_p.pointerId)];
             }
             
             // 保留最匹配的一条。
-            if (!bestResult || bestResult.matchValue < findGTItem.matchValue) {
+            if (!bestResult || bestResult.matchValue * bestResult.beAssSTStrongRatio * bestResult.beBroSTStrongRatio < findGTItem.matchValue * findGTItem.beAssSTStrongRatio * findGTItem.beBroSTStrongRatio) {
                 bestResult = findGTItem;
             }
         }

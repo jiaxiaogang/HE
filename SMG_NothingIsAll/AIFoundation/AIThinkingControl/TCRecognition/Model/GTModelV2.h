@@ -21,4 +21,7 @@
 @property (assign, nonatomic) CGFloat matchCountRatio;
 -(void) run4MatchCountRatio:(NSInteger)max;
 
+@property (assign, nonatomic) CGFloat strongRatio;
+-(void) run4StrongRatio;
+
 @end
