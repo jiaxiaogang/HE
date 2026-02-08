@@ -19,6 +19,7 @@
 @property (strong, nonatomic) AIGroupFeatureNode *baseAssGT;
 @property (assign, nonatomic) NSInteger broSTIndex;
 @property (assign, nonatomic) CGFloat matchValue;
+-(AIFeatureNode*) baseBroST;
 
 -(CGRect) assST_ProtoT;
 
@@ -41,5 +42,13 @@
 // 对于broST的显著程度（参考36021-TODO2）。
 -(CGFloat) beBroSTStrongRatio;
 @property (assign, nonatomic) CGFloat beBroSTStrongRatioCache;
+
+// 对于assST.content的显著程度（参考36022）
+-(CGFloat) beAssSTStrongRatioByContent;
+@property (assign, nonatomic) CGFloat beAssSTStrongRatioByContentCache;
+
+// 对于broST.content的显著程度（参考36022）
+-(CGFloat) beBroSTStrongRatioByContent;
+@property (assign, nonatomic) CGFloat beBroSTStrongRatioByContentCache;
 
 @end

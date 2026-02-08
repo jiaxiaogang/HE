@@ -608,12 +608,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTModelV2 *gtModel in gtModels) {
         [gtModel run4MatchValue];
         [gtModel run4MatchCountRatio:maxMatchCount];
-        [gtModel run4StrongRatio];
+        [gtModel run4StrongRatioByContent];
     }
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio * obj.strongRatio;
+        return obj.matchValue * obj.matchCountRatio * obj.strongRatioByContent;
     }];
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -631,8 +631,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // debug
         if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f \t显著度:%.2f =\t综合得分:%.3f",
                                          [resultModels indexOfObject:model],model.assGT.pId,
-                                         model.matchValue,model.matchCountRatio,model.strongRatio,
-                                         model.matchValue * model.matchCountRatio * model.strongRatio);
+                                         model.matchValue,model.matchCountRatio,model.strongRatioByContent,
+                                         model.matchValue * model.matchCountRatio * model.strongRatioByContent);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -644,7 +644,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio * obj.strongRatio;
+        return obj.matchValue * obj.matchCountRatio * obj.strongRatioByContent;
     }];
     return resultModels;
 }
@@ -1162,7 +1162,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 CGFloat sumNear = NUMTOOK(ARR_INDEX(nearData, 1)).floatValue;
                 
                 //8. 被引用强度;
-                NSInteger sumRefStrong = [AINetUtils getSumRefStrongByIndexDic:indexDic matchFo:refFo.pointer];
+                NSInteger sumRefStrong = [AINetUtils getSumContentStrongByIndexes:indexDic.allKeys baseNode:refFo];
                 
                 //7. 实例化识别结果AIMatchFoModel;
                 AIMatchFoModel *newMatchFo = [AIMatchFoModel newWithMatchFo:refFo.pointer protoOrRegroupFo:protoOrRegroupFo.pointer sumNear:sumNear nearCount:nearCount indexDic:indexDic cutIndex:cutIndex sumRefStrong:sumRefStrong baseFrameModel:inModel];

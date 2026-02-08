@@ -397,11 +397,11 @@
     //44. 记录整体absT.conPort到protoT和assT的rect（参考上面的方案2-TODO1）。
     [AINetUtils updateConPortRect:absGT conT:gtModel.assGT.p rect:newAbsAtAssRect];
     
+    // TODO: 把这里存上indexDic，取显著度的时候需要它，现在不取absGT的content显著度，所以暂时用不到，后需要的时候加上。
+    
     // 参与了抽象的ST元素更新其内容强度（参考36022）。
-    NSArray *assGTIndexes = [SMGUtils convertArr:gtModel.bestSTDic.allValues convertBlock:^id(GTItemV2 *obj) {
-        return @(obj.broSTIndex);
-    }];
-    [AINetUtils updateContentStrongByIndexes:assGTIndexes toNode:gtModel.assGT];
+     NSArray *assGTIndexes = [SMGUtils convertArr:gtModel.bestSTDic.allValues convertBlock:^id(GTItemV2 *obj) { return @(obj.broSTIndex); }];
+     [AINetUtils updateContentStrongByIndexes:assGTIndexes toNode:gtModel.assGT];
     
     //51. debug
     [SMGUtils runByMainQueue:^{

@@ -24,4 +24,7 @@
 @property (assign, nonatomic) CGFloat strongRatio;
 -(void) run4StrongRatio;
 
+@property (assign, nonatomic) CGFloat strongRatioByContent;
+-(void) run4StrongRatioByContent;
+
 @end

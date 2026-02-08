@@ -232,7 +232,7 @@
 /**
  *  MARK:--------------------获取sumRefStrong已发生部分强度--------------------
  */
-+(NSInteger) getSumRefStrongByIndexDic:(NSDictionary*)indexDic matchFo:(AIKVPointer*)matchFo_p;
++(NSInteger) getSumContentStrongByIndexes:(NSArray*)indexes baseNode:(AINodeBase*)baseNode;
 
 /**
  *  MARK:--------------------根据indexDic更新refPort强度值 (参考2722f-todo33)--------------------

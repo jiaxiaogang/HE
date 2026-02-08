@@ -41,5 +41,10 @@
         return obj.beAssSTStrongRatio * obj.beBroSTStrongRatio;
     }] / self.bestSTDic.count;
 }
+-(void) run4StrongRatioByContent {
+    self.strongRatioByContent = self.bestSTDic.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTDic.allValues convertBlock:^double(GTItemV2 *obj) {
+        return obj.beAssSTStrongRatioByContent * obj.beBroSTStrongRatioByContent;
+    }] / self.bestSTDic.count;
+}
 
 @end
