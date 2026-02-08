@@ -278,7 +278,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoT:nil protoTLogDesc:logDesc prefixIndex:[jvBuModel.stModels indexOfObject:model] + 1];
+        [AIAnalogy analogyFeatureV2:model protoTLogDesc:logDesc prefixIndex:[jvBuModel.stModels indexOfObject:model] + 1];
     }
     
     // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。

@@ -256,7 +256,7 @@
  *      2025.03.21: 改用indexDic映射来实现特征类比 (参考34062-方案2);
  *      2025.03.31: 改为调用组码类比v2。
  */
-+(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoT:(AIFeatureNode*)protoT protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex {
++(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex {
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
     NSArray *models = [SMGUtils convertArr:jvBuModel.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
@@ -317,27 +317,21 @@
     }
     
     //31. 外类比构建
-    NSArray *conNodes = protoT ? @[jvBuModel.assT,protoT] : @[jvBuModel.assT];
+    NSArray *conNodes = @[jvBuModel.assT];
     AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:conNodes at:jvBuModel.assT.at ds:jvBuModel.assT.ds isOut:jvBuModel.assT.isOut isJiao:true isGT:false];
     
     // 如果abs的抽象层数少于当前proto或ass加1，则赋新抽象层数值（未达到abs本来就有的层级，则不变）。
-    absT.absLevel = MAX(MAX(jvBuModel.assT.absLevel, protoT ? protoT.absLevel : 0) + 1, absT.absLevel);
+    absT.absLevel = MAX(jvBuModel.assT.absLevel + 1, absT.absLevel);
     
     //2025.08.24: protoT为空时，也要记录protoLogDesc+1，避免一些抽象特征明明很广泛了，还是只记录着最初的那个logDesc（比如通过识别1触发的多次抽象，仅因最具象时是0，最后还只认为它是0是不对的）。
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
-    if (protoT) {
-        [absT updateLogDescDic:protoT.logDesc rate:jvBuModel.matchValue];
-    } else {
-        [absT updateLogDescItem:protoTLogDesc rate:jvBuModel.matchValue];
-    }
+    [absT updateLogDescItem:protoTLogDesc rate:jvBuModel.matchValue];
+
+    // 更新元素内容强度：根据assContentIndexes的下标，把对应的assT.contentPorts元素的AIPort.strong + 1。
     
     // 只有不同时，才存各种匹配度等。
-    if (![absT.p isEqual:jvBuModel.assT.p] && ![absT.p isEqual:protoT.p]) {
+    if (![absT.p isEqual:jvBuModel.assT.p]) {
         //35. 存protoT与absT的匹配度 & 存conPorts的rect（参考34135-TODO1）& 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
-        if (protoT) [protoT updateMatchValue:absT matchValue:jvBuModel.matchValue]; // bestGVs与proto之间的匹配度 = stModel.matchValue
-        if (protoT) [AINetUtils updateConPortRect:absT conT:protoT.p rect:jvBuModel.bestGVsAtProtoTRect];
-        if (protoT) [protoT updateMatchDegree:absT matchDegree:jvBuModel.matchDegree];
-        
         //36. 类比竞争完后，重新计算然后再存assT与absT的：匹配度 & 存conPorts的rect（参考34135-TODO1）& 记录符合度：根据每个符合itemAbsT，来计算平均符合度。
         [jvBuModel run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
         [jvBuModel.assT updateMatchValue:absT matchValue:1]; // ass与abs的匹配度必为1。
@@ -360,25 +354,6 @@
     jvBuModel.bestGVs4NoZeRen = [SMGUtils convertArr:validBestGVs convertBlock:^id(MapModel *obj) { return obj.v2; }];
     jvBuModel.abs_p = absT.p;
     return absT;
-}
-
-/**
- *  MARK:--------------------组码类比V2--------------------
- *  @version
- *      2025.03.31: v2-因组码索引迭代为三个索引后，这里也改下，不再向单码探进了，直接参考单码类比，在组码类比这儿把assG返回就行了。
- */
-+(MapModel*) analogyGroupValueV2:(AIKVPointer*)protoG_p assG:(AIKVPointer*)assG_p curDegree:(CGFloat)curDegree bigerMatchValue:(CGFloat)bigerMatchValue {
-    //1. 数据准备;
-    AIGroupValueNode *protoG = [SMGUtils searchNode:protoG_p];
-    if (!protoG || !assG_p) return nil;
-    
-    //2. 数据检查（当前有主责，直接剔除）。
-    CGFloat curMatchValue = [protoG getAbsMatchValue:assG_p];
-    BOOL noZeRen = [TCLearningUtil noZeRenForPingJun:curMatchValue * curDegree bigerMatchValue:bigerMatchValue];
-    if (!noZeRen) return nil;
-    
-    //3. 当前码责任<50%时 (次要责任时,免责);
-    return [MapModel newWithV1:assG_p v2:@(curMatchValue) v3:@(curDegree)];
 }
 
 +(AIFeatureNode*) analogyGroupFeatureV6:(AIFeatureNode*)protoGT gtModel:(GTModelV2*)gtModel prefixIndex:(NSInteger)prefixIndex {
@@ -445,6 +420,25 @@
         return [MapModel newWithV1:assV_p v2:@(valueMatchValue)];
     }
     return nil;
+}
+
+/**
+ *  MARK:--------------------组码类比V2--------------------
+ *  @version
+ *      2025.03.31: v2-因组码索引迭代为三个索引后，这里也改下，不再向单码探进了，直接参考单码类比，在组码类比这儿把assG返回就行了。
+ */
++(MapModel*) analogyGroupValueV2:(AIKVPointer*)protoG_p assG:(AIKVPointer*)assG_p curDegree:(CGFloat)curDegree bigerMatchValue:(CGFloat)bigerMatchValue {
+    //1. 数据准备;
+    AIGroupValueNode *protoG = [SMGUtils searchNode:protoG_p];
+    if (!protoG || !assG_p) return nil;
+    
+    //2. 数据检查（当前有主责，直接剔除）。
+    CGFloat curMatchValue = [protoG getAbsMatchValue:assG_p];
+    BOOL noZeRen = [TCLearningUtil noZeRenForPingJun:curMatchValue * curDegree bigerMatchValue:bigerMatchValue];
+    if (!noZeRen) return nil;
+    
+    //3. 当前码责任<50%时 (次要责任时,免责);
+    return [MapModel newWithV1:assG_p v2:@(curMatchValue) v3:@(curDegree)];
 }
 
 /**
