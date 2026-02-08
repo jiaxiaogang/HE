@@ -90,4 +90,8 @@
 @property (strong, nonatomic) NSArray *validAbsST_ps;
 -(void) run4ValidAbsST_ps;
 
+// 相邻度（参考36032-方案）。
+-(void) run4AdjacentScore;
+@property (assign, nonatomic) CGFloat adjacentScore;
+
 @end

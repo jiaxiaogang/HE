@@ -478,6 +478,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 竞争因子计算：分区竞争匹配度。
     [decoratorJvBuModel run4AreaRankRatioV2];
+
+    // 计算相邻度。
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [model run4AdjacentScore];
+    }
     
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。

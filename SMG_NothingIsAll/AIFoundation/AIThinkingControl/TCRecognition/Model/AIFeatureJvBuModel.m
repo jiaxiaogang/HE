@@ -227,4 +227,29 @@
     // 更难判断，因为不止得判断指针包含，还得判断rect也对应着，因为st.content中的itemGV是可能重复的（所以还是先用方案1吧）。
 }
 
+// 相邻度（参考36032-方案）。
+-(void) run4AdjacentScore {
+    // 根据model.bestGVs.allKeys数值是否相邻来计算。
+    // 计算相邻得分：归一化到 0~1，越连续分数越高
+    NSArray *sortedKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *obj) {
+        return obj.integerValue;
+    }];
+    if (sortedKeys.count <= 1) {
+        self.adjacentScore = 1.0;
+        return;
+    }
+    
+    NSInteger totalSpan = self.assT.count - 1;                 // 理论最大跨度
+    NSInteger realSpan  = [sortedKeys.lastObject integerValue] - [sortedKeys.firstObject integerValue];
+    NSInteger gapSum    = 0;                                   // 内部空隙总和
+    for (NSInteger i = 1; i < sortedKeys.count; i++) {
+        NSInteger prev = [sortedKeys[i-1] integerValue];
+        NSInteger curr = [sortedKeys[i] integerValue];
+        gapSum += (curr - prev - 1);                           // 相邻索引之间的空缺数
+    }
+    
+    // 归一化：0 表示最分散，1 表示完全连续
+    self.adjacentScore = totalSpan > 0 ? 1.0 - (CGFloat)gapSum / totalSpan : 1.0;
+}
+
 @end
