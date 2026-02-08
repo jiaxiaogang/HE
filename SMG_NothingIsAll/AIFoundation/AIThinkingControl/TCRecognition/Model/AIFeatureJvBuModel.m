@@ -82,20 +82,9 @@
     }
 }
 
-// 2025.08.14: 支持防过抽、防过具（防抽具二者互相制衡，动态平衡竞争）、分区竞争、归一化，即：分区匹配度 * 防过具象 * 防过抽象（参考35064 & 35082-方案3 & 方案4）。
--(CGFloat) getSTMatch {
-    return self.areaRankRatio;// * self.bestGVs.count;// * self.matchDiffValue;
-}
-
 //2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
 -(CGFloat) getGTMatch {
     return self.matchValue * self.matchAssRatio * self.matchAssRatio;// * self.matchDiffValue;
-}
-
--(NSString*) getSTMatchDesc {
-    return STRFORMAT(@"匹配度:%.2f \t匹配数防抽:%.2f = 区域竞争力:%.2f (总分%.0f/科数%ld=均分%.0f)",
-                     self.matchValue,self.modelMatchCountScore,self.areaRankRatio,
-                     self.areaRankSum,self.areaRankNum,self.areaRankScore);
 }
 
 -(NSString*) getGTMatchDesc {

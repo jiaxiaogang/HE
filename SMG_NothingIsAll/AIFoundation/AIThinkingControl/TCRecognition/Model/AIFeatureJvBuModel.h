@@ -50,9 +50,7 @@
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;
 -(void) run4BestGvsAtAssTRect;
--(CGFloat) getSTMatch;
 -(CGFloat) getGTMatch;
--(NSString*) getSTMatchDesc;
 -(NSString*) getGTMatchDesc;
 
 @property (assign, nonatomic) CGFloat areaRankSum; // 考试名次之和（越大越好）。
