@@ -230,15 +230,35 @@
     
     NSInteger totalSpan = self.assT.count - 1;                 // 理论最大跨度
     NSInteger realSpan  = [sortedKeys.lastObject integerValue] - [sortedKeys.firstObject integerValue];
-    NSInteger gapSum    = 0;                                   // 内部空隙总和
-    for (NSInteger i = 1; i < sortedKeys.count; i++) {
-        NSInteger prev = [sortedKeys[i-1] integerValue];
-        NSInteger curr = [sortedKeys[i] integerValue];
-        gapSum += (curr - prev - 1);                           // 相邻索引之间的空缺数
-    }
+    
+    // 计算空隙总和：直接由“实际跨度 - 已占索引数 + 1”得出。
+    NSInteger gapSum = realSpan - sortedKeys.count + 1;
     
     // 归一化：0 表示最分散，1 表示完全连续
     self.adjacentScore = totalSpan > 0 ? 1.0 - (CGFloat)gapSum / totalSpan : 1.0;
+}
+
+// 中心度：bestGVs.allKeys 越集中在 assT 中间越好，越靠近两端越差，归一化到 0~1
+-(void) run4CenterScore {
+    if (self.bestGVs.count == 0) {
+        self.centerScore = 0.0;
+        return;
+    }
+    
+    // 计算所有 key 的平均索引
+    CGFloat avgIndex = [SMGUtils sumOfArr:self.bestGVs.allKeys convertBlock:^double(NSNumber *obj) {
+        return obj.integerValue;
+    }] / self.bestGVs.count;
+    
+    // 理论中心点
+    CGFloat center = (self.assT.count - 1) / 2.0;
+    
+    // 计算偏离中心的绝对距离，最大可能偏离为 center
+    CGFloat deviation = fabs(avgIndex - center);
+    CGFloat maxDeviation = center;
+    
+    // 归一化：0 表示完全偏离（在两端），1 表示正好在中间
+    self.centerScore = maxDeviation > 0 ? 1.0 - (deviation / maxDeviation) : 1.0;
 }
 
 @end

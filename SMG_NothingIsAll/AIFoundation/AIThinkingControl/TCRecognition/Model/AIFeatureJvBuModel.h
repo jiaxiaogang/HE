@@ -92,4 +92,8 @@
 -(void) run4AdjacentScore;
 @property (assign, nonatomic) CGFloat adjacentScore;
 
+// 中心度（参考36033-方案）。
+-(void) run4CenterScore;
+@property (assign, nonatomic) CGFloat centerScore;
+
 @end

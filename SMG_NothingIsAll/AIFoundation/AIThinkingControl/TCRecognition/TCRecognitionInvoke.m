@@ -479,15 +479,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     [decoratorJvBuModel run4AreaRankRatioV2];
 
-    // 计算相邻度。
+    // 计算相邻度 & 中心度。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model run4AdjacentScore];
+        [model run4CenterScore];
     }
     
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.areaRankRatio * obj.adjacentScore;
+        return obj.areaRankRatio * obj.adjacentScore * obj.centerScore;
     }];
     
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
@@ -513,9 +514,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSString *matchDesc = STRFORMAT(@"匹配度:%.2f \t匹配数防抽:%.2f 区域竞争力:%.2f (总分%.0f/科数%ld=均分%.0f)",
                                         model.matchValue,model.modelMatchCountScore,model.areaRankRatio,
                                         model.areaRankSum,model.areaRankNum,model.areaRankScore);
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ \n相邻度:%.2f = 总分:%.2f",
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ \t相邻度:%.2f \t中心度:%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
-              matchDesc,model.adjacentScore,model.areaRankRatio * model.adjacentScore);
+              matchDesc,model.adjacentScore,model.centerScore,model.areaRankRatio * model.adjacentScore * model.centerScore);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
