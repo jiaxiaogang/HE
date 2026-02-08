@@ -1294,7 +1294,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //4. 识别到时,refPorts -> 更新/加强微信息的引用序列
         AIFoNodeBase *matchFo = [SMGUtils searchNode:item.matchFo];
         [AINetUtils updateRefStrongByIndexDic:item.indexDic2 matchFo:item.matchFo];
-        [AINetUtils updateContentStrongByIndexDic:item.indexDic2 matchFo:item.matchFo];
+        [AINetUtils updateContentStrongByIndexes:item.indexDic2.allKeys toNode:matchFo];
         
         //5. 存储matchFo与protoFo之间的indexDic映射 (参考27177-todo5);
         [protoOrRegroupFo updateIndexDic:matchFo indexDic:item.indexDic2];

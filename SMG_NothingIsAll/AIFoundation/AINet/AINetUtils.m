@@ -841,19 +841,20 @@
 }
 
 /**
- *  MARK:--------------------根据indexDic更新contentPort强度值 (参考2722f-todo32)--------------------
+ *  MARK:--------------------更新元素内容强度--------------------
+ *  @desc : 根据indexes的下标，把对应的contentPorts元素的AIPort.strong + 1
+ *  @param indexes : 要更新强度的元素下标数组
+ *  @version
+ *      xxxx.xx.xx: v1 (参考2722f-todo32)
+ *      2026.02.08: 支持ST和GT更新强度（参考36022）。
  */
-+(void) updateContentStrongByIndexDic:(NSDictionary*)indexDic matchFo:(AIKVPointer*)matchFo_p {
-    //1. 数据准备;
-    AIFoNodeBase *matchFo = [SMGUtils searchNode:matchFo_p];
-    
-    //2. 根据indexDic更新contentPort强度值 & 保存;
-    for (NSNumber *key in indexDic.allKeys) {
-        NSInteger absIndex = key.integerValue;
-        AIPort *itemPort = ARR_INDEX(matchFo.contentPorts, absIndex);
-        itemPort.strong.value++;
++(void) updateContentStrongByIndexes:(NSArray<NSNumber*>*)indexes toNode:(AINodeBase*)toNode {
+    indexes = ARRTOOK(indexes);
+    for (NSNumber *index in indexes) {
+        AIPort *itemPort = ARR_INDEX(toNode.contentPorts, index.integerValue);
+        if (itemPort) itemPort.strong.value += 1;
     }
-    [SMGUtils insertNode:matchFo];
+    [SMGUtils insertNode:toNode];
 }
 
 //MARK:===============================================================

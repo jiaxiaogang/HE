@@ -31,6 +31,7 @@
  *  2. 用于alg: 稀疏码微信息组;(微信息/嵌套概念)指针组 (以pointer默认排序) (去重,否则在局部识别全含时,判定content.count=matchingCount时会失效)
  *  @version
  *      2022.12.25: 将content_ps改成contentPorts (参考2722f-todo11);
+ *      2026.02.08: ST和GT的contentPorts的强度：把其所有元素的累计抽象次数，全统计上（用于计算显著度）。
  */
 @property (strong, nonatomic,nonnull) NSMutableArray *contentPorts;
 -(NSMutableArray *)content_ps;

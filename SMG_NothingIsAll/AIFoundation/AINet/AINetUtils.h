@@ -240,9 +240,9 @@
 +(void) updateRefStrongByIndexDic:(NSDictionary*)indexDic matchFo:(AIKVPointer*)matchFo_p;
 
 /**
- *  MARK:--------------------根据indexDic更新contentPort强度值 (参考2722f-todo32)--------------------
+ *  MARK:--------------------更新元素内容强度--------------------
  */
-+(void) updateContentStrongByIndexDic:(NSDictionary*)indexDic matchFo:(AIKVPointer*)matchFo_p;
++(void) updateContentStrongByIndexes:(NSArray<NSNumber*>*)indexes toNode:(AINodeBase*)toNode;
 
 //MARK:===============================================================
 //MARK:                     < Alg抽具象强度ConStrong的取值和更新 >

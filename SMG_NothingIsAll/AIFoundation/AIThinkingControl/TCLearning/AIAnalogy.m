@@ -326,8 +326,6 @@
     //2025.08.24: protoT为空时，也要记录protoLogDesc+1，避免一些抽象特征明明很广泛了，还是只记录着最初的那个logDesc（比如通过识别1触发的多次抽象，仅因最具象时是0，最后还只认为它是0是不对的）。
     [absT updateLogDescDic:jvBuModel.assT.logDesc];
     [absT updateLogDescItem:protoTLogDesc rate:jvBuModel.matchValue];
-
-    // 更新元素内容强度：根据assContentIndexes的下标，把对应的assT.contentPorts元素的AIPort.strong + 1。
     
     // 只有不同时，才存各种匹配度等。
     if (![absT.p isEqual:jvBuModel.assT.p]) {
@@ -339,6 +337,9 @@
         [jvBuModel.assT updateMatchDegree:absT matchDegree:1];
         [jvBuModel.assT updateIndexDic:absT indexDic:indexDic];
     }
+    
+    // 参与了抽象的GV元素更新其内容强度（参考36022）。
+    [AINetUtils updateContentStrongByIndexes:assContentIndexes toNode:jvBuModel.assT];
     
     //41. debugLog
     [SMGUtils runByMainQueue:^{
@@ -395,6 +396,12 @@
     
     //44. 记录整体absT.conPort到protoT和assT的rect（参考上面的方案2-TODO1）。
     [AINetUtils updateConPortRect:absGT conT:gtModel.assGT.p rect:newAbsAtAssRect];
+    
+    // 参与了抽象的ST元素更新其内容强度（参考36022）。
+    NSArray *assGTIndexes = [SMGUtils convertArr:gtModel.bestSTDic.allValues convertBlock:^id(GTItemV2 *obj) {
+        return @(obj.broSTIndex);
+    }];
+    [AINetUtils updateContentStrongByIndexes:assGTIndexes toNode:gtModel.assGT];
     
     //51. debug
     [SMGUtils runByMainQueue:^{
