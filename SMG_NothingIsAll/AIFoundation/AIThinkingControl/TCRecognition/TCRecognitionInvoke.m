@@ -361,6 +361,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
     
+    for (AIMatchModel *gModel in gMatchModels) {
+        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        if (protoRect.size.width < 20) {
+            NSLog(@"ProtoRect:%@ refPorts条数:%ld",Rect2Str(protoRect),refPorts.count);
+        }
+        for (AIPort *refPort in refPorts) {
+            CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
+            if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
+            if (refPort.rect.size.width != 27) {
+                NSLog(@"%.2f %.2f %@ %@",gModel.matchValue,sizeRatio,Rect2Str(protoRect),Rect2Str(refPort.rect));
+                NSLog(@"TODOTOMORROW20260210: 测下27x27原因，这里refPort.rect全是27x27，查下有没有不是27的");
+                
+                
+            }
+        }
+    }
+    
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
         // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
