@@ -230,10 +230,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     jvBuModel.debug = [GroupDebug new];
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     
-    //11. 最粗粒度为size/3切，下一个为size/1.3切（参考35026-1）。
-    // 2025.12.29: 小于5时，切片分组20%不足了，会导致误差变大，微观有误差，宏观就更错位偏移，并且dotSize太小性能也拖累（参考35126-方案2 & TODO5）。
-    CGFloat dotSize = whSize / 3.0f;
-    while (dotSize > 5) {
+    // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
+    CGFloat dotSize = whSize / 6.0f;
+    while (dotSize > 1) {
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
@@ -258,7 +257,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
         }
             
-        //22. 下一层粒度（再/1.3倍）。
+        //22. 下一层粒度/1.3（参考35026-1）。
         dotSize /= 1.3f;
         //[jvBuModel.debug printLogDic];
     }
@@ -360,23 +359,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
-    
-    for (AIMatchModel *gModel in gMatchModels) {
-        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
-        if (protoRect.size.width < 20) {
-            NSLog(@"ProtoRect:%@ refPorts条数:%ld",Rect2Str(protoRect),refPorts.count);
-        }
-        for (AIPort *refPort in refPorts) {
-            CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
-            if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
-            if (refPort.rect.size.width != 27) {
-                NSLog(@"%.2f %.2f %@ %@",gModel.matchValue,sizeRatio,Rect2Str(protoRect),Rect2Str(refPort.rect));
-                NSLog(@"TODOTOMORROW20260210: 测下27x27原因，这里refPort.rect全是27x27，查下有没有不是27的");
-                
-                
-            }
-        }
-    }
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     for (AIMatchModel *gModel in gMatchModels) {
