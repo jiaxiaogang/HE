@@ -374,6 +374,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         
+        // 只识别似层（参考36036）。
+        refPorts = [SMGUtils filterArr:refPorts checkValid:^BOOL(AIPort *item) {
+            return !item.target_p.isJiao;
+        }];
+        
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
         //2025.12.10: 新事物也可以由旧局部特征拼出来，一看微观复用性，二看旧特征的抽象程度，但肯定不能自己拼自己，不然性能肯定跪（参考35105-方案2）。
@@ -639,7 +644,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f \t显著度:%.2f =\t综合得分:%.3f",
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f \t显著度:%.2f = \t综合得分:%.3f",
                                          [resultModels indexOfObject:model],model.assGT.pId,
                                          model.matchValue,model.matchCountRatio,model.strongRatioByContent,
                                          model.matchValue * model.matchCountRatio * model.strongRatioByContent);
