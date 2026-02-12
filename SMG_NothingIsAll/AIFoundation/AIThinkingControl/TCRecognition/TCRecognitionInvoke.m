@@ -378,6 +378,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         refPorts = [SMGUtils filterArr:refPorts checkValid:^BOOL(AIPort *item) {
             return !item.target_p.isJiao;
         }];
+        // TODOTOMORROW20260212: 经测无效，原来条数有多少，后来还是有多少。
+        // 明天查下：一是为什么条数没变化，二是有没别的方法可以执行自举过程中提前用中断方式过滤。
         
         //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
         //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
