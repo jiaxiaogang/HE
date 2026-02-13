@@ -190,7 +190,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 //单通道
 //TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
-+(void) recognitionFeatureV2_Step0:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
++(void) recognitionFeature:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 初始化缓存池数据。
     [self resetPool];
     _curMaxSize = whSize;
@@ -229,13 +229,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
+    NSMutableArray *allRefPorts = [NSMutableArray new];
     
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
     CGFloat dotSize = whSize / 6.0f;
     while (dotSize > 1) {
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
-        NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
         
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
@@ -251,16 +251,24 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
                 if (!DICISOK(gvIndex)) continue;
                 
-                //21. 单特征识别：通过组码识别。
-                NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:gvIndex at:at ds:ds isOut:false protoRect:curRect protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept beginRectExcept:beginRectExcept assRectExcept:assRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept protoRectKey:rectKey];
-                [jvBuModel.stModels addObjectsFromArray:itemSTModels];
+                // 当前粒度层取到的gv.refPorts收集起来。
+                NSArray *itemRefPorts = [TCRecognitionInvoke recognitionFeatureV2_Step0:gvIndex at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
+                [allRefPorts addObjectsFromArray:itemRefPorts];
+                
+                // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
+                [beginRectExcept addObject:@(curRect)];
             }
         }
             
         //22. 下一层粒度/1.3（参考35026-1）。
         dotSize /= 1.3f;
-        //[jvBuModel.debug printLogDic];
     }
+    
+    // 统一进行ST识别：通过组码识别。
+    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:allRefPorts];
+    [jvBuModel.stModels addObjectsFromArray:itemSTModels];
+    
+    // debug
     NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
     NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
     
@@ -321,25 +329,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第5步、特征识别类比 finish ------------------------------------------------");
 }
 
-/**
- *  MARK:--------------------单特征识别--------------------
- *  @desc 识别抽象的单特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
- *  @param beginRectExcept 切入点防重（相近的地方切入识别的gv避免重复进行识别循环）。
- *  @param assRectExcept 成功识别过的区域防重（如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了）。
- *  @param stModels 已收集的stModels（用于防重）。
- *  @test 作用：此总结可方便该算法的测试与BUG分析。
- *        目标：需达成以下功能。
- *         1. 多样性（比如0的各个局部，都得有多个识别结果，使后续GT识别中，可以每元素contains判断到，以取交识别到更准确的GT）。
- *         2. 稳定性（不得只识别最具象和最抽象，而是稳定的中间部位，得识别到）。
- *         3. 显著性（得慢慢竞争浮现出显著的局部特征结果，比如小人的头总是圆的）。
- *         4. 竞争性（广入窄出）。
- *  @version
- *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
- */
-+(NSArray*) recognitionFeatureV2_Step1:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept beginRectExcept:(NSMutableArray*)beginRectExcept assRectExcept:(NSMutableArray*)assRectExcept dotSize:(CGFloat)dotSize stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept protoRectKey:(MapModel*)protoRectKey {
-    // 数据准备
-    NSMutableArray *result = [NSMutableArray new];
-    NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
++(NSArray*) recognitionFeatureV2_Step0:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     
     //1. 单码排序。
     NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
@@ -382,12 +372,32 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // 所有refPorts全收集起来。
         for (AIPort *refPort in refPorts) {
-            [alls addObject:[MapModel newWithV1:gModel v2:refPort]];
+            [alls addObject:[MapModel newWithV1:gModel v2:refPort v3:@(protoRect) v4:gvIndex]];
         }
     }
+    return alls;
+}
+
+/**
+ *  MARK:--------------------单特征识别--------------------
+ *  @desc 识别抽象的单特征：通过组码向refPorts找特征结果（起初似层结果较多，但后期随着抽象，会慢慢变成结果中几乎都是交层）。
+ *  @param stModels 已收集的stModels（用于防重）。
+ *  @test 作用：此总结可方便该算法的测试与BUG分析。
+ *        目标：需达成以下功能。
+ *         1. 多样性（比如0的各个局部，都得有多个识别结果，使后续GT识别中，可以每元素contains判断到，以取交识别到更准确的GT）。
+ *         2. 稳定性（不得只识别最具象和最抽象，而是稳定的中间部位，得识别到）。
+ *         3. 显著性（得慢慢竞争浮现出显著的局部特征结果，比如小人的头总是圆的）。
+ *         4. 竞争性（广入窄出）。
+ *  @version
+ *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
+ */
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept dotSize:(CGFloat)dotSize stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts {
+    // 数据准备
+    NSMutableArray *result = [NSMutableArray new];
+    NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
     // 只保留强度前20%，至少20条，最多100条（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
-    NSArray *sorts = [SMGUtils sortBig2Small:alls compareBlock:^double(MapModel *obj) {
+    NSArray *sorts = [SMGUtils sortBig2Small:allRefPorts compareBlock:^double(MapModel *obj) {
         AIPort *refPort = obj.v2;
         return refPort.strong.value;
     }];
@@ -395,8 +405,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     for (MapModel *valid in valids) {
+        // 数据准备
         AIMatchModel *gModel = valid.v1;
         AIPort *refPort = valid.v2;
+        NSValue *protoRectValue = valid.v3;
+        CGRect protoRect = protoRectValue.CGRectValue;
+        MapModel *protoRectKey = [self getIndexsOfProtoRect:protoRect];
+        NSDictionary *gvIndex = valid.v4;
+        NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
       
         // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
         CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
@@ -455,13 +471,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [model updateBestGVs:bestItem assIndex:curIndex];
         }
         
-        //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
+        //53. 成功识别过的区域防重：如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了（参考35042-TODO4）。
         [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
             return @(obj.bestGVAtProtoTRect);
         }]];
-        
-        //54. 有效单特征条目后，该切入点beginRectExcept防重（参考35042-TODO4）。
-        [beginRectExcept addObject:@(protoRect)];
         [result addObject:model];
     }
     return result;
