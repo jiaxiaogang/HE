@@ -396,15 +396,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
-    // 只保留强度前20%，至少20条，最多100条（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
+    // 强度越好的越优先（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
     NSArray *sorts = [SMGUtils sortBig2Small:allRefPorts compareBlock:^double(MapModel *obj) {
         AIPort *refPort = obj.v2;
         return refPort.strong.value;
     }];
-    NSArray *valids = ARR_SUB(sorts, 0, MAX(20, MIN(100, sorts.count * 0.2f)));
     
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
-    for (MapModel *valid in valids) {
+    for (MapModel *valid in sorts) {
         // 数据准备
         AIMatchModel *gModel = valid.v1;
         AIPort *refPort = valid.v2;
@@ -413,7 +412,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         MapModel *protoRectKey = [self getIndexsOfProtoRect:protoRect];
         NSDictionary *gvIndex = valid.v4;
         NSNumber *beginProtoDiffData = [gvIndex objectForKey:STRFORMAT(@"%@_diff",ds)];
-      
+        
         // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
         CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
         if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
@@ -476,6 +475,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             return @(obj.bestGVAtProtoTRect);
         }]];
         [result addObject:model];
+        
+        // 最多100条（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
+        if (result.count > 100) break;
     }
     return result;
 }
