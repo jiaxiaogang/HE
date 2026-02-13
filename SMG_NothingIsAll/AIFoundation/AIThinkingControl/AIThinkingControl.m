@@ -209,7 +209,7 @@ static AIThinkingControl *_instance;
         NSArray *hsbGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:ds logDesc:logDesc];
         
         //2025.10.18: 自动改成有内容的(hsbGroupModels.count > 5)再跑识别类比等。
-        if (hsbGroupModels.count > 5) [TCRecognitionInvoke recognitionFeatureV2_Step0:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc];
+        if (hsbGroupModels.count > 5) [TCRecognitionInvoke recognitionFeatureV2_Step0:algsModel.bColors whSize:algsModel.whSize at:algsType ds:ds logDesc:logDesc];
         
         //3、构建具象特征。
         //3. 异步构建一下默认三分粒度的protoT，不过不用于识别，只用于以后被识别。

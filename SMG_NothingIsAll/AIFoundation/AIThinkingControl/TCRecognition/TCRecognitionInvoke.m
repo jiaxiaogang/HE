@@ -361,6 +361,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
+    NSMutableArray *alls = [NSMutableArray new];
     for (AIMatchModel *gModel in gMatchModels) {
         // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
         NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
@@ -374,87 +375,94 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (gModel.matchValue < 0.6) continue;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         
-        // 只识别似层（参考36036）。
+        // 只识别似层（参考36036-方案V1）//几乎无效果。
         refPorts = [SMGUtils filterArr:refPorts checkValid:^BOOL(AIPort *item) {
             return !item.target_p.isJiao;
         }];
-        // TODOTOMORROW20260212: 经测无效，原来条数有多少，后来还是有多少。
-        // 明天查下：一是为什么条数没变化，二是有没别的方法可以执行自举过程中提前用中断方式过滤。
         
-        //2025.07.03: 打开refPorts强度门槛（参考35053-方案2）。
-        //2025.08.19: 关掉此处过滤，因为新的事物将无机会激活（参考35066-方案）。
-        //2025.12.10: 新事物也可以由旧局部特征拼出来，一看微观复用性，二看旧特征的抽象程度，但肯定不能自己拼自己，不然性能肯定跪（参考35105-方案2）。
-        NSArray *validRefPorts = ARR_SUB(refPorts, 0, MIN(MAX(refPorts.count * 0.2f, 5), 30));
+        // 所有refPorts全收集起来。
+        for (AIPort *refPort in refPorts) {
+            [alls addObject:[MapModel newWithV1:gModel v2:refPort]];
+        }
+    }
+    
+    // 只保留强度前20%，至少20条，最多100条（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
+    NSArray *sorts = [SMGUtils sortBig2Small:alls compareBlock:^double(MapModel *obj) {
+        AIPort *refPort = obj.v2;
+        return refPort.strong.value;
+    }];
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(20, MIN(100, sorts.count * 0.2f)));
+    
+    // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
+    for (MapModel *valid in valids) {
+        AIMatchModel *gModel = valid.v1;
+        AIPort *refPort = valid.v2;
+      
+        // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
+        CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
+        if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
         
-        //12. 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
-        //[decoratorJvBuModel.debug updateLogDic:102 assPId:100];
-        for (AIPort *refPort in validRefPorts) {
-            // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
-            CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
-            if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
+        AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
+        if (!assT) continue;
+        NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
+        if (beginAssIndex == -1) continue;
+        
+        CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
+        CGRect lastProtoRect = protoRect;
+        CGRect assSTRect = [SMGUtils convertArr2Rect:assT.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
+        
+        // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
+        lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
+        
+        // STModel防重复用池。
+        AIFeatureJvBuModel *oldModel = [self getSTModelFromPoolV2:result runedSTModelsPool:stModels newBeginGV_ProtoRect:lastProtoRect newBeginAssIndex:beginAssIndex assST:assT];
+        if (oldModel) continue;
+        
+        // 无复用时新建并识别。
+        AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
+        
+        // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
+        BOOL havOld = [model getBestGVByAssIndex:beginAssIndex];
+        if (!havOld) {
+            // bestGV防重复用池。
+            AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
+            AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
+            bestGVsPoolTotalCount ++;
+            if (!beginBestGVItem) {
+                bestGVsPoolMissCount ++;
+                // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
+                AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
+                CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
+                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue];
+                [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
+            }
             
-            AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
-            if (!assT) continue;
-            NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
-            if (beginAssIndex == -1) continue;
-            
-            CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
-            CGRect lastProtoRect = protoRect;
-            CGRect assSTRect = [SMGUtils convertArr2Rect:assT.rects itemRectBlock:^CGRect(NSValue *item) { return item.CGRectValue; }];
-            
-            // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
-            lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
-            
-            // STModel防重复用池。
-            AIFeatureJvBuModel *oldModel = [self getSTModelFromPoolV2:result runedSTModelsPool:stModels newBeginGV_ProtoRect:lastProtoRect newBeginAssIndex:beginAssIndex assST:assT];
-            if (oldModel) continue;
-            
-            // 无复用时新建并识别。
-            AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
+            // 收集首条bestGV
+            [model updateBestGVs:beginBestGVItem assIndex:beginAssIndex];
+        }
+        
+        //21. 自举：每个assT一条条自举自身的gv。
+        for (NSInteger i = 1; i < assT.count; i++) {
+            NSInteger curIndex = (beginAssIndex + i) % assT.count;
             
             // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
-            BOOL havOld = [model getBestGVByAssIndex:beginAssIndex];
-            if (!havOld) {
-                // bestGV防重复用池。
-                AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, beginAssIndex);
-                AIFeatureJvBuItem *beginBestGVItem = [bestGVsPoolV2 objectV5ForKey1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
-                bestGVsPoolTotalCount ++;
-                if (!beginBestGVItem) {
-                    bestGVsPoolMissCount ++;
-                    // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
-                    AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
-                    CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
-                    beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue];
-                    [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
-                }
-                
-                // 收集首条bestGV
-                [model updateBestGVs:beginBestGVItem assIndex:beginAssIndex];
-            }
+            BOOL havOld = [model getBestGVByAssIndex:curIndex];
+            if (havOld) continue;
             
-            //21. 自举：每个assT一条条自举自身的gv。
-            for (NSInteger i = 1; i < assT.count; i++) {
-                NSInteger curIndex = (beginAssIndex + i) % assT.count;
-                
-                // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
-                BOOL havOld = [model getBestGVByAssIndex:curIndex];
-                if (havOld) continue;
-                
-                AIFeatureJvBuItem *bestItem = [self stZiJv:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds];
-                //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
-                if (!bestItem) continue;
-                [model updateBestGVs:bestItem assIndex:curIndex];
-            }
-            
-            //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
-            [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
-                return @(obj.bestGVAtProtoTRect);
-            }]];
-            
-            //54. 有效单特征条目后，该切入点beginRectExcept防重（参考35042-TODO4）。
-            [beginRectExcept addObject:@(protoRect)];
-            [result addObject:model];
+            AIFeatureJvBuItem *bestItem = [self stZiJv:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds];
+            //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
+            if (!bestItem) continue;
+            [model updateBestGVs:bestItem assIndex:curIndex];
         }
+        
+        //53. 有效单特征条目后，计为assRectExcept防重（参考35042-TODO4）。
+        [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return @(obj.bestGVAtProtoTRect);
+        }]];
+        
+        //54. 有效单特征条目后，该切入点beginRectExcept防重（参考35042-TODO4）。
+        [beginRectExcept addObject:@(protoRect)];
+        [result addObject:model];
     }
     return result;
 }
