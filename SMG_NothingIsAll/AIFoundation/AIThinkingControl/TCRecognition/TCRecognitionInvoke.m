@@ -409,7 +409,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIPort *refPort = valid.v2;
         NSInteger oldCount = NUMTOOK([assSTCounted objectForKey:@(refPort.target_p.pointerId)]).integerValue;
         if (oldCount > 9) continue;
-        [assSTCounted setObject:@(oldCount + 1) forKey:@(refPort.target_p.pointerId)];
         
         // 数据准备
         AIMatchModel *gModel = valid.v1;
@@ -481,6 +480,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             return @(obj.bestGVAtProtoTRect);
         }]];
         [result addObject:model];
+        
+        // 更新准入机会。
+        [assSTCounted setObject:@(oldCount + 1) forKey:@(model.assT.pId)];
         
         // 最多100条（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
         if (result.count > 100) break;
