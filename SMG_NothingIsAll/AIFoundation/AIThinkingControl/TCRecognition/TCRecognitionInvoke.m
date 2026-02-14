@@ -396,30 +396,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
-    
-    // TODOTOMORROW20260214: 经测，强度排名靠前的全是同一个assST，最终强者恒强，从同一个assST中可以找出任意局部ST，并拼成0-9任何一个数字。
-    
-    
     // 强度越好的越优先（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
-    NSInteger bestStrong = [SMGUtils filterBestScore:allRefPorts scoreBlock:^CGFloat(MapModel *obj) {
+    NSArray *sorts = [SMGUtils sortBig2Small:allRefPorts compareBlock:^double(MapModel *obj) {
         AIPort *refPort = obj.v2;
         return refPort.strong.value;
     }];
-    NSArray *sorts = [SMGUtils sortBig2Small:allRefPorts compareBlock1:^double(MapModel *obj) {
-        AIMatchModel *gModel = obj.v1;
-        AIPort *refPort = obj.v2;
-        CGFloat strongScore = bestStrong > 0 ? (float)refPort.strong.value / bestStrong : 0;
-        return strongScore * gModel.matchValue;
-    } compareBlock2:^double(MapModel *obj) {
-        AIPort *refPort = obj.v2;
-        return refPort.target_p.pointerId;
-    }];
     
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
+    NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
     for (MapModel *valid in sorts) {
+        // 同一个assST只有10次准入机会（参考36037-TODO1）。
+        AIPort *refPort = valid.v2;
+        NSInteger oldCount = NUMTOOK([assSTCounted objectForKey:@(refPort.target_p.pointerId)]).integerValue;
+        if (oldCount > 9) continue;
+        [assSTCounted setObject:@(oldCount + 1) forKey:@(refPort.target_p.pointerId)];
+        
         // 数据准备
         AIMatchModel *gModel = valid.v1;
-        AIPort *refPort = valid.v2;
         NSValue *protoRectValue = valid.v3;
         CGRect protoRect = protoRectValue.CGRectValue;
         MapModel *protoRectKey = [self getIndexsOfProtoRect:protoRect];
