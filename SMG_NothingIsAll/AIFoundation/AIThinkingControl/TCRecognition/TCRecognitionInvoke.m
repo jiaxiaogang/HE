@@ -396,10 +396,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
+    
+    // TODOTOMORROW20260214: 经测，强度排名靠前的全是同一个assST，最终强者恒强，从同一个assST中可以找出任意局部ST，并拼成0-9任何一个数字。
+    
+    
     // 强度越好的越优先（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
-    NSArray *sorts = [SMGUtils sortBig2Small:allRefPorts compareBlock:^double(MapModel *obj) {
+    NSInteger bestStrong = [SMGUtils filterBestScore:allRefPorts scoreBlock:^CGFloat(MapModel *obj) {
         AIPort *refPort = obj.v2;
         return refPort.strong.value;
+    }];
+    NSArray *sorts = [SMGUtils sortBig2Small:allRefPorts compareBlock1:^double(MapModel *obj) {
+        AIMatchModel *gModel = obj.v1;
+        AIPort *refPort = obj.v2;
+        CGFloat strongScore = bestStrong > 0 ? (float)refPort.strong.value / bestStrong : 0;
+        return strongScore * gModel.matchValue;
+    } compareBlock2:^double(MapModel *obj) {
+        AIPort *refPort = obj.v2;
+        return refPort.target_p.pointerId;
     }];
     
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
