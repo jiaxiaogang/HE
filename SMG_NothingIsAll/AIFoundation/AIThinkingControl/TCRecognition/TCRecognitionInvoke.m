@@ -507,14 +507,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // 竞争因子计算：防止过度抽象匹配数。
-    [decoratorJvBuModel run4BestGVsCountRatio];
+    // [decoratorJvBuModel run4BestGVsCountRatio];
     
     // 竞争因子计算：在稳定层里，抽象优先。
     [decoratorJvBuModel run4ModelMatchCountScore];
-    [decoratorJvBuModel run4ModelMatchRatioScore];
+    // [decoratorJvBuModel run4ModelMatchRatioScore];
     
     // 竞争因子计算：分区竞争匹配度。
-    [decoratorJvBuModel run4AreaRankRatioV2];
+    // [decoratorJvBuModel run4AreaRankRatioV2];
 
     // 计算相邻度 & 中心度。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
@@ -525,7 +525,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.areaRankRatio * obj.adjacentScore * obj.centerScore;
+        // return obj.areaRankRatio * obj.adjacentScore * obj.centerScore;
+        return obj.matchValue * obj.modelMatchCountScore * obj.adjacentScore * obj.centerScore;
     }];
     
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
@@ -548,12 +549,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSString *matchDesc = STRFORMAT(@"匹配度:%.2f \t匹配数防抽:%.2f 区域竞争力:%.2f (总分%.0f/科数%ld=均分%.0f)",
-                                        model.matchValue,model.modelMatchCountScore,model.areaRankRatio,
-                                        model.areaRankSum,model.areaRankNum,model.areaRankScore);
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ \t相邻度:%.2f \t中心度:%.2f = 总分:%.2f",
+        //NSString *matchDesc = STRFORMAT(@"匹配度:%.2f \t匹配数防抽:%.2f 区域竞争力:%.2f (总分%.0f/科数%ld=均分%.0f)",
+        //                                model.matchValue,model.modelMatchCountScore,model.areaRankRatio,
+        //                                model.areaRankSum,model.areaRankNum,model.areaRankScore);
+        //NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t%@ \t相邻度:%.2f \t中心度:%.2f = 总分:%.2f",
+        //      [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
+        //      matchDesc,model.adjacentScore,model.centerScore,model.areaRankRatio * model.adjacentScore * model.centerScore);
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配数防抽:%.2f \t相邻度:%.2f \t中心度:%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
-              matchDesc,model.adjacentScore,model.centerScore,model.areaRankRatio * model.adjacentScore * model.centerScore);
+              model.matchValue,model.modelMatchCountScore,model.adjacentScore,model.centerScore,
+              model.matchValue * model.modelMatchCountScore * model.adjacentScore * model.centerScore);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -563,7 +568,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.areaRankRatio * obj.adjacentScore;
+        return obj.matchValue * obj.modelMatchCountScore * obj.areaRankRatio * obj.adjacentScore;
     }];
 }
 
