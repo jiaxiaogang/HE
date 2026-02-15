@@ -24,9 +24,6 @@
 }
 
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio {
-    //1. 匹配度。
-    [self run4MatchValue];
-    
     //2. 符合度。
     self.matchDegree = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.matchDegree;

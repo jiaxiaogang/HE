@@ -47,6 +47,7 @@
 //protoRect和assRect视角匹配度（用于调试日志用）。
 @property (assign, nonatomic) CGFloat matchRectValue;
 
+-(void) run4MatchValue;
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;
 -(void) run4BestGvsAtAssTRect;
