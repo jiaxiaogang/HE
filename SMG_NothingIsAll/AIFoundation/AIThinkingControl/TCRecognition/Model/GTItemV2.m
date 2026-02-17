@@ -150,6 +150,8 @@
 }
 
 -(CGFloat) beGeneralSTStrongRatioByContent:(AIFeatureNode*)generalConST {
+    if ([generalConST isEqual:self.baseAbsST]) return 1;
+    
     // 取出absST有些哪些元素。
     NSDictionary *indexDic = [generalConST getAbsIndexDic:self.baseAbsST.p];
     

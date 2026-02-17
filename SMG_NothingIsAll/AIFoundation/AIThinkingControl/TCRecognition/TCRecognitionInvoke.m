@@ -548,7 +548,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配数:%.2f = 总分:%.2f",
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
               model.matchValue,model.modelMatchCountScore,model.matchValue * model.modelMatchCountScore);
         [SMGUtils runByMainQueue:^{
@@ -652,6 +652,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     for (GTModelV2 *gtModel in gtModels) {
         [gtModel run4MatchValue];
+        
+        // TODOTOMORROW20260217: 查下现在匹配数只有一两条很低，导致匹配率也都是0.5、1、0.75、0.33这些很容易受影响的值。
         [gtModel run4MatchCountRatio:maxMatchCount];
         [gtModel run4StrongRatioByContent];
     }
@@ -674,7 +676,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配数防抽:%.2f \t显著度:%.2f = \t综合得分:%.3f",
+        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配率:%.2f \t显著度:%.2f = \t综合得分:%.3f",
                                          [resultModels indexOfObject:model],model.assGT.pId,
                                          model.matchValue,model.matchCountRatio,model.strongRatioByContent,
                                          model.matchValue * model.matchCountRatio * model.strongRatioByContent);
@@ -731,6 +733,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
                 AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
                 AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
+                
+                // TODOTOMORROW20260217: 查下这里的matchValue值很低，一般只有0.1左右。
+                // 分析、这里乘上匹配率后就很低，而这个率又是assST -> absST -> broST这个通路带来的。
+                // 思路1、那么，似层assGT中，就不可能有很准确的，把通路迁移的低匹配率全乘进来，更是很难找着准确的。
+                //      否掉：可是这个通路应该没问题的，毕竟要维持对撞率，就必须有这个通路。
+                // 思路2、还有一种可能，任何一条assGT.itemST都会因为很不匹配，而把整个匹配度拉低。
+                //      否掉：现在的GTModel.matchValue是取平均，无此问题。
+                // 思路3、加训，让absST更丰富起来，然后能找到更好的assST -> absST -> broST通路，使匹配度有更高的选择。
+                //      调试：可以去掉显著度，去掉匹配率，跑一下基础视觉库，看这块匹配度能不能随着加训，变的越来越高。
+                
                 findGTItem.matchValue = stModel.matchValue * ((float)absST.count / MAX(stModel.assT.count, broST.count));
                 
                 // 计算显著度（参考36021-TODO1 & TODO2）。
