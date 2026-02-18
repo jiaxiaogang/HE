@@ -735,6 +735,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
                 
                 // TODOTOMORROW20260217: 查下这里的matchValue值很低，一般只有0.1左右。
+                // 目标、将GT匹配度从0.1提升到0.8以上。
                 // 分析、这里乘上匹配率后就很低，而这个率又是assST -> absST -> broST这个通路带来的。
                 // 思路1、那么，似层assGT中，就不可能有很准确的，把通路迁移的低匹配率全乘进来，更是很难找着准确的。
                 //      否掉：可是这个通路应该没问题的，毕竟要维持对撞率，就必须有这个通路。
@@ -742,6 +743,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //      否掉：现在的GTModel.matchValue是取平均，无此问题。
                 // 思路3、加训，让absST更丰富起来，然后能找到更好的assST -> absST -> broST通路，使匹配度有更高的选择。
                 //      调试：可以去掉显著度，去掉匹配率，跑一下基础视觉库，看这块匹配度能不能随着加训，变的越来越高。
+                // 思路4、这个通路说到底：只是在判断assST与broST的交集而已，那么，是否可以把取<有效抽象>改为取<所有抽象>。
+                //      实测：需要实测下，如果取有效抽象，改为所有抽象后，能不能使GT随着加训匹配度越来越高。
                 
                 findGTItem.matchValue = stModel.matchValue * ((float)absST.count / MAX(stModel.assT.count, broST.count));
                 
