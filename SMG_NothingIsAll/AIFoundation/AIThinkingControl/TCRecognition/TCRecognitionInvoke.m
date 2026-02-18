@@ -676,10 +676,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        if (Log4RecogDesc || true) NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配率:%.2f \t显著度:%.2f = \t综合得分:%.3f",
-                                         [resultModels indexOfObject:model],model.assGT.pId,
-                                         model.matchValue,model.matchCountRatio,model.strongRatioByContent,
-                                         model.matchValue * model.matchCountRatio * model.strongRatioByContent);
+        NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配率:%.2f \t显著度:%.2f \t= 综合得分:%.3f",
+              [resultModels indexOfObject:model],model.assGT.pId,
+              model.matchValue,model.matchCountRatio,model.strongRatioByContent,
+              model.matchValue * model.matchCountRatio * model.strongRatioByContent);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -746,7 +746,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 思路4、这个通路说到底：只是在判断assST与broST的交集而已，那么，是否可以把取<有效抽象>改为取<所有抽象>。
                 //      实测：需要实测下，如果取有效抽象，改为所有抽象后，能不能使GT随着加训匹配度越来越高。
                 
-                findGTItem.matchValue = stModel.matchValue * ((float)absST.count / MAX(stModel.assT.count, broST.count));
+                CGFloat matchCountRatio = (float)absST.count / MAX(stModel.assT.count, broST.count);
+                findGTItem.matchValue = stModel.matchValue * matchCountRatio;
                 
                 // 计算显著度（参考36021-TODO1 & TODO2）。
                 [findGTItem beAssSTStrongRatio];
@@ -757,7 +758,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
             
             // 保留最匹配的一条。
-            if (!bestResult || bestResult.matchValue * bestResult.beAssSTStrongRatio * bestResult.beBroSTStrongRatio < findGTItem.matchValue * findGTItem.beAssSTStrongRatio * findGTItem.beBroSTStrongRatio) {
+            if (!bestResult || bestResult.matchValue * bestResult.zonHeStrongRatio < findGTItem.matchValue * findGTItem.zonHeStrongRatio) {
                 bestResult = findGTItem;
             }
         }

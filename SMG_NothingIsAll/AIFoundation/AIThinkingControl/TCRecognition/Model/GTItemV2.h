@@ -51,4 +51,7 @@
 -(CGFloat) beBroSTStrongRatioByContent;
 @property (assign, nonatomic) CGFloat beBroSTStrongRatioByContentCache;
 
+// 综合显著度（参考36021）。
+-(CGFloat) zonHeStrongRatio;
+
 @end

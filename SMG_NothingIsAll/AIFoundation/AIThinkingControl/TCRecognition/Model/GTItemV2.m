@@ -168,4 +168,11 @@
     return best > 0 ? pinjunStrongOfAbsST / best : 0.0f;
 }
 
+// 综合显著度（参考36021）。
+-(CGFloat) zonHeStrongRatio {
+    // 2026.02.18: 先关掉，因为显著度也没起到什么作用，关掉看下有没问题，没问题的话，废弃掉，避免导致算法复杂，导致有别的问题而不知。
+    return 1;
+    // return self.beAssSTStrongRatio * self.beBroSTStrongRatio;
+}
+
 @end
