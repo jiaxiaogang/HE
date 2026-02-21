@@ -748,6 +748,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //      查下为什么匹配数又只有一条了：发现在关掉<关掉显著度测试>之前还算ok。
                 // 思路4、这个通路说到底：只是在判断assST与broST的交集而已，那么，是否可以把取<有效抽象>改为取<所有抽象>。
                 //      实测：需要实测下，如果取有效抽象，改为所有抽象后，能不能使GT随着加训匹配度越来越高。
+                // 思路5、把通路改成assST -> absST，去掉broST，然后识别的assGT改成由absST构成。
+                //      原因：因为absST -> broST这个相当于介入了混乱熵增，是不符合原则的，如下（计算通路匹配度的公式AxB如下）：
+                //          A、assST与有效抽象的匹配度 = 匹配的indexDic对应的bestGVs的平均匹配度。
+                //          B、而有效抽象与bro的匹配度 = 。。。（这个总是会很低的，并且介入了absST中都没有的gv，这个不符合熵减原则）。
                 
                 CGFloat matchCountRatio = (float)absST.count / MAX(stModel.assT.count, broST.count);
                 findGTItem.matchValue = stModel.matchValue * matchCountRatio;
