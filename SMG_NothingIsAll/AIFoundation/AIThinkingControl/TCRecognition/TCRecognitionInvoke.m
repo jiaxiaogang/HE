@@ -734,25 +734,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
                 AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
                 
-                // TODOTOMORROW20260217: 查下这里的matchValue值很低，一般只有0.1左右。
-                // 目标、将GT匹配度从0.1提升到0.8以上。
-                // 分析、这里乘上匹配率后就很低，而这个率又是assST -> absST -> broST这个通路带来的。
-                // 思路1、那么，似层assGT中，就不可能有很准确的，把通路迁移的低匹配率全乘进来，更是很难找着准确的。
-                //      否掉：可是这个通路应该没问题的，毕竟要维持对撞率，就必须有这个通路。
-                // 思路2、还有一种可能，任何一条assGT.itemST都会因为很不匹配，而把整个匹配度拉低。
-                //      否掉：现在的GTModel.matchValue是取平均，无此问题。
-                // 思路3、加训，让absST更丰富起来，然后能找到更好的assST -> absST -> broST通路，使匹配度有更高的选择。
-                //      调试：可以去掉显著度，去掉匹配率，跑一下基础视觉库，看这块匹配度能不能随着加训，变的越来越高。
-                //      经测：去掉后，扔7个0，发现GT识别结果匹配度还是0.1左右，并且匹配数一般只有1条。
-                //      继续查下：为什么匹配数只有1条（对撞不上了？），再查下为什么匹配度这么低（应该是因为乘了匹配率：见下方matchValue = stModel.matchValue * matchCountRatio代码）。
-                //      查下为什么匹配数又只有一条了：发现在关掉<关掉显著度测试>之前还算ok。
-                // 思路4、这个通路说到底：只是在判断assST与broST的交集而已，那么，是否可以把取<有效抽象>改为取<所有抽象>。
-                //      实测：需要实测下，如果取有效抽象，改为所有抽象后，能不能使GT随着加训匹配度越来越高。
-                // 思路5、把通路改成assST -> absST，去掉broST，然后识别的assGT改成由absST构成。
-                //      原因：因为absST -> broST这个相当于介入了混乱熵增，是不符合原则的，如下（计算通路匹配度的公式AxB如下）：
-                //          A、assST与有效抽象的匹配度 = 匹配的indexDic对应的bestGVs的平均匹配度。
-                //          B、而有效抽象与bro的匹配度 = 。。。（这个总是会很低的，并且介入了absST中都没有的gv，这个不符合熵减原则）。
-                
                 CGFloat matchCountRatio = (float)absST.count / MAX(stModel.assT.count, broST.count);
                 findGTItem.matchValue = stModel.matchValue * matchCountRatio;
                 

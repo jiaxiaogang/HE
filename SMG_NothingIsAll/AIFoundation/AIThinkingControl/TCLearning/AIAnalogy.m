@@ -380,7 +380,7 @@
     }];
     
     // 构建absGT
-    AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.assGT] at:protoGT.at ds:protoGT.ds isOut:protoGT.isOut isJiao:true];
+    AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.assGT, protoGT] at:protoGT.at ds:protoGT.ds isOut:protoGT.isOut isJiao:true];
     
     //41. 更新logDesc。
     [absGT updateLogDescDic:protoGT.logDesc rate:gtModel.matchValue];
