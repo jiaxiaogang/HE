@@ -548,9 +548,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f = 总分:%.2f",
+        [model run4ValidAbsST_ps];
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f = 总分:%.2f 有效抽象数:%ld",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
-              model.matchValue,model.modelMatchCountScore,model.matchValue * model.modelMatchCountScore);
+              model.matchValue,model.modelMatchCountScore,model.matchValue * model.modelMatchCountScore,model.validAbsST_ps.count);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
