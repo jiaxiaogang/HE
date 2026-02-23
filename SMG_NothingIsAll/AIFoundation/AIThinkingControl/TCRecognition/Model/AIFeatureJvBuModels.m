@@ -85,4 +85,19 @@
     }
 }
 
+// 计算stModel的抽象强度得分。
+-(void) run4AbsPortStrongScore {
+    NSInteger max = [SMGUtils filterBestScore:self.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *item) {
+        return [SMGUtils sumOfArr:item.validAbsSTPorts convertBlock:^double(AIPort *obj) {
+            return obj.strong.value;
+        }];
+    }];
+    for (AIFeatureJvBuModel *item in self.stModels) {
+        CGFloat cur = (float)[SMGUtils sumOfArr:item.validAbsSTPorts convertBlock:^double(AIPort *obj) {
+            return obj.strong.value;
+        }];
+        item.absPortStrongScore = (float)cur / max;
+    }
+}
+
 @end

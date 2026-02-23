@@ -195,22 +195,27 @@
     [self.bestGVs removeObjectsForKeys:invalidKeys];
 }
 
--(void) run4ValidAbsST_ps {
-    NSArray *allAbsST_ps = Ports2Pits([AINetUtils absPorts_All:self.assT]);
+-(void) run4ValidAbsSTPorts {
+    NSArray *allAbsSTPorts = [AINetUtils absPorts_All:self.assT];
     
     // 方案1、用抽具象的indexDic映射，来判断它是否全含（前提：需要存上抽具象特征的indexDic映射）。
-    NSMutableArray *validAbsST_ps = [SMGUtils filterArr:allAbsST_ps checkValid:^BOOL(AIKVPointer *item) {
-        NSDictionary *indexDic = [self.assT getAbsIndexDic:item];
+    self.validAbsSTPorts = [SMGUtils filterArr:allAbsSTPorts checkValid:^BOOL(AIPort *item) {
+        NSDictionary *indexDic = [self.assT getAbsIndexDic:item.target_p];
         // bestGVs了全含absST，则这条absST有效，收集它。
         return ![SMGUtils filterSingleFromArr:indexDic.allValues checkValid:^BOOL(id item) {
             return ![self.bestGVs.allKeys containsObject:item];
         }];
     }];
-     [validAbsST_ps insertObject:self.abs_p atIndex:0];
-    self.validAbsST_ps = validAbsST_ps;
     
     // 方案2、直接取出absST.content判断是否被全含。
     // 更难判断，因为不止得判断指针包含，还得判断rect也对应着，因为st.content中的itemGV是可能重复的（所以还是先用方案1吧）。
+}
+
+-(NSArray *) allValidAbsST_ps {
+    NSMutableArray *result = [NSMutableArray new];
+    if (self.abs_p) [result addObject:self.abs_p];
+    if (ARRISOK(self.validAbsSTPorts)) [result addObjectsFromArray:Ports2Pits(self.validAbsSTPorts)];
+    return result;
 }
 
 // 相邻度（参考36032-方案）。

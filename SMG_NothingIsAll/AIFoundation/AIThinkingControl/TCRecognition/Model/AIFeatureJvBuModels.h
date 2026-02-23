@@ -40,4 +40,7 @@
 // 匹配率（健全度），归一化防过具竞争力（参考35141-方案3）。
 -(void) run4ModelMatchRatioScore;
 
+// 计算stModel的抽象强度得分。
+-(void) run4AbsPortStrongScore;
+
 @end

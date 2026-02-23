@@ -86,8 +86,9 @@
 -(void) filter4MatchValue;
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
-@property (strong, nonatomic) NSArray *validAbsST_ps;
--(void) run4ValidAbsST_ps;
+@property (strong, nonatomic) NSArray *validAbsSTPorts;
+-(void) run4ValidAbsSTPorts;
+-(NSArray *) allValidAbsST_ps;
 
 // 相邻度（参考36032-方案）。
 -(void) run4AdjacentScore;
@@ -96,5 +97,8 @@
 // 中心度（参考36033-方案）。
 -(void) run4CenterScore;
 @property (assign, nonatomic) CGFloat centerScore;
+
+// assST的抽象强度归一化。
+@property (assign, nonatomic) CGFloat absPortStrongScore;
 
 @end

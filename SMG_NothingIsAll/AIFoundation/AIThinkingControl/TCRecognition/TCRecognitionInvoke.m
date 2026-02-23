@@ -507,7 +507,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio]; // 符合度等
         // [model run4AdjacentScore]; // 计算相邻度
         // [model run4CenterScore]; // 中心度
+        [model run4ValidAbsSTPorts]; // 计算有效抽象
     }
+    
+    // 抽象强度得分
+    [decoratorJvBuModel run4AbsPortStrongScore];
     
     // 匹配数归一化：防过抽。
     [decoratorJvBuModel run4ModelMatchCountScore];
@@ -525,7 +529,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         // return obj.areaRankRatio * obj.adjacentScore * obj.centerScore;
-        return obj.matchValue * obj.modelMatchCountScore;
+        return obj.matchValue * obj.modelMatchCountScore * obj.absPortStrongScore;
     }];
     
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
@@ -548,10 +552,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        [model run4ValidAbsST_ps];
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f = 总分:%.2f 有效抽象数:%ld",
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \n抽象强度(%ld):%.2f = 总分:%.2f 有效抽象数:",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
-              model.matchValue,model.modelMatchCountScore,model.matchValue * model.modelMatchCountScore,model.validAbsST_ps.count);
+              model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,
+              model.matchValue * model.modelMatchCountScore * model.absPortStrongScore);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -561,7 +565,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
         return obj.assT;
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * obj.modelMatchCountScore;
+        return obj.matchValue * obj.modelMatchCountScore * obj.absPortStrongScore;
     }];
 }
 
@@ -582,8 +586,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (AIFeatureJvBuModel *stModel in stModels) {
         
         // absST层：有效（全含）absST。
-        [stModel run4ValidAbsST_ps];
-        for (AIKVPointer *absST_p in stModel.validAbsST_ps) {
+        for (AIKVPointer *absST_p in stModel.allValidAbsST_ps) {
             AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
             
             // broST层。
