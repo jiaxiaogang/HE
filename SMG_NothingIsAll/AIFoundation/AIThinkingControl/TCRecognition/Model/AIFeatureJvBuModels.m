@@ -93,10 +93,10 @@
         }];
     }];
     for (AIFeatureJvBuModel *item in self.stModels) {
-        CGFloat cur = (float)[SMGUtils sumOfArr:item.validAbsSTPorts convertBlock:^double(AIPort *obj) {
+        NSInteger cur = [SMGUtils sumOfArr:item.validAbsSTPorts convertBlock:^double(AIPort *obj) {
             return obj.strong.value;
         }];
-        item.absPortStrongScore = (float)cur / max;
+        item.absPortStrongScore = max > 0 ? (float)cur / max : 0;
     }
 }
 

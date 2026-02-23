@@ -552,7 +552,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \n抽象强度(%ld):%.2f = 总分:%.2f 有效抽象数:",
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t抽象强度(%ld):%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
               model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,
               model.matchValue * model.modelMatchCountScore * model.absPortStrongScore);
