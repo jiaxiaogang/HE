@@ -680,8 +680,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t匹配度:%.2f \t匹配率:%.2f \t显著度:%.2f \t= 综合得分:%.3f",
-              [resultModels indexOfObject:model],model.assGT.pId,
+        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t显著度:%.2f \t= 综合得分:%.3f",
+              [resultModels indexOfObject:model],model.assGT.pId,model.bestSTDic.count,model.assGT.count,
               model.matchValue,model.matchCountRatio,model.strongRatioByContent,
               model.matchValue * model.matchCountRatio * model.strongRatioByContent);
         
