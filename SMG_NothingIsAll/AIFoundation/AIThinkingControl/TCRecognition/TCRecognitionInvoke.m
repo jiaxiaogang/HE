@@ -656,8 +656,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     for (GTModelV2 *gtModel in gtModels) {
         [gtModel run4MatchValue];
-        
-        // TODOTOMORROW20260217: 查下现在匹配数只有一两条很低，导致匹配率也都是0.5、1、0.75、0.33这些很容易受影响的值。
         [gtModel run4MatchCountRatio:maxMatchCount];
         [gtModel run4StrongRatioByContent];
     }
@@ -737,8 +735,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
                 AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
                 AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
-                
-                CGFloat matchCountRatio = (float)absST.count / MAX(stModel.assT.count, broST.count);
+                CGFloat matchCountRatio = (float)absST.count / MAX(stModel.bestGVs.count, broST.count); // 通路matchCountRatio
                 findGTItem.matchValue = stModel.matchValue * matchCountRatio;
                 
                 // 计算显著度（参考36021-TODO1 & TODO2）。
