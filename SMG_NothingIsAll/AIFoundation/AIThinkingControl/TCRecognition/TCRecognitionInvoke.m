@@ -662,7 +662,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio * obj.strongRatioByContent;
+        return obj.matchValue * obj.matchCountRatio;
     }];
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -678,10 +678,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t显著度:%.2f \t= 综合得分:%.3f",
+        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.assGT.pId,model.bestSTDic.count,model.assGT.count,
-              model.matchValue,model.matchCountRatio,model.strongRatioByContent,
-              model.matchValue * model.matchCountRatio * model.strongRatioByContent);
+              model.matchValue,model.matchCountRatio,
+              model.matchValue * model.matchCountRatio);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -693,7 +693,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
         return obj.assGT;
     } convertMatchBlock:^float(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio * obj.strongRatioByContent;
+        return obj.matchValue * obj.matchCountRatio;
     }];
     return resultModels;
 }
@@ -736,7 +736,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
                 AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
                 CGFloat matchCountRatio = (float)absST.count / MAX(stModel.bestGVs.count, broST.count); // 通路matchCountRatio
-                findGTItem.matchValue = stModel.matchValue * matchCountRatio;
+                findGTItem.matchValue = matchCountRatio; // stModel.matchValue * matchCountRatio;
                 
                 // 计算显著度（参考36021-TODO1 & TODO2）。
                 [findGTItem beAssSTStrongRatio];

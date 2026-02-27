@@ -41,12 +41,11 @@
         return obj.beAssSTStrongRatio * obj.beBroSTStrongRatio;
     }] / self.bestSTDic.count;
 }
+// 2026.02.18: 关掉显著度，目前显著度效果没体现出来，先关掉测下有没问题，没问题，则彻底删掉。
 -(void) run4StrongRatioByContent {
-    // 2026.02.18: 关掉显著度，目前显著度效果没体现出来，先关掉测下有没问题，没问题，则彻底删掉。
-    self.strongRatioByContent = 1;
-    //self.strongRatioByContent = self.bestSTDic.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTDic.allValues convertBlock:^double(GTItemV2 *obj) {
-    //    return obj.beAssSTStrongRatioByContent * obj.beBroSTStrongRatioByContent;
-    //}] / self.bestSTDic.count;
+    self.strongRatioByContent = self.bestSTDic.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTDic.allValues convertBlock:^double(GTItemV2 *obj) {
+        return obj.beAssSTStrongRatioByContent * obj.beBroSTStrongRatioByContent;
+    }] / self.bestSTDic.count;
 }
 
 @end
