@@ -36,17 +36,9 @@
 -(CGFloat) beAssSTStrongRatio;
 @property (assign, nonatomic) CGFloat beAssSTStrongRatioCache;
 
-// 对于broST的显著程度（参考36021-TODO2）。
--(CGFloat) beBroSTStrongRatio;
-@property (assign, nonatomic) CGFloat beBroSTStrongRatioCache;
-
 // 对于assST.content的显著程度（参考36022）
 -(CGFloat) beAssSTStrongRatioByContent;
 @property (assign, nonatomic) CGFloat beAssSTStrongRatioByContentCache;
-
-// 对于broST.content的显著程度（参考36022）
--(CGFloat) beBroSTStrongRatioByContent;
-@property (assign, nonatomic) CGFloat beBroSTStrongRatioByContentCache;
 
 // 综合显著度（参考36021）。
 -(CGFloat) zonHeStrongRatio;

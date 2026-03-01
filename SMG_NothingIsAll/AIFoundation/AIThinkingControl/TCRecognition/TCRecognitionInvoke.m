@@ -577,127 +577,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.09.09: v5-改回GT为独立网络模块（参考35072-TODO3）。
  *      2026.01.29: v7-提升对撞率，识别通路调整：“assST -> absST -> broST -> assGT”（参考36011）。
  */
-+(NSArray*) recognitionGroupFeatureV7:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
-    // 数据准备
-    NSMutableArray *gtModels = [NSMutableArray new];
-    DDic *sourceDic = [DDic new];
-    
-    // assST层。
-    for (AIFeatureJvBuModel *stModel in stModels) {
-        
-        // absST层：有效（全含）absST。
-        for (AIKVPointer *absST_p in stModel.allValidAbsST_ps) {
-            AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
-            
-            // broST层。
-            NSArray *bro_ps = [SMGUtils collectArrA:Ports2Pits([AINetUtils conPorts_All:absST]) arrB:@[absST_p]];
-            for (AIKVPointer *bro_p in bro_ps) {
-                
-                // bro来源路径记录到sourceDic。
-                NSMutableArray *collectedSTModels = [sourceDic objectV2ForKey1:bro_p k2:absST_p];
-                if (!collectedSTModels) collectedSTModels = [[NSMutableArray alloc] init];
-                [collectedSTModels addObject:stModel];
-                [sourceDic setObjectV2:collectedSTModels k1:bro_p k2:absST_p];
-            }
-        }
-    }
-    
-    // 用sourceDic逐个求refGT。
-    for (AIKVPointer *bro_p in sourceDic.data.allKeys) {
-        NSArray *refPorts = [AINetUtils refPorts_All:bro_p];
-        for (AIPort *refPort in refPorts) {
-            if ([refPort.target_p isEqual:protoGT.p]) continue;
-            
-            // assGT。
-            AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
-            NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
-            
-            // gt自举算法。
-            GTModelV2 *gtModel = [GTModelV2 new:assGT];
-            for (NSInteger i = 0; i < assGT.count; i++) {
-                NSInteger curIndex = (beginIndex + i) % assGT.count;
-                GTItemV2 *gtItem = [self gtZiJv:assGT curIndex:curIndex sourceDic:sourceDic];
-                if (!gtItem) continue;
-                
-                // 收集成GTItemV2模型。
-                [gtModel.bestSTDic setObject:gtItem forKey:@(curIndex)];
-                
-                // 避免多次处理浪费性能：发现与已收集的gtModels中：有同一个assGT & 同一个broST_ProtoRect.rectIndex，进行防重。
-                GTModelV2 *sameOldGTModel = [SMGUtils filterSingleFromArr:gtModels checkValid:^BOOL(GTModelV2 *oldGTModel) {
-                    // 不是同一个assGT为false
-                    if (![oldGTModel.assGT isEqual:assGT]) return false;
-                    // 新旧都得收集到同一个broST，否则为false
-                    GTItemV2 *oldGTItem = [oldGTModel.bestSTDic objectForKey:@(curIndex)];
-                    if (!oldGTItem) return false;
-                    // 没对应同样的assST为false
-                    if (![oldGTItem.baseSTModel.assT isEqual:gtItem.baseSTModel.assT]) return false;
-                    // 新旧复用了同一个GTItem模型，则一模一样，为true
-                    if ([oldGTItem isEqual:gtItem]) return true;
-                    // 对比rectIndex一致，为true
-                    MapModel *oldRectKey = [self getIndexsOfProtoRect:oldGTItem.baseSTModel.assST_ProtoRect];
-                    MapModel *newRectKey = [self getIndexsOfProtoRect:gtItem.baseSTModel.assST_ProtoRect];
-                    if ([oldRectKey isEqual:newRectKey]) return true;
-                    return false;
-                }];
-                if (sameOldGTModel) {
-                    gtModel = nil;
-                    break;
-                }
-            }
-            if (gtModel && gtModel.bestSTDic.count > 0) {
-                [gtModels addObject:gtModel];
-            }
-        }
-    }
-    
-    // 竞争因子：匹配度 & 匹配数（防过抽）。
-    NSInteger maxMatchCount = [SMGUtils filterBestScore:gtModels scoreBlock:^CGFloat(GTModelV2 *item) {
-        return item.bestSTDic.count;
-    }];
-    for (GTModelV2 *gtModel in gtModels) {
-        [gtModel run4MatchValue];
-        [gtModel run4MatchCountRatio:maxMatchCount];
-        [gtModel run4StrongRatioByContent];
-    }
-    
-    // 最后进行综合竞争，把最符合的找出来。
-    NSArray *resultModels = [SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio;
-    }];
-    
-    // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
-    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTModel *obj) {
-        return @(obj.assGT.pId);
-    }];
-    
-    // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
-    NSInteger count = resultModels.count;
-    float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
-    resultModels = ARR_SUB(resultModels, 0, MIN(20, count * needRate));
-    
-    // 更新: ref强度 & 相似度 & 抽具象 & 映射;
-    for (GTModelV2 *model in resultModels) {
-        // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t= 综合得分:%.3f",
-              [resultModels indexOfObject:model],model.assGT.pId,model.bestSTDic.count,model.assGT.count,
-              model.matchValue,model.matchCountRatio,
-              model.matchValue * model.matchCountRatio);
-        
-        // 组特征识别结果可视化（参考34176）。
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForGTModelV2:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.assGT.pId,model.bestSTDic.count,model.assGT.count) left:0 top:0 tvId:3];
-        }];
-    }
-    
-    // debugLog
-    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
-        return obj.assGT;
-    } convertMatchBlock:^float(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio;
-    }];
-    return resultModels;
-}
-
 +(NSArray*) recognitionGroupFeatureV8:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
     // 数据准备
     NSMutableArray *gtModels = [NSMutableArray new];
@@ -817,59 +696,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  MARK:--------------------GT自举算法--------------------
  *  @param sourceDic 需要从broST -> absST -> assST 及baseSTModel的反向路径映射，方便用于GT自举中竞争best结果。
  */
-+(GTItemV2*) gtZiJv:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic {
-    // 反取bro层
-    AIKVPointer *broST_p = ARR_INDEX(assGT.content_ps, curIndex);
-    GTItemV2 *bestResult = nil;
-    
-    // 反取abs层
-    DDic *absSTDic = [sourceDic objectForKey:broST_p];
-    for (AIKVPointer *absST_p in absSTDic.data.allKeys) {
-        
-        // 反取ass层
-        NSMutableArray *collectedSTModels = [absSTDic objectForKey:absST_p];
-        for (AIFeatureJvBuModel *stModel in collectedSTModels) {
-            
-            // 防重：用assST_ProtoT、对应的assST、absST、broST，四个条件来进行防重。
-            // 说明：防重的好处在于，同一个ass->abs->bro通路，投射在同一个protoRectIndex上时，直接复用，其broST_ProtoRect也只需计算一次。
-            MapModel *rectKey = [self getIndexsOfProtoRect:stModel.assST_ProtoRect];
-            GTItemV2 *findGTItem = [bestSTsPool objectV7ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId) k7:@(broST_p.pointerId)];
-            
-            // 占位空，则说明上次已经失败过，还按失败处理（此处防重掉18%）。
-            if ([@"isNull" isEqual:findGTItem]) continue;
-            
-            // 空则新建并计算匹配度等。
-            if (!findGTItem) {
-                findGTItem = [GTItemV2 new];
-                findGTItem.baseSTModel = stModel;
-                findGTItem.baseAbsST = absST_p;
-                findGTItem.baseAssGT = assGT;
-                findGTItem.assGTIndex = curIndex;
-                
-                // 计算匹配度 = assST的匹配度 x abs的匹配率。
-                // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
-                AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
-                AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
-                CGFloat matchCountRatio = (float)absST.count / MAX(stModel.bestGVs.count, broST.count); // 通路matchCountRatio
-                findGTItem.matchValue = matchCountRatio; // stModel.matchValue * matchCountRatio;
-                
-                // 计算显著度（参考36021-TODO1 & TODO2）。
-                [findGTItem beAssSTStrongRatio];
-                [findGTItem beBroSTStrongRatio];
-                
-                // 记录缓存池
-                [bestGVsPoolV2 setObjectV7:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId) k7:@(broST_p.pointerId)];
-            }
-            
-            // 保留最匹配的一条。
-            if (!bestResult || bestResult.matchValue * bestResult.zonHeStrongRatio < findGTItem.matchValue * findGTItem.zonHeStrongRatio) {
-                bestResult = findGTItem;
-            }
-        }
-    }
-    return bestResult;
-}
-
 +(GTItemV2*) gtZiJvV8:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic {
     // 反取abs层
     AIKVPointer *absST_p = ARR_INDEX(assGT.content_ps, curIndex);
@@ -903,7 +729,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 计算显著度（参考36021-TODO1 & TODO2）。
             [findGTItem beAssSTStrongRatio];
-            [findGTItem beBroSTStrongRatio];
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV6:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId)];

@@ -14,9 +14,7 @@
     self =[super init];
     if (self) {
         self.beAssSTStrongRatioCache = -1;
-        self.beBroSTStrongRatioCache = -1;
         self.beAssSTStrongRatioByContentCache = -1;
-        self.beBroSTStrongRatioByContentCache = -1;
     }
     return self;
 }
@@ -73,16 +71,6 @@
     return self.beAssSTStrongRatioCache;
 }
 
-// 对于broST的显著程度（参考36021-TODO2）。
--(CGFloat) beBroSTStrongRatio {
-    // 有缓存复用返回。
-    if (self.beBroSTStrongRatioCache != -1) return self.beBroSTStrongRatioCache;
-    
-    // 无缓存新计算返回。
-    self.beBroSTStrongRatioCache = [self beGeneralSTStrongRatio:self.baseBroST];
-    return self.beBroSTStrongRatioCache;
-}
-
 // 对于assST.content的显著程度（参考36022）
 -(CGFloat) beAssSTStrongRatioByContent {
     // 有缓存复用返回。
@@ -91,16 +79,6 @@
     // 无缓存新计算返回。
     self.beAssSTStrongRatioByContentCache = [self beGeneralSTStrongRatioByContent:self.baseSTModel.assT];
     return self.beAssSTStrongRatioByContentCache;
-}
-
-// 对于broST.content的显著程度（参考36022）
--(CGFloat) beBroSTStrongRatioByContent {
-    // 有缓存复用返回。
-    if (self.beBroSTStrongRatioByContentCache != -1) return self.beBroSTStrongRatioByContentCache;
-    
-    // 无缓存新计算返回。
-    self.beBroSTStrongRatioByContentCache = [self beGeneralSTStrongRatioByContent:self.baseBroST];
-    return self.beBroSTStrongRatioByContentCache;
 }
 
 //MARK:===============================================================
