@@ -735,7 +735,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
         
         // TODOTOMORROW20260301: 此处得判断下位置符合度，absST在：proto和assGT中各自什么位置，是否符合。
-        // 位置必须符合，不然不让其复用到。
+        // 判断新一条预计与实际rect的交集率。
         
         // 保留最匹配的一条。
         if (!bestResult || bestResult.matchValue * bestResult.zonHeStrongRatio < findGTItem.matchValue * findGTItem.zonHeStrongRatio) {
