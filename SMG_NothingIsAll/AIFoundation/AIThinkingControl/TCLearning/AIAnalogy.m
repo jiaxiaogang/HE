@@ -364,18 +364,14 @@
     }];
     
     //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
-    CGRect newAbsAtAssRect = CGRectNull;
-    for (GTItemV2 *item in sameItems) {
-        //12. 取并每个itemAbsT在assT的范围。
-        newAbsAtAssRect = CGRectUnion(newAbsAtAssRect, item.broST_AssGT);
-    }
+    CGRect newAbsAtAssRect = [SMGUtils convertArr2Rect:sameItems itemRectBlock:^CGRect(GTItemV2 *item) { return item.absST_AssGT; }];
     
     NSArray *orders = [SMGUtils convertArr:sameItems convertBlock:^id(GTItemV2 *obj) {
         // 计算itemST在absGT中的位置，其实就是ST在assGT中的位置，减掉margin左上角的留白（参考上面的方案2-TODO2）。
-        CGRect curSTAtAbsGTRect = obj.broST_AssGT;
+        CGRect curSTAtAbsGTRect = obj.absST_AssGT;
         curSTAtAbsGTRect.origin.x -= newAbsAtAssRect.origin.x;//- marginLeft
         curSTAtAbsGTRect.origin.y -= newAbsAtAssRect.origin.y;//- marginTop
-        AIKVPointer *itemST = ARR_INDEX(gtModel.assGT.content_ps, obj.broSTIndex);
+        AIKVPointer *itemST = ARR_INDEX(gtModel.assGT.content_ps, obj.assGTIndex);
         return [InputGroupFeatureModel new:itemST rect:curSTAtAbsGTRect];
     }];
     
@@ -400,7 +396,7 @@
     // TODO: 把这里存上indexDic，取显著度的时候需要它，现在不取absGT的content显著度，所以暂时用不到，后需要的时候加上。
     
     // 参与了抽象的ST元素更新其内容强度（参考36022）。
-     NSArray *assGTIndexes = [SMGUtils convertArr:gtModel.bestSTDic.allValues convertBlock:^id(GTItemV2 *obj) { return @(obj.broSTIndex); }];
+     NSArray *assGTIndexes = [SMGUtils convertArr:gtModel.bestSTDic.allValues convertBlock:^id(GTItemV2 *obj) { return @(obj.assGTIndex); }];
      [AINetUtils updateContentStrongByIndexes:assGTIndexes toNode:gtModel.assGT];
     
     //51. debug

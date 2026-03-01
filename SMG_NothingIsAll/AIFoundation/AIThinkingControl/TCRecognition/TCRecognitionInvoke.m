@@ -842,9 +842,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             if (!findGTItem) {
                 findGTItem = [GTItemV2 new];
                 findGTItem.baseSTModel = stModel;
-                findGTItem.baseAbsST = [SMGUtils searchNode:absST_p];
+                findGTItem.baseAbsST = absST_p;
                 findGTItem.baseAssGT = assGT;
-                findGTItem.broSTIndex = curIndex;
+                findGTItem.assGTIndex = curIndex;
                 
                 // 计算匹配度 = assST的匹配度 x abs的匹配率。
                 // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
@@ -891,9 +891,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (!findGTItem) {
             findGTItem = [GTItemV2 new];
             findGTItem.baseSTModel = stModel;
-            findGTItem.baseAbsST = [SMGUtils searchNode:absST_p];
+            findGTItem.baseAbsST = absST_p;
             findGTItem.baseAssGT = assGT;
-            findGTItem.broSTIndex = curIndex;
+            findGTItem.assGTIndex = curIndex;
             
             // 计算匹配度 = assST的匹配度 x abs的匹配率。
             // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。

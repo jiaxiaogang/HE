@@ -15,21 +15,18 @@
 @interface GTItemV2 : NSObject
 
 @property (strong, nonatomic) AIFeatureJvBuModel *baseSTModel; // 对应的stModel
-@property (strong, nonatomic) AIFeatureNode *baseAbsST;
+@property (strong, nonatomic) AIKVPointer *baseAbsST;
 @property (strong, nonatomic) AIGroupFeatureNode *baseAssGT;
-@property (assign, nonatomic) NSInteger broSTIndex;
+@property (assign, nonatomic) NSInteger assGTIndex;
 @property (assign, nonatomic) CGFloat matchValue;
 -(AIFeatureNode*) baseBroST;
 
 -(CGRect) assST_ProtoT;
 
--(CGRect) broST_AssGT;
+-(CGRect) absST_AssGT;
 
 -(CGRect) absST_ProtoT;
 @property (assign, nonatomic) CGRect absST_ProtoTCache;
-
--(CGRect) broST_ProtoT;
-@property (assign, nonatomic) CGRect broST_ProtoTCache;
 
 //MARK:===============================================================
 //MARK: < 显著度：因为通路是ass,abs,bro，所以显著度有两个值（参考36019-步骤2&3）>

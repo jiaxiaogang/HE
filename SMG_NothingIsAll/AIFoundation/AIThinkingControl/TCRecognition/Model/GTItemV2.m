@@ -22,7 +22,7 @@
 }
 
 -(AIFeatureNode*) baseBroST {
-    AIKVPointer *broST_p = ARR_INDEX(self.baseAssGT.content_ps, self.broSTIndex);
+    AIKVPointer *broST_p = ARR_INDEX(self.baseAssGT.content_ps, self.assGTIndex);
     return [SMGUtils searchNode:broST_p];
 }
 
@@ -30,8 +30,8 @@
     return self.baseSTModel.assST_ProtoRect;
 }
 
--(CGRect) broST_AssGT {
-    return [self.baseAssGT rectByIndex:self.broSTIndex];
+-(CGRect) absST_AssGT {
+    return [self.baseAssGT rectByIndex:self.assGTIndex];
 }
 
 -(CGRect) absST_ProtoT {
@@ -40,7 +40,8 @@
     
     // 设AbsST为A，AssST为B，ProtoT为C计算如下：
     // A_B
-    AIPort *conPort = [SMGUtils filterSingleFromArr:self.baseAbsST.conPorts checkValid:^BOOL(AIPort *item) {
+    AIFeatureNode *absST = [SMGUtils searchNode:self.baseAbsST];
+    AIPort *conPort = [SMGUtils filterSingleFromArr:absST.conPorts checkValid:^BOOL(AIPort *item) {
         return [item.target_p isEqual:self.baseSTModel.assT.p];
     }];
     CGRect absST_AssST = conPort.rect;
@@ -56,32 +57,6 @@
     // A_C
     self.absST_ProtoTCache = [SMGUtils convertAAtCWithAAtB:absST_AssST bAtC:assST_ProtoT protoBSize:assSTRect.size];
     return self.absST_ProtoTCache;
-}
-
--(CGRect) broST_ProtoT {
-    // 计算过，则直接返回缓存结果。
-    if (!CGRectIsEmpty(self.broST_ProtoTCache)) return self.broST_ProtoTCache;
-    
-    // 设BroST为B，ProtoT为A，AbsST为C，求BAtA，计算如下：
-    // C_B：absST_BroST
-    AIKVPointer *broST_p = ARR_INDEX(self.baseAssGT.content_ps, self.broSTIndex);
-    AIPort *conPort = [SMGUtils filterSingleFromArr:self.baseAbsST.conPorts checkValid:^BOOL(AIPort *item) {
-        return [item.target_p isEqual:broST_p];
-    }];
-    CGRect absST_BroST = conPort.rect;
-    
-    // C_A：absST_ProtoT
-    CGRect absST_ProtoT = [self absST_ProtoT];
-    
-    // B：broSTRect
-    AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
-    CGRect broSTRect = [SMGUtils convertArr2Rect:broST.rects itemRectBlock:^CGRect(NSValue *item) {
-        return item.CGRectValue;
-    }];
-    
-    // B_A：broST_ProtoT
-    self.broST_ProtoTCache = [SMGUtils convertBAtAWithCAtA:absST_ProtoT cAtB:absST_BroST B:broSTRect];
-    return self.broST_ProtoTCache;
 }
 
 //MARK:===============================================================
@@ -142,7 +117,7 @@
     
     // 找出当前baseAbsST显著值。
     AIPort *baseAbsPort = [SMGUtils filterSingleFromArr:absPorts checkValid:^BOOL(AIPort *item) {
-        return [item.target_p isEqual:self.baseAbsST.p];
+        return [item.target_p isEqual:self.baseAbsST];
     }];
     
     // 求出当前baseAbsST的归一化显著度。
@@ -153,7 +128,7 @@
     if ([generalConST isEqual:self.baseAbsST]) return 1;
     
     // 取出absST有些哪些元素。
-    NSDictionary *indexDic = [generalConST getAbsIndexDic:self.baseAbsST.p];
+    NSDictionary *indexDic = [generalConST getAbsIndexDic:self.baseAbsST];
     
     // 找出最显著的。
     NSInteger best = [SMGUtils filterBestScore:generalConST.contentPorts scoreBlock:^CGFloat(AIPort *item) {
