@@ -319,7 +319,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV7:jvBuModel.stModels logDesc:logDesc protoGT:protoGT];
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV8:jvBuModel.stModels logDesc:logDesc protoGT:protoGT];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。
@@ -708,7 +708,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // absST层：有效（全含）absST。
         for (AIKVPointer *absST_p in stModel.allValidAbsST_ps) {
-            AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
             
             // bro来源路径记录到sourceDic。
             NSMutableArray *collectedSTModels = [sourceDic objectForKey:absST_p];
@@ -907,8 +906,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [findGTItem beBroSTStrongRatio];
             
             // 记录缓存池
-            [bestGVsPoolV2 setObjectV6:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId) ];
+            [bestGVsPoolV2 setObjectV6:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId)];
         }
+        
+        // TODOTOMORROW20260301: 此处得判断下位置符合度，absST在：proto和assGT中各自什么位置，是否符合。
+        // 位置必须符合，不然不让其复用到。
         
         // 保留最匹配的一条。
         if (!bestResult || bestResult.matchValue * bestResult.zonHeStrongRatio < findGTItem.matchValue * findGTItem.zonHeStrongRatio) {
