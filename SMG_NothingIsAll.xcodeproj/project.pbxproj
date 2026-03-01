@@ -159,6 +159,7 @@
 		0895FFE4264A13C500DAD3EA /* TOModelVision.m in Sources */ = {isa = PBXBuildFile; fileRef = 0895FFE3264A13C500DAD3EA /* TOModelVision.m */; };
 		089614A9219A4D5200343FAC /* BirdGrowPage.m in Sources */ = {isa = PBXBuildFile; fileRef = 089614A7219A4D5200343FAC /* BirdGrowPage.m */; };
 		089614AA219A4D5200343FAC /* BirdGrowPage.xib in Resources */ = {isa = PBXBuildFile; fileRef = 089614A8219A4D5200343FAC /* BirdGrowPage.xib */; };
+		089889A72F541C7D001B84BC /* DDicV2.m in Sources */ = {isa = PBXBuildFile; fileRef = 089889A62F541C7D001B84BC /* DDicV2.m */; };
 		089991C02A1A432200A44050 /* HitItemModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 089991BF2A1A432200A44050 /* HitItemModel.m */; };
 		089E66B121B9F5D100ECA28A /* AIAbsAlgNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 089E66B021B9F5D100ECA28A /* AIAbsAlgNode.m */; };
 		089E66B421B9F84500ECA28A /* AIAlgNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 089E66B321B9F84500ECA28A /* AIAlgNode.m */; };
@@ -560,6 +561,8 @@
 		089614A6219A4D5200343FAC /* BirdGrowPage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BirdGrowPage.h; sourceTree = "<group>"; };
 		089614A7219A4D5200343FAC /* BirdGrowPage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BirdGrowPage.m; sourceTree = "<group>"; };
 		089614A8219A4D5200343FAC /* BirdGrowPage.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = BirdGrowPage.xib; sourceTree = "<group>"; };
+		089889A52F541C7D001B84BC /* DDicV2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DDicV2.h; sourceTree = "<group>"; };
+		089889A62F541C7D001B84BC /* DDicV2.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DDicV2.m; sourceTree = "<group>"; };
 		089991BE2A1A432200A44050 /* HitItemModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HitItemModel.h; sourceTree = "<group>"; };
 		089991BF2A1A432200A44050 /* HitItemModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HitItemModel.m; sourceTree = "<group>"; };
 		089E66AF21B9F5D100ECA28A /* AIAbsAlgNode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIAbsAlgNode.h; sourceTree = "<group>"; };
@@ -1718,6 +1721,8 @@
 				084DF1592DCF2271001FC42B /* DDic.m */,
 				084542322EF315DE00568A0B /* DoubleObjMapModel.h */,
 				084542332EF315DE00568A0B /* DoubleObjMapModel.m */,
+				089889A52F541C7D001B84BC /* DDicV2.h */,
+				089889A62F541C7D001B84BC /* DDicV2.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -2331,6 +2336,7 @@
 				08F27D6E29ED8FC60063E71B /* TCTransfer.m in Sources */,
 				089E66B421B9F84500ECA28A /* AIAlgNode.m in Sources */,
 				081B3ACC1F6E2155008A7F36 /* AITime.m in Sources */,
+				089889A72F541C7D001B84BC /* DDicV2.m in Sources */,
 				08A7E06A24EE07C40042C7A9 /* AIShortMatchModel_Simple.m in Sources */,
 				08A1E57C2193BAFA0046C4AC /* UIView+Extension.m in Sources */,
 				087705B42753746800BA4EFB /* TCDemand.m in Sources */,
