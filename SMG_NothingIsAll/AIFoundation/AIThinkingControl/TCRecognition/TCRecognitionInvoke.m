@@ -610,7 +610,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             GTModelV2 *gtModel = [GTModelV2 new:assGT];
             for (NSInteger i = 0; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
-                GTItemV2 *gtItem = [self gtZiJvV8:assGT curIndex:curIndex sourceDic:sourceDic];
+                GTItemV2 *gtItem = [self gtZiJvV8:assGT curIndex:curIndex sourceDic:sourceDic gtModel:gtModel];
                 if (!gtItem) continue;
                 
                 // 收集成GTItemV2模型。
@@ -696,7 +696,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  MARK:--------------------GT自举算法--------------------
  *  @param sourceDic 需要从broST -> absST -> assST 及baseSTModel的反向路径映射，方便用于GT自举中竞争best结果。
  */
-+(GTItemV2*) gtZiJvV8:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic {
++(GTItemV2*) gtZiJvV8:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic gtModel:(GTModelV2*)gtModel {
     // 反取abs层
     AIKVPointer *absST_p = ARR_INDEX(assGT.content_ps, curIndex);
     GTItemV2 *bestResult = nil;
@@ -734,11 +734,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [bestGVsPoolV2 setObjectV6:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId)];
         }
         
-        // TODOTOMORROW20260301: 此处得判断下位置符合度，absST在：proto和assGT中各自什么位置，是否符合。
-        // 判断新一条预计与实际rect的交集率。
-        // 根据现有bests预计任一个assIndex的rect（以前应该写过这个，找不到了）。
-        // 根据：一、bests_AssGT 二、bests_Proto 三、newAbsST_Proto 计算出：newAbsST_AssGT。
-        // 然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率。
+        // ========== 判断下位置符合度：根据新帧absST在proto位置，预计出在assGT中应该在什么位置，然后与其实际在assGT中的位置，计算二者位置符合度 ==========
+        // 第1步：根据1.bests_AssGT 2.bests_Proto 3.newAbsST_Proto 计算出4.newAbsST_AssGT（参考36045-TODO2）。
+        CGRect bests_AssGT = [SMGUtils convertArr2Rect:gtModel.bestSTDic.allValues itemRectBlock:^CGRect(GTItemV2 *item) { return item.absST_AssGT; }];
+        CGRect bests_Proto = [SMGUtils convertArr2Rect:gtModel.bestSTDic.allValues itemRectBlock:^CGRect(GTItemV2 *item) { return item.absST_ProtoT; }];
+        CGRect newAbsST_Proto = findGTItem.absST_ProtoT;
+        CGRect newAbsST_AssGT = [SMGUtils convertNewAAtCWithAAtB:bests_Proto aAtC:bests_AssGT newAAtB:newAbsST_Proto];
+        
+        // 第2步：然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率（参考36045-TODO3）。
+        findGTItem.matchDegree = [SMGUtils rate4IntersectionRect:newAbsST_AssGT bRect:findGTItem.absST_AssGT];
+        if (findGTItem.matchDegree < 0.6f) continue;
         
         // 保留最匹配的一条。
         if (!bestResult || bestResult.matchValue * bestResult.zonHeStrongRatio < findGTItem.matchValue * findGTItem.zonHeStrongRatio) {

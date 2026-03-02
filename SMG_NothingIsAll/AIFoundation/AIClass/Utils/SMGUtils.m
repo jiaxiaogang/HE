@@ -725,6 +725,19 @@
     return aAtC;
 }
 
+//A在B & A在C：已知A在B的Rect，以及A在C的rect，以及newA在B中的rect，计算newA在C中的Rect。
++(CGRect) convertNewAAtCWithAAtB:(CGRect)aAtB aAtC:(CGRect)aAtC newAAtB:(CGRect)newAAtB {
+    // 此方法统一在C坐标系计算（因为result要求在C坐标系，这样最方便计算）。
+    // 1、求出比例：C/B
+    CGFloat xScale = aAtC.size.width / aAtB.size.width;
+    CGFloat yScale = aAtC.size.height / aAtB.size.height;
+
+    // 2、求出偏移量（统一到C坐标系后，再求差）。
+    CGFloat xDelta = aAtC.origin.x - aAtB.origin.x * xScale;
+    CGFloat yDelta = aAtC.origin.y - aAtB.origin.y * yScale;
+    return CGRectMake(newAAtB.origin.x * xScale + xDelta, newAAtB.origin.y * yScale + yDelta, newAAtB.size.width * xScale, newAAtB.size.height * yScale);
+}
+
 //调用示例：（显然上面的convertBAtA方法更简单）。
 // 1. CGSize assST_Proto_Size = [SMGUtils convertBAtCSizeFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoBSize:assSTRect.size]; // assST是B，proto是C，bestGVs是A。
 // 2. CGPoint bestGVs_AssST_Point_ByProto = [SMGUtils convertBAtCPointFrom:bestGVs_AssST.size aAtC:bestGVs_ProtoT.size protoAAtBPoint:bestGVs_AssST.origin]; // assST是B，proto是C，bestGVs是A。

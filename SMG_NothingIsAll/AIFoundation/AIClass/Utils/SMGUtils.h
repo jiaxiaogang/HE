@@ -188,6 +188,9 @@
 //A在B & B在C：已知A在B的Rect，以及B在C的rect，以及B的原始尺寸protoBSize，计算A在C中的Rect。
 +(CGRect) convertAAtCWithAAtB:(CGRect)aAtB bAtC:(CGRect)bAtC protoBSize:(CGSize)protoBSize;
 
+//A在B & A在C：已知A在B的Rect，以及A在C的rect，以及newA在B中的rect，计算newA在C中的Rect。
++(CGRect) convertNewAAtCWithAAtB:(CGRect)aAtB aAtC:(CGRect)aAtC newAAtB:(CGRect)newAAtB;
+
 // 根据A在B的尺寸，以及A在C的尺寸，求出B在C的尺寸。
 +(CGSize) convertBAtCSizeFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoBSize:(CGSize)protoBSize;
 
