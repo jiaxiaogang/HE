@@ -147,35 +147,7 @@
     //10. 视觉训练工具
     self.imgTrainerView = [[ImgTrainerView alloc] init];
     [self.window addSubview:self.imgTrainerView];
-    [AppDelegate testConvertNewAAtCWithAAtB];
     return YES;
-}
-
-
-/**
- *  MARK:--------------------测试 convertNewAAtCWithAAtB 方法--------------------
- *  @desc 用三组示例验证 A在B & A在C → 已知 newA在B，求 newA在C 的 rect 是否正确。
- */
-+(void) testConvertNewAAtCWithAAtB {
-    // 示例1：简单平移 + 等比缩放
-    CGRect aAtB1   = CGRectMake(10, 10, 100, 100);
-    CGRect aAtC1   = CGRectMake(20, 20, 200, 200);
-    CGRect newAtB1 = CGRectMake(30, 30, 50, 50);
-    CGRect newAtC1 = [SMGUtils convertNewAAtCWithAAtB:aAtB1 aAtC:aAtC1 newAAtB:newAtB1];
-    NSLog(@"newAtC: %@  →  预期: {{60,60},{100,100}}", NSStringFromCGRect(newAtC1));
-    
-    // 示例2：负偏移 + 非等比缩放
-    CGRect aAtB2   = CGRectMake(0, 0, 100, 100);
-    CGRect aAtC2   = CGRectMake(-50, 100, 50, 200);
-    CGRect newAtB2 = CGRectMake(50, 25, 20, 30);
-    CGRect newAtC2 = [SMGUtils convertNewAAtCWithAAtB:aAtB2 aAtC:aAtC2 newAAtB:newAtB2];
-    NSLog(@"newAtC: %@  →  预期: {{-25,150},{10,60}}", NSStringFromCGRect(newAtC2));
-    
-    CGRect aAtB3   = CGRectMake(5, 5, 10, 100);
-    CGRect aAtC3   = CGRectMake(10, 10, 10, 300);
-    CGRect newAtB3 = CGRectMake(5, 25, 1, 20);
-    CGRect newAtC3 = [SMGUtils convertNewAAtCWithAAtB:aAtB3 aAtC:aAtC3 newAAtB:newAtB3];
-    NSLog(@"newAtC: %@  →  预期: {{10,70},{1,60}}", NSStringFromCGRect(newAtC3));
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {}
