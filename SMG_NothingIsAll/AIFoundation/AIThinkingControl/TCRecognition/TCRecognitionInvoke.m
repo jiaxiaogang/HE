@@ -736,6 +736,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // TODOTOMORROW20260301: 此处得判断下位置符合度，absST在：proto和assGT中各自什么位置，是否符合。
         // 判断新一条预计与实际rect的交集率。
+        // 根据现有bests预计任一个assIndex的rect（以前应该写过这个，找不到了）。
+        // 根据：一、bests_AssGT 二、bests_Proto 三、newAbsST_Proto 计算出：newAbsST_AssGT。
+        // 然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率。
         
         // 保留最匹配的一条。
         if (!bestResult || bestResult.matchValue * bestResult.zonHeStrongRatio < findGTItem.matchValue * findGTItem.zonHeStrongRatio) {
