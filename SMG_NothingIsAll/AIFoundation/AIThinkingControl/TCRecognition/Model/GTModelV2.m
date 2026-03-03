@@ -48,4 +48,13 @@
     }] / self.bestSTDic.count;
 }
 
+/**
+ *  MARK:--------------------辅因子：位置符合度（参考36045）--------------------
+ */
+-(void) run4MatchDegree {
+    self.matchDegree = self.bestSTDic.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTDic.allValues convertBlock:^double(GTItemV2 *obj) {
+        return obj.matchDegree;
+    }] / self.bestSTDic.count;
+}
+
 @end

@@ -652,11 +652,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtModel run4MatchValue];
         [gtModel run4MatchCountRatio:maxMatchCount];
         [gtModel run4StrongRatioByContent];
+        [gtModel run4MatchDegree];
     }
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio;
+        return obj.matchValue * obj.matchCountRatio * obj.matchDegree;
     }];
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -672,10 +673,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t= 综合得分:%.3f",
+        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t符合度:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.assGT.pId,model.bestSTDic.count,model.assGT.count,
-              model.matchValue,model.matchCountRatio,
-              model.matchValue * model.matchCountRatio);
+              model.matchValue,model.matchCountRatio,model.matchDegree,
+              model.matchValue * model.matchCountRatio * model.matchDegree);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -734,16 +735,24 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [bestGVsPoolV2 setObjectV6:findGTItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(stModel.assT.pId) k6:@(absST_p.pointerId)];
         }
         
-        // ========== 判断下位置符合度：根据新帧absST在proto位置，预计出在assGT中应该在什么位置，然后与其实际在assGT中的位置，计算二者位置符合度 ==========
-        // 第1步：根据1.bests_AssGT 2.bests_Proto 3.newAbsST_Proto 计算出4.newAbsST_AssGT（参考36045-TODO2）。
-        CGRect bests_AssGT = [SMGUtils convertArr2Rect:gtModel.bestSTDic.allValues itemRectBlock:^CGRect(GTItemV2 *item) { return item.absST_AssGT; }];
-        CGRect bests_Proto = [SMGUtils convertArr2Rect:gtModel.bestSTDic.allValues itemRectBlock:^CGRect(GTItemV2 *item) { return item.absST_ProtoT; }];
-        CGRect newAbsST_Proto = findGTItem.absST_ProtoT;
-        CGRect newAbsST_AssGT = [SMGUtils convertNewAAtCWithAAtB:bests_Proto aAtC:bests_AssGT newAAtB:newAbsST_Proto];
-        
-        // 第2步：然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率（参考36045-TODO3）。
-        findGTItem.matchDegree = [SMGUtils rate4IntersectionRect:newAbsST_AssGT bRect:findGTItem.absST_AssGT];
-        if (findGTItem.matchDegree < 0.6f) continue;
+        // 首条时，位置符合度 = 默认1。
+        if (gtModel.bestSTDic.count == 0) {
+            findGTItem.matchDegree = 1;
+        } else {
+            // ========== 判断下位置符合度：根据新帧absST在proto位置，预计出在assGT中应该在什么位置，然后与其实际在assGT中的位置，计算二者位置符合度 ==========
+            // 第1步：根据1.bests_AssGT 2.bests_Proto 3.newAbsST_Proto 计算出4.newAbsST_AssGT（参考36045-TODO2）。
+            CGRect bests_AssGT = [SMGUtils convertArr2Rect:gtModel.bestSTDic.allValues itemRectBlock:^CGRect(GTItemV2 *item) { return item.absST_AssGT; }];
+            CGRect bests_Proto = [SMGUtils convertArr2Rect:gtModel.bestSTDic.allValues itemRectBlock:^CGRect(GTItemV2 *item) { return item.absST_ProtoT; }];
+            CGRect newAbsST_Proto = findGTItem.absST_ProtoT;
+            CGRect newAbsST_AssGT = [SMGUtils convertNewAAtCWithAAtB:bests_Proto aAtC:bests_AssGT newAAtB:newAbsST_Proto];
+            
+            // 第2步：然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率（参考36045-TODO3）。
+            findGTItem.matchDegree = [SMGUtils rate4IntersectionRect:newAbsST_AssGT bRect:findGTItem.absST_AssGT];
+            
+            NSLog(@"TODOTOMORROW20260304：查下此处bests_Proto为0问题：%@ %.2f",Rect2Str(bests_Proto),findGTItem.matchDegree);
+            NSLog(@"");
+        }
+        // if (findGTItem.matchDegree < 0.6f) continue;
         
         // 保留最匹配的一条。
         if (!bestResult) {

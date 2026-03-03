@@ -27,4 +27,7 @@
 @property (assign, nonatomic) CGFloat strongRatioByContent;
 -(void) run4StrongRatioByContent;
 
+@property (assign, nonatomic) CGFloat matchDegree;
+-(void) run4MatchDegree;
+
 @end
