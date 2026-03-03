@@ -540,8 +540,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
     
-    // run4AssST_ProtoRect
+    // 计算assST_Proto和bestGVs_Proto。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        // bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
+        [model run4BestGvsAtProtoTRect];
+        
+        // run4AssST_ProtoRect
         [model run4AssST_ProtoRect];
     }
     
@@ -747,9 +751,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGRect newAbsST_AssGT = [SMGUtils convertNewAAtCWithAAtB:bests_Proto aAtC:bests_AssGT newAAtB:newAbsST_Proto];
             
             // 第2步：然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率（参考36045-TODO3）。
-            findGTItem.matchDegree = [SMGUtils rate4IntersectionRect:newAbsST_AssGT bRect:findGTItem.absST_AssGT];
+            CGRect realAbsST_AssGT = findGTItem.absST_AssGT;
+            findGTItem.matchDegree = [SMGUtils rate4IntersectionRect:newAbsST_AssGT bRect:realAbsST_AssGT];
             
-            NSLog(@"TODOTOMORROW20260304：查下此处bests_Proto为0问题：%@ %.2f",Rect2Str(bests_Proto),findGTItem.matchDegree);
+            NSLog(@"TODOTOMORROW20260304：预计：%@ 实际：%@ %.2f",Rect2Str(newAbsST_AssGT),Rect2Str(realAbsST_AssGT),findGTItem.matchDegree);
             NSLog(@"");
         }
         // if (findGTItem.matchDegree < 0.6f) continue;
