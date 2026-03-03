@@ -746,8 +746,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (findGTItem.matchDegree < 0.6f) continue;
         
         // 保留最匹配的一条。
-        if (!bestResult || bestResult.matchValue * bestResult.zonHeStrongRatio < findGTItem.matchValue * findGTItem.zonHeStrongRatio) {
+        if (!bestResult) {
             bestResult = findGTItem;
+        } else {
+            CGFloat bestScore = bestResult.matchValue * bestResult.zonHeStrongRatio * bestResult.matchDegree;
+            CGFloat findScore = findGTItem.matchValue * findGTItem.zonHeStrongRatio * findGTItem.matchDegree;
+            if (bestScore < findScore) {
+                bestResult = findGTItem;
+            }
         }
     }
     
