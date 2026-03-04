@@ -753,11 +753,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 第2步：然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率（参考36045-TODO3）。
             CGRect realAbsST_AssGT = findGTItem.absST_AssGT;
             findGTItem.matchDegree = [SMGUtils rate4IntersectionRect:newAbsST_AssGT bRect:realAbsST_AssGT];
-            
-            NSLog(@"TODOTOMORROW20260304：预计：%@ 实际：%@ %.2f",Rect2Str(newAbsST_AssGT),Rect2Str(realAbsST_AssGT),findGTItem.matchDegree);
-            NSLog(@"");
         }
-        // if (findGTItem.matchDegree < 0.6f) continue;
+        if (findGTItem.matchDegree < 0.6f) continue;
         
         // 保留最匹配的一条。
         if (!bestResult) {
