@@ -280,7 +280,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds logDesc:logDesc];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     
     // 单特征类比：借助bestGVs来类比。
@@ -495,7 +495,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // bestGVs根据匹配度末尾淘汰20%。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model filter4MatchValue];
@@ -551,6 +551,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        // 更新logDesc到assT（参考36052）。
+        [model.assT updateLogDescItem:logDesc rate:model.matchValue];
         
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
@@ -676,6 +678,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
+        // 更新logDesc到assT（参考36052）。
+        [model.assGT updateLogDescItem:logDesc rate:model.matchValue * model.matchDegree];
+        
         // debug
         NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t符合度:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.assGT.pId,model.bestSTDic.count,model.assGT.count,
@@ -863,7 +868,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
                 //a. 通过组码做单特征识别。
                 AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel protoColorDic:nil ds:nil];
+                [self recognitionFeatureV2_Step2:jvBuModel protoColorDic:nil ds:nil logDesc:nil];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = nil;//[self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.stModels dotSize:1];
