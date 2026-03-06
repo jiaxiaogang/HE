@@ -551,9 +551,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        // 更新logDesc到assT（参考36052）。
-        [model.assT updateLogDescItem:logDesc rate:model.matchValue];
-        
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
@@ -575,6 +572,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.matchValue * obj.modelMatchCountScore * obj.absPortStrongScore;
     }];
+    
+    // 更新logDesc到assT（参考36052）。
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        // [model.assT updateLogDescItem:logDesc rate:model.matchValue];
+        for (AIPort *validAbsPort in model.validAbsSTPorts) {
+            AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
+            [validAbs updateLogDescItem:logDesc];
+        }
+    }
 }
 
 /**
@@ -661,6 +667,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtModel run4MatchCountRatio:maxMatchCount];
         [gtModel run4StrongRatioByContent];
         [gtModel run4MatchDegree];
+        [gtModel run4ValidAbsPorts];
     }
     
     // 最后进行综合竞争，把最符合的找出来。
@@ -680,9 +687,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
-        // 更新logDesc到assT（参考36052）。
-        [model.assGT updateLogDescItem:logDesc rate:model.matchValue * model.matchDegree];
-        
         // debug
         NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t符合度:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.assGT.pId,model.bestSTDic.count,model.assGT.count,
@@ -703,6 +707,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     } convertMatchBlock:^float(GTModelV2 *obj) {
         return obj.matchValue * obj.matchCountRatio * obj.matchDegree;
     }];
+    
+    // 更新logDesc到assT（参考36052）。
+    for (GTModelV2 *model in resultModels) {
+        // [model.assGT updateLogDescItem:logDesc rate:model.matchValue * model.matchDegree];
+        for (AIPort *validAbsPort in model.validAbsPorts) {
+            AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
+            [validAbs updateLogDescItem:logDesc];
+        }
+    }
     return resultModels;
 }
 
