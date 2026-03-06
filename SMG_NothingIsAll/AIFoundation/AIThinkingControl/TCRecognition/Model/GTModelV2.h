@@ -15,6 +15,10 @@
 @property (strong, nonatomic) NSMutableDictionary *bestSTDic;
 @property (strong, nonatomic) AIGroupFeatureNode *assGT;
 
+// assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
+@property (strong, nonatomic) NSArray *validAbsPorts;
+-(void) run4ValidAbsPorts;
+
 @property (assign, nonatomic) CGFloat matchValue;
 -(void) run4MatchValue;
 

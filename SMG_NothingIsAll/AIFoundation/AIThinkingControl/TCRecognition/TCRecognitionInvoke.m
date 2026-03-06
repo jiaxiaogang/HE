@@ -568,8 +568,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     //61. debugLog
-    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^id(AIFeatureJvBuModel *obj) {
-        return obj.assT;
+    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^NSArray*(AIFeatureJvBuModel *obj) {
+        return [SMGUtils convertArr:obj.allValidAbsST_ps convertBlock:^id(AIKVPointer *obj) {
+            return [SMGUtils searchNode:obj];
+        }];
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.matchValue * obj.modelMatchCountScore * obj.absPortStrongScore;
     }];
@@ -694,10 +696,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // debugLog
-    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^id(GTModelV2 *obj) {
-        return obj.assGT;
+    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTModelV2 *obj) {
+        return [SMGUtils convertArr:obj.validAbsPorts convertBlock:^id(AIPort *obj) {
+            return [SMGUtils searchNode:obj.target_p];
+        }];
     } convertMatchBlock:^float(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio;
+        return obj.matchValue * obj.matchCountRatio * obj.matchDegree;
     }];
     return resultModels;
 }
@@ -1006,8 +1010,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     //18. debugLog3
-    [TCRecognitionInvoke printLogDescRate:[SMGUtils convertArr:logModels convertBlock:^id(AIMatchAlgModel *obj) {
-        return obj.matchAlg;
+    [TCRecognitionInvoke printLogDescRate:[SMGUtils convertArr:logModels convertBlock:^NSArray*(AIMatchAlgModel *obj) {
+        return @[obj.matchAlg];
     }] protoLogDesc:CLEANSTR([protoAlg getLogDesc:false].allKeys) prefix:@"概念" convertNodeBlock:^id(id obj) {
         return [SMGUtils searchNode:obj];
     } convertMatchBlock:nil];
@@ -1583,17 +1587,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return nil;
 }
 
-+(void) printLogDescRate:(NSArray*)asses protoLogDesc:(NSString*)protoLogDesc prefix:(NSString*)prefix convertNodeBlock:(id(^)(id obj))convertNodeBlock convertMatchBlock:(float(^)(id obj))convertMatchBlock {
++(void) printLogDescRate:(NSArray*)asses protoLogDesc:(NSString*)protoLogDesc prefix:(NSString*)prefix convertNodeBlock:(NSArray*(^)(id obj))convertNodeBlock convertMatchBlock:(float(^)(id obj))convertMatchBlock {
     //18. debugLog3
     NSMutableDictionary *allLogDic = [NSMutableDictionary new];
     for (id itemAss in asses) {
-        AINodeBase *assNode = convertNodeBlock(itemAss);
+        NSArray *assNodes = convertNodeBlock(itemAss);
         CGFloat match = convertMatchBlock ? convertMatchBlock(itemAss) : 1;
-        NSDictionary *itemLogDic = [assNode getLogDesc_Number:true];
-        for (NSString *key in itemLogDic.allKeys) {
-            CGFloat oldCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
-            CGFloat newCount = NUMTOOK([itemLogDic objectForKey:key]).floatValue;
-            [allLogDic setObject:@(oldCount + newCount * match) forKey:key];
+        for (AINodeBase *assNode in assNodes) {
+            NSDictionary *itemLogDic = [assNode getLogDesc_Number:true];
+            for (NSString *key in itemLogDic.allKeys) {
+                CGFloat oldCount = NUMTOOK([allLogDic objectForKey:key]).floatValue;
+                CGFloat newCount = NUMTOOK([itemLogDic objectForKey:key]).floatValue;
+                [allLogDic setObject:@(oldCount + newCount * match) forKey:key];
+            }
         }
     }
     CGFloat max = [SMGUtils filterBestScore:allLogDic.allValues scoreBlock:^CGFloat(NSNumber *obj) {
