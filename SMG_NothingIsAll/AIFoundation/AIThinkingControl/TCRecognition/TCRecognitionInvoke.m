@@ -732,10 +732,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             findGTItem.assGTIndex = curIndex;
             
             // 计算匹配度 = assST的匹配度 x abs的匹配率。
-            // 注：abs匹配率 = abs.count / max(assST.count,broST.count)。
+            // 注1：abs匹配率 = abs.count / bestGVs.count。
+            // 注2：把assST的竞争因子也乘进来（参考36053-方案2）。
             AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
+            CGFloat stScore = stModel.matchValue * stModel.modelMatchCountScore * stModel.absPortStrongScore;
             CGFloat matchCountRatio = (float)absST.count / stModel.bestGVs.count; // 通路matchCountRatio
-            findGTItem.matchValue = matchCountRatio; // stModel.matchValue * matchCountRatio;
+            findGTItem.matchValue = stScore * matchCountRatio;
             
             // 计算显著度（参考36021-TODO1 & TODO2）。
             [findGTItem beAssSTStrongRatio];
