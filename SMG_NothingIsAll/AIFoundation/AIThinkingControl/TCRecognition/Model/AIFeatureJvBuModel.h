@@ -101,4 +101,7 @@
 // assST的抽象强度归一化。
 @property (assign, nonatomic) CGFloat absPortStrongScore;
 
+// ST综合竞争分（用于ST识别竞争）。
+-(CGFloat) stScore;
+
 @end

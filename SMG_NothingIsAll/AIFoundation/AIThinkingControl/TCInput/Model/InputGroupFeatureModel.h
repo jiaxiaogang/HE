@@ -15,4 +15,6 @@
 @property (assign, nonatomic) CGRect rect;//单特征组成组特征中的范围
 @property (strong, nonatomic) AIKVPointer *feature_p;//单特征。
 
+@property (assign, nonatomic) NSInteger assIndex; // 如果是类比，这里存具象assNode的下标（用于生成indexDic用）。
+
 @end

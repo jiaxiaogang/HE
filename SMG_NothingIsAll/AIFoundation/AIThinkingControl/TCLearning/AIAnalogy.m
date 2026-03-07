@@ -372,8 +372,13 @@
         curSTAtAbsGTRect.origin.x -= newAbsAtAssRect.origin.x;//- marginLeft
         curSTAtAbsGTRect.origin.y -= newAbsAtAssRect.origin.y;//- marginTop
         AIKVPointer *itemST = ARR_INDEX(gtModel.assGT.content_ps, obj.assGTIndex);
-        return [InputGroupFeatureModel new:itemST rect:curSTAtAbsGTRect];
+        InputGroupFeatureModel *result = [InputGroupFeatureModel new:itemST rect:curSTAtAbsGTRect];
+        result.assIndex = obj.assGTIndex;
+        return result;
     }];
+    
+    // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
+    orders = [ThinkingUtils sortInputGroupFeatureModels:orders];
     
     // 构建absGT
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.assGT, protoGT] at:protoGT.at ds:protoGT.ds isOut:protoGT.isOut isJiao:true];
@@ -396,9 +401,9 @@
     // 存indexDic。
     // 用途1、TODO：取显著度的时候需要它，现在不取absGT的content显著度，所以暂时用不到，后需要的时候加上。
     // 用途2、assGT识别结果，取有效抽象时，要用indexDic来判断抽象absGT是否全映射匹配。
-    NSDictionary *indexDic = [SMGUtils convertArr2Dic:orders kvBlock:^NSArray *(GTItemV2 *obj) {
+    NSDictionary *indexDic = [SMGUtils convertArr2Dic:orders kvBlock:^NSArray *(InputGroupFeatureModel *obj) {
         NSNumber *absKey = @([orders indexOfObject:obj]);
-        NSNumber *conValue = @(obj.assGTIndex);
+        NSNumber *conValue = @(obj.assIndex);
         return @[absKey, conValue];
     }];
     [gtModel.assGT updateIndexDic:absGT indexDic:indexDic];

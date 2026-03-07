@@ -34,4 +34,10 @@
 @property (assign, nonatomic) CGFloat matchDegree;
 -(void) run4MatchDegree;
 
+@property (assign, nonatomic) CGFloat zonHeSTScore;
+-(void) run4ZonHeSTScore;
+
+// GTModel综合评分（用于GT识别竞争）。
+-(CGFloat) zonHeScore;
+
 @end

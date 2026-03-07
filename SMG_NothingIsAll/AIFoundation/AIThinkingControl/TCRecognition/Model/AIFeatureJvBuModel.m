@@ -263,4 +263,9 @@
     self.centerScore = maxDeviation > 0 ? 1.0 - (deviation / maxDeviation) : 1.0;
 }
 
+// ST综合竞争分（用于ST识别竞争）。
+-(CGFloat) stScore {
+    return self.matchValue * self.modelMatchCountScore * self.absPortStrongScore;
+}
+
 @end

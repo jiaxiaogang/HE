@@ -44,4 +44,7 @@
 // 综合显著度（参考36021）。
 -(CGFloat) zonHeStrongRatio;
 
+// GTItem的综合竞争分（用于GT自举算法竞争）。
+-(CGFloat) zonHeScore;
+
 @end

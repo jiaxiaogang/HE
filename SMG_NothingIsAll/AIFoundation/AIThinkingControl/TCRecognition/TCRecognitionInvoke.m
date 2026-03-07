@@ -297,7 +297,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //}];
     
     // 方案2、========== 用absST来构建ProtoGT ==========
-    NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+    NSArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
         if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
         CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
             return item.bestGVAtProtoTRect;
@@ -308,6 +308,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSLog(@"第3步、单特征识别类比 finish ------------------------------------------------");
         return;
     }
+    
+    // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
+    gtOrders = [ThinkingUtils sortInputGroupFeatureModels:gtOrders];
     
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
@@ -529,7 +532,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         // return obj.areaRankRatio * obj.adjacentScore * obj.centerScore;
-        return obj.matchValue * obj.modelMatchCountScore * obj.absPortStrongScore;
+        return obj.stScore;
     }];
     
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
@@ -557,8 +560,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t抽象强度(%ld):%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
-              model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,
-              model.matchValue * model.modelMatchCountScore * model.absPortStrongScore);
+              model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,model.stScore);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -570,7 +572,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             return [SMGUtils searchNode:obj];
         }];
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * obj.modelMatchCountScore * obj.absPortStrongScore;
+        return obj.stScore;
     }];
     
     // 更新logDesc到assT（参考36052）。
@@ -667,12 +669,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtModel run4MatchCountRatio:maxMatchCount];
         [gtModel run4StrongRatioByContent];
         [gtModel run4MatchDegree];
+        [gtModel run4ZonHeSTScore];
         [gtModel run4ValidAbsPorts];
     }
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:gtModels compareBlock:^double(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio * obj.matchDegree;
+        return obj.zonHeScore;
     }];
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重。
@@ -688,10 +691,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t符合度:%.2f \t= 综合得分:%.3f",
+        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t符合度:%.2f \t综合ST:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.assGT.pId,model.bestSTDic.count,model.assGT.count,
-              model.matchValue,model.matchCountRatio,model.matchDegree,
-              model.matchValue * model.matchCountRatio * model.matchDegree);
+              model.matchValue,model.matchCountRatio,model.matchDegree,model.zonHeSTScore,model.zonHeScore);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -705,7 +707,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             return [SMGUtils searchNode:obj.target_p];
         }];
     } convertMatchBlock:^float(GTModelV2 *obj) {
-        return obj.matchValue * obj.matchCountRatio * obj.matchDegree;
+        return obj.zonHeScore;
     }];
     
     // 更新logDesc到assT（参考36052）。
@@ -752,9 +754,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 注1：abs匹配率 = abs.count / bestGVs.count。
             // 注2：把assST的竞争因子也乘进来（参考36053-方案2）。
             AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
-            CGFloat stScore = stModel.matchValue * stModel.modelMatchCountScore * stModel.absPortStrongScore;
             CGFloat matchCountRatio = (float)absST.count / stModel.bestGVs.count; // 通路matchCountRatio
-            findGTItem.matchValue = stScore * matchCountRatio;
+            findGTItem.matchValue = matchCountRatio;
             
             // 计算显著度（参考36021-TODO1 & TODO2）。
             [findGTItem beAssSTStrongRatio];
@@ -784,9 +785,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (!bestResult) {
             bestResult = findGTItem;
         } else {
-            CGFloat bestScore = bestResult.matchValue * bestResult.zonHeStrongRatio * bestResult.matchDegree;
-            CGFloat findScore = findGTItem.matchValue * findGTItem.zonHeStrongRatio * findGTItem.matchDegree;
-            if (bestScore < findScore) {
+            if (bestResult.zonHeScore < findGTItem.zonHeScore) {
                 bestResult = findGTItem;
             }
         }

@@ -70,4 +70,18 @@
     }] / self.bestSTDic.count;
 }
 
+/**
+ *  MARK:--------------------辅因子：ST综合竞争度（参考36053-方案2）--------------------
+ */
+-(void) run4ZonHeSTScore {
+    self.zonHeSTScore = self.bestSTDic.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTDic.allValues convertBlock:^double(GTItemV2 *obj) {
+        return obj.baseSTModel.stScore;
+    }] / self.bestSTDic.count;
+}
+
+// GTModel综合评分（用于GT识别竞争）。
+-(CGFloat) zonHeScore {
+    return self.zonHeSTScore * self.matchValue * self.matchCountRatio * self.matchDegree;
+}
+
 @end

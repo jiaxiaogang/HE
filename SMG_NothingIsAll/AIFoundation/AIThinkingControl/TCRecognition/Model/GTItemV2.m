@@ -128,4 +128,9 @@
     // return self.beAssSTStrongRatio * self.beBroSTStrongRatio;
 }
 
+// GTItem的综合竞争分（用于GT自举算法竞争）。
+-(CGFloat) zonHeScore {
+    return self.baseSTModel.stScore * self.matchValue * self.zonHeStrongRatio * self.matchDegree;
+}
+
 @end
