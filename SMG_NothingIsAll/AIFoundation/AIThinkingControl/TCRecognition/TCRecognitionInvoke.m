@@ -456,7 +456,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
                 AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                 CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
-                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue];
+                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue baseGV_p:curAssGV_p];
                 [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
             }
             
@@ -626,7 +626,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             GTModelV2 *gtModel = [GTModelV2 new:assGT];
             for (NSInteger i = 0; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
-                GTItemV2 *gtItem = [self gtZiJvV8:assGT curIndex:curIndex sourceDic:sourceDic gtModel:gtModel];
+                GTItemV2 *gtItem = [self gtZiJvV8:assGT curIndex:curIndex sourceDic:sourceDic gtModel:gtModel stModels:stModels];
                 if (!gtItem) continue;
                 
                 // 收集成GTItemV2模型。
@@ -725,7 +725,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  MARK:--------------------GT自举算法--------------------
  *  @param sourceDic 需要从broST -> absST -> assST 及baseSTModel的反向路径映射，方便用于GT自举中竞争best结果。
  */
-+(GTItemV2*) gtZiJvV8:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic gtModel:(GTModelV2*)gtModel {
++(GTItemV2*) gtZiJvV8:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic gtModel:(GTModelV2*)gtModel stModels:(NSArray*)stModels {
     // 反取abs层
     AIKVPointer *absST_p = ARR_INDEX(assGT.content_ps, curIndex);
     GTItemV2 *bestResult = nil;
@@ -791,6 +791,42 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
     }
     
+    return bestResult;
+}
+
++(GTItemV2*) gtZiJvV9:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic gtModel:(GTModelV2*)gtModel stModels:(NSArray*)stModels {
+    // 反取abs层
+    AIKVPointer *absST_p = ARR_INDEX(assGT.content_ps, curIndex);
+    GTItemV2 *bestResult = nil;
+    AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
+
+    // 取allBestGVs，格式：List<AIFeatureJvBuItem>
+    NSArray *allBestGVs = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *obj) {
+        return obj.bestGVs.allValues;
+    }];
+    
+    // 依次自举absGV
+    for (AIKVPointer *absGV_p in absST.content_ps) {
+        
+        for (AIFeatureJvBuItem *bestGV in allBestGVs) {
+            if (![absGV_p isEqual:bestGV.baseGV_p]) continue;
+            
+            // 封装一下用已知indexes及对应的rects，预计新index对应的rect算法。
+            
+            // 1. 用已知protoRects，计算出整体protoRect。
+            // 2. 用新index在ass中的rect、以及整体protoRect、整体assRect，预计出新index在proto的Rect。
+            // 3. 用预计index_ProtoRect和实际bestGV_RectProto求交，看位置符合度是否ok。
+            
+            
+            // 与以往相容的就划为一组。
+            
+            // 与以往不相容的另起一组。
+            
+        }
+        
+        
+    }
+
     return bestResult;
 }
 
@@ -1706,7 +1742,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
             }
             CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue];
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue baseGV_p:curAssGV_p];
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(curAssGV_p.pointerId)];
