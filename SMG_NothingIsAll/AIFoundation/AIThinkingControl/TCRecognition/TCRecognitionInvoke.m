@@ -796,20 +796,28 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 +(GTItemV2*) gtZiJvV9:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic gtModel:(GTModelV2*)gtModel stModels:(NSArray*)stModels {
     // 反取abs层
-    AIKVPointer *absST_p = ARR_INDEX(assGT.content_ps, curIndex);
+    AIKVPointer *itemST_p = ARR_INDEX(assGT.content_ps, curIndex);
     GTItemV2 *bestResult = nil;
-    AIFeatureNode *absST = [SMGUtils searchNode:absST_p];
-
+    AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
+    DDicV2 *pool = [DDicV2 new];
+    
     // 取allBestGVs，格式：List<AIFeatureJvBuItem>
     NSArray *allBestGVs = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *obj) {
         return obj.bestGVs.allValues;
     }];
     
     // 依次自举absGV
-    for (AIKVPointer *absGV_p in absST.content_ps) {
+    for (NSInteger itemGVIndex = 0; itemGVIndex < itemST.count; itemGVIndex++) {
+        AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, itemGVIndex);
         
         for (AIFeatureJvBuItem *bestGV in allBestGVs) {
-            if (![absGV_p isEqual:bestGV.baseGV_p]) continue;
+            if (![itemGV_p isEqual:bestGV.baseGV_p]) continue;
+            
+            // 根据同一个itemST对应上同一个bestGV进行防重（相当于同一个itemST + itemGVIndex + itemGV_ProtoRect.index共同做防重因子）。
+            MapModel *rectIndex = [self getIndexsOfProtoRect:bestGV.bestGVAtProtoTRect];
+            NSArray *poolKey = @[itemST_p, @(itemGVIndex), rectIndex.v1, rectIndex.v2, rectIndex.v3, rectIndex.v4];
+            GTItemV2 *old = [pool objectForKeys:poolKey];
+            if (old) continue;
             
             // 封装一下用已知indexes及对应的rects，预计新index对应的rect算法。
             
@@ -821,6 +829,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 与以往相容的就划为一组。
             
             // 与以往不相容的另起一组。
+            
+            
+            if (bestResult) [pool setObject:bestResult forKeys:poolKey];
             
         }
         
