@@ -62,6 +62,8 @@
 #import "AIMatchFoModel.h"
 #import "AIMatchAlgModel.h"
 #import "AIMatchCansetModel.h"
+
+//识别
 #import "AIMatchModel.h"
 #import "AIFeatureNextGVRankItem.h"
 #import "AIFeatureAllBestGVModel.h"
@@ -78,6 +80,8 @@
 #import "GTModelV2.h"
 #import "GTItem.h"
 #import "GTItemV2.h"
+#import "GTZiJvSTModel.h"
+#import "GTZiJvSTItem.h"
 
 //短时记忆
 #import "TOAlgModel.h"

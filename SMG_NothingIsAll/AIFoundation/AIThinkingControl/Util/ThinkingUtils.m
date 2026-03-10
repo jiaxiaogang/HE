@@ -394,7 +394,7 @@
     NSMutableArray *result = [NSMutableArray new];
     for (NSValue *key in gvRectExcept) {
         CGRect oldRect = key.CGRectValue;
-        CGFloat matchOfRect = [SMGUtils rate4IntersectionRectV0:oldRect newRect:newRect];
+        CGFloat matchOfRect = [SMGUtils rate4IntersectionRectV1:oldRect newRect:newRect];
         if (matchOfRect > 0.3f) {
             [result addObjectsFromArray:[gvRectExcept objectForKey:key]];
         }

@@ -456,7 +456,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 2025.07.11: 修复当前gv的diffValue的匹配度，而不是差值。
                 AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                 CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
-                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue baseGV_p:curAssGV_p];
+                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue baseGV_p:curAssGV_p baseIndex:beginAssIndex];
                 [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
             }
             
@@ -777,7 +777,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 第2步：然后用预计的newAbsST_AssGT 和 实际的newAbsST_AssGT，计算二者的rect交集率（参考36045-TODO3）。
             CGRect realAbsST_AssGT = findGTItem.absST_AssGT;
-            findGTItem.matchDegree = [SMGUtils rate4IntersectionRect:newAbsST_AssGT bRect:realAbsST_AssGT];
+            findGTItem.matchDegree = [SMGUtils rate4IntersectionRectV2:newAbsST_AssGT bRect:realAbsST_AssGT];
         }
         if (findGTItem.matchDegree < 0.6f) continue;
         
@@ -807,11 +807,44 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     
     // 依次自举absGV
+    GTZiJvSTModel *result = [GTZiJvSTModel new];
     for (NSInteger itemGVIndex = 0; itemGVIndex < itemST.count; itemGVIndex++) {
         AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, itemGVIndex);
         
+        NSArray *validBestGVs = [SMGUtils filterArr:allBestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
+            return [item.baseGV_p isEqual:itemGV_p];
+        }];
+        
+        BOOL joinSuccess = false;
+        for (GTZiJvSTItem *item in result.items) {
+            // 预计newGV_Proto。
+            CGRect hopeNewGV_Proto = [item hopeProtoRectByIndex:itemGVIndex];
+            
+            // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
+            AIFeatureJvBuItem *validBestGV = [SMGUtils filterBestObj:validBestGVs scoreBlock:^CGFloat(AIFeatureJvBuItem *obj) {
+                CGRect realNewGV_Proto = obj.bestGVAtProtoTRect;
+                return [SMGUtils rate4IntersectionRectV2:realNewGV_Proto bRect:hopeNewGV_Proto];
+            }];
+            
+            // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
+            if ([SMGUtils rate4IntersectionRectV2:validBestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
+                [item.gvs addObject:validBestGV];
+                joinSuccess = true;
+            }
+        }
+        
+        // 与以往不相容的另起一组：不属于任何组，则自成一组。
+        if (!joinSuccess) {
+            GTZiJvSTItem *newItem = [GTZiJvSTItem new];
+            [newItem.gvs addObject:nil];
+            [result.items addObject:newItem];
+        }
+        
+        
+        
+        
+        // TODO: 防重随后再写，先写完代码，再做封装和优化（参考36074-TODO6 & TODO7）。
         for (AIFeatureJvBuItem *bestGV in allBestGVs) {
-            if (![itemGV_p isEqual:bestGV.baseGV_p]) continue;
             
             // 根据同一个itemST对应上同一个bestGV进行防重（相当于同一个itemST + itemGVIndex + itemGV_ProtoRect.index共同做防重因子）。
             MapModel *rectIndex = [self getIndexsOfProtoRect:bestGV.bestGVAtProtoTRect];
@@ -819,16 +852,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             GTItemV2 *old = [pool objectForKeys:poolKey];
             if (old) continue;
             
-            // 封装一下用已知indexes及对应的rects，预计新index对应的rect算法。
             
-            // 1. 用已知protoRects，计算出整体protoRect。
-            // 2. 用新index在ass中的rect、以及整体protoRect、整体assRect，预计出新index在proto的Rect。
-            // 3. 用预计index_ProtoRect和实际bestGV_RectProto求交，看位置符合度是否ok。
-            
-            
-            // 与以往相容的就划为一组。
-            
-            // 与以往不相容的另起一组。
             
             
             if (bestResult) [pool setObject:bestResult forKeys:poolKey];
@@ -1753,7 +1777,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
             }
             CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue baseGV_p:curAssGV_p];
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue baseGV_p:curAssGV_p baseIndex:curIndex];
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(curAssGV_p.pointerId)];

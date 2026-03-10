@@ -178,9 +178,9 @@
 +(NSMutableArray*) convertArr:(NSArray*)arr convertItemArrBlock:(NSArray*(^)(id obj))convertItemArrBlock;
 +(CGRect) convertArr2Rect:(NSArray*)arr itemRectBlock:(CGRect(^)(id item))itemRectBlock;
 +(CGPoint) convertRect2Center:(CGRect)rect;
-+(CGFloat) rate4IntersectionRectV0:(CGRect)oldRect newRect:(CGRect)newRect;
++(CGFloat) rate4IntersectionRectV1:(CGRect)oldRect newRect:(CGRect)newRect;
 // 求交集占比（交集rect占比小的那一个）。
-+(CGFloat) rate4IntersectionRect:(CGRect)aRect bRect:(CGRect)bRect;
++(CGFloat) rate4IntersectionRectV2:(CGRect)aRect bRect:(CGRect)bRect;
 
 //C在A & C在B：已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
 +(CGRect) convertBAtAWithCAtA:(CGRect)cAtA cAtB:(CGRect)cAtB B:(CGRect)B;

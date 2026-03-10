@@ -680,7 +680,7 @@
 }
 
 //两个rect的区域匹配度（度 = 交 / 并）
-+(CGFloat) rate4IntersectionRectV0:(CGRect)oldRect newRect:(CGRect)newRect {
++(CGFloat) rate4IntersectionRectV1:(CGRect)oldRect newRect:(CGRect)newRect {
     CGRect intersectsRect = CGRectIntersection(newRect, oldRect);
     CGFloat intersectArea = intersectsRect.size.width * intersectsRect.size.height;
     CGFloat newArea = newRect.size.width * newRect.size.height;
@@ -690,7 +690,7 @@
 }
 
 // 求交集占比（交集rect占比小的那一个）。
-+(CGFloat) rate4IntersectionRect:(CGRect)aRect bRect:(CGRect)bRect {
++(CGFloat) rate4IntersectionRectV2:(CGRect)aRect bRect:(CGRect)bRect {
     CGRect intersectionRect = CGRectIntersection(aRect, bRect);
     CGFloat intersectionArea = intersectionRect.size.width * intersectionRect.size.height;
     CGFloat abMaxArea = MAX(aRect.size.width * aRect.size.height,bRect.size.width * bRect.size.height);

@@ -154,6 +154,8 @@
 		0889258122B0703700A0DBDD /* NVModuleView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0889258022B0703700A0DBDD /* NVModuleView.xib */; };
 		088A147F27E177AC00FA1097 /* TOMVisionDemandView.m in Sources */ = {isa = PBXBuildFile; fileRef = 088A147E27E177AC00FA1097 /* TOMVisionDemandView.m */; };
 		088DD7232201216500E0A786 /* TOFoModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 088DD7222201216500E0A786 /* TOFoModel.m */; };
+		088EA86E2F606A0900E0ED6F /* GTZiJvSTModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 088EA86D2F606A0900E0ED6F /* GTZiJvSTModel.m */; };
+		088EA8712F606A3200E0ED6F /* GTZiJvSTItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 088EA8702F606A3200E0ED6F /* GTZiJvSTItem.m */; };
 		089041742D8AF2E100545CD7 /* AIMatchModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 089041732D8AF2E100545CD7 /* AIMatchModel.m */; };
 		0892BAED277808F80024B43C /* TCActYes.m in Sources */ = {isa = PBXBuildFile; fileRef = 0892BAEC277808F80024B43C /* TCActYes.m */; };
 		0895FFE4264A13C500DAD3EA /* TOModelVision.m in Sources */ = {isa = PBXBuildFile; fileRef = 0895FFE3264A13C500DAD3EA /* TOModelVision.m */; };
@@ -551,6 +553,10 @@
 		088A147E27E177AC00FA1097 /* TOMVisionDemandView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOMVisionDemandView.m; sourceTree = "<group>"; };
 		088DD7212201216500E0A786 /* TOFoModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TOFoModel.h; sourceTree = "<group>"; };
 		088DD7222201216500E0A786 /* TOFoModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOFoModel.m; sourceTree = "<group>"; };
+		088EA86C2F606A0900E0ED6F /* GTZiJvSTModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvSTModel.h; sourceTree = "<group>"; };
+		088EA86D2F606A0900E0ED6F /* GTZiJvSTModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvSTModel.m; sourceTree = "<group>"; };
+		088EA86F2F606A3200E0ED6F /* GTZiJvSTItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvSTItem.h; sourceTree = "<group>"; };
+		088EA8702F606A3200E0ED6F /* GTZiJvSTItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvSTItem.m; sourceTree = "<group>"; };
 		089041722D8AF2E100545CD7 /* AIMatchModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIMatchModel.h; sourceTree = "<group>"; };
 		089041732D8AF2E100545CD7 /* AIMatchModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIMatchModel.m; sourceTree = "<group>"; };
 		0892BAEB277808F80024B43C /* TCActYes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCActYes.h; sourceTree = "<group>"; };
@@ -1344,6 +1350,7 @@
 		087705A0275373C000BA4EFB /* TCRecognition */ = {
 			isa = PBXGroup;
 			children = (
+				088EA86B2F6069E700E0ED6F /* GTZiJvModel */,
 				08ABC56C2D90107400E67D5B /* Model */,
 				087705AC2753745100BA4EFB /* TCRecognition.h */,
 				087705AD2753745100BA4EFB /* TCRecognition.m */,
@@ -1436,6 +1443,17 @@
 				08366B8F27DFFCC3004EBBB9 /* TOMVisionItemModel.m */,
 			);
 			path = Model;
+			sourceTree = "<group>";
+		};
+		088EA86B2F6069E700E0ED6F /* GTZiJvModel */ = {
+			isa = PBXGroup;
+			children = (
+				088EA86C2F606A0900E0ED6F /* GTZiJvSTModel.h */,
+				088EA86D2F606A0900E0ED6F /* GTZiJvSTModel.m */,
+				088EA86F2F606A3200E0ED6F /* GTZiJvSTItem.h */,
+				088EA8702F606A3200E0ED6F /* GTZiJvSTItem.m */,
+			);
+			path = GTZiJvModel;
 			sourceTree = "<group>";
 		};
 		0892BAEA277808E30024B43C /* TCActYes */ = {
@@ -2157,6 +2175,7 @@
 				0819F4F427583AA9007396D0 /* TCFeedback.m in Sources */,
 				080DF6A22DBB1273000EC837 /* ImgTrainerItemModel.m in Sources */,
 				081E3A352DD2338700897ED0 /* InputGroupFeatureModel.m in Sources */,
+				088EA86E2F606A0900E0ED6F /* GTZiJvSTModel.m in Sources */,
 				08EF604E2F2EE89600E1AE3B /* GTModelV2.m in Sources */,
 				086D93371F8CA782002BAF3F /* RuntimeInvoker.m in Sources */,
 				08D471DE1FEB3FFF00C61322 /* AIImvAlgs.m in Sources */,
@@ -2191,6 +2210,7 @@
 				08A5D5D822AF1E3400E56BB4 /* NVView.m in Sources */,
 				0830DAB721D6E8AD003065CD /* NSString+Extension.m in Sources */,
 				08C84A8E1E9A866200897D8B /* AIInput.m in Sources */,
+				088EA8712F606A3200E0ED6F /* GTZiJvSTItem.m in Sources */,
 				0819F4F727583B27007396D0 /* TCLearning.m in Sources */,
 				0873E11328B45D0600FBC09E /* TCRefrection.m in Sources */,
 				08EA48BF2029242B0038B982 /* ImvAlgsHungerModel.m in Sources */,
