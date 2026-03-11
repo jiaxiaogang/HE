@@ -26,6 +26,8 @@ static int bestGVsPoolTotalCount = 0, bestGVsPoolMissCount = 0, cutImgPoolTotalC
 
 static DDic *bestSTsPool; // 构建bestSTs的元素的复用池 <K=protoRect的分组索引 和 assGT.itemST.pId, V=bestSTItem>
 
+static NSMutableDictionary *gtZiJvSTPool; // GT自举之ST处理结果的缓存池
+
 static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 +(void) resetPool {
@@ -41,6 +43,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     cutImgPoolTotalCount = 0;
     cutImgPoolMissCount = 0;
     bestSTsPool = [DDic new];
+    gtZiJvSTPool = [NSMutableDictionary new];
 }
 
 //MARK:===============================================================
@@ -794,28 +797,40 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return bestResult;
 }
 
-+(GTItemV2*) gtZiJvV9:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic gtModel:(GTModelV2*)gtModel stModels:(NSArray*)stModels {
++(GTZiJvSTModel*) gtZiJvV9_ST:(AIGroupFeatureNode*)assGT curIndex:(NSInteger)curIndex sourceDic:(DDic*)sourceDic gtModel:(GTModelV2*)gtModel stModels:(NSArray*)stModels {
     // 反取abs层
     AIKVPointer *itemST_p = ARR_INDEX(assGT.content_ps, curIndex);
     GTItemV2 *bestResult = nil;
     AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
     DDicV2 *pool = [DDicV2 new];
     
+    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）。
+    GTZiJvSTModel *old = [gtZiJvSTPool objectForKey:@(itemST.pId)];
+    if (old) return old;
+    
+    // ==================== step1. 把微观一级元素的识别结果model全收集起来 ====================
+    
     // 取allBestGVs，格式：List<AIFeatureJvBuItem>
     NSArray *allBestGVs = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *obj) {
         return obj.bestGVs.allValues;
     }];
     
+    // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
+    
     // 依次自举absGV
     GTZiJvSTModel *result = [GTZiJvSTModel new];
     for (NSInteger itemGVIndex = 0; itemGVIndex < itemST.count; itemGVIndex++) {
         AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, itemGVIndex);
+    
+        // ==================== step3. 从allBests中，找出与当前assT.item一致的 ====================
         
         NSArray *validBestGVs = [SMGUtils filterArr:allBestGVs checkValid:^BOOL(AIFeatureJvBuItem *item) {
             return [item.baseGV_p isEqual:itemGV_p];
         }];
         
-        BOOL joinSuccess = false;
+        // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
+        
+        NSMutableArray *joinSuccess = [NSMutableArray new];
         for (GTZiJvSTItem *item in result.items) {
             // 预计newGV_Proto。
             CGRect hopeNewGV_Proto = [item hopeProtoRectByIndex:itemGVIndex];
@@ -829,40 +844,24 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:validBestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
                 [item.gvs addObject:validBestGV];
-                joinSuccess = true;
+                [joinSuccess addObject:validBestGV];
             }
         }
         
+        // ==================== step5. 新成员未找到已有分组：则自成一组 ====================
+        
         // 与以往不相容的另起一组：不属于任何组，则自成一组。
-        if (!joinSuccess) {
+        for (AIFeatureJvBuItem *validBestGV in validBestGVs) {
+            if ([joinSuccess containsObject:validBestGV]) continue;
             GTZiJvSTItem *newItem = [GTZiJvSTItem new];
-            [newItem.gvs addObject:nil];
+            [newItem.gvs addObject:validBestGV];
             [result.items addObject:newItem];
         }
-        
-        
-        
-        
-        // TODO: 防重随后再写，先写完代码，再做封装和优化（参考36074-TODO6 & TODO7）。
-        for (AIFeatureJvBuItem *bestGV in allBestGVs) {
-            
-            // 根据同一个itemST对应上同一个bestGV进行防重（相当于同一个itemST + itemGVIndex + itemGV_ProtoRect.index共同做防重因子）。
-            MapModel *rectIndex = [self getIndexsOfProtoRect:bestGV.bestGVAtProtoTRect];
-            NSArray *poolKey = @[itemST_p, @(itemGVIndex), rectIndex.v1, rectIndex.v2, rectIndex.v3, rectIndex.v4];
-            GTItemV2 *old = [pool objectForKeys:poolKey];
-            if (old) continue;
-            
-            
-            
-            
-            if (bestResult) [pool setObject:bestResult forKeys:poolKey];
-            
-        }
-        
-        
     }
-
-    return bestResult;
+    
+    // 结果加入缓存池。
+    [gtZiJvSTPool setObject:result forKey:@(itemST.pId)];
+    return result;
 }
 
 //MARK:===============================================================
