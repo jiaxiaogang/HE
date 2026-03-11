@@ -56,6 +56,7 @@
 		082A904E27F5E04D003D15BE /* RLTrainer.m in Sources */ = {isa = PBXBuildFile; fileRef = 082A904D27F5E04D003D15BE /* RLTrainer.m */; };
 		082A905327F5E447003D15BE /* RTModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 082A905227F5E447003D15BE /* RTModel.m */; };
 		082B910A27E414FB00EE4DF2 /* TOMVisionAlgView.m in Sources */ = {isa = PBXBuildFile; fileRef = 082B910927E414FB00EE4DF2 /* TOMVisionAlgView.m */; };
+		082CA9EC2F61BE5600DF3991 /* GTZiJvGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */; };
 		082D03DF22D40AF000BB0B7A /* SMGUtils+General.m in Sources */ = {isa = PBXBuildFile; fileRef = 082D03DE22D40AF000BB0B7A /* SMGUtils+General.m */; };
 		082F9D561EB234750009F6A9 /* Output.m in Sources */ = {isa = PBXBuildFile; fileRef = 082F9D551EB234750009F6A9 /* Output.m */; };
 		0830DAB721D6E8AD003065CD /* NSString+Extension.m in Sources */ = {isa = PBXBuildFile; fileRef = 0830DAB621D6E8AD003065CD /* NSString+Extension.m */; };
@@ -154,8 +155,7 @@
 		0889258122B0703700A0DBDD /* NVModuleView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0889258022B0703700A0DBDD /* NVModuleView.xib */; };
 		088A147F27E177AC00FA1097 /* TOMVisionDemandView.m in Sources */ = {isa = PBXBuildFile; fileRef = 088A147E27E177AC00FA1097 /* TOMVisionDemandView.m */; };
 		088DD7232201216500E0A786 /* TOFoModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 088DD7222201216500E0A786 /* TOFoModel.m */; };
-		088EA86E2F606A0900E0ED6F /* GTZiJvSTModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 088EA86D2F606A0900E0ED6F /* GTZiJvSTModel.m */; };
-		088EA8712F606A3200E0ED6F /* GTZiJvSTItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 088EA8702F606A3200E0ED6F /* GTZiJvSTItem.m */; };
+		088EA86E2F606A0900E0ED6F /* GTZiJvGroups.m in Sources */ = {isa = PBXBuildFile; fileRef = 088EA86D2F606A0900E0ED6F /* GTZiJvGroups.m */; };
 		089041742D8AF2E100545CD7 /* AIMatchModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 089041732D8AF2E100545CD7 /* AIMatchModel.m */; };
 		0892BAED277808F80024B43C /* TCActYes.m in Sources */ = {isa = PBXBuildFile; fileRef = 0892BAEC277808F80024B43C /* TCActYes.m */; };
 		0895FFE4264A13C500DAD3EA /* TOModelVision.m in Sources */ = {isa = PBXBuildFile; fileRef = 0895FFE3264A13C500DAD3EA /* TOModelVision.m */; };
@@ -354,6 +354,8 @@
 		082A905227F5E447003D15BE /* RTModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RTModel.m; sourceTree = "<group>"; };
 		082B910827E414FB00EE4DF2 /* TOMVisionAlgView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TOMVisionAlgView.h; sourceTree = "<group>"; };
 		082B910927E414FB00EE4DF2 /* TOMVisionAlgView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOMVisionAlgView.m; sourceTree = "<group>"; };
+		082CA9EA2F61BE5600DF3991 /* GTZiJvGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvGroup.h; sourceTree = "<group>"; };
+		082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvGroup.m; sourceTree = "<group>"; };
 		082D03DD22D40AF000BB0B7A /* SMGUtils+General.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SMGUtils+General.h"; sourceTree = "<group>"; };
 		082D03DE22D40AF000BB0B7A /* SMGUtils+General.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "SMGUtils+General.m"; sourceTree = "<group>"; };
 		082F9D541EB234750009F6A9 /* Output.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Output.h; sourceTree = "<group>"; };
@@ -553,10 +555,8 @@
 		088A147E27E177AC00FA1097 /* TOMVisionDemandView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOMVisionDemandView.m; sourceTree = "<group>"; };
 		088DD7212201216500E0A786 /* TOFoModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TOFoModel.h; sourceTree = "<group>"; };
 		088DD7222201216500E0A786 /* TOFoModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOFoModel.m; sourceTree = "<group>"; };
-		088EA86C2F606A0900E0ED6F /* GTZiJvSTModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvSTModel.h; sourceTree = "<group>"; };
-		088EA86D2F606A0900E0ED6F /* GTZiJvSTModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvSTModel.m; sourceTree = "<group>"; };
-		088EA86F2F606A3200E0ED6F /* GTZiJvSTItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvSTItem.h; sourceTree = "<group>"; };
-		088EA8702F606A3200E0ED6F /* GTZiJvSTItem.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvSTItem.m; sourceTree = "<group>"; };
+		088EA86C2F606A0900E0ED6F /* GTZiJvGroups.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvGroups.h; sourceTree = "<group>"; };
+		088EA86D2F606A0900E0ED6F /* GTZiJvGroups.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvGroups.m; sourceTree = "<group>"; };
 		089041722D8AF2E100545CD7 /* AIMatchModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIMatchModel.h; sourceTree = "<group>"; };
 		089041732D8AF2E100545CD7 /* AIMatchModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIMatchModel.m; sourceTree = "<group>"; };
 		0892BAEB277808F80024B43C /* TCActYes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCActYes.h; sourceTree = "<group>"; };
@@ -1448,10 +1448,10 @@
 		088EA86B2F6069E700E0ED6F /* GTZiJvModel */ = {
 			isa = PBXGroup;
 			children = (
-				088EA86C2F606A0900E0ED6F /* GTZiJvSTModel.h */,
-				088EA86D2F606A0900E0ED6F /* GTZiJvSTModel.m */,
-				088EA86F2F606A3200E0ED6F /* GTZiJvSTItem.h */,
-				088EA8702F606A3200E0ED6F /* GTZiJvSTItem.m */,
+				088EA86C2F606A0900E0ED6F /* GTZiJvGroups.h */,
+				088EA86D2F606A0900E0ED6F /* GTZiJvGroups.m */,
+				082CA9EA2F61BE5600DF3991 /* GTZiJvGroup.h */,
+				082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */,
 			);
 			path = GTZiJvModel;
 			sourceTree = "<group>";
@@ -2175,7 +2175,7 @@
 				0819F4F427583AA9007396D0 /* TCFeedback.m in Sources */,
 				080DF6A22DBB1273000EC837 /* ImgTrainerItemModel.m in Sources */,
 				081E3A352DD2338700897ED0 /* InputGroupFeatureModel.m in Sources */,
-				088EA86E2F606A0900E0ED6F /* GTZiJvSTModel.m in Sources */,
+				088EA86E2F606A0900E0ED6F /* GTZiJvGroups.m in Sources */,
 				08EF604E2F2EE89600E1AE3B /* GTModelV2.m in Sources */,
 				086D93371F8CA782002BAF3F /* RuntimeInvoker.m in Sources */,
 				08D471DE1FEB3FFF00C61322 /* AIImvAlgs.m in Sources */,
@@ -2210,7 +2210,6 @@
 				08A5D5D822AF1E3400E56BB4 /* NVView.m in Sources */,
 				0830DAB721D6E8AD003065CD /* NSString+Extension.m in Sources */,
 				08C84A8E1E9A866200897D8B /* AIInput.m in Sources */,
-				088EA8712F606A3200E0ED6F /* GTZiJvSTItem.m in Sources */,
 				0819F4F727583B27007396D0 /* TCLearning.m in Sources */,
 				0873E11328B45D0600FBC09E /* TCRefrection.m in Sources */,
 				08EA48BF2029242B0038B982 /* ImvAlgsHungerModel.m in Sources */,
@@ -2253,6 +2252,7 @@
 				0843AAE5281436EF002B9AA9 /* XGLabCell.m in Sources */,
 				081321832D89A5A9005B9F4B /* AIGroupValueNode.m in Sources */,
 				08355577266C6A1000ECFC51 /* MemManager.m in Sources */,
+				082CA9EC2F61BE5600DF3991 /* GTZiJvGroup.m in Sources */,
 				087705BA2753747E00BA4EFB /* TCAction.m in Sources */,
 				0808D34022B6F73D00D383BA /* NVLineView.m in Sources */,
 				08C7539225A3EEB800BCF011 /* AIScore.m in Sources */,

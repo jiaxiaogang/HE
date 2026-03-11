@@ -1,0 +1,49 @@
+//
+//  GTZiJvGroup.m
+//  SMG_NothingIsAll
+//
+//  Created by jia on 2026/3/11.
+//  Copyright © 2026 XiaoGang. All rights reserved.
+//
+
+#import "GTZiJvGroup.h"
+
+@implementation GTZiJvGroup
+
+// 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
+-(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex {
+    // gvs在ST中的Rect
+    CGRect bests_BaseT = [SMGUtils convertArr2Rect:self.bests itemRectBlock:^CGRect(id obj) {
+        if (ISOK(obj, AIFeatureJvBuItem.class)) {
+            AIFeatureJvBuItem *item = (AIFeatureJvBuItem*)obj;
+            return [self.baseT rectByIndex:item.baseIndex];
+        } else if (ISOK(obj, AIFeatureJvBuModel.class)) {
+            AIFeatureJvBuModel *item = (AIFeatureJvBuModel*)obj;
+            return [self.baseT rectByIndex:item.beginAssIndex];
+        }
+        return CGRectNull;
+    }];
+    
+    // gvs在Proto中的Rect
+    CGRect bests_Proto = [SMGUtils convertArr2Rect:self.bests itemRectBlock:^CGRect(id obj) {
+        if (ISOK(obj, AIFeatureJvBuItem.class)) {
+            AIFeatureJvBuItem *item = (AIFeatureJvBuItem*)obj;
+            return item.bestGVAtProtoTRect;
+        } else if (ISOK(obj, AIFeatureJvBuModel.class)) {
+            AIFeatureJvBuModel *item = (AIFeatureJvBuModel*)obj;
+            return item.assST_ProtoRect;
+        }
+        return CGRectNull;
+    }];
+    
+    // index的GV在ST中的Rect
+    CGRect newBest_BaseT = [self.baseT rectByIndex:newBestIndex];
+    
+    // 用newGV_ST、以及已知gvs_Proto、已知gvs_ST，预计出newGV_Proto。
+    CGRect newBest_Proto = [SMGUtils convertNewAAtCWithAAtB:bests_BaseT aAtC:bests_Proto newAAtB:newBest_BaseT];
+    
+    // 即为：预计newGV的protoRect。
+    return newBest_Proto;
+}
+
+@end

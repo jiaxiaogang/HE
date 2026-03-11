@@ -1,13 +1,13 @@
 //
-//  GTZiJvSTModel.m
+//  GTZiJvGroups.m
 //  SMG_NothingIsAll
 //
 //  Created by jia on 2026/3/10.
 //  Copyright © 2026 XiaoGang. All rights reserved.
 //
 
-#import "GTZiJvSTModel.h"
+#import "GTZiJvGroups.h"
 
-@implementation GTZiJvSTModel
+@implementation GTZiJvGroups
 
 @end
