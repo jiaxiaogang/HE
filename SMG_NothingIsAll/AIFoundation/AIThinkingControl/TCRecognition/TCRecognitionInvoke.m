@@ -821,12 +821,24 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 而是要直接对targetST进行GV层自举匹配判断，得到stGroups，其中stGroups.groups数组全是对targetST真实的自举匹配结果。
             NSMutableArray *stGroups = [self gtZiJvV9_ST:targetST stModels:stModels];
             
-            // 计算baseST_Proto
+            // 装饰字段
             for (GTZiJvGroup *stGroup in stGroups) {
-                stGroup.baseST_Proto = CGRectNull;
                 
-                // 方案、根据baseST的每bests计算出：bestGVs_Proto，再计算整个baseST_Proto。
+                // 计算baseST_Proto：1、根据baseST的每bests计算出bestGVs_Proto 2、再计算整个baseST_Proto。
+                CGRect bestGVs_ST = [SMGUtils convertArr2Rect:stGroup.bests itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+                    return [stGroup.baseT rectByIndex:item.baseIndex];
+                }];
+                CGRect bestGVs_Proto = [SMGUtils convertArr2Rect:stGroup.bests itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+                    return item.bestGVAtProtoTRect;
+                }];
+                CGRect baseSTRect = [SMGUtils convertArr2Rect:stGroup.baseT.rects itemRectBlock:^CGRect(NSValue *item) {
+                    return item.CGRectValue;
+                }];
                 
+                // 设：A=bestGVs B=ST C=Proto newA=整个ST 求 ST在Proto中的Rect。
+                stGroup.baseST_Proto = [SMGUtils convertNewAAtCWithAAtB:bestGVs_ST aAtC:bestGVs_Proto newAAtB:baseSTRect];;
+                
+                // 记录baseST对应下标
                 stGroup.baseSTIndex = itemIndex;
             }
             return stGroups;
