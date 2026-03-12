@@ -80,7 +80,6 @@
 #import "GTModelV2.h"
 #import "GTItem.h"
 #import "GTItemV2.h"
-#import "GTZiJvGroups.h"
 #import "GTZiJvGroup.h"
 
 //短时记忆

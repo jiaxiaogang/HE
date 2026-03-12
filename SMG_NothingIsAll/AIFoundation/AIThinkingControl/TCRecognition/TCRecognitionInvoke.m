@@ -799,16 +799,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return bestResult;
 }
 
-+(GTZiJvGroups*) gtZiJvV9_GT:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex stModels:(NSArray*)stModels {
++(NSMutableArray*) gtZiJvV9_GT:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex stModels:(NSArray*)stModels {
     
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）。
-    GTZiJvGroups *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
+    NSMutableArray *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
     if (old) return old;
     
     // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
     
     // 依次自举absGV
-    GTZiJvGroups *result = [GTZiJvGroups new];
+    NSMutableArray *result = [NSMutableArray new];
     for (NSInteger i = 0; i < targetGT.count; i++) {
         NSInteger itemIndex = (beginIndex + i) % targetGT.count;
         AIKVPointer *targetST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
@@ -819,25 +819,25 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSArray *validSTGroups = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *obj) {
             // 因为有错位问题，此处不能从jvBuModel中找好的assST或validAbsST_ps。
             // 而是要直接对targetST进行GV层自举匹配判断，得到stGroups，其中stGroups.groups数组全是对targetST真实的自举匹配结果。
-            GTZiJvGroups *stGroupsModel = [self gtZiJvV9_ST:targetST stModels:stModels];
+            NSMutableArray *stGroups = [self gtZiJvV9_ST:targetST stModels:stModels];
             
             // 计算targetST_Proto
-            for (GTZiJvGroup *group in stGroupsModel.groups) {
-                group.targetST_Proto = CGRectNull;
+            for (GTZiJvGroup *stGroup in stGroups) {
+                stGroup.targetST_Proto = CGRectNull;
                 
                 // TODO: 计算targetST_Proto。
                 // 方案2、根据每个gv在protoRect来预算targetST_Proto。
                 // 方案3、计算stGroupsModel.groups中每个group的GV总protoRect，然后再推算整个targetST_Proto。
             }
-            return stGroupsModel.groups;
+            return stGroups;
         }];
         
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
         NSMutableArray *joinSuccess = [NSMutableArray new];
-        for (GTZiJvGroup *group in result.groups) { // GT时group.bests为bestSTs ST时group.bests为bestGVs。
+        for (GTZiJvGroup *gtGroup in result) { // GT时group.bests为bestSTs ST时group.bests为bestGVs。
             // 预计newGV_Proto。
-            CGRect hopeNewBest_Proto = [group hopeProtoRectByIndex:itemIndex];
+            CGRect hopeNewBest_Proto = [gtGroup hopeProtoRectByIndex:itemIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
             GTZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(GTZiJvGroup *validSTGroup) {
@@ -847,7 +847,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.targetST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
-                [group.bests addObject:bestSTGroup];
+                [gtGroup.bests addObject:bestSTGroup];
                 [joinSuccess addObject:bestSTGroup];
             }
         }
@@ -858,8 +858,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         for (AIFeatureJvBuItem *validSTGroup in validSTGroups) {
             if ([joinSuccess containsObject:validSTGroup]) continue;
             GTZiJvGroup *newItem = [GTZiJvGroup new];
+            newItem.baseT = targetGT;
             [newItem.bests addObject:validSTGroup];
-            [result.groups addObject:newItem];
+            [result addObject:newItem];
         }
     }
     
@@ -868,16 +869,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return result;
 }
 
-+(GTZiJvGroups*) gtZiJvV9_ST:(AIFeatureNode*)targetST stModels:(NSArray*)stModels {
++(NSMutableArray*) gtZiJvV9_ST:(AIFeatureNode*)targetST stModels:(NSArray*)stModels {
     
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）。
-    GTZiJvGroups *old = [gtZiJvSTPool objectForKey:@(targetST.pId)];
+    NSMutableArray *old = [gtZiJvSTPool objectForKey:@(targetST.pId)];
     if (old) return old;
     
     // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
     
     // 依次自举absGV
-    GTZiJvGroups *result = [GTZiJvGroups new];
+    NSMutableArray *result = [NSMutableArray new];
     for (NSInteger itemGVIndex = 0; itemGVIndex < targetST.count; itemGVIndex++) {
         AIKVPointer *itemGV_p = ARR_INDEX(targetST.content_ps, itemGVIndex);
     
@@ -892,9 +893,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
         NSMutableArray *joinSuccess = [NSMutableArray new];
-        for (GTZiJvGroup *group in result.groups) {
+        for (GTZiJvGroup *stGroup in result) {
             // 预计newGV_Proto。
-            CGRect hopeNewGV_Proto = [group hopeProtoRectByIndex:itemGVIndex];
+            CGRect hopeNewGV_Proto = [stGroup hopeProtoRectByIndex:itemGVIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
             AIFeatureJvBuItem *validBestGV = [SMGUtils filterBestObj:validBestGVs scoreBlock:^CGFloat(AIFeatureJvBuItem *obj) {
@@ -904,7 +905,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:validBestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
-                [group.bests addObject:validBestGV];
+                [stGroup.bests addObject:validBestGV];
                 [joinSuccess addObject:validBestGV];
             }
         }
@@ -915,8 +916,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         for (AIFeatureJvBuItem *validBestGV in validBestGVs) {
             if ([joinSuccess containsObject:validBestGV]) continue;
             GTZiJvGroup *newItem = [GTZiJvGroup new];
+            newItem.baseT = targetST;
             [newItem.bests addObject:validBestGV];
-            [result.groups addObject:newItem];
+            [result addObject:newItem];
         }
     }
     

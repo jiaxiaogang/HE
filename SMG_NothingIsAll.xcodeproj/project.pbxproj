@@ -155,7 +155,6 @@
 		0889258122B0703700A0DBDD /* NVModuleView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0889258022B0703700A0DBDD /* NVModuleView.xib */; };
 		088A147F27E177AC00FA1097 /* TOMVisionDemandView.m in Sources */ = {isa = PBXBuildFile; fileRef = 088A147E27E177AC00FA1097 /* TOMVisionDemandView.m */; };
 		088DD7232201216500E0A786 /* TOFoModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 088DD7222201216500E0A786 /* TOFoModel.m */; };
-		088EA86E2F606A0900E0ED6F /* GTZiJvGroups.m in Sources */ = {isa = PBXBuildFile; fileRef = 088EA86D2F606A0900E0ED6F /* GTZiJvGroups.m */; };
 		089041742D8AF2E100545CD7 /* AIMatchModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 089041732D8AF2E100545CD7 /* AIMatchModel.m */; };
 		0892BAED277808F80024B43C /* TCActYes.m in Sources */ = {isa = PBXBuildFile; fileRef = 0892BAEC277808F80024B43C /* TCActYes.m */; };
 		0895FFE4264A13C500DAD3EA /* TOModelVision.m in Sources */ = {isa = PBXBuildFile; fileRef = 0895FFE3264A13C500DAD3EA /* TOModelVision.m */; };
@@ -555,8 +554,6 @@
 		088A147E27E177AC00FA1097 /* TOMVisionDemandView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOMVisionDemandView.m; sourceTree = "<group>"; };
 		088DD7212201216500E0A786 /* TOFoModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TOFoModel.h; sourceTree = "<group>"; };
 		088DD7222201216500E0A786 /* TOFoModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOFoModel.m; sourceTree = "<group>"; };
-		088EA86C2F606A0900E0ED6F /* GTZiJvGroups.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvGroups.h; sourceTree = "<group>"; };
-		088EA86D2F606A0900E0ED6F /* GTZiJvGroups.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvGroups.m; sourceTree = "<group>"; };
 		089041722D8AF2E100545CD7 /* AIMatchModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIMatchModel.h; sourceTree = "<group>"; };
 		089041732D8AF2E100545CD7 /* AIMatchModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIMatchModel.m; sourceTree = "<group>"; };
 		0892BAEB277808F80024B43C /* TCActYes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCActYes.h; sourceTree = "<group>"; };
@@ -1448,8 +1445,6 @@
 		088EA86B2F6069E700E0ED6F /* GTZiJvModel */ = {
 			isa = PBXGroup;
 			children = (
-				088EA86C2F606A0900E0ED6F /* GTZiJvGroups.h */,
-				088EA86D2F606A0900E0ED6F /* GTZiJvGroups.m */,
 				082CA9EA2F61BE5600DF3991 /* GTZiJvGroup.h */,
 				082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */,
 			);
@@ -2175,7 +2170,6 @@
 				0819F4F427583AA9007396D0 /* TCFeedback.m in Sources */,
 				080DF6A22DBB1273000EC837 /* ImgTrainerItemModel.m in Sources */,
 				081E3A352DD2338700897ED0 /* InputGroupFeatureModel.m in Sources */,
-				088EA86E2F606A0900E0ED6F /* GTZiJvGroups.m in Sources */,
 				08EF604E2F2EE89600E1AE3B /* GTModelV2.m in Sources */,
 				086D93371F8CA782002BAF3F /* RuntimeInvoker.m in Sources */,
 				08D471DE1FEB3FFF00C61322 /* AIImvAlgs.m in Sources */,
