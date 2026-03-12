@@ -821,13 +821,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 而是要直接对targetST进行GV层自举匹配判断，得到stGroups，其中stGroups.groups数组全是对targetST真实的自举匹配结果。
             NSMutableArray *stGroups = [self gtZiJvV9_ST:targetST stModels:stModels];
             
-            // 计算targetST_Proto
+            // 计算baseST_Proto
             for (GTZiJvGroup *stGroup in stGroups) {
-                stGroup.targetST_Proto = CGRectNull;
+                stGroup.baseST_Proto = CGRectNull;
                 
-                // TODO: 计算targetST_Proto。
-                // 方案2、根据每个gv在protoRect来预算targetST_Proto。
-                // 方案3、计算stGroupsModel.groups中每个group的GV总protoRect，然后再推算整个targetST_Proto。
+                // 方案、根据baseST的每bests计算出：bestGVs_Proto，再计算整个baseST_Proto。
+                
+                stGroup.baseSTIndex = itemIndex;
             }
             return stGroups;
         }];
@@ -841,12 +841,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
             GTZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(GTZiJvGroup *validSTGroup) {
-                CGRect realNewBest_Proto = validSTGroup.targetST_Proto;
+                CGRect realNewBest_Proto = validSTGroup.baseST_Proto;
                 return [SMGUtils rate4IntersectionRectV2:realNewBest_Proto bRect:hopeNewBest_Proto];
             }];
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
-            if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.targetST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
+            if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.baseST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
                 [gtGroup.bests addObject:bestSTGroup];
                 [joinSuccess addObject:bestSTGroup];
             }
@@ -898,15 +898,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGRect hopeNewGV_Proto = [stGroup hopeProtoRectByIndex:itemGVIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
-            AIFeatureJvBuItem *validBestGV = [SMGUtils filterBestObj:validBestGVs scoreBlock:^CGFloat(AIFeatureJvBuItem *obj) {
+            AIFeatureJvBuItem *bestGV = [SMGUtils filterBestObj:validBestGVs scoreBlock:^CGFloat(AIFeatureJvBuItem *obj) {
                 CGRect realNewGV_Proto = obj.bestGVAtProtoTRect;
                 return [SMGUtils rate4IntersectionRectV2:realNewGV_Proto bRect:hopeNewGV_Proto];
             }];
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
-            if ([SMGUtils rate4IntersectionRectV2:validBestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
-                [stGroup.bests addObject:validBestGV];
-                [joinSuccess addObject:validBestGV];
+            if ([SMGUtils rate4IntersectionRectV2:bestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
+                [stGroup.bests addObject:bestGV];
+                [joinSuccess addObject:bestGV];
             }
         }
         

@@ -12,26 +12,26 @@
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex {
-    // gvs在ST中的Rect
+    // bests在baseT中的Rect
     CGRect bests_BaseT = [SMGUtils convertArr2Rect:self.bests itemRectBlock:^CGRect(id obj) {
         if (ISOK(obj, AIFeatureJvBuItem.class)) {
             AIFeatureJvBuItem *item = (AIFeatureJvBuItem*)obj;
             return [self.baseT rectByIndex:item.baseIndex];
-        } else if (ISOK(obj, AIFeatureJvBuModel.class)) {
-            AIFeatureJvBuModel *item = (AIFeatureJvBuModel*)obj;
-            return [self.baseT rectByIndex:item.beginAssIndex];
+        } else if (ISOK(obj, GTZiJvGroup.class)) {
+            GTZiJvGroup *item = (GTZiJvGroup*)obj;
+            return [self.baseT rectByIndex:item.baseSTIndex];
         }
         return CGRectNull;
     }];
     
-    // gvs在Proto中的Rect
+    // bests在Proto中的Rect
     CGRect bests_Proto = [SMGUtils convertArr2Rect:self.bests itemRectBlock:^CGRect(id obj) {
         if (ISOK(obj, AIFeatureJvBuItem.class)) {
             AIFeatureJvBuItem *item = (AIFeatureJvBuItem*)obj;
             return item.bestGVAtProtoTRect;
-        } else if (ISOK(obj, AIFeatureJvBuModel.class)) {
-            AIFeatureJvBuModel *item = (AIFeatureJvBuModel*)obj;
-            return item.assST_ProtoRect;
+        } else if (ISOK(obj, GTZiJvGroup.class)) {
+            GTZiJvGroup *item = (GTZiJvGroup*)obj;
+            return item.baseST_Proto;
         }
         return CGRectNull;
     }];

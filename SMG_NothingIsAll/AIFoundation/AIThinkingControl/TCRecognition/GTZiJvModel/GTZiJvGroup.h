@@ -16,8 +16,12 @@
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex;
 
-// GT时为targetST_Proto（要根据bests计算出bests_Proto，然后再推算出整个targetST_Proto）
-// ST时为gv_Proto（此时bests的元素是JvBuItem，它本身就有gv_Proto）
-@property (assign, nonatomic) CGRect targetST_Proto;
+// GT时为baseST_Proto（要根据bests计算出bestGVs_Proto，然后再推算出整个baseST_Proto）
+// ST时用jvBuItem.bestGVAtProtoTRect即可，用不着这个。
+@property (assign, nonatomic) CGRect baseST_Proto;
+
+// GT时，这个在GT.bests中的元素下，表示当前baseST所在的下标。
+// ST时，GV的下标在jvBuItem.baseIndex，用不着这个。
+@property (assign, nonatomic) NSInteger baseSTIndex;
 
 @end
