@@ -16,8 +16,4 @@
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex;
 
-// GT时为st_Proto ST时为gv_Proto
-//TODOTOMORROW20260311: ST时，把JvBuItem.gv_Proto存到此处 GT时，把JvBuModel.validAbsST在ProtoRect算出来存在此处。
-@property (assign, nonatomic) CGRect bestAtProtoTRect;
-
 @end
