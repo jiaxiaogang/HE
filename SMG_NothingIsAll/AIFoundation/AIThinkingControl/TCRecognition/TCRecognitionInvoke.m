@@ -628,6 +628,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
             
             // gt自举算法。
+            NSMutableArray *ziJvGroups = [self gtZiJvV9_GT:assGT beginIndex:beginIndex stModels:stModels];
+            // TODOTOMORROW20260312:
+            // 1. 这里要把groups转成GTItemV2类型。
+            // 2. 或者直接把groups扔给它，它可以用这个计算匹配度，位置符合度。
+            // 3. 或者直接把groups支持下计算匹配度，位置符合度等。
+            
             GTModelV2 *gtModel = [GTModelV2 new:assGT];
             for (NSInteger i = 0; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
