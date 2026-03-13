@@ -628,12 +628,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
             
             // gt自举算法。
-            NSMutableArray *ziJvGroups = [self gtZiJvV9_GT:assGT beginIndex:beginIndex stModels:stModels];
-            // TODOTOMORROW20260312:
-            // 1. 这里要把groups转成GTItemV2类型。
-            // 2. 或者直接把groups扔给它，它可以用这个计算匹配度，位置符合度。
-            // 3. 或者直接把groups支持下计算匹配度，位置符合度等。
-            
             GTModelV2 *gtModel = [GTModelV2 new:assGT];
             for (NSInteger i = 0; i < assGT.count; i++) {
                 NSInteger curIndex = (beginIndex + i) % assGT.count;
@@ -725,6 +719,98 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTModelV2 *model in resultModels) {
         // [model.assGT updateLogDescItem:logDesc rate:model.matchValue * model.matchDegree];
         for (AIPort *validAbsPort in model.validAbsPorts) {
+            AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
+            [validAbs updateLogDescItem:logDesc];
+        }
+    }
+    return resultModels;
+}
+
++(NSArray*) recognitionGroupFeatureV9:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
+    // 数据准备
+    NSMutableArray *allGTGroups = [NSMutableArray new];
+    DDic *sourceDic = [DDic new];
+    
+    // assST层。
+    for (AIFeatureJvBuModel *stModel in stModels) {
+        
+        // absST层：有效（全含）absST。
+        for (AIKVPointer *absST_p in stModel.allValidAbsST_ps) {
+            
+            // bro来源路径记录到sourceDic。
+            NSMutableArray *collectedSTModels = [sourceDic objectForKey:absST_p];
+            if (!collectedSTModels) collectedSTModels = [[NSMutableArray alloc] init];
+            [collectedSTModels addObject:stModel];
+            [sourceDic setObject:collectedSTModels forKey:absST_p];
+        }
+    }
+    
+    // 用sourceDic逐个求refGT。
+    for (AIKVPointer *abs_p in sourceDic.data.allKeys) {
+        NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
+        for (AIPort *refPort in refPorts) {
+            if ([refPort.target_p isEqual:protoGT.p]) continue;
+            
+            // assGT。
+            AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+            NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
+            
+            // gt自举算法。
+            NSMutableArray *ziJvGroups = [self gtZiJvV9_GT:assGT beginIndex:beginIndex stModels:stModels];
+            
+            // 竞争因子：匹配度 & 匹配数（防过抽）。
+            for (GTZiJvGroup *gtGroup in ziJvGroups) {
+                [gtGroup run4GTMatchValue];
+                [gtGroup run4GTMatchDegree];
+                [gtGroup run4STMatchValue];
+                [gtGroup run4STMatchDegree];
+            }
+            [allGTGroups addObjectsFromArray:ziJvGroups];
+        }
+    }
+    
+    // 最后进行综合竞争，把最符合的找出来。
+    NSArray *resultModels = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvGroup *obj) {
+        return obj.zonHeScore;
+    }];
+    
+    // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（先关掉，同一个assGT可能有多个groups结果）。
+    //resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvGroup *obj) {
+    //    return @(obj.baseT.pId);
+    //}];
+    
+    // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
+    NSInteger count = resultModels.count;
+    float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
+    resultModels = ARR_SUB(resultModels, 0, MIN(20, count * needRate));
+    
+    // 更新: ref强度 & 相似度 & 抽具象 & 映射;
+    for (GTZiJvGroup *model in resultModels) {
+        // debug
+        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \tST匹配度:%.2f \tST符合度:%.2f \t= 综合得分:%.3f",
+              [resultModels indexOfObject:model],model.baseT.pId,model.bests.count,model.baseT.count,
+              model.gtMatchValue,model.gtMatchDegree,model.stMatchValue,model.stMatchDegree,model.zonHeScore);
+        
+        // 组特征识别结果可视化（参考34176）。
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForGTModelV3:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.baseT.pId,model.bests.count,model.baseT.count) left:0 top:0 tvId:3];
+        }];
+    }
+    
+    // debugLog
+    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvGroup *obj) {
+        //TODO: 此处随后考虑把obj.baseT.absPorts改成validAbsPorts，即从bests的全含找有效抽象。
+        return [SMGUtils convertArr:obj.baseT.absPorts convertBlock:^id(AIPort *obj) {
+            return [SMGUtils searchNode:obj.target_p];
+        }];
+    } convertMatchBlock:^float(GTZiJvGroup *obj) {
+        return obj.zonHeScore;
+    }];
+    
+    // 更新logDesc到assT（参考36052）。
+    for (GTZiJvGroup *model in resultModels) {
+        //TODO: 此处随后考虑把obj.baseT.absPorts改成validAbsPorts，即从bests的全含找有效抽象。
+        for (AIPort *validAbsPort in model.baseT.absPorts) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
             [validAbs updateLogDescItem:logDesc];
         }

@@ -50,4 +50,7 @@
 -(void) run4STMatchDegree;
 @property (assign, nonatomic) CGFloat stMatchDegree;
 
+// GTModel综合评分（用于GT识别竞争）。
+-(CGFloat) zonHeScore;
+
 @end

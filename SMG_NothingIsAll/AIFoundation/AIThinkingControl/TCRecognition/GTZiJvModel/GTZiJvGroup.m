@@ -96,4 +96,9 @@
     }] / self.bests.count;
 }
 
+// GTModel综合评分（用于GT识别竞争）。
+-(CGFloat) zonHeScore {
+    return self.gtMatchValue * self.gtMatchDegree * self.stMatchValue * self.stMatchDegree;
+}
+
 @end
