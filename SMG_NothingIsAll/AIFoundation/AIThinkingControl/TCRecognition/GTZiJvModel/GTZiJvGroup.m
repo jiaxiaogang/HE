@@ -46,4 +46,63 @@
     return newBest_Proto;
 }
 
+/**
+ *  MARK:--------------------主因子：匹配度--------------------
+ */
+-(void) run4GTMatchValue {
+    self.gtMatchValue = self.bests.count == 0 ? 0 : [SMGUtils sumOfArr:self.bests convertBlock:^double(GTZiJvGroup *obj) {
+        return (float)obj.bests.count / obj.baseT.count;
+    }] / self.bests.count;
+}
+
+/**
+ *  MARK:--------------------辅因子：位置符合度（参考36045）--------------------
+ */
+-(void) run4GTMatchDegree {
+    
+    for (GTZiJvGroup *stGroup in self.bests) {
+        for (AIFeatureJvBuItem *item in stGroup.bests) {
+            //TODOTOMORROW20260313: 求出每个st的hopy和real，求出位置符合度。
+        
+            // 预计newGV_Proto。
+            CGRect hopeNewBest_Proto = [gtGroup hopeProtoRectByIndex:itemIndex];
+            
+            // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
+            GTZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(GTZiJvGroup *validSTGroup) {
+                CGRect realNewBest_Proto = validSTGroup.baseST_Proto;
+                return [SMGUtils rate4IntersectionRectV2:realNewBest_Proto bRect:hopeNewBest_Proto];
+            }];
+            
+        }
+        
+        
+    }
+    
+    self.gtMatchDegree = self.bests.count == 0 ? 0 : [SMGUtils sumOfArr:self.bests convertBlock:^double(GTZiJvGroup *obj) {
+        return obj.matchDegree;
+    }] / self.bests.count;
+}
+
+/**
+ *  MARK:--------------------ST时的匹配度--------------------
+ */
+-(void) run4STMatchValue {
+    self.stMatchValue = self.bests.count == 0 ? 0 : [SMGUtils sumOfArr:self.bests convertBlock:^double(GTZiJvGroup *obj) {
+        return obj.bests == 0 ? 0 : [SMGUtils sumOfArr:obj.bests convertBlock:^double(AIFeatureJvBuItem *obj) {
+            return obj.matchValue;
+        }] / obj.bests.count;
+    }] / self.bests.count;
+}
+
+/**
+ *  MARK:--------------------ST时的位置符合度--------------------
+ */
+-(void) run4STMatchDegree {
+    self.stMatchDegree = self.bests.count == 0 ? 0 : [SMGUtils sumOfArr:self.bests convertBlock:^double(GTZiJvGroup *obj) {
+        return obj.bests == 0 ? 0 : [SMGUtils sumOfArr:obj.bests convertBlock:^double(AIFeatureJvBuItem *obj) {
+            return obj.matchDegree;
+        }] / obj.bests.count;
+    }] / self.bests.count;
+}
+
 @end
