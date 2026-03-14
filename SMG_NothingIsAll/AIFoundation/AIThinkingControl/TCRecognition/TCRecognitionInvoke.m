@@ -195,6 +195,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 //单通道
 //TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
+//连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
 +(void) recognitionFeature:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 初始化缓存池数据。
     [self resetPool];
@@ -764,6 +765,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 [gtGroup run4GTMatchDegree];
                 [gtGroup run4STMatchValue];
                 [gtGroup run4STMatchDegree];
+                [gtGroup run4GTValidAbsPorts];
             }
             [allGTGroups addObjectsFromArray:ziJvGroups];
         }
@@ -799,8 +801,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // debugLog
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvGroup *obj) {
-        //TODO: 此处随后考虑把obj.baseT.absPorts改成validAbsPorts，即从bests的全含找有效抽象。
-        return [SMGUtils convertArr:obj.baseT.absPorts convertBlock:^id(AIPort *obj) {
+        return [SMGUtils convertArr:obj.validAbsPorts convertBlock:^id(AIPort *obj) {
             return [SMGUtils searchNode:obj.target_p];
         }];
     } convertMatchBlock:^float(GTZiJvGroup *obj) {
@@ -809,8 +810,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 更新logDesc到assT（参考36052）。
     for (GTZiJvGroup *model in resultModels) {
-        //TODO: 此处随后考虑把obj.baseT.absPorts改成validAbsPorts，即从bests的全含找有效抽象。
-        for (AIPort *validAbsPort in model.baseT.absPorts) {
+        for (AIPort *validAbsPort in model.validAbsPorts) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
             [validAbs updateLogDescItem:logDesc];
         }

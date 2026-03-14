@@ -101,4 +101,20 @@
     return self.gtMatchValue * self.gtMatchDegree * self.stMatchValue * self.stMatchDegree;
 }
 
+// assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
+-(void) run4GTValidAbsPorts {
+    NSArray *allAbsPorts = [AINetUtils absPorts_All:self.baseT];
+    NSArray *validIndexes = [SMGUtils convertArr:self.bests convertBlock:^id(GTZiJvGroup *obj) {
+        return @(obj.baseSTIndex);
+    }];
+    
+    // 方案1、用抽具象的indexDic映射，来判断它是否全含（前提：需要存上抽具象特征的indexDic映射）。
+    self.validAbsPorts = [SMGUtils filterArr:allAbsPorts checkValid:^BOOL(AIPort *item) {
+        NSDictionary *indexDic = [self.baseT getAbsIndexDic:item.target_p];
+        return ![SMGUtils filterSingleFromArr:indexDic.allValues checkValid:^BOOL(id item) {
+            return ![validIndexes containsObject:item];
+        }];
+    }];
+}
+
 @end
