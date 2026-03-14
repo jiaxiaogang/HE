@@ -24,4 +24,7 @@
 // ST时，GV的下标在jvBuItem.baseIndex，用不着这个。
 @property (assign, nonatomic) NSInteger baseSTIndex;
 
+-(CGFloat) stMatchValue;
+-(CGFloat) stMatchDegree:(GTZiJvGroup*)gtGroup;
+
 @end

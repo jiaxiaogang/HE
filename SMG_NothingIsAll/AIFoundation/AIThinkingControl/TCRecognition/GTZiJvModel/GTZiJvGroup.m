@@ -38,8 +38,7 @@
 -(void) run4GTMatchValue {
     // 需此时self为单GTGroup
     self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs convertBlock:^double(STZiJvGroup *stGroup) {
-        CGFloat stMatchValue = (float)stGroup.bestGVs.count / stGroup.baseST.count;
-        return stMatchValue;
+        return stGroup.stMatchValue;
     }] / self.bestSTs.count;
 }
 
@@ -50,11 +49,7 @@
     // 需此时self为单GTGroup
     // 当前GTGroup的所有元素位置符合度的平均值。
     self.gtMatchDegree = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs convertBlock:^double(STZiJvGroup *stGroup) {
-        // 当前gtGroup期望其元素stGroup 的 ProtoRect。
-        CGRect realRect = stGroup.baseST_Proto;
-        CGRect hopeRect = [self hopeProtoRectByIndex:stGroup.baseSTIndex];
-        CGFloat stMatchDegree = [SMGUtils rate4IntersectionRectV2:realRect bRect:hopeRect];
-        return stMatchDegree;
+        return [stGroup stMatchDegree:self];
     }] / self.bestSTs.count;
 }
 

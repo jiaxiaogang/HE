@@ -32,4 +32,16 @@
     return newBest_Proto;
 }
 
+-(CGFloat) stMatchValue {
+    return (float)self.bestGVs.count / self.baseST.count;
+}
+
+-(CGFloat) stMatchDegree:(GTZiJvGroup*)gtGroup {
+    // 当前gtGroup期望其元素stGroup 的 ProtoRect。
+    CGRect realRect = self.baseST_Proto;
+    CGRect hopeRect = [gtGroup hopeProtoRectByIndex:self.baseSTIndex];
+    CGFloat stMatchDegree = [SMGUtils rate4IntersectionRectV2:realRect bRect:hopeRect];
+    return stMatchDegree;
+}
+
 @end
