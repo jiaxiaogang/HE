@@ -204,7 +204,7 @@
         //21. ======== 兼容新版组码特征 ========
         if (PitIsFeature(protoV_p) || PitIsFeature(assV_p)) {
             // TODO: 等这里再次测试时，把这儿改一下，alg类比，不应该调用gt类比。这里先临时这么写着。。。
-            AIFeatureNode *absT = [self analogyGroupFeatureV6:nil gtModel:nil prefixIndex:0];
+            AIFeatureNode *absT = [self analogyGroupFeatureV7:nil gtModel:nil prefixIndex:0];
             if (!absT) continue;
             CGFloat valueMatchValue = [absT getConMatchValue:protoA_p];
             [sameValue_ps addObject:absT.p];

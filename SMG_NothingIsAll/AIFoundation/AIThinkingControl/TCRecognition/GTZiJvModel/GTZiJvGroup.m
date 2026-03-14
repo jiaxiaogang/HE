@@ -10,6 +10,11 @@
 
 @implementation GTZiJvGroup
 
+-(NSMutableArray *) bestSTs {
+    if (!_bestSTs) _bestSTs = [NSMutableArray new];
+    return _bestSTs;
+}
+
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex {
     // bests在baseT中的Rect
