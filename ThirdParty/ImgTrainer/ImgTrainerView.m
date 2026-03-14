@@ -277,7 +277,7 @@
 -(void) setDataForGTModelV3:(GTZiJvGroup*)gtGroup lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
     // 为GT全显示。
     NSArray *indexes = nil; //[SMGUtils convertArr:gtModel.items convertBlock:^id(GTItem *gtItem) { return @(gtItem.assIndex); }];
-    [self addFeatureToPreview:gtGroup.baseT indexes:indexes lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:gtGroup.baseGT indexes:indexes lab:lab left:left top:top tvId:tvId];
     [[self getPreviewTV:tvId] reloadData];
 }
 

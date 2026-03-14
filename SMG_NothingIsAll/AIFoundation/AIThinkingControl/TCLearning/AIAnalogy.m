@@ -423,6 +423,10 @@
     return absGT;
 }
 
++(AIFeatureNode*) analogyGroupFeatureV7:(AIFeatureNode*)protoGT gtModel:(GTZiJvGroup*)gtModel prefixIndex:(NSInteger)prefixIndex {
+    return nil;
+}
+
 /**
  *  MARK:--------------------单码类比--------------------
  */

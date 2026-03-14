@@ -81,6 +81,7 @@
 #import "GTItem.h"
 #import "GTItemV2.h"
 #import "GTZiJvGroup.h"
+#import "STZiJvGroup.h"
 
 //短时记忆
 #import "TOAlgModel.h"

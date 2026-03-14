@@ -70,6 +70,7 @@
 		08366B9027DFFCC3004EBBB9 /* TOMVisionItemModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08366B8F27DFFCC3004EBBB9 /* TOMVisionItemModel.m */; };
 		08366B9327E00232004EBBB9 /* TOMVisionFoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 08366B9227E00232004EBBB9 /* TOMVisionFoView.m */; };
 		083680422853863E003F91FE /* AIAnalyst.m in Sources */ = {isa = PBXBuildFile; fileRef = 083680412853863E003F91FE /* AIAnalyst.m */; };
+		083880E22F659FE60061394E /* STZiJvGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 083880E12F659FE60061394E /* STZiJvGroup.m */; };
 		0839819F24DB7F8C00A020D2 /* HEView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0839819E24DB7F8C00A020D2 /* HEView.m */; };
 		083981F92A19E9D400F61263 /* MathUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 083981F82A19E9D400F61263 /* MathUtils.m */; };
 		083ADA722A67AB4F00319561 /* AsyncMutableDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 083ADA712A67AB4F00319561 /* AsyncMutableDictionary.m */; };
@@ -381,6 +382,8 @@
 		083680402853863E003F91FE /* AIAnalyst.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIAnalyst.h; sourceTree = "<group>"; };
 		083680412853863E003F91FE /* AIAnalyst.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIAnalyst.m; sourceTree = "<group>"; };
 		0837F72322A89A0D00836689 /* ReadMe.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ReadMe.md; sourceTree = "<group>"; };
+		083880E02F659FE60061394E /* STZiJvGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STZiJvGroup.h; sourceTree = "<group>"; };
+		083880E12F659FE60061394E /* STZiJvGroup.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = STZiJvGroup.m; sourceTree = "<group>"; };
 		0839819D24DB7F8C00A020D2 /* HEView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HEView.h; sourceTree = "<group>"; };
 		0839819E24DB7F8C00A020D2 /* HEView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HEView.m; sourceTree = "<group>"; };
 		083981F72A19E9D300F61263 /* MathUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MathUtils.h; sourceTree = "<group>"; };
@@ -1447,6 +1450,8 @@
 			children = (
 				082CA9EA2F61BE5600DF3991 /* GTZiJvGroup.h */,
 				082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */,
+				083880E02F659FE60061394E /* STZiJvGroup.h */,
+				083880E12F659FE60061394E /* STZiJvGroup.m */,
 			);
 			path = GTZiJvModel;
 			sourceTree = "<group>";
@@ -2239,6 +2244,7 @@
 				08C3978D2950A1A700C49EA7 /* AIRank.m in Sources */,
 				0858C5CF2194F8B000951BA5 /* MASViewAttribute.m in Sources */,
 				086BFF382BC043F600CB77B0 /* TVUtil_Short.m in Sources */,
+				083880E22F659FE60061394E /* STZiJvGroup.m in Sources */,
 				88BC09D720B4EB920006ABEF /* XGRedis.m in Sources */,
 				084219E11FD8CEFD009DA6BC /* AIReactorControl.m in Sources */,
 				0827DC0229BEA60E0070EB67 /* CortexAlgorithmsUtil.m in Sources */,

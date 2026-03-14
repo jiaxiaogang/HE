@@ -790,12 +790,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTZiJvGroup *model in resultModels) {
         // debug
         NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \tST匹配度:%.2f \tST符合度:%.2f \t= 综合得分:%.3f",
-              [resultModels indexOfObject:model],model.baseT.pId,model.bests.count,model.baseT.count,
+              [resultModels indexOfObject:model],model.baseGT.pId,model.bestSTs.count,model.baseGT.count,
               model.gtMatchValue,model.gtMatchDegree,model.stMatchValue,model.stMatchDegree,model.zonHeScore);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForGTModelV3:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.baseT.pId,model.bests.count,model.baseT.count) left:0 top:0 tvId:3];
+            [theApp.imgTrainerView setDataForGTModelV3:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.baseGT.pId,model.bestSTs.count,model.baseGT.count) left:0 top:0 tvId:3];
         }];
     }
     
@@ -914,16 +914,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSMutableArray *stGroups = [self gtZiJvV9_ST:targetST stModels:stModels];
             
             // 装饰字段
-            for (GTZiJvGroup *stGroup in stGroups) {
+            for (STZiJvGroup *stGroup in stGroups) {
                 
                 // 计算baseST_Proto：1、根据baseST的每bests计算出bestGVs_Proto 2、再计算整个baseST_Proto。
-                CGRect bestGVs_ST = [SMGUtils convertArr2Rect:stGroup.bests itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-                    return [stGroup.baseT rectByIndex:item.baseIndex];
+                CGRect bestGVs_ST = [SMGUtils convertArr2Rect:stGroup.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+                    return [stGroup.baseST rectByIndex:item.baseIndex];
                 }];
-                CGRect bestGVs_Proto = [SMGUtils convertArr2Rect:stGroup.bests itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+                CGRect bestGVs_Proto = [SMGUtils convertArr2Rect:stGroup.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
                     return item.bestGVAtProtoTRect;
                 }];
-                CGRect baseSTRect = [SMGUtils convertArr2Rect:stGroup.baseT.rects itemRectBlock:^CGRect(NSValue *item) {
+                CGRect baseSTRect = [SMGUtils convertArr2Rect:stGroup.baseST.rects itemRectBlock:^CGRect(NSValue *item) {
                     return item.CGRectValue;
                 }];
                 
@@ -944,14 +944,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGRect hopeNewBest_Proto = [gtGroup hopeProtoRectByIndex:itemIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
-            GTZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(GTZiJvGroup *validSTGroup) {
+            STZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(STZiJvGroup *validSTGroup) {
                 CGRect realNewBest_Proto = validSTGroup.baseST_Proto;
                 return [SMGUtils rate4IntersectionRectV2:realNewBest_Proto bRect:hopeNewBest_Proto];
             }];
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.baseST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
-                [gtGroup.bests addObject:bestSTGroup];
+                [gtGroup.bestSTs addObject:bestSTGroup];
                 [joinSuccess addObject:bestSTGroup];
             }
         }
@@ -959,11 +959,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // ==================== step5. 新成员未找到已有分组：则自成一组 ====================
         
         // 与以往不相容的另起一组：不属于任何组，则自成一组。
-        for (AIFeatureJvBuItem *validSTGroup in validSTGroups) {
+        for (STZiJvGroup *validSTGroup in validSTGroups) {
             if ([joinSuccess containsObject:validSTGroup]) continue;
             GTZiJvGroup *newItem = [GTZiJvGroup new];
-            newItem.baseT = targetGT;
-            [newItem.bests addObject:validSTGroup];
+            newItem.baseGT = targetGT;
+            [newItem.bestSTs addObject:validSTGroup];
             [result addObject:newItem];
         }
     }
@@ -997,7 +997,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
         NSMutableArray *joinSuccess = [NSMutableArray new];
-        for (GTZiJvGroup *stGroup in result) {
+        for (STZiJvGroup *stGroup in result) {
             // 预计newGV_Proto。
             CGRect hopeNewGV_Proto = [stGroup hopeProtoRectByIndex:itemGVIndex];
             
@@ -1009,7 +1009,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
-                [stGroup.bests addObject:bestGV];
+                [stGroup.bestGVs addObject:bestGV];
                 [joinSuccess addObject:bestGV];
             }
         }
@@ -1019,9 +1019,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 与以往不相容的另起一组：不属于任何组，则自成一组。
         for (AIFeatureJvBuItem *validBestGV in validBestGVs) {
             if ([joinSuccess containsObject:validBestGV]) continue;
-            GTZiJvGroup *newItem = [GTZiJvGroup new];
-            newItem.baseT = targetST;
-            [newItem.bests addObject:validBestGV];
+            STZiJvGroup *newItem = [STZiJvGroup new];
+            newItem.baseST = targetST;
+            [newItem.bestGVs addObject:validBestGV];
             [result addObject:newItem];
         }
     }
