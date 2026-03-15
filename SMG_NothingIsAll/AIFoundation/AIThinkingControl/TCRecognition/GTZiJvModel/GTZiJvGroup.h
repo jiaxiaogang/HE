@@ -11,7 +11,7 @@
 @interface GTZiJvGroup : NSObject
 
 @property (strong, nonatomic) AIFeatureNode *baseGT;
-@property (strong, nonatomic) NSMutableArray *bestSTs; // GT时为List<STGroup>
+@property (strong, nonatomic) NSMutableDictionary *bestSTs; // GT时为Dic<stIndex, STGroup>
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex;

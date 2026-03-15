@@ -13,7 +13,7 @@
  */
 @interface AIFeatureJvBuItem : NSObject
 
-+(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree diffValue:(CGFloat)diffValue baseGV_p:(AIKVPointer*)baseGV_p baseIndex:(NSInteger)baseIndex;
++(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree diffValue:(CGFloat)diffValue baseGV_p:(AIKVPointer*)baseGV_p;
 
 //每一条bestGV都可以把rect存下来（可用于计算bestGVsAtProtoTRect）。
 @property (assign, nonatomic) CGRect bestGVAtProtoTRect;
@@ -25,7 +25,5 @@
 @property (assign, nonatomic) CGFloat diffValue;
 // baseGV
 @property (strong, nonatomic) AIKVPointer *baseGV_p;
-// baseIndex
-@property (assign, nonatomic) NSInteger baseIndex;
 
 @end

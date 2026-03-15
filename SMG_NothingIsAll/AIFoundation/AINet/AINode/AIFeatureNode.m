@@ -41,6 +41,12 @@
     return value.CGRectValue;
 }
 
+-(CGRect) rect {
+    return [SMGUtils convertArr2Rect:self.rects itemRectBlock:^CGRect(NSValue *item) {
+        return item.CGRectValue;
+    }];
+}
+
 //MARK:===============================================================
 //MARK:             < 特征位置符合度（类似匹配度，持久化）>
 //MARK:===============================================================

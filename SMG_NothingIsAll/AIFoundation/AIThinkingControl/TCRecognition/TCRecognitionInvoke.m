@@ -463,8 +463,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 AIKVPointer *beginAssDiffV = [AINetUtils getDiffV:curAssGV_p tDS:ds];
                 CGFloat beginDiffMatchValue = [AINetUtils diffMatchValue:beginProtoDiffData.floatValue assDiffV:beginAssDiffV vInfo:[vInfoCache objectForKey:beginAssDiffV.dataSource]];
                 
-                // TODOTOMORROW20260315: 此处beginAssIndex是针对assT的，但在GT自举算法中，却不是针对assT的。
-                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue baseGV_p:curAssGV_p baseIndex:beginAssIndex];
+                beginBestGVItem = [AIFeatureJvBuItem new:lastProtoRect matchValue:gModel.matchValue matchDegree:1 diffValue:beginDiffMatchValue baseGV_p:curAssGV_p];
                 [bestGVsPoolV2 setObjectV5:beginBestGVItem k1:protoRectKey.v1 k2:protoRectKey.v2 k3:protoRectKey.v3 k4:protoRectKey.v4 k5:@(curAssGV_p.pointerId)];
             }
             
@@ -918,24 +917,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 装饰字段
             for (STZiJvGroup *stGroup in stGroups) {
                 
-                // TODOTOMORROW20260315: 此处baseIndex是针对assST的，但此处却是对targetST在取，查下统一下，不然有bug，此处取bestGVs_ST越界。
-                
                 // 计算baseST_Proto：1、根据baseST的每bests计算出bestGVs_Proto 2、再计算整个baseST_Proto。
-                CGRect bestGVs_ST = [SMGUtils convertArr2Rect:stGroup.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-                    return [stGroup.baseST rectByIndex:item.baseIndex];
-                }];
-                CGRect bestGVs_Proto = [SMGUtils convertArr2Rect:stGroup.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-                    return item.bestGVAtProtoTRect;
-                }];
-                CGRect baseSTRect = [SMGUtils convertArr2Rect:stGroup.baseST.rects itemRectBlock:^CGRect(NSValue *item) {
-                    return item.CGRectValue;
-                }];
+                CGRect bestGVs_ST = [stGroup bestGVs_ST];
+                CGRect bestGVs_Proto = [stGroup bestGVs_Proto];
+                CGRect baseSTRect = stGroup.baseST.rect;
                 
                 // 设：A=bestGVs B=ST C=Proto newA=整个ST 求 ST在Proto中的Rect。
                 stGroup.baseST_Proto = [SMGUtils convertNewAAtCWithAAtB:bestGVs_ST aAtC:bestGVs_Proto newAAtB:baseSTRect];;
-                
-                // 记录baseST对应下标
-                stGroup.baseSTIndex = itemIndex;
             }
             return stGroups;
         }];
@@ -955,7 +943,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.baseST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
-                [gtGroup.bestSTs addObject:bestSTGroup];
+                [gtGroup.bestSTs setObject:bestSTGroup forKey:@(itemIndex)];
                 [joinSuccess addObject:bestSTGroup];
             }
         }
@@ -967,7 +955,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             if ([joinSuccess containsObject:validSTGroup]) continue;
             GTZiJvGroup *newItem = [GTZiJvGroup new];
             newItem.baseGT = targetGT;
-            [newItem.bestSTs addObject:validSTGroup];
+            [newItem.bestSTs setObject:validSTGroup forKey:@(itemIndex)];
             [result addObject:newItem];
         }
     }
@@ -993,8 +981,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // ==================== step3. 从allBests中，找出与当前assT.item一致的 ====================
         // ST微观一级找JvBuItem（jvBuItem.bestGVs）。
         NSArray *validBestGVs = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuModel) {
-            return [SMGUtils filterArr:jvBuModel.bestGVs.allValues checkValid:^BOOL(AIFeatureJvBuItem *jvbuItem) {
-                return [jvbuItem.baseGV_p isEqual:itemGV_p];
+            return [SMGUtils filterArr:jvBuModel.bestGVs.allValues checkValid:^BOOL(AIFeatureJvBuItem *jvBuItem) {
+                return [jvBuItem.baseGV_p isEqual:itemGV_p];
             }];
         }];
         
@@ -1013,7 +1001,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
-                [stGroup.bestGVs addObject:bestGV];
+                [stGroup.bestGVs setObject:bestGV forKey:@(itemGVIndex)];
                 [joinSuccess addObject:bestGV];
             }
         }
@@ -1025,7 +1013,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             if ([joinSuccess containsObject:validBestGV]) continue;
             STZiJvGroup *newItem = [STZiJvGroup new];
             newItem.baseST = targetST;
-            [newItem.bestGVs addObject:validBestGV];
+            [newItem.bestGVs setObject:validBestGV forKey:@(itemGVIndex)];
             [result addObject:newItem];
         }
     }
@@ -1947,7 +1935,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
             }
             CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue baseGV_p:curAssGV_p baseIndex:curIndex];
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue baseGV_p:curAssGV_p];
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(curAssGV_p.pointerId)];

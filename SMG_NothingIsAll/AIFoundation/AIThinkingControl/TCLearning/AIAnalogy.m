@@ -425,25 +425,28 @@
 
 +(AIFeatureNode*) analogyGroupFeatureV7:(AIFeatureNode*)protoGT gtModel:(GTZiJvGroup*)gtModel prefixIndex:(NSInteger)prefixIndex {
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    NSArray *sameItems = [SMGUtils filterArr:gtModel.bestSTs checkValid:^BOOL(STZiJvGroup *stGroup) {
-        return [TCLearningUtil noZeRenForPingJun:stGroup.stMatchValue * [stGroup stMatchDegree:gtModel] bigerMatchValue:gtModel.gtMatchValue * gtModel.gtMatchDegree];
+    NSDictionary *sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvGroup *stGroup) {
+        CGRect hopeItemST_Proto = [gtModel hopeProtoRectByIndex:key.integerValue];
+        CGFloat stMatchDegree = [stGroup stMatchDegree:hopeItemST_Proto];
+        return [TCLearningUtil noZeRenForPingJun:stGroup.stMatchValue * stMatchDegree bigerMatchValue:gtModel.gtMatchValue * gtModel.gtMatchDegree];
     }];
     
     //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
-    CGRect sameSTs_AssGT = [SMGUtils convertArr2Rect:sameItems itemRectBlock:^CGRect(STZiJvGroup *item) {
-        return [gtModel.baseGT rectByIndex:item.baseSTIndex];
+    CGRect sameSTs_AssGT = [SMGUtils convertArr2Rect:sameItems.allKeys itemRectBlock:^CGRect(NSNumber *item) {
+        return [gtModel.baseGT rectByIndex:item.integerValue];
     }];
     
-    NSArray *orders = [SMGUtils convertArr:sameItems convertBlock:^id(STZiJvGroup *obj) {
+    sameItems = [SMGUtils convertDic:sameItems kvBlock:^NSArray *(NSNumber *protoK, STZiJvGroup *protoV) {
         // 计算itemST在absGT中的位置，其实就是ST在assGT中的位置，减掉margin左上角的留白（参考上面的方案2-TODO2）。
-        CGRect curSTAtAbsGTRect = [gtModel.baseGT rectByIndex:obj.baseSTIndex];
+        CGRect curSTAtAbsGTRect = [gtModel.baseGT rectByIndex:protoK.integerValue];
         curSTAtAbsGTRect.origin.x -= sameSTs_AssGT.origin.x;//- marginLeft
         curSTAtAbsGTRect.origin.y -= sameSTs_AssGT.origin.y;//- marginTop
-        AIKVPointer *itemST = ARR_INDEX(gtModel.baseGT.content_ps, obj.baseSTIndex);
+        AIKVPointer *itemST = ARR_INDEX(gtModel.baseGT.content_ps, protoK.integerValue);
         InputGroupFeatureModel *result = [InputGroupFeatureModel new:itemST rect:curSTAtAbsGTRect];
-        result.assIndex = obj.baseSTIndex;
-        return result;
+        result.assIndex = protoK.integerValue;
+        return @[protoK, result];
     }];
+    NSArray *orders = sameItems.allValues;
     
     // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
     orders = [ThinkingUtils sortInputGroupFeatureModels:orders];
@@ -477,7 +480,7 @@
     [gtModel.baseGT updateIndexDic:absGT indexDic:indexDic];
     
     // 参与了抽象的ST元素更新其内容强度（参考36022）。
-    NSArray *assGTIndexes = [SMGUtils convertArr:gtModel.bestSTs convertBlock:^id(STZiJvGroup *obj) { return @(obj.baseSTIndex); }];
+    NSArray *assGTIndexes = [SMGUtils convertArr:gtModel.bestSTs.allKeys convertBlock:^id(NSNumber *obj) { return @(obj.integerValue); }];
     [AINetUtils updateContentStrongByIndexes:assGTIndexes toNode:gtModel.baseGT];
     
     //51. debug

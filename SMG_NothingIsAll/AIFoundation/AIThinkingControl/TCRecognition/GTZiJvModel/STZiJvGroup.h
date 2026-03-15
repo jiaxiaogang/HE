@@ -11,20 +11,23 @@
 @interface STZiJvGroup : NSObject
 
 @property (strong, nonatomic) AIFeatureNode *baseST;
-@property (strong, nonatomic) NSMutableArray *bestGVs; // List<AIFeatureJvBuItem>
+@property (strong, nonatomic) NSMutableDictionary *bestGVs; // Dic<gvIndex, AIFeatureJvBuItem>
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex;
+-(CGRect) bestGVs_ST;
+-(CGRect) bestGVs_Proto;
 
 // GT时为baseST_Proto（要根据bests计算出bestGVs_Proto，然后再推算出整个baseST_Proto）
 // ST时用jvBuItem.bestGVAtProtoTRect即可，用不着这个。
 @property (assign, nonatomic) CGRect baseST_Proto;
 
-// GT时，这个在GT.bests中的元素下，表示当前baseST所在的下标。
-// ST时，GV的下标在jvBuItem.baseIndex，用不着这个。
-@property (assign, nonatomic) NSInteger baseSTIndex;
-
 -(CGFloat) stMatchValue;
--(CGFloat) stMatchDegree:(GTZiJvGroup*)gtGroup;
+
+/**
+ *  MARK:--------------------st位置符合度--------------------
+ *  @param hopeRect 传所属GT期望当前st在Proto中的位置。
+ */
+-(CGFloat) stMatchDegree:(CGRect)hopeRect;
 
 @end

@@ -10,22 +10,18 @@
 
 @implementation STZiJvGroup
 
--(NSMutableArray *) bestGVs {
-    if (!_bestGVs) _bestGVs = [NSMutableArray new];
+-(NSMutableDictionary *) bestGVs {
+    if (!_bestGVs) _bestGVs = [NSMutableDictionary new];
     return _bestGVs;
 }
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex {
     // bests在baseT中的Rect
-    CGRect bests_BaseT = [SMGUtils convertArr2Rect:self.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-        return [self.baseST rectByIndex:item.baseIndex];
-    }];
+    CGRect bests_BaseT = [self bestGVs_ST];
     
     // bests在Proto中的Rect
-    CGRect bests_Proto = [SMGUtils convertArr2Rect:self.bestGVs itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-        return item.bestGVAtProtoTRect;
-    }];
+    CGRect bests_Proto = [self bestGVs_Proto];
     
     // index的GV在ST中的Rect
     CGRect newBest_BaseT = [self.baseST rectByIndex:newBestIndex];
@@ -37,14 +33,29 @@
     return newBest_Proto;
 }
 
+-(CGRect) bestGVs_ST {
+    return [SMGUtils convertArr2Rect:self.bestGVs.allKeys itemRectBlock:^CGRect(NSNumber *item) {
+        return [self.baseST rectByIndex:item.integerValue];
+    }];
+}
+
+-(CGRect) bestGVs_Proto {
+    return [SMGUtils convertArr2Rect:self.bestGVs.allValues itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+        return item.bestGVAtProtoTRect;
+    }];
+}
+
 -(CGFloat) stMatchValue {
     return (float)self.bestGVs.count / self.baseST.count;
 }
 
--(CGFloat) stMatchDegree:(GTZiJvGroup*)gtGroup {
+/**
+ *  MARK:--------------------st位置符合度--------------------
+ *  @param hopeRect 传所属GT期望当前st在Proto中的位置。
+ */
+-(CGFloat) stMatchDegree:(CGRect)hopeRect {
     // 当前gtGroup期望其元素stGroup 的 ProtoRect。
     CGRect realRect = self.baseST_Proto;
-    CGRect hopeRect = [gtGroup hopeProtoRectByIndex:self.baseSTIndex];
     CGFloat stMatchDegree = [SMGUtils rate4IntersectionRectV2:realRect bRect:hopeRect];
     return stMatchDegree;
 }
