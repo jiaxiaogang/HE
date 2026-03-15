@@ -760,16 +760,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // gt自举算法。
             NSMutableArray *ziJvGroups = [self gtZiJvV9_GT:assGT beginIndex:beginIndex stModels:stModels];
             
-            // 竞争因子：匹配度 & 匹配数（防过抽）。
-            for (GTZiJvGroup *gtGroup in ziJvGroups) {
-                [gtGroup run4GTMatchValue];
-                [gtGroup run4GTMatchDegree];
-                [gtGroup run4STMatchValue];
-                [gtGroup run4STMatchDegree];
-                [gtGroup run4GTValidAbsPorts];
-            }
+            // 收集。
             [allGTGroups addObjectsFromArray:ziJvGroups];
         }
+    }
+    
+    // 竞争因子：匹配度 & 匹配数（防过抽）。
+    NSInteger maxMatchCount = [SMGUtils filterBestScore:allGTGroups scoreBlock:^CGFloat(GTZiJvGroup *item) {
+        return item.bestSTs.count;
+    }];
+    for (GTZiJvGroup *gtGroup in allGTGroups) {
+        [gtGroup run4GTMatchValue];
+        [gtGroup run4GTMatchDegree];
+        [gtGroup run4MatchCountRatio:maxMatchCount];
+        [gtGroup run4STMatchValue];
+        [gtGroup run4STMatchDegree];
+        [gtGroup run4GTValidAbsPorts];
     }
     
     // 最后进行综合竞争，把最符合的找出来。
@@ -790,9 +796,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvGroup *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \tST匹配度:%.2f \tST符合度:%.2f \t= 综合得分:%.3f",
+        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \t匹配率:%.2f \tST匹配度:%.2f \tST符合度:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.baseGT.pId,model.bestSTs.count,model.baseGT.count,
-              model.gtMatchValue,model.gtMatchDegree,model.stMatchValue,model.stMatchDegree,model.zonHeScore);
+              model.gtMatchValue,model.gtMatchDegree,model.matchCountRatio,model.stMatchValue,model.stMatchDegree,model.zonHeScore);
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
