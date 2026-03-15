@@ -85,6 +85,11 @@
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore {
+    // TODOTOMORROW20260315: 查 4/17 比 1/12 没优势的问题。
+    // 1. 原来有匹配数：matchCountRatio。
+    // 2. 或者加上gt匹配率，不然多条没优势。
+    // 如果是加匹配率，那可能全是1/1了，还是加匹配数吧。
+
     return self.gtMatchValue * self.gtMatchDegree * self.stMatchValue * self.stMatchDegree;
 }
 

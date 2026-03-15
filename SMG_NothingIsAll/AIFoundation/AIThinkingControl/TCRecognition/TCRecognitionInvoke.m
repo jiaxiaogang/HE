@@ -777,10 +777,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return obj.zonHeScore;
     }];
     
-    // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（先关掉，同一个assGT可能有多个groups结果）。
-    //resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvGroup *obj) {
-    //    return @(obj.baseT.pId);
-    //}];
+    // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
+    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvGroup *obj) {
+        return @(obj.baseGT.pId);
+    }];
     
     // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
     NSInteger count = resultModels.count;
