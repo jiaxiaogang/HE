@@ -100,12 +100,18 @@
  *              1. V1: 先在代码块之间调用AddDebugCodeBlock("自定义后辍","代码块");
  *                 V2: 使用AddDebugCodeBlock_KeyV2("自定义后辍)，自动会以代码行为代码块打印。
  *              2. 在末尾调用PrintDebugCodeBlock()将结果日志打出;
+ *  @desc   用法1、AddDebugCodeBlock_Key(@"a", @"3"); & PrintDebugCodeBlock_Key(@"a");
+ *          用法2、AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); & PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
+ *          用法3、AddDebugCodeBlock_KeyV3(); & PrintDebugCodeBlock_KeyV3();
  *  @desc 前辍说明: 使用当前文件名+循环id;
  */
 //含自定义前辍版本 (适用于多类工作时,根据自定义前辍跨类工作);
 #define AddDebugCodeBlock_Key(key,codeBlockName) if([key isEqual:TCCurDebugKey]) [theDebug debugModuleWithPrefix:TCDebugPrefixV2(key) suffix:codeBlockName]
 #define AddDebugCodeBlock_KeyV2(key) if([key isEqual:TCCurDebugKey]) [theDebug debugModuleWithPrefix:TCDebugPrefixV2(key) suffix:STRFORMAT(@"%@%d",kFILENAME, kLINE)]
+#define AddDebugCodeBlock_KeyV3() [theDebug debugModuleWithPrefix:TCDebugPrefixV3(TCCurDebugKey) suffix:STRFORMAT(@"%@%d",kFILENAME, kLINE)]
+
 #define PrintDebugCodeBlock_Key(key) [theDebug print:TCDebugPrefixV2(key) rmPrefix:TCDebugRMPrefixV2(key)]
+#define PrintDebugCodeBlock_KeyV3() [theDebug print:TCDebugPrefixV3(TCCurDebugKey) rmPrefix:TCDebugRMPrefixV3(TCCurDebugKey)]
 
 /**
  *  MARK:--------------------tcDebug拼接前辍--------------------
@@ -114,7 +120,8 @@
 #define TCDebugPrefixV2(blockKey) STRFORMAT(@"DEBUG匹配 => 代码块:%@ 循环圈:%lld",blockKey,theTC.getLoopId) //TCDebug的前辍=文件名用来匹配的前部分+循环Id
 #define TCDebugRMPrefixV2(blockKey) STRFORMAT(@"DEBUG匹配 => 代码块:%@",blockKey) //用于删除所有的prefixKey,不限循环数;
 
-// 用法1、AddDebugCodeBlock_KeyV2(TCDebugKey4AutoSplit); & PrintDebugCodeBlock_Key(TCDebugKey4AutoSplit);
-// 用法2、AddDebugCodeBlock_Key(@"a", @"3"); & PrintDebugCodeBlock_Key(@"a");
-#define TCCurDebugKey @"自适应粒度"
-#define TCDebugKey4AutoSplit @""
+#define TCDebugPrefixV3(blockKey) STRFORMAT(@"DEBUG:%@",blockKey)
+#define TCDebugRMPrefixV3(blockKey) STRFORMAT(@"DEBUG:%@",blockKey) //用于删除所有的prefixKey,不限循环数;
+
+// 当前DefaultDebugKey
+#define TCCurDebugKey @"GTV9"

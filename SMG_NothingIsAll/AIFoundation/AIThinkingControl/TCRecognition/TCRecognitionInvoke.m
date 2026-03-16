@@ -621,24 +621,30 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // 用sourceDic逐个求refGT。
+    AddDebugCodeBlock_KeyV3();
     for (AIKVPointer *abs_p in sourceDic.data.allKeys) {
         NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
+        AddDebugCodeBlock_KeyV3();
         for (AIPort *refPort in refPorts) {
             if ([refPort.target_p isEqual:protoGT.p]) continue;
+            AddDebugCodeBlock_KeyV3();
             
             // assGT。
             AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
             NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
             
             // gt自举算法。
+            AddDebugCodeBlock_KeyV3();
             NSMutableArray *ziJvGroups = [self gtZiJvV9_GT:assGT beginIndex:beginIndex stModels:stModels];
             
             // 收集。
             [allGTGroups addObjectsFromArray:ziJvGroups];
+            AddDebugCodeBlock_KeyV3();
         }
     }
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。
+    AddDebugCodeBlock_KeyV3();
     NSInteger maxMatchCount = [SMGUtils filterBestScore:allGTGroups scoreBlock:^CGFloat(GTZiJvGroup *item) {
         return item.bestSTs.count;
     }];
@@ -650,11 +656,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4STMatchDegree];
         [gtGroup run4GTValidAbsPorts];
     }
+    AddDebugCodeBlock_KeyV3();
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvGroup *obj) {
         return obj.zonHeScore;
     }];
+    AddDebugCodeBlock_KeyV3();
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvGroup *obj) {
@@ -678,6 +686,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [theApp.imgTrainerView setDataForGTModelV3:model lab:STRFORMAT(@"%ld识GT%ld(%ld/%ld)",[resultModels indexOfObject:model]+1,model.baseGT.pId,model.bestSTs.count,model.baseGT.count) left:0 top:0 tvId:3];
         }];
     }
+    AddDebugCodeBlock_KeyV3();
     
     // debugLog
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvGroup *obj) {
@@ -687,6 +696,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     } convertMatchBlock:^float(GTZiJvGroup *obj) {
         return obj.zonHeScore;
     }];
+    AddDebugCodeBlock_KeyV3();
     
     // 更新logDesc到assT（参考36052）。
     for (GTZiJvGroup *model in resultModels) {
@@ -695,6 +705,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [validAbs updateLogDescItem:logDesc];
         }
     }
+    AddDebugCodeBlock_KeyV3();
+    PrintDebugCodeBlock_KeyV3();
     return resultModels;
 }
 
@@ -705,24 +717,31 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(NSMutableArray*) gtZiJvV9_GT:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex stModels:(NSArray*)stModels {
     
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）。
+    AddDebugCodeBlock_KeyV3();
     NSMutableArray *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
+    AddDebugCodeBlock_KeyV3();
     if (old) return old;
+    AddDebugCodeBlock_KeyV3();
     
     // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
     
     // 依次自举absGV
     NSMutableArray *result = [NSMutableArray new];
     for (NSInteger i = 0; i < targetGT.count; i++) {
+        AddDebugCodeBlock_KeyV3();
         NSInteger itemIndex = (beginIndex + i) % targetGT.count;
         AIKVPointer *targetST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
         AIFeatureNode *targetST = [SMGUtils searchNode:targetST_p];
+        AddDebugCodeBlock_KeyV3();
         
         // ==================== step3. 从stModels中，找出与当前assT.item一致的 ====================
         // GT微观一级找ST（JvBuModel.jvBuItems.bestGVs）。
         NSArray *validSTGroups = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *obj) {
             // 因为有错位问题，此处不能从jvBuModel中找好的assST或validAbsST_ps。
             // 而是要直接对targetST进行GV层自举匹配判断，得到stGroups，其中stGroups.groups数组全是对targetST真实的自举匹配结果。
+            AddDebugCodeBlock_KeyV3();
             NSMutableArray *stGroups = [self gtZiJvV9_ST:targetST stModels:stModels];
+            AddDebugCodeBlock_KeyV3();
             
             // 装饰字段
             for (STZiJvGroup *stGroup in stGroups) {
@@ -735,32 +754,38 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 设：A=bestGVs B=ST C=Proto newA=整个ST 求 ST在Proto中的Rect。
                 stGroup.baseST_Proto = [SMGUtils convertNewAAtCWithAAtB:bestGVs_ST aAtC:bestGVs_Proto newAAtB:baseSTRect];;
             }
+            AddDebugCodeBlock_KeyV3();
             return stGroups;
         }];
         
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
+        AddDebugCodeBlock_KeyV3();
         NSMutableArray *joinSuccess = [NSMutableArray new];
         for (GTZiJvGroup *gtGroup in result) { // GT时group.bests为bestSTs ST时group.bests为bestGVs。
             // 预计newGV_Proto。
             CGRect hopeNewBest_Proto = [gtGroup hopeProtoRectByIndex:itemIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
+            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:4671 读:0 写:0
             STZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(STZiJvGroup *validSTGroup) {
                 CGRect realNewBest_Proto = validSTGroup.baseST_Proto;
                 return [SMGUtils rate4IntersectionRectV2:realNewBest_Proto bRect:hopeNewBest_Proto];
             }];
+            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:3327 读:0 写:0
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.baseST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
                 [gtGroup.bestSTs setObject:bestSTGroup forKey:@(itemIndex)];
                 [joinSuccess addObject:bestSTGroup];
             }
+            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:3468 读:0 写:0
         }
         
         // ==================== step5. 新成员未找到已有分组：则自成一组 ====================
         
         // 与以往不相容的另起一组：不属于任何组，则自成一组。
+        AddDebugCodeBlock_KeyV3();
         for (STZiJvGroup *validSTGroup in validSTGroups) {
             if ([joinSuccess containsObject:validSTGroup]) continue;
             GTZiJvGroup *newItem = [GTZiJvGroup new];
@@ -768,9 +793,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [newItem.bestSTs setObject:validSTGroup forKey:@(itemIndex)];
             [result addObject:newItem];
         }
+        AddDebugCodeBlock_KeyV3();
     }
     
     // 结果加入缓存池。
+    AddDebugCodeBlock_KeyV3();
     [gtZiJvGTPool setObject:result forKey:@(targetGT.pId)];
     return result;
 }
@@ -778,8 +805,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(NSMutableArray*) gtZiJvV9_ST:(AIFeatureNode*)targetST stModels:(NSArray*)stModels {
     
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）。
+    AddDebugCodeBlock_KeyV3();
     NSMutableArray *old = [gtZiJvSTPool objectForKey:@(targetST.pId)];
+    AddDebugCodeBlock_KeyV3();
     if (old) return old;
+    AddDebugCodeBlock_KeyV3();
     
     // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
     
@@ -790,11 +820,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
         // ==================== step3. 从allBests中，找出与当前assT.item一致的 ====================
         // ST微观一级找JvBuItem（jvBuItem.bestGVs）。
+        AddDebugCodeBlock_KeyV3();
         NSArray *validBestGVs = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *jvBuModel) {
             return [SMGUtils filterArr:jvBuModel.bestGVs.allValues checkValid:^BOOL(AIFeatureJvBuItem *jvBuItem) {
                 return [jvBuItem.baseGV_p isEqual:itemGV_p];
             }];
         }];
+        AddDebugCodeBlock_KeyV3();
         
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
@@ -804,17 +836,21 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGRect hopeNewGV_Proto = [stGroup hopeProtoRectByIndex:itemGVIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
+            AddDebugCodeBlock_KeyV3();
             AIFeatureJvBuItem *bestGV = [SMGUtils filterBestObj:validBestGVs scoreBlock:^CGFloat(AIFeatureJvBuItem *obj) {
                 CGRect realNewGV_Proto = obj.bestGVAtProtoTRect;
                 return [SMGUtils rate4IntersectionRectV2:realNewGV_Proto bRect:hopeNewGV_Proto];
             }];
+            AddDebugCodeBlock_KeyV3();
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestGV.bestGVAtProtoTRect bRect:hopeNewGV_Proto] > 0.6f) {
                 [stGroup.bestGVs setObject:bestGV forKey:@(itemGVIndex)];
                 [joinSuccess addObject:bestGV];
             }
+            AddDebugCodeBlock_KeyV3();
         }
+        AddDebugCodeBlock_KeyV3();
         
         // ==================== step5. 新成员未找到已有分组：则自成一组 ====================
         
@@ -826,8 +862,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [newItem.bestGVs setObject:validBestGV forKey:@(itemGVIndex)];
             [result addObject:newItem];
         }
+        AddDebugCodeBlock_KeyV3();
     }
     
+    AddDebugCodeBlock_KeyV3();
     // 结果加入缓存池。
     [gtZiJvSTPool setObject:result forKey:@(targetST.pId)];
     return result;
