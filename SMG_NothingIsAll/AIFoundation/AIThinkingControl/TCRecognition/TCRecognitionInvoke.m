@@ -762,24 +762,51 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         AddDebugCodeBlock_KeyV3();
         NSMutableArray *joinSuccess = [NSMutableArray new];
-        for (GTZiJvGroup *gtGroup in result) { // GT时group.bests为bestSTs ST时group.bests为bestGVs。
-            // 预计newGV_Proto。
+        
+        // 优化：预先计算所有GT组的hopeNewBest_Proto，避免重复计算
+        NSMutableArray *hopeRects = [NSMutableArray arrayWithCapacity:result.count];
+        for (GTZiJvGroup *gtGroup in result) {
             CGRect hopeNewBest_Proto = [gtGroup hopeProtoRectByIndex:itemIndex];
+            [hopeRects addObject:[NSValue valueWithCGRect:hopeNewBest_Proto]];
+        }
+        
+        // 优化：预先计算所有ST组的baseST_Proto，避免重复访问属性
+        NSMutableArray *stRects = [NSMutableArray arrayWithCapacity:validSTGroups.count];
+        for (STZiJvGroup *stGroup in validSTGroups) {
+            [stRects addObject:[NSValue valueWithCGRect:stGroup.baseST_Proto]];
+        }
+        
+        // 优化：批量计算匹配度，减少循环次数
+        for (NSInteger gtIndex = 0; gtIndex < result.count; gtIndex++) {
+            GTZiJvGroup *gtGroup = result[gtIndex];
+            CGRect hopeNewBest_Proto = [hopeRects[gtIndex] CGRectValue];
             
-            // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
-            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:4671 读:0 写:0
-            STZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(STZiJvGroup *validSTGroup) {
-                CGRect realNewBest_Proto = validSTGroup.baseST_Proto;
-                return [SMGUtils rate4IntersectionRectV2:realNewBest_Proto bRect:hopeNewBest_Proto];
-            }];
-            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:3327 读:0 写:0
+            STZiJvGroup *bestSTGroup = nil;
+            CGFloat bestScore = 0.0f;
+            
+            // 直接遍历查找最佳匹配，避免filterBestObj的额外开销
+            for (NSInteger stIndex = 0; stIndex < validSTGroups.count; stIndex++) {
+                STZiJvGroup *validSTGroup = validSTGroups[stIndex];
+                CGRect realNewBest_Proto = [stRects[stIndex] CGRectValue];
+                
+                CGFloat score = [SMGUtils rate4IntersectionRectV2:realNewBest_Proto bRect:hopeNewBest_Proto];
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestSTGroup = validSTGroup;
+                }
+                
+                // 优化：如果已经找到满意匹配，提前终止搜索
+                if (bestScore >= 0.95f) break;
+            }
+            
+            AddDebugCodeBlock_KeyV3();
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
-            if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.baseST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
+            if (bestScore > 0.6f && bestSTGroup) {
                 [gtGroup.bestSTs setObject:bestSTGroup forKey:@(itemIndex)];
                 [joinSuccess addObject:bestSTGroup];
             }
-            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:3468 读:0 写:0
+            AddDebugCodeBlock_KeyV3();
         }
         
         // ==================== step5. 新成员未找到已有分组：则自成一组 ====================
