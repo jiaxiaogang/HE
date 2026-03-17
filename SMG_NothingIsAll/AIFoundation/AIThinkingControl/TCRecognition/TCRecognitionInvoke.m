@@ -728,7 +728,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 依次自举absGV
     NSMutableArray *result = [NSMutableArray new];
     for (NSInteger i = 0; i < targetGT.count; i++) {
-        AddDebugCodeBlock_KeyV3();
+        AddDebugCodeBlock_KeyV3(); // 计数:409 均耗:0.43 = 总耗:177 读:92 写:0
         NSInteger itemIndex = (beginIndex + i) % targetGT.count;
         AIKVPointer *targetST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
         AIFeatureNode *targetST = [SMGUtils searchNode:targetST_p];
@@ -739,9 +739,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSArray *validSTGroups = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *obj) {
             // 因为有错位问题，此处不能从jvBuModel中找好的assST或validAbsST_ps。
             // 而是要直接对targetST进行GV层自举匹配判断，得到stGroups，其中stGroups.groups数组全是对targetST真实的自举匹配结果。
-            AddDebugCodeBlock_KeyV3();
+            AddDebugCodeBlock_KeyV3(); // 计数:8180 均耗:0.02 = 总耗:124 读:0 写:0
             NSMutableArray *stGroups = [self gtZiJvV9_ST:targetST stModels:stModels];
-            AddDebugCodeBlock_KeyV3();
+            AddDebugCodeBlock_KeyV3(); // 计数:8180 均耗:0.02 = 总耗:199 读:0 写:0
             
             // 装饰字段
             for (STZiJvGroup *stGroup in stGroups) {
@@ -754,13 +754,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 设：A=bestGVs B=ST C=Proto newA=整个ST 求 ST在Proto中的Rect。
                 stGroup.baseST_Proto = [SMGUtils convertNewAAtCWithAAtB:bestGVs_ST aAtC:bestGVs_Proto newAAtB:baseSTRect];;
             }
-            AddDebugCodeBlock_KeyV3();
+            AddDebugCodeBlock_KeyV3(); // 计数:8180 均耗:0.02 = 总耗:134 读:0 写:0
             return stGroups;
         }];
         
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
-        AddDebugCodeBlock_KeyV3();
+        // TODOTOMORROW20260318: 性能优化：这里result循环中执行了19w次，说明result有475条左右。
+        // 方案1、每个时刻仅保留匹配数前100名。
+        //      优点、此方案绝对有效，且不仅gtZiJvV9_GT，在gtZiJvV9_ST也可以这么优化。
+        // 方案2、从GT->ST->GV每个模块展开时，都应该竞争仅保留前X名。
+        //      缺点1A、每个stGroup对于不同的GT不同（GV也一样），所以只能在本体宏微层上淘汰。
+        //      缺点1B、可是在本体宏微层上的话，识别时已经竞争过了，现在再淘汰没意义。
+        //      否掉、所以，此方案不可行，也没意义，直接否掉。
+        // 抉择、如上优点分析，先优化方案1。
+        
+        AddDebugCodeBlock_KeyV3(); // 计数:409 均耗:0.02 = 总耗:6 读:0 写:0
         NSMutableArray *joinSuccess = [NSMutableArray new];
         for (GTZiJvGroup *gtGroup in result) { // GT时group.bests为bestSTs ST时group.bests为bestGVs。
             // 预计newGV_Proto。
