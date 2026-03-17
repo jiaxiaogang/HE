@@ -716,7 +716,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  */
 +(NSMutableArray*) gtZiJvV9_GT:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex stModels:(NSArray*)stModels {
     
-    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）。
+    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
     AddDebugCodeBlock_KeyV3();
     NSMutableArray *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
     AddDebugCodeBlock_KeyV3();
@@ -804,7 +804,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 +(NSMutableArray*) gtZiJvV9_ST:(AIFeatureNode*)targetST stModels:(NSArray*)stModels {
     
-    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）。
+    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：8067 / 8180 = 98.6%）。
     AddDebugCodeBlock_KeyV3();
     NSMutableArray *old = [gtZiJvSTPool objectForKey:@(targetST.pId)];
     AddDebugCodeBlock_KeyV3();
