@@ -802,6 +802,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [newItem.bestSTs setObject:validSTGroup forKey:@(itemIndex)];
             [result addObject:newItem];
         }
+        
+        // TODO: 这里是不是有问题？
+        // 1. validSTGroups必须各成一组么？各成一组是不是有点多。（未分到组里，就说明前面和他都不成组）
+        // 2. 它是从curI出发？过去的itemST还需要再回去判断下是否匹配么？（未分到组里，就说明前面和他都不成组）。
+        // 3. 如果错过太多，就没必要成组了，错过多少就不成组了？
+        // TODO: 根据匹配条数，只保留前100条。
+        
+        
         AddDebugCodeBlock_KeyV3();
     }
     
