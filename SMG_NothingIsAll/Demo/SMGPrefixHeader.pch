@@ -110,8 +110,8 @@
 #define AddDebugCodeBlock_KeyV2(key) if([key isEqual:TCCurDebugKey]) [theDebug debugModuleWithPrefix:TCDebugPrefixV2(key) suffix:STRFORMAT(@"%@%d",kFILENAME, kLINE)]
 #define AddDebugCodeBlock_KeyV3() [theDebug debugModuleWithPrefix:TCDebugPrefixV3(TCCurDebugKey) suffix:STRFORMAT(@"%@%d",kFILENAME, kLINE)]
 
-#define PrintDebugCodeBlock_Key(key) [theDebug print:TCDebugPrefixV2(key) rmPrefix:TCDebugRMPrefixV2(key)]
-#define PrintDebugCodeBlock_KeyV3() [theDebug print:TCDebugPrefixV3(TCCurDebugKey) rmPrefix:TCDebugRMPrefixV3(TCCurDebugKey)]
+#define PrintDebugCodeBlock_Key(key) if (TCDebugV3Switch) [theDebug print:TCDebugPrefixV2(key) rmPrefix:TCDebugRMPrefixV2(key)]
+#define PrintDebugCodeBlock_KeyV3() if (TCDebugV3Switch) [theDebug print:TCDebugPrefixV3(TCCurDebugKey) rmPrefix:TCDebugRMPrefixV3(TCCurDebugKey)]
 
 /**
  *  MARK:--------------------tcDebug拼接前辍--------------------
@@ -125,3 +125,4 @@
 
 // 当前DefaultDebugKey
 #define TCCurDebugKey @"GTV9"
+#define TCDebugV3Switch true

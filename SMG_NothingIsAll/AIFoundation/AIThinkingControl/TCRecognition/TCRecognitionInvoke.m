@@ -760,6 +760,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
+        // TODOTOMORROW20260318：下方循环已经优化至3.7w次。
+        // 1. 但性能三步各占用0.8s还是慢。
+        // 2. 但GT识别整体占6s还是慢。
+        // 所以：继续分析下可优化的地方，继续优化。
+        // 方案1、同一个assGT仅保留一条匹配数最大的。
+        
         AddDebugCodeBlock_KeyV3(); // 计数:409 均耗:0.02 = 总耗:6 读:0 写:0
         NSMutableArray *joinSuccess = [NSMutableArray new];
         for (GTZiJvGroup *gtGroup in result) { // GT时group.bests为bestSTs ST时group.bests为bestGVs。
@@ -767,19 +773,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGRect hopeNewBest_Proto = [gtGroup hopeProtoRectByIndex:itemIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
-            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:4671 读:0 写:0
+            AddDebugCodeBlock_KeyV3(); // 计数:37000 均耗:0.02 = 总耗:898 读:0 写:0
             STZiJvGroup *bestSTGroup = [SMGUtils filterBestObj:validSTGroups scoreBlock:^CGFloat(STZiJvGroup *validSTGroup) {
                 CGRect realNewBest_Proto = validSTGroup.baseST_Proto;
                 return [SMGUtils rate4IntersectionRectV2:realNewBest_Proto bRect:hopeNewBest_Proto];
             }];
-            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:3327 读:0 写:0
+            AddDebugCodeBlock_KeyV3();
             
             // 与以往相容的就划为一组：如果最高的位置符合度>60%，则归为一组。
             if ([SMGUtils rate4IntersectionRectV2:bestSTGroup.baseST_Proto bRect:hopeNewBest_Proto] > 0.6f) {
                 [gtGroup.bestSTs setObject:bestSTGroup forKey:@(itemIndex)];
                 [joinSuccess addObject:bestSTGroup];
             }
-            AddDebugCodeBlock_KeyV3(); // 计数:198600 均耗:0.02 = 总耗:3468 读:0 写:0
+            AddDebugCodeBlock_KeyV3();
         }
         
         // ==================== step5. 新成员未找到已有分组：则自成一组 ====================
@@ -795,10 +801,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
 
         // 上方相容划为一组，循环执行19w次，说明result有475条左右：所以对result按bestSTs.count进行排序，并仅保留前100名，以优化性能。
-        result = [SMGUtils sortBig2Small:result compareBlock:^double(GTZiJvGroup *obj) {
+        NSArray *valids = [SMGUtils sortBig2Small:result compareBlock:^double(GTZiJvGroup *obj) {
             return obj.bestSTs.count;
         }];
-        result = ARR_SUB(result, 0, MIN(100, result.count));
+        valids = ARR_SUB(valids, 0, MIN(100, valids.count));
+        result = [[NSMutableArray alloc] initWithArray:valids];
         AddDebugCodeBlock_KeyV3();
     }
     
@@ -870,10 +877,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
 
         // 上方相容划为一组：可以对result按bestGVs.count进行排序，并仅保留前100名，以优化性能。
-        result = [SMGUtils sortBig2Small:result compareBlock:^double(STZiJvGroup *obj) {
+        NSArray *valids = [SMGUtils sortBig2Small:result compareBlock:^double(STZiJvGroup *obj) {
             return obj.bestGVs.count;
         }];
-        result = ARR_SUB(result, 0, MIN(100, result.count));
+        valids = ARR_SUB(valids, 0, MIN(100, valids.count));
+        result = [[NSMutableArray alloc] initWithArray:valids];
         AddDebugCodeBlock_KeyV3();
     }
     
