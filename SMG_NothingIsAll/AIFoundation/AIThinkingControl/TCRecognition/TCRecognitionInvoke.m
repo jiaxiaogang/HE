@@ -760,15 +760,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
         
-        // TODOTOMORROW20260318: 性能优化：这里result循环中执行了19w次，说明result有475条左右。
-        // 方案1、每个时刻仅保留匹配数前100名。
-        //      优点、此方案绝对有效，且不仅gtZiJvV9_GT，在gtZiJvV9_ST也可以这么优化。
-        // 方案2、从GT->ST->GV每个模块展开时，都应该竞争仅保留前X名。
-        //      缺点1A、每个stGroup对于不同的GT不同（GV也一样），所以只能在本体宏微层上淘汰。
-        //      缺点1B、可是在本体宏微层上的话，识别时已经竞争过了，现在再淘汰没意义。
-        //      否掉、所以，此方案不可行，也没意义，直接否掉。
-        // 抉择、如上优点分析，先优化方案1。
-        
         AddDebugCodeBlock_KeyV3(); // 计数:409 均耗:0.02 = 总耗:6 读:0 写:0
         NSMutableArray *joinSuccess = [NSMutableArray new];
         for (GTZiJvGroup *gtGroup in result) { // GT时group.bests为bestSTs ST时group.bests为bestGVs。
@@ -802,14 +793,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [newItem.bestSTs setObject:validSTGroup forKey:@(itemIndex)];
             [result addObject:newItem];
         }
-        
-        // TODO: 这里是不是有问题？
-        // 1. validSTGroups必须各成一组么？各成一组是不是有点多。（未分到组里，就说明前面和他都不成组）
-        // 2. 它是从curI出发？过去的itemST还需要再回去判断下是否匹配么？（未分到组里，就说明前面和他都不成组）。
-        // 3. 如果错过太多，就没必要成组了，错过多少就不成组了？
-        // TODO: 根据匹配条数，只保留前100条。
-        
-        
+
+        // 上方相容划为一组，循环执行19w次，说明result有475条左右：所以对result按bestSTs.count进行排序，并仅保留前100名，以优化性能。
+        result = [SMGUtils sortBig2Small:result compareBlock:^double(GTZiJvGroup *obj) {
+            return obj.bestSTs.count;
+        }];
+        result = ARR_SUB(result, 0, MIN(100, result.count));
         AddDebugCodeBlock_KeyV3();
     }
     
@@ -879,6 +868,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [newItem.bestGVs setObject:validBestGV forKey:@(itemGVIndex)];
             [result addObject:newItem];
         }
+
+        // 上方相容划为一组：可以对result按bestGVs.count进行排序，并仅保留前100名，以优化性能。
+        result = [SMGUtils sortBig2Small:result compareBlock:^double(STZiJvGroup *obj) {
+            return obj.bestGVs.count;
+        }];
+        result = ARR_SUB(result, 0, MIN(100, result.count));
         AddDebugCodeBlock_KeyV3();
     }
     
