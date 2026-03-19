@@ -624,6 +624,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AddDebugCodeBlock_KeyV3();
     for (AIKVPointer *abs_p in sourceDic.data.allKeys) {
         NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
+        
+        // 性能优化、减少refPorts的切入点。
+        refPorts = ARR_SUB(refPorts, 0, MAX(3, refPorts.count * 0.3f));
+        
         AddDebugCodeBlock_KeyV3();
         for (AIPort *refPort in refPorts) {
             if ([refPort.target_p isEqual:protoGT.p]) continue;
@@ -668,11 +672,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvGroup *obj) {
         return @(obj.baseGT.pId);
     }];
+    AddDebugCodeBlock_KeyV3();
     
     // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
     NSInteger count = resultModels.count;
     float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
     resultModels = ARR_SUB(resultModels, 0, MIN(20, count * needRate));
+    AddDebugCodeBlock_KeyV3();
     
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvGroup *model in resultModels) {
@@ -680,6 +686,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \t匹配率:%.2f \tST匹配度:%.2f \tST符合度:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.baseGT.pId,model.bestSTs.count,model.baseGT.count,
               model.gtMatchValue,model.gtMatchDegree,model.matchCountRatio,model.stMatchValue,model.stMatchDegree,model.zonHeScore);
+        AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -739,9 +746,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSArray *validSTGroups = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *obj) {
             // 因为有错位问题，此处不能从jvBuModel中找好的assST或validAbsST_ps。
             // 而是要直接对targetST进行GV层自举匹配判断，得到stGroups，其中stGroups.groups数组全是对targetST真实的自举匹配结果。
-            AddDebugCodeBlock_KeyV3(); // 计数:8180 均耗:0.02 = 总耗:124 读:0 写:0
+            AddDebugCodeBlock_KeyV3(); // 计数:5520 均耗:0.02 = 总耗:108 读:0 写:0
             NSMutableArray *stGroups = [self gtZiJvV9_ST:targetST stModels:stModels];
-            AddDebugCodeBlock_KeyV3(); // 计数:8180 均耗:0.02 = 总耗:199 读:0 写:0
+            AddDebugCodeBlock_KeyV3(); // 计数:5520 均耗:0.02 = 总耗:113 读:0 写:0
             
             // 装饰字段
             for (STZiJvGroup *stGroup in stGroups) {
@@ -754,17 +761,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 设：A=bestGVs B=ST C=Proto newA=整个ST 求 ST在Proto中的Rect。
                 stGroup.baseST_Proto = [SMGUtils convertNewAAtCWithAAtB:bestGVs_ST aAtC:bestGVs_Proto newAAtB:baseSTRect];;
             }
-            AddDebugCodeBlock_KeyV3(); // 计数:8180 均耗:0.02 = 总耗:134 读:0 写:0
+            AddDebugCodeBlock_KeyV3(); // 计数:5520 均耗:0.02 = 总耗:110 读:0 写:0
             return stGroups;
         }];
         
         // ==================== step4. 为已有分组找新成员：最新发现的最匹配best ====================
-        
-        // TODOTOMORROW20260318：下方循环已经优化至3.7w次。
-        // 1. 但性能三步各占用0.8s还是慢。
-        // 2. 但GT识别整体占6s还是慢。
-        // 所以：继续分析下可优化的地方，继续优化。
-        // 方案1、同一个assGT仅保留一条匹配数最大的。
         
         AddDebugCodeBlock_KeyV3(); // 计数:409 均耗:0.02 = 总耗:6 读:0 写:0
         NSMutableArray *joinSuccess = [NSMutableArray new];
@@ -800,11 +801,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [result addObject:newItem];
         }
 
-        // 上方相容划为一组，循环执行19w次，说明result有475条左右：所以对result按bestSTs.count进行排序，并仅保留前100名，以优化性能。
+        // 条数说明1、上方相容划为一组，循环执行19w次，说明result有475条左右：所以对result按bestSTs.count进行排序，并仅保留前100名，以优化性能。
+        // 条数说明2、同一个assGT保留10条匹配数最多的（100条太多浪费性能，1条太少后面还要广入概念，改成10条）。
         NSArray *valids = [SMGUtils sortBig2Small:result compareBlock:^double(GTZiJvGroup *obj) {
             return obj.bestSTs.count;
         }];
-        valids = ARR_SUB(valids, 0, MIN(100, valids.count));
+        valids = ARR_SUB(valids, 0, MIN(10, valids.count));
         result = [[NSMutableArray alloc] initWithArray:valids];
         AddDebugCodeBlock_KeyV3();
     }
@@ -849,7 +851,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGRect hopeNewGV_Proto = [stGroup hopeProtoRectByIndex:itemGVIndex];
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
-            AddDebugCodeBlock_KeyV3();
+            AddDebugCodeBlock_KeyV3(); // 计数:2992 均耗:0.07 = 总耗:198 读:0 写:0
             AIFeatureJvBuItem *bestGV = [SMGUtils filterBestObj:validBestGVs scoreBlock:^CGFloat(AIFeatureJvBuItem *obj) {
                 CGRect realNewGV_Proto = obj.bestGVAtProtoTRect;
                 return [SMGUtils rate4IntersectionRectV2:realNewGV_Proto bRect:hopeNewGV_Proto];
@@ -880,7 +882,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSArray *valids = [SMGUtils sortBig2Small:result compareBlock:^double(STZiJvGroup *obj) {
             return obj.bestGVs.count;
         }];
-        valids = ARR_SUB(valids, 0, MIN(100, valids.count));
+        valids = ARR_SUB(valids, 0, MIN(50, valids.count));
         result = [[NSMutableArray alloc] initWithArray:valids];
         AddDebugCodeBlock_KeyV3();
     }
