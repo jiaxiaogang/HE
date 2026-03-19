@@ -658,7 +658,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4MatchCountRatio:maxMatchCount];
         [gtGroup run4STMatchValue];
         [gtGroup run4STMatchDegree];
-        [gtGroup run4GTValidAbsPorts];
+        [gtGroup run4GTValidAbs_ps];
     }
     AddDebugCodeBlock_KeyV3();
     
@@ -697,8 +697,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // debugLog
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvGroup *obj) {
-        return [SMGUtils convertArr:obj.validAbsPorts convertBlock:^id(AIPort *obj) {
-            return [SMGUtils searchNode:obj.target_p];
+        return [SMGUtils convertArr:obj.validAbs_ps convertBlock:^id(AIKVPointer *obj) {
+            return [SMGUtils searchNode:obj];
         }];
     } convertMatchBlock:^float(GTZiJvGroup *obj) {
         return obj.zonHeScore;
@@ -707,8 +707,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 更新logDesc到assT（参考36052）。
     for (GTZiJvGroup *model in resultModels) {
-        for (AIPort *validAbsPort in model.validAbsPorts) {
-            AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
+        for (AIKVPointer *validAbs_p in model.validAbs_ps) {
+            AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
             [validAbs updateLogDescItem:logDesc];
         }
     }

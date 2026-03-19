@@ -50,7 +50,7 @@
 -(CGFloat) zonHeScore;
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
--(void) run4GTValidAbsPorts;
-@property (strong, nonatomic) NSArray *validAbsPorts;
+-(void) run4GTValidAbs_ps;
+@property (strong, nonatomic) NSArray *validAbs_ps;
 
 @end

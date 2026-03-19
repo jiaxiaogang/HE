@@ -96,19 +96,20 @@
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
--(void) run4GTValidAbsPorts {
-    NSArray *allAbsPorts = [AINetUtils absPorts_All:self.baseGT];
+-(void) run4GTValidAbs_ps {
+    NSArray *allAbs = Ports2Pits([AINetUtils absPorts_All:self.baseGT]);
     NSArray *validIndexes = [SMGUtils convertArr:self.bestSTs.allKeys convertBlock:^id(NSNumber *obj) {
         return @(obj.integerValue);
     }];
     
     // 方案1、用抽具象的indexDic映射，来判断它是否全含（前提：需要存上抽具象特征的indexDic映射）。
-    self.validAbsPorts = [SMGUtils filterArr:allAbsPorts checkValid:^BOOL(AIPort *item) {
-        NSDictionary *indexDic = [self.baseGT getAbsIndexDic:item.target_p];
+    NSArray *validAbs = [SMGUtils filterArr:allAbs checkValid:^BOOL(AIKVPointer *item) {
+        NSDictionary *indexDic = [self.baseGT getAbsIndexDic:item];
         return ![SMGUtils filterSingleFromArr:indexDic.allValues checkValid:^BOOL(id item) {
             return ![validIndexes containsObject:item];
         }];
     }];
+    self.validAbs_ps = [SMGUtils collectArrA:@[self.baseGT.p] arrB:validAbs];
 }
 
 @end
