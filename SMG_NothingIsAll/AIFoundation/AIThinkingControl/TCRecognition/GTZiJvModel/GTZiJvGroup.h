@@ -49,7 +49,7 @@
 /**
  *  MARK:--------------------ST时的匹配率：作用于GT识别竞争因子--------------------
  */
--(void) run4STMatchCountRatio:(NSInteger)max;
+-(void) run4STMatchCountRatio;
 @property (assign, nonatomic) CGFloat stMatchCountRatio;
 
 // GTModel综合评分（用于GT识别竞争）。

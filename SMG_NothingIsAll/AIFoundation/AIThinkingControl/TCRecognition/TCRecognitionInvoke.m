@@ -658,6 +658,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4GTMatchCountRatio:maxMatchCount];
         [gtGroup run4STMatchValue];
         [gtGroup run4STMatchDegree];
+        [gtGroup run4STMatchCountRatio];
         [gtGroup run4GTValidAbs_ps];
     }
     AddDebugCodeBlock_KeyV3();
