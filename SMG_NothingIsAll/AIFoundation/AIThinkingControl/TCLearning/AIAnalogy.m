@@ -358,6 +358,10 @@
 }
 
 +(AIFeatureNode*) analogyGroupFeatureV7:(AIFeatureNode*)protoGT gtModel:(GTZiJvGroup*)gtModel prefixIndex:(NSInteger)prefixIndex {
+    // TODO: 这里后面可考虑把每个bestSTs里的stGroup.bestGVs先抽象出来，再抽象GT。
+    //      优点：这样才更准确，不然明明bestST中只有一部分bestGVs到了，却要全抽象到absGT中？
+    //      缺点1：这样的话assGT就没用了，只有有效抽象validAbsGT才有用，这个有效抽象是不是也得判断到bestGVs
+    //      缺点2：抽具象GT不再单纯是全含关系了，如具象是ABC，抽象可能是Ab，即不仅仅是少一个C，连B也变成一部分了。
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
     NSDictionary *sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvGroup *stGroup) {
         CGRect hopeItemST_Proto = [gtModel hopeProtoRectByIndex:key.integerValue];

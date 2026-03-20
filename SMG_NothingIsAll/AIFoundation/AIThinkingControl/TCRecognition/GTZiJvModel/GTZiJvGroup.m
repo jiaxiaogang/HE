@@ -62,8 +62,8 @@
 /**
  *  MARK:--------------------辅因子：元素数归一化值（防过抽：因为只有具象的匹配数count才可能长）--------------------
  */
--(void) run4MatchCountRatio:(NSInteger)max {
-    self.matchCountRatio = max == 0 ? 0 : (float)self.bestSTs.count / max;
+-(void) run4GTMatchCountRatio:(NSInteger)max {
+    self.gtMatchCountRatio = max == 0 ? 0 : (float)self.bestSTs.count / max;
 }
 
 /**
@@ -90,9 +90,18 @@
     }] / self.bestSTs.count;
 }
 
+/**
+ *  MARK:--------------------ST时的匹配率：作用于GT识别竞争因子--------------------
+ */
+-(void) run4STMatchCountRatio:(NSInteger)max {
+    self.stMatchCountRatio = [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^CGFloat(STZiJvGroup *stGroup) {
+        return (float)stGroup.bestGVs.count / stGroup.baseST.count;
+    }] / self.bestSTs.count;
+}
+
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore {
-    return self.gtMatchValue * self.gtMatchDegree * self.matchCountRatio * self.stMatchValue * self.stMatchDegree;
+    return self.gtMatchValue * self.gtMatchDegree * self.gtMatchCountRatio * self.stMatchValue * self.stMatchDegree * self.stMatchCountRatio;
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。

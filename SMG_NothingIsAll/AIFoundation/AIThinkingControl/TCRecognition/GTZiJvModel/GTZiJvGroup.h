@@ -31,8 +31,8 @@
 /**
  *  MARK:--------------------辅因子：元素数归一化值（防过抽：因为只有具象的匹配数count才可能长）--------------------
  */
--(void) run4MatchCountRatio:(NSInteger)max;
-@property (assign, nonatomic) CGFloat matchCountRatio;
+-(void) run4GTMatchCountRatio:(NSInteger)max;
+@property (assign, nonatomic) CGFloat gtMatchCountRatio;
 
 /**
  *  MARK:--------------------ST时的匹配度：作用于GT识别竞争因子--------------------
@@ -45,6 +45,12 @@
  */
 -(void) run4STMatchDegree;
 @property (assign, nonatomic) CGFloat stMatchDegree;
+
+/**
+ *  MARK:--------------------ST时的匹配率：作用于GT识别竞争因子--------------------
+ */
+-(void) run4STMatchCountRatio:(NSInteger)max;
+@property (assign, nonatomic) CGFloat stMatchCountRatio;
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;

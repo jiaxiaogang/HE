@@ -655,7 +655,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTZiJvGroup *gtGroup in allGTGroups) {
         [gtGroup run4GTMatchValue];
         [gtGroup run4GTMatchDegree];
-        [gtGroup run4MatchCountRatio:maxMatchCount];
+        [gtGroup run4GTMatchCountRatio:maxMatchCount];
         [gtGroup run4STMatchValue];
         [gtGroup run4STMatchDegree];
         [gtGroup run4GTValidAbs_ps];
@@ -683,9 +683,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvGroup *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \t匹配率:%.2f \tST匹配度:%.2f \tST符合度:%.2f \t= 综合得分:%.3f",
+        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \tGT匹配率:%.2f \tST匹配度:%.2f \tST符合度:%.2f \tST匹配率:%.2f \t= 综合得分:%.3f",
               [resultModels indexOfObject:model],model.baseGT.pId,model.bestSTs.count,model.baseGT.count,
-              model.gtMatchValue,model.gtMatchDegree,model.matchCountRatio,model.stMatchValue,model.stMatchDegree,model.zonHeScore);
+              model.gtMatchValue,model.gtMatchDegree,model.gtMatchCountRatio,model.stMatchValue,model.stMatchDegree,model.stMatchCountRatio,model.zonHeScore);
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 组特征识别结果可视化（参考34176）。
