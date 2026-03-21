@@ -23,11 +23,15 @@
 @property (assign, nonatomic) CGRect baseST_Proto;
 
 -(CGFloat) stMatchValue;
+-(CGFloat) stMatchDegree;
+-(CGFloat) stMatchCountRatio;
 
 /**
  *  MARK:--------------------st位置符合度--------------------
  *  @param hopeRect 传所属GT期望当前st在Proto中的位置。
  */
 -(CGFloat) stMatchDegree:(CGRect)hopeRect;
+
+@property (strong, nonatomic) AIFeatureNode *absST; // 类比gtGroup时，先把stGroup中的bestGVs抽象成absST。
 
 @end

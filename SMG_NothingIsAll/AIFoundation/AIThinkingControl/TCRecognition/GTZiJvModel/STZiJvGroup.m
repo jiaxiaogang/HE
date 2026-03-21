@@ -46,6 +46,18 @@
 }
 
 -(CGFloat) stMatchValue {
+    return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
+        return gv.matchValue;
+    }] / self.bestGVs.count;
+}
+
+-(CGFloat) stMatchDegree {
+    return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
+        return gv.matchDegree;
+    }] / self.bestGVs.count;
+}
+
+-(CGFloat) stMatchCountRatio {
     return (float)self.bestGVs.count / self.baseST.count;
 }
 
