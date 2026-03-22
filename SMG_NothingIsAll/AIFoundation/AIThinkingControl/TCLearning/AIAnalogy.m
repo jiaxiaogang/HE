@@ -489,6 +489,10 @@
     // 构建absGT
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.baseGT] at:at ds:ds isOut:isOut isJiao:true];
     
+    if (absGT.count < orders.count) {
+        NSLog(@"TODOTOMORROW20260322: 查下原因");
+    }
+    
     //41. 更新logDesc。
     [absGT updateLogDescItem:logDesc rate:gtModel.zonHeScore];
     [absGT updateLogDescDic:gtModel.baseGT.logDesc];

@@ -353,6 +353,18 @@
     }
 }
 
++(void) test36:(NSDictionary*)indexDic conNode:(AINodeBase*)conNode absNode:(AINodeBase*)absNode {
+    // 看下有没indexDic越界了;
+    for (NSNumber *key in indexDic.allKeys) {
+        NSNumber *value = [indexDic objectForKey:key];
+        if (value.integerValue >= conNode.count) {
+            ELog(@"映射的value越界,已修,复测一段时间,遇过两次,都修了");
+        } else if (key.integerValue >= absNode.count) {
+            ELog(@"映射的key越界,已修,复测一段时间,遇过两次,都修了");
+        }
+    }
+}
+
 //MARK:===============================================================
 //MARK:    < 回测必经点测试 (常关,每个轮回测时打开,触发则关,未触发者为异常) >
 //MARK:===============================================================

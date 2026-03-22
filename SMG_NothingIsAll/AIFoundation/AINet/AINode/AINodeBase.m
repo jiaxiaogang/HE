@@ -206,17 +206,8 @@
     //1. 更新抽具象两个indexDDic;
     [self.absIndexDDic setObject:indexDic forKey:@(absFo.pointer.pointerId)];
     [absFo.conIndexDDic setObject:indexDic forKey:@(self.pointer.pointerId)];
-    
-    //TODOTOMORROW20240626: 看下有没indexDic越界了;
-    for (NSNumber *key in indexDic.allKeys) {
-        NSNumber *value = [indexDic objectForKey:key];
-        if (value.integerValue >= self.count) {
-            NSLog(@"映射的value越界,已修,复测一段时间,遇过两次,都修了,如果到2024.07.26没断过点,则删除此处");
-        } else if (key.integerValue >= absFo.count) {
-            NSLog(@"映射的key越界,已修,复测一段时间,遇过两次,都修了,如果到2024.07.26没断过点,则删除此处");
-        }
-    }
     [AITest test34:indexDic];
+    [AITest test36:indexDic conNode:self absNode:absFo];
     
     //2. 保存节点;
     [SMGUtils insertNode:self];
