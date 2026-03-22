@@ -204,7 +204,7 @@
         //21. ======== 兼容新版组码特征 ========
         if (PitIsFeature(protoV_p) || PitIsFeature(assV_p)) {
             // TODO: 等这里再次测试时，把这儿改一下，alg类比，不应该调用gt类比。这里先临时这么写着。。。
-            AIFeatureNode *absT = [self analogyGroupFeatureV7:nil gtModel:nil prefixIndex:0];
+            AIFeatureNode *absT = [AIAnalogy analogyGroupFeatureV8:nil at:nil isOut:false logDesc:nil gtModel:nil prefixIndex:0];
             if (!absT) continue;
             CGFloat valueMatchValue = [absT getConMatchValue:protoA_p];
             [sameValue_ps addObject:absT.p];
@@ -257,19 +257,22 @@
  *      2025.03.31: 改为调用组码类比v2。
  */
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex {
-    AIFeatureNode *absST = [self analogyFeatureV3:jvBuModel.bestGVs baseST:jvBuModel.assT stMatchValue:jvBuModel.matchValue protoTLogDesc:protoTLogDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs) {
-        // 把后面会用到的一些数据存下来: 1。
+    AIFeatureNode *absST = [self analogyFeatureV3:jvBuModel.bestGVs baseST:jvBuModel.assT stMatchValue:jvBuModel.matchValue protoTLogDesc:protoTLogDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
+        // 1. 把后面会用到的一些数据存下来。
         jvBuModel.bestGVs4NoZeRen = [SMGUtils convertArr:validBestGVs convertBlock:^id(MapModel *obj) { return obj.v2; }];
     }];
+    
+    // 2. 完成后数据处理。
     if (![absST.p isEqual:jvBuModel.assT.p]) {
         [jvBuModel run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
     }
-    // 把后面会用到的一些数据存下来: 2。
+    
+    // 3. 把后面会用到的一些数据存下来。
     jvBuModel.abs_p = absST.p;
     return absST;
 }
 
-+(AIFeatureNode*) analogyFeatureV3:(NSDictionary*)bestGVs baseST:(AIFeatureNode*)baseST stMatchValue:(CGFloat)stMatchValue protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex finishBlock:(void(^)(NSArray *validBestGVs))finishBlock {
++(AIFeatureNode*) analogyFeatureV3:(NSDictionary*)bestGVs baseST:(AIFeatureNode*)baseST stMatchValue:(CGFloat)stMatchValue protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex finishBlock:(void(^)(NSArray *validBestGVs, NSValue *bestGVs_AssT))finishBlock {
     
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
@@ -362,7 +365,7 @@
     if (Log4Ana) NSLog(@"\n单特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",baseST.ds,
                                baseST.pId,baseST.count,CLEANSTR([baseST getLogDesc:false]),FeatureDesc(baseST.p,1),
                                absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
-    if (finishBlock) finishBlock(validBestGVs);
+    if (finishBlock) finishBlock(validBestGVs,@(bestGVs_AssT));
     return absT;
 }
 
@@ -451,36 +454,30 @@
     
     // STEP1 ===== 先抽象其stGroup：把每个bestSTs里的stGroup.bestGVs先抽象出来（这样才更准确，不然明明bestST中只有一部分bestGVs到了，却要全抽象到absGT中？）。
     for (STZiJvGroup *stGroup in gtModel.bestSTs.allValues) {
-        stGroup.absST = [AIAnalogy analogyFeatureV3:stGroup.bestGVs baseST:stGroup.baseST stMatchValue:stGroup.stMatchValue protoTLogDesc:logDesc prefixIndex:prefixIndex finishBlock:nil];
+        stGroup.absST = [AIAnalogy analogyFeatureV3:stGroup.bestGVs baseST:stGroup.baseST stMatchValue:stGroup.stMatchValue protoTLogDesc:logDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
+            stGroup.absST_BaseST = bestGVs_AssT.CGRectValue;
+        }];
     }
     
     // STEP2 ===== 再抽象GT。
     //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
-    CGRect sameSTs_AssGT = [SMGUtils convertArr2Rect:sameItems.allKeys itemRectBlock:^CGRect(NSNumber *item) {
-        
-        
-        // TODOTOMORROW20260321: 此处整个indexST的rect不一定表示sameSTs_AssGT，要改为用absST的rect。
-        // 注意：在每个absST.conPorts中存的有rect，以及absST与conST间有indexDic可供复用。
-        
-        return [gtModel.baseGT rectByIndex:item.integerValue];
+    CGRect absSTs_AssGT = [SMGUtils convertArr2Rect:sameItems.allKeys itemRectBlock:^CGRect(NSNumber *key) {
+        //  根据absST在stGroup 和 stGroup在assGT 二者得出absST_assGT。
+        STZiJvGroup *stGroup = [sameItems objectForKey:key];
+        CGRect absST_BaseST = stGroup.absST_BaseST;
+        CGRect baseST_BaseGT = [gtModel.baseGT rectByIndex:key.integerValue];
+        CGRect absST_BaseGT = [SMGUtils convertAAtCWithAAtB:absST_BaseST bAtC:baseST_BaseGT protoBSize:stGroup.baseST.rect.size];
+        return absST_BaseGT;
     }];
     
+    // STEP3 ===== 转成orders
     sameItems = [SMGUtils convertDic:sameItems kvBlock:^NSArray *(NSNumber *protoK, STZiJvGroup *protoV) {
-        
-        
-        // TODOTOMORROW20260321: 此处curSTAtAbsGTRect也不是用stIndex直接取，而应该改为取absST在absGT的Rect。
-        // 注意：在每个absST.conPorts中存的有rect，以及absST与conST间有indexDic可供复用。
-        // 目标是：取absST_AbsGT
-        //  1、根据absST在stGroup 和 stGroup在assGT 二者得出absST_assGT。
-        //  2、再根据整个absSTs_AssGT，减掉xy偏移值，计算出最终absST_AbsGT。
-        
-        
+        // 再根据整个absSTs_AssGT，减掉xy偏移值，计算出最终absST_AbsGT。
         // 计算itemST在absGT中的位置，其实就是ST在assGT中的位置，减掉margin左上角的留白（参考上面的方案2-TODO2）。
-        CGRect curSTAtAbsGTRect = [gtModel.baseGT rectByIndex:protoK.integerValue];
-        curSTAtAbsGTRect.origin.x -= sameSTs_AssGT.origin.x;//- marginLeft
-        curSTAtAbsGTRect.origin.y -= sameSTs_AssGT.origin.y;//- marginTop
-        AIKVPointer *itemST = ARR_INDEX(gtModel.baseGT.content_ps, protoK.integerValue);
-        InputGroupFeatureModel *result = [InputGroupFeatureModel new:itemST rect:curSTAtAbsGTRect];
+        CGRect absST_AbsGT = protoV.absST_BaseST;
+        absST_AbsGT.origin.x -= absSTs_AssGT.origin.x;//- marginLeft
+        absST_AbsGT.origin.y -= absSTs_AssGT.origin.y;//- marginTop
+        InputGroupFeatureModel *result = [InputGroupFeatureModel new:protoV.absST.p rect:absST_AbsGT];
         result.assIndex = protoK.integerValue;
         return @[protoK, result];
     }];
@@ -505,7 +502,7 @@
     [gtModel.baseGT updateMatchDegree:absGT matchDegree:gtModel.gtMatchDegree];
     
     //44. 记录整体absT.conPort到protoT和assT的rect（参考上面的方案2-TODO1）。
-    [AINetUtils updateConPortRect:absGT conT:gtModel.baseGT.p rect:sameSTs_AssGT];
+    [AINetUtils updateConPortRect:absGT conT:gtModel.baseGT.p rect:absSTs_AssGT];
     
     // 存indexDic。
     // 用途1、TODO：取显著度的时候需要它，现在不取absGT的content显著度，所以暂时用不到，后需要的时候加上。

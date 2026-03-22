@@ -33,5 +33,6 @@
 -(CGFloat) stMatchDegree:(CGRect)hopeRect;
 
 @property (strong, nonatomic) AIFeatureNode *absST; // 类比gtGroup时，先把stGroup中的bestGVs抽象成absST。
+@property (assign, nonatomic) CGRect absST_BaseST; // 类比后，取得absST_BaseST
 
 @end
