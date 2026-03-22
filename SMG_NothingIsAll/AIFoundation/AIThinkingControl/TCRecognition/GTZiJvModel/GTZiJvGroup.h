@@ -31,7 +31,7 @@
 /**
  *  MARK:--------------------辅因子：元素数归一化值（防过抽：因为只有具象的匹配数count才可能长）--------------------
  */
--(void) run4GTMatchCountRatio:(NSInteger)max;
+-(void) run4GTMatchCountRatio;
 @property (assign, nonatomic) CGFloat gtMatchCountRatio;
 
 /**
@@ -46,8 +46,17 @@
 -(void) run4STMatchCountRatio;
 @property (assign, nonatomic) CGFloat stMatchCountRatio;
 
+/**
+ *  MARK:--------------------匹配数归一化值--------------------
+ */
+-(void) run4CountRatio:(NSInteger)max;
+@property (assign, nonatomic) CGFloat countRatio;
+
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;
+
+// GTModel综合评分的描述。
+-(NSString*) zonHeDesc;
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
 -(void) run4GTValidAbs_ps;

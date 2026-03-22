@@ -571,7 +571,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%ld/%ld) \t匹配度:%.2f \t匹配率:%.2f \t抽象强度(%ld):%.2f = 总分:%.2f",
+        NSLog(@"%ld. 单特征识别结果:T%ld \t(%02ld/%02ld) \t匹配度:%.2f \t匹配率:%.2f \t抽象强度(%ld):%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
               model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,model.stScore);
         [SMGUtils runByMainQueue:^{
@@ -661,10 +661,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (GTZiJvGroup *gtGroup in allGTGroups) {
         [gtGroup run4GTMatchValue];
         [gtGroup run4GTMatchDegree];
-        [gtGroup run4GTMatchCountRatio:maxMatchCount];
+        [gtGroup run4GTMatchCountRatio];
         [gtGroup run4STMatchDegree];
         [gtGroup run4STMatchCountRatio];
         [gtGroup run4GTValidAbs_ps];
+        [gtGroup run4CountRatio:maxMatchCount];
     }
     AddDebugCodeBlock_KeyV3();
     
@@ -689,9 +690,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvGroup *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t(%ld/%ld) \tGT匹配度:%.2f \tGT符合度:%.2f \tGT匹配率:%.2f \tST符合度:%.2f \tST匹配率:%.2f \t= 综合得分:%.3f",
-              [resultModels indexOfObject:model],model.baseGT.pId,model.bestSTs.count,model.baseGT.count,
-              model.gtMatchValue,model.gtMatchDegree,model.gtMatchCountRatio,model.stMatchDegree,model.stMatchCountRatio,model.zonHeScore);
+        NSLog(@"%ld. 组特征识别结果:T%ld \t%@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc);
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 组特征识别结果可视化（参考34176）。
@@ -1500,7 +1499,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [protoOrRegroupFo updateMatchValue:matchFo matchValue:item.sumNear];
         
         //8. 调试日志;
-        if (debugMode) NSLog(@"%ld. %@强度:(%ld)(%ld/%ld)\t> %@->{%.2f} (SP:%@) indexDic:%@ 匹配度 => %.2f",[allMatchFos indexOfObject:item],matchFo.cmvNode_p?@"P":@"",item.sumRefStrong,item.cutIndex,matchFo.count,Fo2FStr(matchFo),[AIScore score4MV_v2FromCache:item],CLEANSTR(matchFo.spDic),CLEANSTR(item.indexDic2),item.matchFoValue);
+        if (debugMode) NSLog(@"%ld. %@强度:(%ld)(%02ld/%02ld)\t> %@->{%.2f} (SP:%@) indexDic:%@ 匹配度 => %.2f",[allMatchFos indexOfObject:item],matchFo.cmvNode_p?@"P":@"",item.sumRefStrong,item.cutIndex,matchFo.count,Fo2FStr(matchFo),[AIScore score4MV_v2FromCache:item],CLEANSTR(matchFo.spDic),CLEANSTR(item.indexDic2),item.matchFoValue);
     }
 }
 

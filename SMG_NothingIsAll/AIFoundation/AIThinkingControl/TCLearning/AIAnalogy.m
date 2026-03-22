@@ -279,10 +279,13 @@
     NSArray *models = [SMGUtils convertArr:bestGVs.allKeys convertBlock:^id(NSNumber *key) {
         return [MapModel newWithV1:key v2:[bestGVs objectForKey:key]];
     }];
-    NSArray *validBestGVs = [[NSMutableArray alloc] initWithArray:[SMGUtils filterArr:models checkValid:^BOOL(MapModel *model) {
-        AIFeatureJvBuItem *item = model.v2;
-        return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:stMatchValue fanForce:2.0f];
-    }]];
+    NSArray *validBestGVs = models;
+    
+    // 关闭过滤（识别已竞争过，不必画蛇添足）。
+    //validBestGVs = [SMGUtils filterArr:models checkValid:^BOOL(MapModel *model) {
+    //    AIFeatureJvBuItem *item = model.v2;
+    //    return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:stMatchValue fanForce:2.0f];
+    //}];
     
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
     NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(MapModel *obj) {
@@ -372,12 +375,15 @@
 +(AIFeatureNode*) analogyGroupFeatureV8:(NSString*)ds at:(NSString*)at isOut:(BOOL)isOut logDesc:(NSString*)logDesc gtModel:(GTZiJvGroup*)gtModel prefixIndex:(NSInteger)prefixIndex {
     
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    NSDictionary *sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvGroup *stGroup) {
-        CGRect hopeItemST_Proto = [gtModel hopeProtoRectByIndex:key.integerValue];
-        CGFloat stMatchDegree = [stGroup stMatchDegree:hopeItemST_Proto];
-        return [TCLearningUtil noZeRenForPingJun:stGroup.stMatchValue * stMatchDegree * stGroup.stMatchCountRatio
-                                 bigerMatchValue:gtModel.gtMatchValue * gtModel.gtMatchDegree * gtModel.stMatchCountRatio];
-    }];
+    NSDictionary *sameItems = gtModel.bestSTs;
+    
+    // 关闭过滤（识别已竞争过，不必画蛇添足）。
+    //sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvGroup *stGroup) {
+    //    CGRect hopeItemST_Proto = [gtModel hopeProtoRectByIndex:key.integerValue];
+    //    CGFloat stMatchDegree = [stGroup stMatchDegree:hopeItemST_Proto];
+    //    return [TCLearningUtil noZeRenForPingJun:stGroup.stMatchValue * stMatchDegree * stGroup.stMatchCountRatio
+    //                             bigerMatchValue:gtModel.gtMatchValue * gtModel.gtMatchDegree * gtModel.stMatchCountRatio];
+    //}];
     
     // STEP1 ===== 先抽象其stGroup：把每个bestSTs里的stGroup.bestGVs先抽象出来（这样才更准确，不然明明bestST中只有一部分bestGVs到了，却要全抽象到absGT中？）。
     for (STZiJvGroup *stGroup in gtModel.bestSTs.allValues) {
