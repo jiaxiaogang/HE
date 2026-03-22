@@ -318,6 +318,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
     gtOrders = [ThinkingUtils sortInputGroupFeatureModels:gtOrders];
     
+    // 防重：orders
+    gtOrders = [SMGUtils removeRepeat:gtOrders convertBlock:^id(InputGroupFeatureModel *obj) {
+        return STRFORMAT(@"%ld_%@",obj.feature_p.pointerId,@(obj.rect));
+    }];
+    
     // TODO: 2026.03.22: 其实这里的ProtoGT已经没什么用了，后面的识别和类比全不必用它，后面删掉？可是要没有第一个ProtoGT，怎么能有后面的识别结果呢？
     // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
     AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];

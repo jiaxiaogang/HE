@@ -73,11 +73,6 @@
 +(AIGroupFeatureNode*) createGroupFeatureNode:(NSArray*)subTModels conNodes:(NSArray*)conNodes at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut isJiao:(BOOL)isJiao {
     if (subTModels.count == 0) return nil;
     
-    //2. 数据准备：subTModels防重。
-    subTModels = [SMGUtils removeRepeat:subTModels convertBlock:^id(InputGroupFeatureModel *obj) {
-        return STRFORMAT(@"%ld_%@",obj.feature_p.pointerId,@(obj.rect));
-    }];
-    
     //2. 数据准备：转content_ps。
     NSArray *content_ps = [SMGUtils convertArr:subTModels convertBlock:^id(InputGroupFeatureModel *obj) {
         return obj.feature_p;
