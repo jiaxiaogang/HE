@@ -855,6 +855,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 预计newGV_Proto。
             CGRect hopeNewGV_Proto = [stGroup hopeProtoRectByIndex:itemGVIndex];
             
+            // TODOTOMORROW20260324: 先写这里，有了hopeNewGV_Proto，就可以直接从ProtoImg切图。
+            
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
             AddDebugCodeBlock_KeyV3(); // 计数:2992 均耗:0.07 = 总耗:198 读:0 写:0
             AIFeatureJvBuItem *bestGV = [SMGUtils filterBestObj:validBestGVs scoreBlock:^CGFloat(AIFeatureJvBuItem *obj) {
