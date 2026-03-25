@@ -822,6 +822,44 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return result;
 }
 
++(NSMutableArray*) gtZiJvV10_GT:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex stModels:(NSArray*)stModels {
+    
+    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
+    NSMutableArray *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
+    if (old) return old;
+    
+    // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
+    
+    // 依次自举absGV
+    NSMutableArray *result = [NSMutableArray new];
+    for (NSInteger stIndex = 0; stIndex < targetGT.count; stIndex++) {
+        NSInteger itemIndex = (beginIndex + stIndex) % targetGT.count;
+        AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
+        AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
+        CGRect itemST_GT = [targetGT rectByIndex:itemIndex];
+        
+        for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
+            AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
+            AIGroupValueNode *itemGV = [SMGUtils searchNode:itemGV_p];
+            CGRect itemGV_ST = [itemST rectByIndex:gvIndex];
+        
+            
+            
+            
+            // TODOTOMORROW20260324: 先写这里，有了hopeNewGV_Proto，就可以直接从ProtoImg切图。
+            // 1. 切入targetIndex和切入protoRect应该都是有的，别的切图rect都根据这个来估算。
+            
+            
+        }
+        
+        
+    }
+    
+    // 结果加入缓存池。
+    [gtZiJvGTPool setObject:result forKey:@(targetGT.pId)];
+    return result;
+}
+
 +(NSMutableArray*) gtZiJvV9_ST:(AIFeatureNode*)targetST stModels:(NSArray*)stModels {
     
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：8067 / 8180 = 98.6%）。
@@ -854,8 +892,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         for (STZiJvGroup *stGroup in result) {
             // 预计newGV_Proto。
             CGRect hopeNewGV_Proto = [stGroup hopeProtoRectByIndex:itemGVIndex];
-            
-            // TODOTOMORROW20260324: 先写这里，有了hopeNewGV_Proto，就可以直接从ProtoImg切图。
             
             // 用预计hopeNewGV_Proto和实际realNewGV_Rect求交，把位置符合度最高的找出来。
             AddDebugCodeBlock_KeyV3(); // 计数:2992 均耗:0.07 = 总耗:198 读:0 写:0
