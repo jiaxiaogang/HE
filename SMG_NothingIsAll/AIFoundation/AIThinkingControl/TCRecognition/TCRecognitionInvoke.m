@@ -827,6 +827,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
     NSMutableArray *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
     if (old) return old;
+    CGRect targetGTRect = targetGT.rect;
     
     // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
     
@@ -837,13 +838,25 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
         AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
         CGRect itemST_GT = [targetGT rectByIndex:itemIndex];
+        CGRect itemSTRect = itemST.rect;
         
         for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
             AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
             AIGroupValueNode *itemGV = [SMGUtils searchNode:itemGV_p];
             CGRect itemGV_ST = [itemST rectByIndex:gvIndex];
-        
             
+            // ======== Step1: 先根据已收集，估算出，当前itemGV_Proto （参考36114）=========
+            
+            // 1. 根据已收集，估算整个targetGT_Proto。
+            CGRect targetGT_Proto = CGRectNull;
+            
+            // 2. 计算itemGV_TargetGT。
+            CGRect itemGV_TargetGT = [SMGUtils convertAAtCWithAAtB:itemGV_ST bAtC:itemST_GT protoBSize:itemSTRect.size];
+            
+            // 3. 算出itemGV_Proto。
+            CGRect itemGV_Proto = [SMGUtils convertAAtCWithAAtB:itemGV_TargetGT bAtC:targetGT_Proto protoBSize:targetGTRect.size];
+            
+            // ======== Step2: 在估算的附近多做尝试，尝试找出偏移最准（参考36114-TODO）=========
             
             
             // TODOTOMORROW20260324: 先写这里，有了hopeNewGV_Proto，就可以直接从ProtoImg切图。
