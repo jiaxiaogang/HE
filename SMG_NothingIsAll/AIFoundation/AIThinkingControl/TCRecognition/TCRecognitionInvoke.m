@@ -822,33 +822,35 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return result;
 }
 
-+(NSMutableArray*) gtZiJvV10_GT:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex stModels:(NSArray*)stModels {
++(GTZiJvModelV2*) gtZiJvV10_GT:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex stModels:(NSArray*)stModels {
     
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
-    NSMutableArray *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
+    GTZiJvModelV2 *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
     if (old) return old;
     CGRect targetGTRect = targetGT.rect;
     
     // ==================== step2. 根据当前assT目标，对微观一级allBests进行分组 ====================
     
     // 依次自举absGV
-    NSMutableArray *result = [NSMutableArray new];
+    GTZiJvModelV2 *gtResult = [GTZiJvModelV2 new];
     for (NSInteger stIndex = 0; stIndex < targetGT.count; stIndex++) {
         NSInteger itemIndex = (beginIndex + stIndex) % targetGT.count;
         AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
         AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
-        CGRect itemST_GT = [targetGT rectByIndex:itemIndex];
+        CGRect itemST_GT = [gtResult hopeProtoRectByIndex:itemIndex];
         CGRect itemSTRect = itemST.rect;
         
+        STZiJvModelV2 *stResult = [STZiJvModelV2 new];
         for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
             AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
             AIGroupValueNode *itemGV = [SMGUtils searchNode:itemGV_p];
-            CGRect itemGV_ST = [itemST rectByIndex:gvIndex];
+            CGRect itemGV_ST = [stResult hopeProtoRectByIndex:gvIndex];
             
             // ======== Step1: 先根据已收集，估算出，当前itemGV_Proto （参考36114）=========
             
             // 1. 根据已收集，估算整个targetGT_Proto。
             CGRect targetGT_Proto = CGRectNull;
+            // TODOTOMORROW20260328: 写gtResult和stResult取hopy的V2方法。
             
             // 2. 计算itemGV_TargetGT。
             CGRect itemGV_TargetGT = [SMGUtils convertAAtCWithAAtB:itemGV_ST bAtC:itemST_GT protoBSize:itemSTRect.size];
@@ -869,8 +871,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // 结果加入缓存池。
-    [gtZiJvGTPool setObject:result forKey:@(targetGT.pId)];
-    return result;
+    [gtZiJvGTPool setObject:gtResult forKey:@(targetGT.pId)];
+    return gtResult;
 }
 
 +(NSMutableArray*) gtZiJvV9_ST:(AIFeatureNode*)targetST stModels:(NSArray*)stModels {

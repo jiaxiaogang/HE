@@ -86,6 +86,8 @@
 		084542342EF315DE00568A0B /* DoubleObjMapModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 084542332EF315DE00568A0B /* DoubleObjMapModel.m */; };
 		08457E322E1DE77100E3C39A /* GroupDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 08457E312E1DE77100E3C39A /* GroupDebug.m */; };
 		0846125329AA20C400661CC7 /* AIFilter.m in Sources */ = {isa = PBXBuildFile; fileRef = 0846125229AA20C400661CC7 /* AIFilter.m */; };
+		084739D22F76E7210003B5D1 /* GTZiJvModelV2.m in Sources */ = {isa = PBXBuildFile; fileRef = 084739D12F76E7210003B5D1 /* GTZiJvModelV2.m */; };
+		084739D52F76E74B0003B5D1 /* STZiJvModelV2.m in Sources */ = {isa = PBXBuildFile; fileRef = 084739D42F76E74B0003B5D1 /* STZiJvModelV2.m */; };
 		08497A9921C32E17009E7D69 /* AIAlgNodeManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 08497A9821C32E17009E7D69 /* AIAlgNodeManager.m */; };
 		084B4B0824433AA900FB3670 /* ShortMatchManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 084B4B0724433AA900FB3670 /* ShortMatchManager.m */; };
 		084C3A6B21926D5700DAA08A /* BirdView.m in Sources */ = {isa = PBXBuildFile; fileRef = 084C3A6A21926D5700DAA08A /* BirdView.m */; };
@@ -414,6 +416,10 @@
 		08457E312E1DE77100E3C39A /* GroupDebug.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GroupDebug.m; sourceTree = "<group>"; };
 		0846125129AA20C400661CC7 /* AIFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIFilter.h; sourceTree = "<group>"; };
 		0846125229AA20C400661CC7 /* AIFilter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIFilter.m; sourceTree = "<group>"; };
+		084739D02F76E7210003B5D1 /* GTZiJvModelV2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvModelV2.h; sourceTree = "<group>"; };
+		084739D12F76E7210003B5D1 /* GTZiJvModelV2.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvModelV2.m; sourceTree = "<group>"; };
+		084739D32F76E74B0003B5D1 /* STZiJvModelV2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STZiJvModelV2.h; sourceTree = "<group>"; };
+		084739D42F76E74B0003B5D1 /* STZiJvModelV2.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = STZiJvModelV2.m; sourceTree = "<group>"; };
 		08497A9721C32E17009E7D69 /* AIAlgNodeManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIAlgNodeManager.h; sourceTree = "<group>"; };
 		08497A9821C32E17009E7D69 /* AIAlgNodeManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIAlgNodeManager.m; sourceTree = "<group>"; };
 		084B4B0624433AA900FB3670 /* ShortMatchManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShortMatchManager.h; sourceTree = "<group>"; };
@@ -1452,6 +1458,10 @@
 				082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */,
 				083880E02F659FE60061394E /* STZiJvGroup.h */,
 				083880E12F659FE60061394E /* STZiJvGroup.m */,
+				084739D02F76E7210003B5D1 /* GTZiJvModelV2.h */,
+				084739D12F76E7210003B5D1 /* GTZiJvModelV2.m */,
+				084739D32F76E74B0003B5D1 /* STZiJvModelV2.h */,
+				084739D42F76E74B0003B5D1 /* STZiJvModelV2.m */,
 			);
 			path = GTZiJvModel;
 			sourceTree = "<group>";
@@ -2316,6 +2326,7 @@
 				08F27D7629ED958B0063E71B /* TCCanset.m in Sources */,
 				0858C5AE2194F5DA00951BA5 /* CarView.m in Sources */,
 				086733922D850B920073DCD5 /* AIVisionAlgsModelV2.m in Sources */,
+				084739D52F76E74B0003B5D1 /* STZiJvModelV2.m in Sources */,
 				0858C5D02194F8B000951BA5 /* MASViewConstraint.m in Sources */,
 				087705C32753B9F400BA4EFB /* HDemandModel.m in Sources */,
 				88C20B8220C7696A0076BB52 /* AINetAbsFoUtils.m in Sources */,
@@ -2359,6 +2370,7 @@
 				089889A72F541C7D001B84BC /* DDicV2.m in Sources */,
 				08A7E06A24EE07C40042C7A9 /* AIShortMatchModel_Simple.m in Sources */,
 				08A1E57C2193BAFA0046C4AC /* UIView+Extension.m in Sources */,
+				084739D22F76E7210003B5D1 /* GTZiJvModelV2.m in Sources */,
 				087705B42753746800BA4EFB /* TCDemand.m in Sources */,
 				089E66B121B9F5D100ECA28A /* AIAbsAlgNode.m in Sources */,
 				082A905327F5E447003D15BE /* RTModel.m in Sources */,
