@@ -11,7 +11,7 @@
 @interface STZiJvModelV2 : NSObject
 
 @property (strong, nonatomic) AIFeatureNode *baseST;
-@property (strong, nonatomic) NSMutableDictionary *bestGVs; // Dic<gvIndex, GVZiJvModelV2>
+@property (strong, nonatomic) NSMutableDictionary *bestGVs; // Dic<gvIndex, AIFeatureJvBuItem>
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex;

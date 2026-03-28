@@ -64,8 +64,8 @@
 }
 
 -(CGRect) bestGVs_Proto {
-    return [SMGUtils convertArr2Rect:self.bestGVs.allValues itemRectBlock:^CGRect(GVZiJvModelV2 *item) {
-        return item.gv_Proto;
+    return [SMGUtils convertArr2Rect:self.bestGVs.allValues itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+        return item.bestGVAtProtoTRect;
     }];
 }
 
