@@ -56,7 +56,6 @@
 		082A904E27F5E04D003D15BE /* RLTrainer.m in Sources */ = {isa = PBXBuildFile; fileRef = 082A904D27F5E04D003D15BE /* RLTrainer.m */; };
 		082A905327F5E447003D15BE /* RTModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 082A905227F5E447003D15BE /* RTModel.m */; };
 		082B910A27E414FB00EE4DF2 /* TOMVisionAlgView.m in Sources */ = {isa = PBXBuildFile; fileRef = 082B910927E414FB00EE4DF2 /* TOMVisionAlgView.m */; };
-		082CA9EC2F61BE5600DF3991 /* GTZiJvGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */; };
 		082D03DF22D40AF000BB0B7A /* SMGUtils+General.m in Sources */ = {isa = PBXBuildFile; fileRef = 082D03DE22D40AF000BB0B7A /* SMGUtils+General.m */; };
 		082F9D561EB234750009F6A9 /* Output.m in Sources */ = {isa = PBXBuildFile; fileRef = 082F9D551EB234750009F6A9 /* Output.m */; };
 		0830DAB721D6E8AD003065CD /* NSString+Extension.m in Sources */ = {isa = PBXBuildFile; fileRef = 0830DAB621D6E8AD003065CD /* NSString+Extension.m */; };
@@ -70,7 +69,6 @@
 		08366B9027DFFCC3004EBBB9 /* TOMVisionItemModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08366B8F27DFFCC3004EBBB9 /* TOMVisionItemModel.m */; };
 		08366B9327E00232004EBBB9 /* TOMVisionFoView.m in Sources */ = {isa = PBXBuildFile; fileRef = 08366B9227E00232004EBBB9 /* TOMVisionFoView.m */; };
 		083680422853863E003F91FE /* AIAnalyst.m in Sources */ = {isa = PBXBuildFile; fileRef = 083680412853863E003F91FE /* AIAnalyst.m */; };
-		083880E22F659FE60061394E /* STZiJvGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 083880E12F659FE60061394E /* STZiJvGroup.m */; };
 		0839819F24DB7F8C00A020D2 /* HEView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0839819E24DB7F8C00A020D2 /* HEView.m */; };
 		083981F92A19E9D400F61263 /* MathUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 083981F82A19E9D400F61263 /* MathUtils.m */; };
 		083ADA722A67AB4F00319561 /* AsyncMutableDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 083ADA712A67AB4F00319561 /* AsyncMutableDictionary.m */; };
@@ -356,8 +354,6 @@
 		082A905227F5E447003D15BE /* RTModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RTModel.m; sourceTree = "<group>"; };
 		082B910827E414FB00EE4DF2 /* TOMVisionAlgView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TOMVisionAlgView.h; sourceTree = "<group>"; };
 		082B910927E414FB00EE4DF2 /* TOMVisionAlgView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOMVisionAlgView.m; sourceTree = "<group>"; };
-		082CA9EA2F61BE5600DF3991 /* GTZiJvGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvGroup.h; sourceTree = "<group>"; };
-		082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvGroup.m; sourceTree = "<group>"; };
 		082D03DD22D40AF000BB0B7A /* SMGUtils+General.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SMGUtils+General.h"; sourceTree = "<group>"; };
 		082D03DE22D40AF000BB0B7A /* SMGUtils+General.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "SMGUtils+General.m"; sourceTree = "<group>"; };
 		082F9D541EB234750009F6A9 /* Output.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Output.h; sourceTree = "<group>"; };
@@ -384,8 +380,6 @@
 		083680402853863E003F91FE /* AIAnalyst.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIAnalyst.h; sourceTree = "<group>"; };
 		083680412853863E003F91FE /* AIAnalyst.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIAnalyst.m; sourceTree = "<group>"; };
 		0837F72322A89A0D00836689 /* ReadMe.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ReadMe.md; sourceTree = "<group>"; };
-		083880E02F659FE60061394E /* STZiJvGroup.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = STZiJvGroup.h; sourceTree = "<group>"; };
-		083880E12F659FE60061394E /* STZiJvGroup.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = STZiJvGroup.m; sourceTree = "<group>"; };
 		0839819D24DB7F8C00A020D2 /* HEView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HEView.h; sourceTree = "<group>"; };
 		0839819E24DB7F8C00A020D2 /* HEView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HEView.m; sourceTree = "<group>"; };
 		083981F72A19E9D300F61263 /* MathUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MathUtils.h; sourceTree = "<group>"; };
@@ -1454,10 +1448,6 @@
 		088EA86B2F6069E700E0ED6F /* GTZiJvModel */ = {
 			isa = PBXGroup;
 			children = (
-				082CA9EA2F61BE5600DF3991 /* GTZiJvGroup.h */,
-				082CA9EB2F61BE5600DF3991 /* GTZiJvGroup.m */,
-				083880E02F659FE60061394E /* STZiJvGroup.h */,
-				083880E12F659FE60061394E /* STZiJvGroup.m */,
 				084739D02F76E7210003B5D1 /* GTZiJvModelV2.h */,
 				084739D12F76E7210003B5D1 /* GTZiJvModelV2.m */,
 				084739D32F76E74B0003B5D1 /* STZiJvModelV2.h */,
@@ -2254,7 +2244,6 @@
 				08C3978D2950A1A700C49EA7 /* AIRank.m in Sources */,
 				0858C5CF2194F8B000951BA5 /* MASViewAttribute.m in Sources */,
 				086BFF382BC043F600CB77B0 /* TVUtil_Short.m in Sources */,
-				083880E22F659FE60061394E /* STZiJvGroup.m in Sources */,
 				88BC09D720B4EB920006ABEF /* XGRedis.m in Sources */,
 				084219E11FD8CEFD009DA6BC /* AIReactorControl.m in Sources */,
 				0827DC0229BEA60E0070EB67 /* CortexAlgorithmsUtil.m in Sources */,
@@ -2262,7 +2251,6 @@
 				0843AAE5281436EF002B9AA9 /* XGLabCell.m in Sources */,
 				081321832D89A5A9005B9F4B /* AIGroupValueNode.m in Sources */,
 				08355577266C6A1000ECFC51 /* MemManager.m in Sources */,
-				082CA9EC2F61BE5600DF3991 /* GTZiJvGroup.m in Sources */,
 				087705BA2753747E00BA4EFB /* TCAction.m in Sources */,
 				0808D34022B6F73D00D383BA /* NVLineView.m in Sources */,
 				08C7539225A3EEB800BCF011 /* AIScore.m in Sources */,

@@ -80,8 +80,6 @@
 #import "GTModelV2.h"
 #import "GTItem.h"
 #import "GTItemV2.h"
-#import "GTZiJvGroup.h"
-#import "STZiJvGroup.h"
 #import "GTZiJvModelV2.h"
 #import "STZiJvModelV2.h"
 

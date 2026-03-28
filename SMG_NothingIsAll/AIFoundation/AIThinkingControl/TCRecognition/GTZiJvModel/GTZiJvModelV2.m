@@ -62,7 +62,7 @@
  */
 -(void) run4GTMatchValue {
     // 需此时self为单GTGroup
-    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvGroup *stGroup) {
+    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
         return stGroup.stMatchValue;
     }] / self.bestSTs.count;
 }
@@ -74,7 +74,7 @@
     // 需此时self为单GTGroup
     // 当前GTGroup的所有元素位置符合度的平均值。
     self.gtMatchDegree = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allKeys convertBlock:^double(NSNumber *key) {
-        STZiJvGroup *stGroup = [self.bestSTs objectForKey:key];
+        STZiJvModelV2 *stGroup = [self.bestSTs objectForKey:key];
         return [stGroup stMatchDegree:[self hopeProtoRectByIndex:key.integerValue]];
     }] / self.bestSTs.count;
 }
@@ -91,7 +91,7 @@
  */
 -(void) run4STMatchDegree {
     // 需此时self为单GTGroup
-    self.stMatchDegree = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvGroup *stGroup) {
+    self.stMatchDegree = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
         return stGroup.stMatchDegree;
     }] / self.bestSTs.count;
 }
@@ -100,7 +100,7 @@
  *  MARK:--------------------ST时的匹配率：作用于GT识别竞争因子--------------------
  */
 -(void) run4STMatchCountRatio {
-    self.stMatchCountRatio = [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^CGFloat(STZiJvGroup *stGroup) {
+    self.stMatchCountRatio = [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^CGFloat(STZiJvModelV2 *stGroup) {
         return stGroup.stMatchCountRatio;
     }] / self.bestSTs.count;
 }

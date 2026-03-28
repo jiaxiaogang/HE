@@ -378,7 +378,7 @@
     NSDictionary *sameItems = gtModel.bestSTs;
     
     // 关闭过滤（识别已竞争过，不必画蛇添足）。
-    //sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvGroup *stGroup) {
+    //sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvModelV2 *stGroup) {
     //    CGRect hopeItemST_Proto = [gtModel hopeProtoRectByIndex:key.integerValue];
     //    CGFloat stMatchDegree = [stGroup stMatchDegree:hopeItemST_Proto];
     //    return [TCLearningUtil noZeRenForPingJun:stGroup.stMatchValue * stMatchDegree * stGroup.stMatchCountRatio

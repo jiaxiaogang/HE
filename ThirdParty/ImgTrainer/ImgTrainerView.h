@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@class AIFeatureNode,AIFeatureJvBuModel,AIFeatureZenTiModel,GTModel,GTModelV2,GTZiJvGroup;
+@class AIFeatureNode,AIFeatureJvBuModel,AIFeatureZenTiModel,GTModel,GTModelV2,GTZiJvModelV2;
 @interface ImgTrainerView : UIView
 
 -(void) open;
@@ -32,7 +32,7 @@
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
 -(void) setDataForGTModel:(GTModel*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
 -(void) setDataForGTModelV2:(GTModelV2*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
--(void) setDataForGTModelV3:(GTZiJvGroup*)gtGroup lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
+-(void) setDataForGTModelV3:(GTZiJvModelV2*)gtGroup lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
 -(void) setDataForAlg:(AINodeBase*)algNode lab:(NSString*)lab tvId:(NSInteger)tvId;
 
 @end
