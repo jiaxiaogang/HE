@@ -334,7 +334,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
     
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV9:jvBuModel.stModels logDesc:logDesc protoGT:protoGT];
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV9:jvBuModel.stModels logDesc:logDesc protoGT:protoGT colorDic:colorDic ds:ds];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。
@@ -607,7 +607,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2026.01.29: v7-提升对撞率，识别通路调整：“assST -> absST -> broST -> assGT”（参考36011）。
  *      2026.03.13: v9-迭代为ZiJvGroup模型，减维至GV层来实现GT自举，从而解决ST错位的问题（参考36074-方案）。
  */
-+(NSArray*) recognitionGroupFeatureV9:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT {
++(NSArray*) recognitionGroupFeatureV9:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
     // 数据准备
     NSMutableArray *allGTGroups = [NSMutableArray new];
     
@@ -633,10 +633,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 // gt自举算法。
                 AddDebugCodeBlock_KeyV3();
-                NSMutableArray *ziJvGroups = [self gtZiJvV9_GT:assGT beginIndex:beginIndex stModels:stModels];
+                GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds];
                 
                 // 收集。
-                [allGTGroups addObjectsFromArray:ziJvGroups];
+                [allGTGroups addObject:gtZiJvModel];
                 AddDebugCodeBlock_KeyV3();
             }
         }
@@ -647,7 +647,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSInteger maxMatchCount = [SMGUtils filterBestScore:allGTGroups scoreBlock:^CGFloat(GTZiJvGroup *item) {
         return item.bestSTs.count;
     }];
-    for (GTZiJvGroup *gtGroup in allGTGroups) {
+    for (GTZiJvModelV2 *gtGroup in allGTGroups) {
         [gtGroup run4GTMatchValue];
         [gtGroup run4GTMatchDegree];
         [gtGroup run4GTMatchCountRatio];
@@ -659,13 +659,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AddDebugCodeBlock_KeyV3();
     
     // 最后进行综合竞争，把最符合的找出来。
-    NSArray *resultModels = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvGroup *obj) {
+    NSArray *resultModels = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvModelV2 *obj) {
         return obj.zonHeScore;
     }];
     AddDebugCodeBlock_KeyV3();
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
-    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvGroup *obj) {
+    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvModelV2 *obj) {
         return @(obj.baseGT.pId);
     }];
     AddDebugCodeBlock_KeyV3();
@@ -690,17 +690,17 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AddDebugCodeBlock_KeyV3();
     
     // debugLog
-    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvGroup *obj) {
+    [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvModelV2 *obj) {
         return [SMGUtils convertArr:obj.validAbs_ps convertBlock:^id(AIKVPointer *obj) {
             return [SMGUtils searchNode:obj];
         }];
-    } convertMatchBlock:^float(GTZiJvGroup *obj) {
+    } convertMatchBlock:^float(GTZiJvModelV2 *obj) {
         return obj.zonHeScore;
     }];
     AddDebugCodeBlock_KeyV3();
     
     // 更新logDesc到assT（参考36052）。
-    for (GTZiJvGroup *model in resultModels) {
+    for (GTZiJvModelV2 *model in resultModels) {
         for (AIKVPointer *validAbs_p in model.validAbs_ps) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
             [validAbs updateLogDescItem:logDesc];
