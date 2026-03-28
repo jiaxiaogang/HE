@@ -40,11 +40,6 @@
 
 // 根据已有bestGVs的线索，推算baseST中新的某部分范围，对应到Proto中的Rect。
 -(CGRect) hopeProtoRect:(CGRect)part_BaseST {
-    
-    // TODOTOMORROW20260328: 把beginST切入点也要加入其中
-    // 1. 一条没收集过的时候，就要以切入点为基准进行计算。
-    // 2. 即使收集过，只要切入点还没收集覆盖，也要算上切入点一份。
-    
     // bests在baseT中的Rect
     CGRect bests_BaseT = [SMGUtils convertArr2Rect:self.bestSTs.allKeys itemRectBlock:^CGRect(NSNumber *item) {
         return [self.baseGT rectByIndex:item.integerValue];
