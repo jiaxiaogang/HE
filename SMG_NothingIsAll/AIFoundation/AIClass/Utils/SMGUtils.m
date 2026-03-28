@@ -698,6 +698,7 @@
 }
 
 //C在A & C在B：已知c在A和B中的rect，以及bRect，求B在A中的rect（比如，求：单特征识别的AssT At Proto 的 rect）。
+// @status 废弃：与convertNewAAtCWithAAtB是一样的，优先用那个吧，那个把第三个参数B:描述的更清晰。
 +(CGRect) convertBAtAWithCAtA:(CGRect)cAtA cAtB:(CGRect)cAtB B:(CGRect)B {
     // 先把atB这边的rect全缩放成和在A那边一样的大小。
     CGFloat xScale = cAtA.size.width / cAtB.size.width;

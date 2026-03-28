@@ -837,19 +837,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSInteger itemIndex = (beginIndex + stIndex) % targetGT.count;
         AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
         AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
-        CGRect itemST_GT = [gtResult hopeProtoRectByIndex:itemIndex];
+        CGRect itemST_GT = [gtResult.baseGT rectByIndex:itemIndex];
         CGRect itemSTRect = itemST.rect;
+        
+        // TODO: itemST也要缩放平移找更准确（直接对itemST_Proto做就行，不过现在不做，等写完再做）。
         
         STZiJvModelV2 *stResult = [STZiJvModelV2 new];
         for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
             AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
             AIGroupValueNode *itemGV = [SMGUtils searchNode:itemGV_p];
-            CGRect itemGV_ST = [stResult hopeProtoRectByIndex:gvIndex];
+            
+            CGRect itemGV_ST = [stResult.baseST rectByIndex:gvIndex];
             
             // ======== Step1: 先根据已收集，估算出，当前itemGV_Proto （参考36114）=========
             
             // 1. 根据已收集，估算整个targetGT_Proto。
-            CGRect targetGT_Proto = CGRectNull;
+            CGRect targetGT_Proto = gtResult.hopeProtoRectByAll;
+            
             // TODOTOMORROW20260328: 写gtResult和stResult取hopy的V2方法。
             
             // 2. 计算itemGV_TargetGT。
@@ -861,12 +865,25 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // ======== Step2: 在估算的附近多做尝试，尝试找出偏移最准（参考36114-TODO）=========
             
             
+            // TODO: itemGV也要缩放平移找更准确（直接对itemGV_Proto做就行，不过现在不做，等写完不缩放不平移后再做）。
+            
+            
             // TODOTOMORROW20260324: 先写这里，有了hopeNewGV_Proto，就可以直接从ProtoImg切图。
             // 1. 切入targetIndex和切入protoRect应该都是有的，别的切图rect都根据这个来估算。
             
+            // TODO: 切图。。。
             
+            
+            // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
+            stResult.hopeProtoRectByAllCache = CGRectNull;
+        
+            
+            // 可考虑gt.hopeProtoRectByAllCache也清空，即每次gv更新时，gt也及时重算。
+            // gtResult.hopeProtoRectByAllCache = CGRectNull;
         }
         
+        // 每收集一条bestST，就把gtResult.hopeProtoRectByAllCache置为null，以及时更新。
+        gtResult.hopeProtoRectByAllCache = CGRectNull;
         
     }
     

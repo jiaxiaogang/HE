@@ -17,24 +17,47 @@
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex {
+    // index的GV在ST中的Rect
+    CGRect newBest_BaseT = [self.baseGT rectByIndex:newBestIndex];
+    
+    // 用newGV_ST、以及已知gvs_Proto、已知gvs_ST，预计出newGV_Proto。
+    CGRect newBest_Proto = [self hopeProtoRect:newBest_BaseT];
+    
+    // 即为：预计newGV的protoRect。
+    return newBest_Proto;
+}
+
+// 根据已有bestGVs，实时推算出当前baseST_Proto。
+-(CGRect) hopeProtoRectByAll {
+    if (CGRectIsNull(self.hopeProtoRectByAllCache)) {
+        // allBases在baseT中的Rect
+        CGRect baseT_BaseT = [self.baseGT rect];
+        CGRect baseT_Proto = [self hopeProtoRect:baseT_BaseT]; // 推算出allBases在Proto中的Rect。
+        self.hopeProtoRectByAllCache = baseT_Proto;
+    }
+    return self.self.hopeProtoRectByAllCache;
+}
+
+// 根据已有bestGVs的线索，推算baseST中新的某部分范围，对应到Proto中的Rect。
+-(CGRect) hopeProtoRect:(CGRect)part_BaseST {
+    
+    // TODO: 把beginST切入点也要加入其中，
+    
     // bests在baseT中的Rect
     CGRect bests_BaseT = [SMGUtils convertArr2Rect:self.bestSTs.allKeys itemRectBlock:^CGRect(NSNumber *item) {
         return [self.baseGT rectByIndex:item.integerValue];
     }];
     
     // bests在Proto中的Rect
-    CGRect bests_Proto = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvGroup *item) {
-        return item.baseST_Proto;
+    CGRect bests_Proto = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *item) {
+        return item.hopeProtoRectByAll;
     }];
     
-    // index的GV在ST中的Rect
-    CGRect newBest_BaseT = [self.baseGT rectByIndex:newBestIndex];
-    
     // 用newGV_ST、以及已知gvs_Proto、已知gvs_ST，预计出newGV_Proto。
-    CGRect newBest_Proto = [SMGUtils convertNewAAtCWithAAtB:bests_BaseT aAtC:bests_Proto newAAtB:newBest_BaseT];
+    CGRect part_Proto = [SMGUtils convertNewAAtCWithAAtB:bests_BaseT aAtC:bests_Proto newAAtB:part_BaseST];
     
     // 即为：预计newGV的protoRect。
-    return newBest_Proto;
+    return part_Proto;
 }
 
 /**

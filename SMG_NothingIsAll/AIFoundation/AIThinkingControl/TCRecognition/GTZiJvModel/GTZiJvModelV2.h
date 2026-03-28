@@ -3,10 +3,12 @@
 @interface GTZiJvModelV2 : NSObject
 
 @property (strong, nonatomic) AIFeatureNode *baseGT;
-@property (strong, nonatomic) NSMutableDictionary *bestSTs; // GT时为Dic<stIndex, STGroup>
+@property (strong, nonatomic) NSMutableDictionary *bestSTs; // GT时为Dic<stIndex, STZiJvModelV2>
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。
 -(CGRect) hopeProtoRectByIndex:(NSInteger)newBestIndex;
+-(CGRect) hopeProtoRectByAll;
+@property (assign, nonatomic) CGRect hopeProtoRectByAllCache; // 复用结果，但每次best有更新时，手动将此值清空，使之可以重算。
 
 /**
  *  MARK:--------------------主因子：匹配度--------------------

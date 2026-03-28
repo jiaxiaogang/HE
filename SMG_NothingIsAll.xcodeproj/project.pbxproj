@@ -79,6 +79,7 @@
 		084219ED1FD8CF81009DA6BC /* AIThinkingControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 084219EA1FD8CF81009DA6BC /* AIThinkingControl.m */; };
 		0842ADBD1FE207500048ADDC /* DemoHunger.m in Sources */ = {isa = PBXBuildFile; fileRef = 0842ADBC1FE207500048ADDC /* DemoHunger.m */; };
 		0842ADC01FE209700048ADDC /* DemoCharge.m in Sources */ = {isa = PBXBuildFile; fileRef = 0842ADBF1FE209700048ADDC /* DemoCharge.m */; };
+		08432A8F2F777FD3008074AA /* GVZiJvModelV2.m in Sources */ = {isa = PBXBuildFile; fileRef = 08432A8E2F777FD3008074AA /* GVZiJvModelV2.m */; };
 		0843AADC28141711002B9AA9 /* XGDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 0843AADB28141711002B9AA9 /* XGDebug.m */; };
 		0843AADF281419C2002B9AA9 /* XGDebugModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0843AADE281419C2002B9AA9 /* XGDebugModel.m */; };
 		0843AAE228142A49002B9AA9 /* XGDebugTV.m in Sources */ = {isa = PBXBuildFile; fileRef = 0843AAE128142A49002B9AA9 /* XGDebugTV.m */; };
@@ -402,6 +403,8 @@
 		0842ADBC1FE207500048ADDC /* DemoHunger.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DemoHunger.m; sourceTree = "<group>"; };
 		0842ADBE1FE209700048ADDC /* DemoCharge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DemoCharge.h; sourceTree = "<group>"; };
 		0842ADBF1FE209700048ADDC /* DemoCharge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DemoCharge.m; sourceTree = "<group>"; };
+		08432A8D2F777FD3008074AA /* GVZiJvModelV2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GVZiJvModelV2.h; sourceTree = "<group>"; };
+		08432A8E2F777FD3008074AA /* GVZiJvModelV2.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GVZiJvModelV2.m; sourceTree = "<group>"; };
 		0843AADA28141711002B9AA9 /* XGDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XGDebug.h; sourceTree = "<group>"; };
 		0843AADB28141711002B9AA9 /* XGDebug.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = XGDebug.m; sourceTree = "<group>"; };
 		0843AADD281419C2002B9AA9 /* XGDebugModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XGDebugModel.h; sourceTree = "<group>"; };
@@ -1462,6 +1465,8 @@
 				084739D12F76E7210003B5D1 /* GTZiJvModelV2.m */,
 				084739D32F76E74B0003B5D1 /* STZiJvModelV2.h */,
 				084739D42F76E74B0003B5D1 /* STZiJvModelV2.m */,
+				08432A8D2F777FD3008074AA /* GVZiJvModelV2.h */,
+				08432A8E2F777FD3008074AA /* GVZiJvModelV2.m */,
 			);
 			path = GTZiJvModel;
 			sourceTree = "<group>";
@@ -2277,6 +2282,7 @@
 				089041742D8AF2E100545CD7 /* AIMatchModel.m in Sources */,
 				08E44D372B3A58D1005456A1 /* MapModel.m in Sources */,
 				08E8F7B221798AEE004F51DE /* AIFoNodeBase.m in Sources */,
+				08432A8F2F777FD3008074AA /* GVZiJvModelV2.m in Sources */,
 				0842ADBD1FE207500048ADDC /* DemoHunger.m in Sources */,
 				0805EB3426C54A0D005F6341 /* LongTipWindow.m in Sources */,
 				082104122DBDAD8900FE0794 /* ImgTrainerPreview.m in Sources */,

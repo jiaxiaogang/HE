@@ -84,6 +84,7 @@
 #import "STZiJvGroup.h"
 #import "GTZiJvModelV2.h"
 #import "STZiJvModelV2.h"
+#import "GVZiJvModelV2.h"
 
 //短时记忆
 #import "TOAlgModel.h"
