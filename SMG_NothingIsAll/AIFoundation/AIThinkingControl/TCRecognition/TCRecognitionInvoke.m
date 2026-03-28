@@ -338,8 +338,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
     // 组特征类比V5：用子元素assSTs来类比。
-    for (GTZiJvGroup *assGT in assGTs) {
-        [AIAnalogy analogyGroupFeatureV8:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[assGTs indexOfObject:assGT] + 1];
+    for (GTZiJvModelV2 *assGT in assGTs) {
+        [AIAnalogy analogyGroupFeatureV10:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[assGTs indexOfObject:assGT] + 1];
     }
     NSLog(@"第5步、特征识别类比 finish ------------------------------------------------");
 }

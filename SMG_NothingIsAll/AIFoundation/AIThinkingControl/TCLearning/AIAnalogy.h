@@ -41,7 +41,7 @@
  *  MARK:--------------------特征类比--------------------
  */
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex;
-+(AIFeatureNode*) analogyGroupFeatureV8:(NSString*)ds at:(NSString*)at isOut:(BOOL)isOut logDesc:(NSString*)logDesc gtModel:(GTZiJvGroup*)gtModel prefixIndex:(NSInteger)prefixIndex;
++(AIFeatureNode*) analogyGroupFeatureV10:(NSString*)ds at:(NSString*)at isOut:(BOOL)isOut logDesc:(NSString*)logDesc gtModel:(GTZiJvModelV2*)gtModel prefixIndex:(NSInteger)prefixIndex;
 
 /**
  *  MARK:--------------------Canset类比 --------------------
