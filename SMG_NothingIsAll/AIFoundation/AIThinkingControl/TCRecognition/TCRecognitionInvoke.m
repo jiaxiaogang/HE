@@ -634,6 +634,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // gt自举算法。
                 AddDebugCodeBlock_KeyV3();
                 GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds];
+                if (gtZiJvModel.bestSTs.count == 0) continue;
                 
                 // 收集。
                 [allGTGroups addObject:gtZiJvModel];
@@ -741,11 +742,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 依次自举absGV
     GTZiJvModelV2 *gtResult = [GTZiJvModelV2 new];
     gtResult.baseGT = targetGT;
-    for (NSInteger stIndex = 0; stIndex < targetGT.count; stIndex++) {
-        NSInteger itemIndex = (beginIndex + stIndex) % targetGT.count;
-        AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, itemIndex);
+    for (NSInteger i = 0; i < targetGT.count; i++) {
+        NSInteger stIndex = (beginIndex + i) % targetGT.count;
+        AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, stIndex);
         AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
-        CGRect itemST_GT = [gtResult.baseGT rectByIndex:itemIndex];
+        CGRect itemST_GT = [gtResult.baseGT rectByIndex:stIndex];
         CGRect itemSTRect = itemST.rect;
         
         // TODO: itemST也要缩放平移找更准确（直接对itemST_Proto做就行，不过现在不做，等写完再做）。
@@ -756,7 +757,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         stResult.baseST = itemST;
         for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
             AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
-            AIGroupValueNode *itemGV = [SMGUtils searchNode:itemGV_p];
             
             CGRect itemGV_ST = [stResult.baseST rectByIndex:gvIndex];
             
@@ -786,6 +786,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
         
         // 每收集一条bestST，就把gtResult.hopeProtoRectByAllCache置为null，以及时更新。
+        if (stResult.bestGVs.count > 0) [gtResult.bestSTs setObject:stResult forKey:@(stIndex)];
         gtResult.hopeProtoRectByAllCache = CGRectNull;
         
     }

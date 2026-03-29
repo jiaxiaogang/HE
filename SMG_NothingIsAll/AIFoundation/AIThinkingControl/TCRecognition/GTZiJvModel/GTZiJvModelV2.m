@@ -100,7 +100,7 @@
  *  MARK:--------------------ST时的匹配率：作用于GT识别竞争因子--------------------
  */
 -(void) run4STMatchCountRatio {
-    self.stMatchCountRatio = [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^CGFloat(STZiJvModelV2 *stGroup) {
+    self.stMatchCountRatio = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^CGFloat(STZiJvModelV2 *stGroup) {
         return stGroup.stMatchCountRatio;
     }] / self.bestSTs.count;
 }
