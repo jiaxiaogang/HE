@@ -712,90 +712,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return resultModels;
 }
 
-/**
- *  MARK:--------------------GT自举算法--------------------
- *  @param targetGT 即assGT，会取它的itemST分别进行判断匹配，然后还会再马itemST展开成itemGV，进行判断匹配（参考36074-方案）。
- */
-+(GTZiJvModelV2*) gtZiJvV10:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex beginSTModel:(AIFeatureJvBuModel*)beginSTModel colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
-    
-    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
-    GTZiJvModelV2 *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
-    if (old) return old;
-    CGRect targetGTRect = targetGT.rect;
-    
-    // ==================== step0. 根据切入点，推算出targetGT默认在Proto中的Rect ====================
-    AIKVPointer *beginST_p = ARR_INDEX(targetGT.content_ps, beginIndex);
-    AIFeatureNode *beginST = [SMGUtils searchNode:beginST_p];
-    NSArray *conPorts = [AINetUtils conPorts_All:beginST];
-    AIPort *conPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginSTModel.assT.p]; }];
-    // 1. 根据assST_Proto 和 beginST_AssST = 求出beginST_Proto。
-    CGRect beginST_AssST = conPort.rect;
-    CGRect assST_Proto = beginSTModel.assST_ProtoRect;
-    CGRect beginST_Proto = [SMGUtils convertAAtCWithAAtB:beginST_AssST bAtC:assST_Proto protoBSize:beginSTModel.assT.rect.size];
-    
-    // 2. 根据beginST_Proto 和 beginST_TargetGT = 求出targetGT_Proto。
-    CGRect beginST_TargetGT = [targetGT rectByIndex:beginIndex];
-    CGRect defaultTargetGT_Proto = [SMGUtils convertNewAAtCWithAAtB:beginST_TargetGT aAtC:beginST_Proto newAAtB:targetGTRect];
-    
-    // ==================== step1. 根据当前assGT目标，对微观一级allST进行自举 ====================
-    
-    // 依次自举absGV
-    GTZiJvModelV2 *gtResult = [GTZiJvModelV2 new];
-    gtResult.baseGT = targetGT;
-    for (NSInteger i = 0; i < targetGT.count; i++) {
-        NSInteger stIndex = (beginIndex + i) % targetGT.count;
-        AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, stIndex);
-        AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
-        CGRect itemST_GT = [gtResult.baseGT rectByIndex:stIndex];
-        CGRect itemSTRect = itemST.rect;
-        
-        // TODO: itemST也要缩放平移找更准确（直接对itemST_Proto做就行，不过现在不做，等写完再做）。
-    
-        // ==================== step2. 根据当前itemST目标，对微观一级allGV进行自举 ====================
-        
-        STZiJvModelV2 *stResult = [STZiJvModelV2 new];
-        stResult.baseST = itemST;
-        for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
-            AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
-            
-            CGRect itemGV_ST = [stResult.baseST rectByIndex:gvIndex];
-            
-            // ==================== Step3: 先根据已收集，估算出，当前itemGV_Proto（参考36114）====================
-            
-            // 1. 根据已收集，估算整个targetGT_Proto。
-            CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? gtResult.hopeProtoRectByAll : defaultTargetGT_Proto;
-            
-            // 2. 计算itemGV_TargetGT。
-            CGRect itemGV_TargetGT = [SMGUtils convertAAtCWithAAtB:itemGV_ST bAtC:itemST_GT protoBSize:itemSTRect.size];
-            
-            // 3. 算出itemGV_Proto。
-            CGRect itemGV_Proto = [SMGUtils convertAAtCWithAAtB:itemGV_TargetGT bAtC:targetGT_Proto protoBSize:targetGTRect.size];
-            
-            // ==================== Step4: GV切图自举，计算itemGV与实际Proto的匹配度等（参考36112）====================
-            
-            // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
-            AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGV:itemGV_p olds_Proto:targetGT_Proto colorDic:colorDic ds:ds];
-            if (!gvResult || gvResult.matchValue < 0.1f) continue;
-            [stResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
-            
-            // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
-            stResult.hopeProtoRectByAllCache = CGRectNull;
-            
-            // 可考虑gt.hopeProtoRectByAllCache也清空，即每次gv更新时，gt也及时重算。
-            // gtResult.hopeProtoRectByAllCache = CGRectNull;
-        }
-        
-        // 每收集一条bestST，就把gtResult.hopeProtoRectByAllCache置为null，以及时更新。
-        if (stResult.bestGVs.count > 0) [gtResult.bestSTs setObject:stResult forKey:@(stIndex)];
-        gtResult.hopeProtoRectByAllCache = CGRectNull;
-        
-    }
-    
-    // 结果加入缓存池。
-    [gtZiJvGTPool setObject:gtResult forKey:@(targetGT.pId)];
-    return gtResult;
-}
-
 //MARK:===============================================================
 //MARK:                     < 概念识别 >
 //MARK:===============================================================
@@ -1629,6 +1545,90 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }]));
 }
 
+/**
+ *  MARK:--------------------GT自举算法--------------------
+ *  @param targetGT 即assGT，会取它的itemST分别进行判断匹配，然后还会再马itemST展开成itemGV，进行判断匹配（参考36074-方案）。
+ */
++(GTZiJvModelV2*) gtZiJvV10:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex beginSTModel:(AIFeatureJvBuModel*)beginSTModel colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
+    
+    // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
+    GTZiJvModelV2 *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
+    if (old) return old;
+    CGRect targetGTRect = targetGT.rect;
+    
+    // ==================== step0. 根据切入点，推算出targetGT默认在Proto中的Rect ====================
+    AIKVPointer *beginST_p = ARR_INDEX(targetGT.content_ps, beginIndex);
+    AIFeatureNode *beginST = [SMGUtils searchNode:beginST_p];
+    NSArray *conPorts = [AINetUtils conPorts_All:beginST];
+    AIPort *conPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginSTModel.assT.p]; }];
+    // 1. 根据assST_Proto 和 beginST_AssST = 求出beginST_Proto。
+    CGRect beginST_AssST = conPort.rect;
+    CGRect assST_Proto = beginSTModel.assST_ProtoRect;
+    CGRect beginST_Proto = [SMGUtils convertAAtCWithAAtB:beginST_AssST bAtC:assST_Proto protoBSize:beginSTModel.assT.rect.size];
+    
+    // 2. 根据beginST_Proto 和 beginST_TargetGT = 求出targetGT_Proto。
+    CGRect beginST_TargetGT = [targetGT rectByIndex:beginIndex];
+    CGRect defaultTargetGT_Proto = [SMGUtils convertNewAAtCWithAAtB:beginST_TargetGT aAtC:beginST_Proto newAAtB:targetGTRect];
+    
+    // ==================== step1. 根据当前assGT目标，对微观一级allST进行自举 ====================
+    
+    // 依次自举absGV
+    GTZiJvModelV2 *gtResult = [GTZiJvModelV2 new];
+    gtResult.baseGT = targetGT;
+    for (NSInteger i = 0; i < targetGT.count; i++) {
+        NSInteger stIndex = (beginIndex + i) % targetGT.count;
+        AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, stIndex);
+        AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
+        CGRect itemST_GT = [gtResult.baseGT rectByIndex:stIndex];
+        CGRect itemSTRect = itemST.rect;
+        
+        // TODO: itemST也要缩放平移找更准确（直接对itemST_Proto做就行，不过现在不做，等写完再做）。
+    
+        // ==================== step2. 根据当前itemST目标，对微观一级allGV进行自举 ====================
+        
+        STZiJvModelV2 *stResult = [STZiJvModelV2 new];
+        stResult.baseST = itemST;
+        for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
+            AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
+            
+            CGRect itemGV_ST = [stResult.baseST rectByIndex:gvIndex];
+            
+            // ==================== Step3: 先根据已收集，估算出，当前itemGV_Proto（参考36114）====================
+            
+            // 1. 根据已收集，估算整个targetGT_Proto。
+            CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? gtResult.hopeProtoRectByAll : defaultTargetGT_Proto;
+            
+            // 2. 计算itemGV_TargetGT。
+            CGRect itemGV_TargetGT = [SMGUtils convertAAtCWithAAtB:itemGV_ST bAtC:itemST_GT protoBSize:itemSTRect.size];
+            
+            // 3. 算出itemGV_Proto。
+            CGRect itemGV_Proto = [SMGUtils convertAAtCWithAAtB:itemGV_TargetGT bAtC:targetGT_Proto protoBSize:targetGTRect.size];
+            
+            // ==================== Step4: GV切图自举，计算itemGV与实际Proto的匹配度等（参考36112）====================
+            
+            // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
+            AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGV:itemGV_p olds_Proto:targetGT_Proto colorDic:colorDic ds:ds];
+            if (!gvResult || gvResult.matchValue < 0.1f) continue;
+            [stResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
+            
+            // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
+            stResult.hopeProtoRectByAllCache = CGRectNull;
+            
+            // 可考虑gt.hopeProtoRectByAllCache也清空，即每次gv更新时，gt也及时重算。
+            // gtResult.hopeProtoRectByAllCache = CGRectNull;
+        }
+        
+        // 每收集一条bestST，就把gtResult.hopeProtoRectByAllCache置为null，以及时更新。
+        if (stResult.bestGVs.count > 0) [gtResult.bestSTs setObject:stResult forKey:@(stIndex)];
+        gtResult.hopeProtoRectByAllCache = CGRectNull;
+        
+    }
+    
+    // 结果加入缓存池。
+    [gtZiJvGTPool setObject:gtResult forKey:@(targetGT.pId)];
+    return gtResult;
+}
+
 +(AIFeatureJvBuItem*) stZiJv:(NSInteger)curIndex assT:(AIFeatureNode*)assT lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
     // 数据准备
     AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
@@ -1732,7 +1732,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 记录diff匹配度。
                 if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
             }
-            CGFloat matchDegree = 1; // MIN(1, scale) / MAX(1, scale);
+            CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
             curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue baseGV_p:newGV];
             
             // 记录缓存池
