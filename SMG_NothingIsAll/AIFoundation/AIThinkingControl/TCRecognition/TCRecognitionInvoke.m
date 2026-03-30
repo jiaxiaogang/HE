@@ -571,7 +571,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%ld. 单特征识别结果:T%ld \t(%02ld/%02ld) \t匹配度:%.2f \t匹配率:%.2f \t抽象强度(%ld):%.2f = 总分:%.2f",
+        NSLog(@"%02ld. 单特征识别结果:T%ld \t(%02ld/%02ld) \t匹配度:%.2f \t匹配率:%.2f \t抽象强度(%ld):%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
               model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,model.stScore);
         [SMGUtils runByMainQueue:^{
@@ -627,6 +627,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if ([refPort.target_p isEqual:protoGT.p]) continue;
                 AddDebugCodeBlock_KeyV3();
                 
+                if (refPort.target_p.isJiao) continue;
+                
                 // assGT。
                 AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
                 NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
@@ -680,7 +682,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%ld \t%@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc);
+        NSLog(@"%ld. 组特征识别结果:T%03ld \t%@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc);
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 组特征识别结果可视化（参考34176）。
@@ -692,21 +694,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // debugLog
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvModelV2 *obj) {
-        return [SMGUtils convertArr:obj.validAbs_ps convertBlock:^id(AIKVPointer *obj) {
-            return [SMGUtils searchNode:obj];
-        }];
+        //return [SMGUtils convertArr:obj.validAbs_ps convertBlock:^id(AIKVPointer *obj) {
+        //    return [SMGUtils searchNode:obj];
+        //}];
+        return @[obj.baseGT];
     } convertMatchBlock:^float(GTZiJvModelV2 *obj) {
         return obj.zonHeScore;
     }];
     AddDebugCodeBlock_KeyV3();
     
     // 更新logDesc到assT（参考36052）。
-    for (GTZiJvModelV2 *model in resultModels) {
-        for (AIKVPointer *validAbs_p in model.validAbs_ps) {
-            AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
-            [validAbs updateLogDescItem:logDesc];
-        }
-    }
+    //for (GTZiJvModelV2 *model in resultModels) {
+    //    //[model.baseGT updateLogDescItem:logDesc rate:model.zonHeScore];
+    //    for (AIKVPointer *validAbs_p in model.validAbs_ps) {
+    //        AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
+    //        [validAbs updateLogDescItem:logDesc];
+    //    }
+    //}
     AddDebugCodeBlock_KeyV3();
     PrintDebugCodeBlock_KeyV3();
     return resultModels;
