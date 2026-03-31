@@ -386,28 +386,29 @@
     //}];
     
     // STEP1 ===== 先抽象其stGroup：把每个bestSTs里的stGroup.bestGVs先抽象出来（这样才更准确，不然明明bestST中只有一部分bestGVs到了，却要全抽象到absGT中？）。
-    for (STZiJvModelV2 *stGroup in gtModel.bestSTs.allValues) {
+    for (NSNumber *key in gtModel.bestSTs.allKeys) {
+        STZiJvModelV2 *stGroup = [gtModel.bestSTs objectForKey:key];
+        CGRect baseST_BaseGT = [gtModel.baseGT rectByIndex:key.integerValue];
+        
         stGroup.absST = [AIAnalogy analogyFeatureV3:stGroup.bestGVs baseST:stGroup.baseST stMatchValue:stGroup.stMatchValue protoTLogDesc:logDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
             stGroup.absST_BaseST = bestGVs_AssT.CGRectValue;
+            
+            // 再根据absST_BaseST + baseST_BaseGT = 得出absST_BaseGT。
+            stGroup.absST_BaseGT = [SMGUtils convertAAtCWithAAtB:stGroup.absST_BaseST bAtC:baseST_BaseGT protoBSize:stGroup.baseST.rect.size];
         }];
     }
     
     // STEP2 ===== 再抽象GT。
     //11. 将每个absT指向具象组特征的rect求并集，得出加一块儿的绝对rect范围（参考3413a-示图2）。
-    CGRect absSTs_AssGT = [SMGUtils convertArr2Rect:sameItems.allKeys itemRectBlock:^CGRect(NSNumber *key) {
-        //  根据absST在stGroup 和 stGroup在assGT 二者得出absST_assGT。
-        STZiJvModelV2 *stGroup = [sameItems objectForKey:key];
-        CGRect absST_BaseST = stGroup.absST_BaseST;
-        CGRect baseST_BaseGT = [gtModel.baseGT rectByIndex:key.integerValue];
-        CGRect absST_BaseGT = [SMGUtils convertAAtCWithAAtB:absST_BaseST bAtC:baseST_BaseGT protoBSize:stGroup.baseST.rect.size];
-        return absST_BaseGT;
+    CGRect absSTs_AssGT = [SMGUtils convertArr2Rect:gtModel.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *stGroup) {
+        return stGroup.absST_BaseGT;
     }];
     
     // STEP3 ===== 转成orders
     NSArray *orders = [SMGUtils convertDic:sameItems kvBlock:^NSArray *(NSNumber *protoK, STZiJvModelV2 *protoV) {
         // 再根据整个absSTs_AssGT，减掉xy偏移值，计算出最终absST_AbsGT。
         // 计算itemST在absGT中的位置，其实就是ST在assGT中的位置，减掉margin左上角的留白（参考上面的方案2-TODO2）。
-        CGRect absST_AbsGT = protoV.absST_BaseST;
+        CGRect absST_AbsGT = protoV.absST_BaseGT;
         absST_AbsGT.origin.x -= absSTs_AssGT.origin.x;//- marginLeft
         absST_AbsGT.origin.y -= absSTs_AssGT.origin.y;//- marginTop
         InputGroupFeatureModel *result = [InputGroupFeatureModel new:protoV.absST.p rect:absST_AbsGT];
