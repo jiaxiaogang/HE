@@ -375,10 +375,8 @@
 +(AIFeatureNode*) analogyGroupFeatureV10:(NSString*)ds at:(NSString*)at isOut:(BOOL)isOut logDesc:(NSString*)logDesc gtModel:(GTZiJvModelV2*)gtModel prefixIndex:(NSInteger)prefixIndex {
     
     //1. 借助每个absT来实现整体T的类比：类比orders的规律: 类比rectItems，把责任超过50%的去掉，别的保留（参考34139）。
-    NSDictionary *sameItems = gtModel.bestSTs;
-    
-    // 关闭过滤（识别已竞争过，不必画蛇添足）。
-    //sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvModelV2 *stGroup) {
+    // 2026.03.xx: 关闭过滤（识别已竞争过，不必画蛇添足）。
+    // NSDictionary *sameItems = [SMGUtils filterDic:gtModel.bestSTs checkValid:^BOOL(NSNumber *key, STZiJvModelV2 *stGroup) {
     //    CGRect hopeItemST_Proto = [gtModel hopeProtoRectByIndex:key.integerValue];
     //    CGFloat stMatchDegree = [stGroup stMatchDegree:hopeItemST_Proto];
     //    return [TCLearningUtil noZeRenForPingJun:stGroup.stMatchValue * stMatchDegree * stGroup.stMatchCountRatio
@@ -405,7 +403,7 @@
     }];
     
     // STEP3 ===== 转成orders
-    NSArray *orders = [SMGUtils convertDic:sameItems kvBlock:^NSArray *(NSNumber *protoK, STZiJvModelV2 *protoV) {
+    NSArray *orders = [SMGUtils convertDic:gtModel.bestSTs kvBlock:^NSArray *(NSNumber *protoK, STZiJvModelV2 *protoV) {
         // 再根据整个absSTs_AssGT，减掉xy偏移值，计算出最终absST_AbsGT。
         // 计算itemST在absGT中的位置，其实就是ST在assGT中的位置，减掉margin左上角的留白（参考上面的方案2-TODO2）。
         CGRect absST_AbsGT = protoV.absST_BaseGT;
