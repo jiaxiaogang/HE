@@ -274,10 +274,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:allRefPorts];
     [jvBuModel.stModels addObjectsFromArray:itemSTModels];
     
-    // debug
-    NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
-    NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
-    
     //31. 单特征识别无结果则跳过。
     if (!ARRISOK(jvBuModel.stModels)) {
         NSLog(@"第1步、所有粒度层ST识别结果0条 finish ------------------------------------------------");
@@ -342,6 +338,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AIAnalogy analogyGroupFeatureV10:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[assGTs indexOfObject:assGT] + 1];
     }
     NSLog(@"第5步、特征识别类比 finish ------------------------------------------------");
+    
+    // debug
+    NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
+    NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
 }
 
 +(NSArray*) recognitionFeatureV2_Step0:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
@@ -571,7 +571,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%ld \t(%02ld/%02ld) \t匹配度:%.2f \t匹配率:%.2f \t抽象强度(%ld):%.2f = 总分:%.2f",
+        NSLog(@"%02ld. 单特征识别结果:T%ld (%02ld/%02ld) 匹配度:%.2f 匹配率:%.2f 抽象强度(%ld):%.2f = 总分:%.2f",
               [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
               model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,model.stScore);
         [SMGUtils runByMainQueue:^{
@@ -682,7 +682,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%ld. 组特征识别结果:T%03ld \t%@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc);
+        NSLog(@"%02ld. 组特征识别结果:T%03ld \t%@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc);
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 组特征识别结果可视化（参考34176）。
@@ -1612,7 +1612,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
             AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGV:itemGV_p olds_Proto:targetGT_Proto colorDic:colorDic ds:ds];
-            if (!gvResult || gvResult.matchValue < 0.1f) continue;
+            if (!gvResult || gvResult.matchValue < 0.6f) continue;
             [stResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
             
             // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。

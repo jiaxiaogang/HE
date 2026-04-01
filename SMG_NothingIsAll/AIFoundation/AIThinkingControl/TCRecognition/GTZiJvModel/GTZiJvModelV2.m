@@ -123,7 +123,7 @@
 -(NSString*) zonHeDesc {
     //return STRFORMAT(@"匹配度:%.2f 符合度:%.2f 匹配数(防过抽):%.2f (%02ld/%02ld) 匹配率(防过具):%.2f = 综合得分:%.3f",
     //                 self.gtMatchValue,self.gtMatchDegree,self.countRatio,self.bestSTs.count,self.baseGT.count,self.gtMatchCountRatio * self.stMatchCountRatio,self.zonHeScore);
-    return STRFORMAT(@"匹配度:%.2f 匹配率(防过具):%.2f = 综合得分:%.3f",
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f = 综合得分:%.3f",
                      self.gtMatchValue,self.gtMatchCountRatio * self.stMatchCountRatio,self.zonHeScore);
 }
 
