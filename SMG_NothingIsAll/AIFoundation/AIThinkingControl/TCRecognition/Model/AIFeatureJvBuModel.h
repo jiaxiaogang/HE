@@ -101,7 +101,11 @@
 // assST的抽象强度归一化。
 @property (assign, nonatomic) CGFloat absPortStrongScore;
 
+// 匹配率
+-(CGFloat)modelMatchRatio;
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
+-(NSString*) stScoreDesc;
 
 @end

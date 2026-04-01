@@ -263,9 +263,29 @@
     self.centerScore = maxDeviation > 0 ? 1.0 - (deviation / maxDeviation) : 1.0;
 }
 
+// 匹配率
+-(CGFloat)modelMatchRatio {
+    return (float)self.bestGVs.count / self.assT.count;
+}
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore {
+    // v1
+    // return obj.areaRankRatio * obj.adjacentScore * obj.centerScore;
+    
+    // v2：20260401前挺准确的，不过想再优化成v3（参考36131）。
     return self.matchValue * self.modelMatchCountScore * self.absPortStrongScore;
+    
+    // v3：GT识别仅识别具层，只保留匹配度匹配率（参考36131）。
+    // return self.matchValue * self.modelMatchRatio;
+}
+
+-(NSString*) stScoreDesc {
+    // v2：20260401前挺准确的，不过想再优化成v3（参考36131）。
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 抽象强度(%02ld):%.2f = 总分:%.2f",self.matchValue,self.modelMatchCountScore,self.validAbsSTPorts.count,self.absPortStrongScore,self.stScore);
+    
+    // v3：GT识别仅识别具层，只保留匹配度匹配率（参考36131）。
+    // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f = 总分:%.2f",self.matchValue,self.modelMatchRatio,self.stScore);
 }
 
 @end

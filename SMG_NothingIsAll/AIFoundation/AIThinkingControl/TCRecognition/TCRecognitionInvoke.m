@@ -420,10 +420,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
     for (MapModel *valid in sorts) {
+        
         // 同一个assST只有10次准入机会（参考36037-TODO1）。
         AIPort *refPort = valid.v2;
         NSInteger oldCount = NUMTOOK([assSTCounted objectForKey:@(refPort.target_p.pointerId)]).integerValue;
         if (oldCount > 9) continue;
+        
+        // ST识别也改成：只识别具层（参考36131）。
+        // if (refPort.target_p.isJiao) continue;
         
         // 数据准备
         AIMatchModel *gModel = valid.v1;
@@ -544,7 +548,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        // return obj.areaRankRatio * obj.adjacentScore * obj.centerScore;
         return obj.stScore;
     }];
     
@@ -571,9 +574,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%ld (%02ld/%02ld) 匹配度:%.2f 匹配率:%.2f 抽象强度(%ld):%.2f = 总分:%.2f",
-              [decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,
-              model.matchValue,model.modelMatchCountScore,model.validAbsSTPorts.count,model.absPortStrongScore,model.stScore);
+        NSLog(@"%02ld. 单特征识别结果:T%ld (%02ld/%02ld) %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.stScoreDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -1661,7 +1662,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //1. 即输入和谁都不完全相似时
     //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
     //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
-    if (!best || best.matchValue < 0.1f) return nil;
+    if (!best || best.matchValue < 0.6f) return nil;
     
     //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
     //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。

@@ -260,7 +260,7 @@
     AIFeatureNode *absST = [self analogyFeatureV3:jvBuModel.bestGVs baseST:jvBuModel.assT stMatchValue:jvBuModel.matchValue protoTLogDesc:protoTLogDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
         // 1. 把后面会用到的一些数据存下来。
         jvBuModel.bestGVs4NoZeRen = [SMGUtils convertArr:validBestGVs convertBlock:^id(MapModel *obj) { return obj.v2; }];
-    }];
+    } debug:true];
     
     // 2. 完成后数据处理。
     if (![absST.p isEqual:jvBuModel.assT.p]) {
@@ -272,7 +272,7 @@
     return absST;
 }
 
-+(AIFeatureNode*) analogyFeatureV3:(NSDictionary*)bestGVs baseST:(AIFeatureNode*)baseST stMatchValue:(CGFloat)stMatchValue protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex finishBlock:(void(^)(NSArray *validBestGVs, NSValue *bestGVs_AssT))finishBlock {
++(AIFeatureNode*) analogyFeatureV3:(NSDictionary*)bestGVs baseST:(AIFeatureNode*)baseST stMatchValue:(CGFloat)stMatchValue protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex finishBlock:(void(^)(NSArray *validBestGVs, NSValue *bestGVs_AssT))finishBlock debug:(BOOL)debug {
     
     //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
     // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
@@ -360,9 +360,11 @@
     [AINetUtils updateContentStrongByIndexes:assContentIndexes toNode:baseST];
     
     //41. debugLog
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld-T%ld->抽%ld(%ld)",prefixIndex,baseST.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:2];
-    }];
+    if (debug) {
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld-T%ld->抽%ld(%ld)",prefixIndex,baseST.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:2];
+        }];
+    }
     
     // NSLog(@"单特征识别类比结果absT长度：%ld 匹配度:%.2f 符合度:%.2f",absT.count,jvBuModel.matchValue,jvBuModel.matchDegree);
     if (Log4Ana) NSLog(@"\n单特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",baseST.ds,
@@ -393,7 +395,7 @@
             
             // 再根据absST_BaseST + baseST_BaseGT = 得出absST_BaseGT。
             stGroup.absST_BaseGT = [SMGUtils convertAAtCWithAAtB:stGroup.absST_BaseST bAtC:baseST_BaseGT protoBSize:stGroup.baseST.rect.size];
-        }];
+        } debug:false];
     }
     
     // STEP2 ===== 再抽象GT。
