@@ -281,7 +281,7 @@
 //    refsB_p = ARRTOOK(refsB_p);
 //    NSInteger aLength = refsA_p.count;
 //    NSInteger bLength = refsB_p.count;
-//    
+//
 //    //2. 比较大小
 //    for (NSInteger i = 0; i < MIN(aLength, bLength); i++) {
 //        AIKVPointer *itemA = ARR_INDEX(refsA_p, i);
@@ -293,7 +293,7 @@
 //            return result;
 //        }
 //    }
-//    
+//
 //    //3. 前面都一样
 //    return aLength > bLength ? NSOrderedAscending : aLength < bLength ? NSOrderedDescending : NSOrderedSame;
 //}
@@ -763,6 +763,29 @@
     // 统一放到C坐标系之：将放到C后的A At B的xy坐标求出来。
     CGPoint resultAAtBPoint = CGPointMake(protoAAtBPoint.x * cbWRate, protoAAtBPoint.y * cbHRate);
     return resultAAtBPoint;
+}
+
+// 根据新旧rect，求出锚点（锚点在新旧rect的中心点之间）。这个锚点可以理解为一个不变的参考点，缩放时以它为中心进行缩放。
++(CGPoint) convertAnchorByOldRect:(CGRect)oldRect newRect:(CGRect)newRect {
+    // 1. 找出锚点。
+    CGFloat anchorX = (CGRectGetMidX(oldRect) + CGRectGetMidX(newRect)) / 2;
+    CGFloat anchorY = (CGRectGetMidY(oldRect) + CGRectGetMidY(newRect)) / 2;
+    return CGPointMake(anchorX, anchorY);
+}
+
+// 根据锚点和缩放比例，求出新的rect（锚点不变，求出各比例下的protoRect）。
++(CGRect) convertRectByAnchor:(CGPoint)anchor scale:(CGFloat)scale protoRect:(CGRect)protoRect {
+    // 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
+    CGRect resultRect = CGRectMake((1 - scale) * anchor.x + protoRect.origin.x * scale,
+                                   (1 - scale) * anchor.y + protoRect.origin.y * scale,
+                                   protoRect.size.width * scale,
+                                   protoRect.size.height * scale);
+    return resultRect;
+}
+
+// 将rect的origin和size的x/y都取整（四舍五入），以去掉小数点（因为在某些场景下，rect的小数部分会导致一些问题，比如无法正确匹配等）。
++(CGRect) rectNoDot:(CGRect)protoRect {
+    return CGRectMake((int)(protoRect.origin.x+0.5f), (int)(protoRect.origin.y+0.5f), (int)(protoRect.size.width+0.5f), (int)(protoRect.size.height+0.5f));
 }
 
 /**

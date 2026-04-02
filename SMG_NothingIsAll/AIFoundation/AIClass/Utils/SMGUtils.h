@@ -197,6 +197,15 @@
 // 根据A在B的尺寸，以及A在C的尺寸，求出A在B的坐标。
 +(CGPoint) convertBAtCPointFrom:(CGSize)aAtB aAtC:(CGSize)aAtC protoAAtBPoint:(CGPoint)protoAAtBPoint;
 
+// 根据新旧rect，求出锚点（锚点在新旧rect的中心点之间）。这个锚点可以理解为一个不变的参考点，缩放时以它为中心进行缩放。
++(CGPoint) convertAnchorByOldRect:(CGRect)oldRect newRect:(CGRect)newRect;
+
+// 根据锚点和缩放比例，求出新的rect（锚点不变，求出各比例下的protoRect）。
++(CGRect) convertRectByAnchor:(CGPoint)anchor scale:(CGFloat)scale protoRect:(CGRect)protoRect;
+
+// 将rect的origin和size的x/y都取整（四舍五入），以去掉小数点（因为在某些场景下，rect的小数部分会导致一些问题，比如无法正确匹配等）。
++(CGRect) rectNoDot:(CGRect)protoRect;
+
 //将arr转成dic
 +(NSDictionary*) convertArr2Dic:(NSArray*)objs kvBlock:(NSArray*(^)(id obj))kvBlock;
 //将dic转成dic

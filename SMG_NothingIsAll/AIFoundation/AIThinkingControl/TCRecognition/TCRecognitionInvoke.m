@@ -1587,46 +1587,59 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         CGRect itemST_GT = [gtResult.baseGT rectByIndex:stIndex];
         CGRect itemSTRect = itemST.rect;
         
-        // TODO: itemST也要缩放平移找更准确（直接对itemST_Proto做就行，不过现在不做，等写完再做）。
-    
         // ==================== step2. 根据当前itemST目标，对微观一级allGV进行自举 ====================
         
-        STZiJvModelV2 *stResult = [STZiJvModelV2 new];
-        stResult.baseST = itemST;
-        for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
-            AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
+        // 找出最好的stResult结果。
+        STZiJvModelV2 *bestSTResult = nil;
+        CGPoint anchor = [SMGUtils convertAnchorByOldRect:itemSTRect newRect:itemST_GT];
+        NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)]; // @[@(1)]
+        for (NSNumber *scale in scales) {
             
-            CGRect itemGV_ST = [stResult.baseST rectByIndex:gvIndex];
+            // 根据锚点，求出新st的rect。
+            CGRect itemST_GT_Scaled = [SMGUtils convertRectByAnchor:anchor scale:scale.floatValue protoRect:itemST_GT];
+            itemST_GT_Scaled = [SMGUtils rectNoDot:itemST_GT_Scaled];
             
-            // ==================== Step3: 先根据已收集，估算出，当前itemGV_Proto（参考36114）====================
+            STZiJvModelV2 *curSTResult = [STZiJvModelV2 new];
+            curSTResult.baseST = itemST;
+            for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
+                AIKVPointer *itemGV_p = ARR_INDEX(itemST.content_ps, gvIndex);
+                
+                CGRect itemGV_ST = [curSTResult.baseST rectByIndex:gvIndex];
+                
+                // ==================== Step3: 先根据已收集，估算出，当前itemGV_Proto（参考36114）====================
+                
+                // 1. 根据已收集，估算整个targetGT_Proto。
+                CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? gtResult.hopeProtoRectByAll : defaultTargetGT_Proto;
+                
+                // 2. 计算itemGV_TargetGT。
+                CGRect itemGV_TargetGT = [SMGUtils convertAAtCWithAAtB:itemGV_ST bAtC:itemST_GT protoBSize:itemSTRect.size];
+                
+                // 3. 算出itemGV_Proto。
+                CGRect itemGV_Proto = [SMGUtils convertAAtCWithAAtB:itemGV_TargetGT bAtC:targetGT_Proto protoBSize:targetGTRect.size];
+                
+                // ==================== Step4: GV切图自举，计算itemGV与实际Proto的匹配度等（参考36112）====================
+                
+                // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
+                AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGV:itemGV_p olds_Proto:targetGT_Proto colorDic:colorDic ds:ds];
+                if (!gvResult || gvResult.matchValue < 0.6f) continue;
+                [curSTResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
+                
+                // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
+                curSTResult.hopeProtoRectByAllCache = CGRectNull;
+                
+                // 可考虑gt.hopeProtoRectByAllCache也清空，即每次gv更新时，gt也及时重算。
+                // gtResult.hopeProtoRectByAllCache = CGRectNull;
+            }
             
-            // 1. 根据已收集，估算整个targetGT_Proto。
-            CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? gtResult.hopeProtoRectByAll : defaultTargetGT_Proto;
-            
-            // 2. 计算itemGV_TargetGT。
-            CGRect itemGV_TargetGT = [SMGUtils convertAAtCWithAAtB:itemGV_ST bAtC:itemST_GT protoBSize:itemSTRect.size];
-            
-            // 3. 算出itemGV_Proto。
-            CGRect itemGV_Proto = [SMGUtils convertAAtCWithAAtB:itemGV_TargetGT bAtC:targetGT_Proto protoBSize:targetGTRect.size];
-            
-            // ==================== Step4: GV切图自举，计算itemGV与实际Proto的匹配度等（参考36112）====================
-            
-            // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
-            AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGV:itemGV_p olds_Proto:targetGT_Proto colorDic:colorDic ds:ds];
-            if (!gvResult || gvResult.matchValue < 0.6f) continue;
-            [stResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
-            
-            // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
-            stResult.hopeProtoRectByAllCache = CGRectNull;
-            
-            // 可考虑gt.hopeProtoRectByAllCache也清空，即每次gv更新时，gt也及时重算。
-            // gtResult.hopeProtoRectByAllCache = CGRectNull;
+            // 保留更好的stResult。
+            if (bestSTResult == nil || curSTResult.bestGVs.count > bestSTResult.bestGVs.count) {
+                bestSTResult = curSTResult;
+            }
         }
-        
+    
         // 每收集一条bestST，就把gtResult.hopeProtoRectByAllCache置为null，以及时更新。
-        if (stResult.bestGVs.count > 0) [gtResult.bestSTs setObject:stResult forKey:@(stIndex)];
+        if (bestSTResult.bestGVs.count > 0) [gtResult.bestSTs setObject:bestSTResult forKey:@(stIndex)];
         gtResult.hopeProtoRectByAllCache = CGRectNull;
-        
     }
     
     // 结果加入缓存池。
@@ -1677,29 +1690,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  */
 +(AIFeatureJvBuItem*) gvZiJv:(CGRect)new_Proto newGV:(AIKVPointer*)newGV olds_Proto:(CGRect)olds_Proto colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
     //23. 找出锚点。
-    CGFloat anchorX = (CGRectGetMidX(olds_Proto) + CGRectGetMidX(new_Proto)) / 2;
-    CGFloat anchorY = (CGRectGetMidY(olds_Proto) + CGRectGetMidY(new_Proto)) / 2;
+    CGPoint anchor = [SMGUtils convertAnchorByOldRect:olds_Proto newRect:new_Proto];
     
     //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
     //2025.06.12：调整成只有1测试先，现在废弃组特征后，刚开始测bug应该还比较多，单纯1都测不过来，加更多更难测修bug了。
     //2026.03.28：在估算的附近多做尝试，尝试找出偏移最准（现在有锚点，所以先只缩放不平移）（参考36114-TODO）。
-    //NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)];
-    NSArray *scales = @[@(1)];
+    NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)]; // @[@(1)]
     AIFeatureJvBuItem *best = nil;
     for (NSNumber *item in scales) {
         CGFloat scale = item.floatValue;
-        //[decoratorJvBuModel.debug updateLogDic:105 assPId:100];
         //32. 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
         //x = anchorX + (CGRectGetMidX(curProtoRect) - anchorX) * scale - curProtoRect.size.width * scale * 0.5;
-        CGRect checkCurProtoRect = CGRectMake((1 - scale) * anchorX + new_Proto.origin.x * scale,
-                                              (1 - scale) * anchorY + new_Proto.origin.y * scale,
-                                              new_Proto.size.width * scale,
-                                              new_Proto.size.height * scale);
-        
+        CGRect checkCurProtoRect = [SMGUtils convertRectByAnchor:anchor scale:scale protoRect:new_Proto];
         
         // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
         // 2025.06.20：更提前转成int，因为在getSubDots的时候，就需要是正确的int值了。
-        checkCurProtoRect = CGRectMake((int)(checkCurProtoRect.origin.x+0.5f), (int)(checkCurProtoRect.origin.y+0.5f), (int)(checkCurProtoRect.size.width+0.5f), (int)(checkCurProtoRect.size.height+0.5f));
+        checkCurProtoRect = [SMGUtils rectNoDot:checkCurProtoRect];
         
         // 2025.06.20：如果到proto切范围为空，则直接跳过，判定为该itemGV未匹配到。
         if (checkCurProtoRect.size.width < 1 || checkCurProtoRect.size.height < 1) return nil;
