@@ -427,7 +427,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (oldCount > 9) continue;
         
         // ST识别也改成：只识别具层（参考36131）。
-        // if (refPort.target_p.isJiao) continue;
+        if (refPort.target_p.isJiao) continue;
         
         // 数据准备
         AIMatchModel *gModel = valid.v1;
