@@ -683,7 +683,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%02ld. 组特征识别结果:T%03ld \t%@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc);
+        NSLog(@"%02ld. 组特征识别结果:T%03ld \t%@ %@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc,CLEANSTR([model.baseGT getLogDesc:true]));
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 组特征识别结果可视化（参考34176）。
