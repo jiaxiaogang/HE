@@ -2,7 +2,7 @@
 
 @interface GTZiJvModelV2 : NSObject
 
-@property (strong, nonatomic) AIFeatureNode *baseGT;
+@property (strong, nonatomic) AIGroupFeatureNode *baseGT;
 @property (strong, nonatomic) NSMutableDictionary *bestSTs; // GT时为Dic<stIndex, STZiJvModelV2>
 
 // 根据已知oldGVs，预计newGV的protoRect（即：用已知protoRects，计算出整体protoRect）。

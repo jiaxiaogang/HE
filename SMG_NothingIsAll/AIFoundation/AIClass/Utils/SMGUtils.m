@@ -820,6 +820,59 @@
     return [SMGUtils computeUnionAreaOfRects:validGVRects];
 }
 
++(CGFloat) computeArea4GT:(AIGroupFeatureNode*)gt {
+    // 转成allGVRects
+    NSMutableArray *allGVRects = [NSMutableArray new];
+    for (NSInteger i = 0; i < gt.count; i++) {
+        CGRect st_GT = [gt rectByIndex:i];
+        AIKVPointer *st_p = ARR_INDEX(gt.content_ps, i);
+        AIFeatureNode *st = [SMGUtils searchNode:st_p];
+        CGRect stRect = st.rect;
+        
+        NSArray *itemArr = [SMGUtils convertArr:st.rects convertBlock:^id(NSValue *obj) {
+            CGRect gv_ST = obj.CGRectValue;
+            CGRect gv_GT = [SMGUtils convertAAtCWithAAtB:gv_ST bAtC:st_GT protoBSize:stRect.size];
+            return @(gv_GT);
+        }];
+        [allGVRects addObjectsFromArray:itemArr];
+    }
+    
+    // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
+    NSArray *validGVRects = [SMGUtils removeRepeat4Rects:allGVRects];
+    
+    // 计算union area：所有validGVs的矩形并集面积（去重交集）。
+    return [SMGUtils computeUnionAreaOfRects:validGVRects];
+}
+
+// 转成在assGT中的实际匹配上的面积。
++(CGFloat) computeArea4GTGroup:(GTZiJvModelV2*)gtGroup {
+    // 转成allGVRects
+    AIGroupFeatureNode *gt = gtGroup.baseGT;
+    NSMutableArray *allGVRects = [NSMutableArray new];
+    [SMGUtils convertArr:gtGroup.bestSTs.allKeys convertItemArrBlock:^NSArray *(NSNumber *assIndex) {
+        CGRect st_GT = [gt rectByIndex:assIndex.integerValue];
+        STZiJvModelV2 *stGroup = [gtGroup.bestSTs objectForKey:assIndex];
+        
+        
+        AIKVPointer *st_p = ARR_INDEX(gt.content_ps, assIndex.integerValue);
+        AIFeatureNode *st = [SMGUtils searchNode:st_p];
+        CGRect stRect = st.rect;
+        
+        NSArray *itemArr = [SMGUtils convertArr:st.rects convertBlock:^id(NSValue *obj) {
+            CGRect gv_ST = obj.CGRectValue;
+            CGRect gv_GT = [SMGUtils convertAAtCWithAAtB:gv_ST bAtC:st_GT protoBSize:stRect.size];
+            return @(gv_GT);
+        }];
+        [allGVRects addObjectsFromArray:itemArr];
+    }];
+    
+    // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
+    NSArray *validGVRects = [SMGUtils removeRepeat4Rects:allGVRects];
+    
+    // 计算union area：所有validGVs的矩形并集面积（去重交集）。
+    return [SMGUtils computeUnionAreaOfRects:validGVRects];
+}
+
 // rects防重（如果内部有别的rect则包含它的rect无效。
 +(NSArray*) removeRepeat4Rects:(NSArray*)rects {
     // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
