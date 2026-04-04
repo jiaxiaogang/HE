@@ -121,6 +121,8 @@
     // 计算union area：所有validGVs的矩形并集面积（去重交集）。
     CGFloat totalUnionArea = [SMGUtils computeArea4STGroups:self.bestSTs.allValues];
     
+    // TODOTOMORROW20260404: 查一下，当bests占用proto为100%，但占用assGT为40%时，怎么处理（比如：assGT是0，proto是1，bests也是0左侧的1）。
+    
     // 环境占用率 = 所有有效GVs的union面积 / protoGT面积（裁剪到0~1）
     CGFloat rate = (protoGTArea > 0) ? (totalUnionArea / protoGTArea) : 0;
     self.envMatchRate = MIN(1.0f, MAX(0.0f, rate));
