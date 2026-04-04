@@ -651,7 +651,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSInteger maxMatchCount = [SMGUtils filterBestScore:allGTGroups scoreBlock:^CGFloat(GTZiJvModelV2 *item) {
         return item.bestSTs.count;
     }];
-    CGFloat protoGTArea = [SMGUtils computeArea4STModels:stModels];
+    CGFloat protoGTArea = [SMGUtils computeArea4STModels_Proto:stModels];
     for (GTZiJvModelV2 *gtGroup in allGTGroups) {
         [gtGroup run4GTMatchValue];
         [gtGroup run4GTMatchDegree];

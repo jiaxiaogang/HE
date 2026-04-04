@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-@class AIPointer,AIKVPointer,AIObject,AIArray,ThinkModel,AIPort,AINodeBase,AIAlgNodeBase,MapModel;
+@class AIPointer,AIKVPointer,AIObject,AIArray,ThinkModel,AIPort,AINodeBase,AIAlgNodeBase,MapModel,AIGroupFeatureNode,GTZiJvModelV2;
 @interface SMGUtils : NSObject
 
 
@@ -207,10 +207,16 @@
 +(CGRect) rectNoDot:(CGRect)protoRect;
 
 // 根据模型取所有高亮细节区域的总面积1。
-+(CGFloat) computeArea4STGroups:(NSArray*)stGroups;
++(CGFloat) computeArea4STGroups_Proto:(NSArray*)stGroups;
 
 // 根据模型取所有高亮细节区域的总面积2。
-+(CGFloat) computeArea4STModels:(NSArray*)stModels;
++(CGFloat) computeArea4STModels_Proto:(NSArray*)stModels;
+
+// 根据模型取所有高亮细节区域的总面积3（所有assGT的高亮细节面积）。
++(CGFloat) computeArea4Full_AssGT:(AIGroupFeatureNode*)gt;
+
+// 根据模型取所有高亮细节区域的总面积3（所有Bests在assGT的高亮细节面积）。
++(CGFloat) computeArea4Bests_AssGT:(GTZiJvModelV2*)gtGroup;
 
 // rects防重（如果内部有别的rect则包含它的rect无效。
 +(NSArray*) removeRepeat4Rects:(NSArray*)rects;

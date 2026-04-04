@@ -118,14 +118,22 @@
  *  @param protoGTArea protoGT的细节面积（作为分母基准）。
  */
 -(void) run4EnvMatchRate:(CGFloat)protoGTArea {
-    // 计算union area：所有validGVs的矩形并集面积（去重交集）。
-    CGFloat totalUnionArea = [SMGUtils computeArea4STGroups:self.bestSTs.allValues];
+    // 1、在protoGT环境占用率 = 所有有效GVs的union面积 / protoGT面积
+    CGFloat bests_Proto = [SMGUtils computeArea4STGroups_Proto:self.bestSTs.allValues];
+    CGFloat protoRate = (protoGTArea > 0) ? (bests_Proto / protoGTArea) : 0;
     
-    // TODOTOMORROW20260404: 查一下，当bests占用proto为100%，但占用assGT为40%时，怎么处理（比如：assGT是0，proto是1，bests也是0左侧的1）。
+    // 2、在assGT环境占用率 = 所有有效GVs的union面积 / assGT面积
+    CGFloat full_AssGT = [SMGUtils computeArea4Full_AssGT:self.baseGT];
+    CGFloat bests_AssGT = [SMGUtils computeArea4Bests_AssGT:self];
+    CGFloat assRate = (full_AssGT > 0) ? (bests_AssGT / full_AssGT) : 0;
     
-    // 环境占用率 = 所有有效GVs的union面积 / protoGT面积（裁剪到0~1）
-    CGFloat rate = (protoGTArea > 0) ? (totalUnionArea / protoGTArea) : 0;
-    self.envMatchRate = MIN(1.0f, MAX(0.0f, rate));
+    // 3、二者取其小（参考如下两例，所以得取小）。
+    // 示例1、当bests占用proto为100%，但占用assGT为40%时（比如：assGT是0，proto是1，bests只是assGT=0左侧的竖1）。
+    // 示例2、当bests占用assGT为100%，但占用proto为40%时（比如：assGT是1，proto是0，bests只匹配到proto=0的左侧）。
+    self.envMatchRate = MIN(protoRate, assRate);
+    
+    // 4、裁剪到0~1
+    self.envMatchRate = MIN(1.0f, MAX(0.0f, self.envMatchRate));
 }
 
 // GTModel综合评分（用于GT识别竞争）。

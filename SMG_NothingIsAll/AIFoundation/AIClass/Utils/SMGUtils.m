@@ -789,7 +789,7 @@
 }
 
 // 根据模型取所有高亮细节区域的总面积1。
-+(CGFloat) computeArea4STGroups:(NSArray*)stGroups {
++(CGFloat) computeArea4STGroups_Proto:(NSArray*)stGroups {
     // 转成allGVRects
     NSArray *allGVRects = [SMGUtils convertArr:stGroups convertItemArrBlock:^NSArray *(STZiJvModelV2 *stGroup) {
         return [SMGUtils convertArr:stGroup.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *gvItem) {
@@ -805,7 +805,7 @@
 }
 
 // 根据模型取所有高亮细节区域的总面积2。
-+(CGFloat) computeArea4STModels:(NSArray*)stModels {
++(CGFloat) computeArea4STModels_Proto:(NSArray*)stModels {
     // 转成allGVRects
     NSArray *allGVRects = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *stModel) {
         return [SMGUtils convertArr:stModel.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *gvItem) {
@@ -820,7 +820,8 @@
     return [SMGUtils computeUnionAreaOfRects:validGVRects];
 }
 
-+(CGFloat) computeArea4GT:(AIGroupFeatureNode*)gt {
+// 根据模型取所有高亮细节区域的总面积3（所有assGT的高亮细节面积）。
++(CGFloat) computeArea4Full_AssGT:(AIGroupFeatureNode*)gt {
     // 转成allGVRects
     NSMutableArray *allGVRects = [NSMutableArray new];
     for (NSInteger i = 0; i < gt.count; i++) {
@@ -844,26 +845,18 @@
     return [SMGUtils computeUnionAreaOfRects:validGVRects];
 }
 
-// 转成在assGT中的实际匹配上的面积。
-+(CGFloat) computeArea4GTGroup:(GTZiJvModelV2*)gtGroup {
+// 根据模型取所有高亮细节区域的总面积3（所有Bests在assGT的高亮细节面积）。
++(CGFloat) computeArea4Bests_AssGT:(GTZiJvModelV2*)gtGroup {
     // 转成allGVRects
-    AIGroupFeatureNode *gt = gtGroup.baseGT;
-    NSMutableArray *allGVRects = [NSMutableArray new];
-    [SMGUtils convertArr:gtGroup.bestSTs.allKeys convertItemArrBlock:^NSArray *(NSNumber *assIndex) {
-        CGRect st_GT = [gt rectByIndex:assIndex.integerValue];
+    NSMutableArray *allGVRects = [SMGUtils convertArr:gtGroup.bestSTs.allKeys convertItemArrBlock:^NSArray *(NSNumber *assIndex) {
         STZiJvModelV2 *stGroup = [gtGroup.bestSTs objectForKey:assIndex];
-        
-        
-        AIKVPointer *st_p = ARR_INDEX(gt.content_ps, assIndex.integerValue);
-        AIFeatureNode *st = [SMGUtils searchNode:st_p];
-        CGRect stRect = st.rect;
-        
-        NSArray *itemArr = [SMGUtils convertArr:st.rects convertBlock:^id(NSValue *obj) {
-            CGRect gv_ST = obj.CGRectValue;
+        CGRect st_GT = [gtGroup.baseGT rectByIndex:assIndex.integerValue];
+        CGRect stRect = stGroup.baseST.rect;
+        return [SMGUtils convertArr:stGroup.bestGVs.allKeys convertBlock:^id(NSNumber *gvIndex) {
+            CGRect gv_ST = [stGroup.baseST rectByIndex:gvIndex.integerValue];
             CGRect gv_GT = [SMGUtils convertAAtCWithAAtB:gv_ST bAtC:st_GT protoBSize:stRect.size];
             return @(gv_GT);
         }];
-        [allGVRects addObjectsFromArray:itemArr];
     }];
     
     // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
