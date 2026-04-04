@@ -48,6 +48,7 @@
 		08236CEC21A23439008D8761 /* AIVisionAlgsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08236CEB21A23439008D8761 /* AIVisionAlgsModel.m */; };
 		08250AE0228112C000FC497C /* XGWedis.m in Sources */ = {isa = PBXBuildFile; fileRef = 08250ADF228112C000FC497C /* XGWedis.m */; };
 		0825AFF31F748F67003B86C7 /* NSObject+Extension.m in Sources */ = {isa = PBXBuildFile; fileRef = 0825AFF21F748F67003B86C7 /* NSObject+Extension.m */; };
+		0825E3C92F81513500CEDEB4 /* SMGUtilsTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0825E3C82F81513500CEDEB4 /* SMGUtilsTest.m */; };
 		082709D229EC1A5E0045EE22 /* AITransferPort.m in Sources */ = {isa = PBXBuildFile; fileRef = 082709D129EC1A5E0045EE22 /* AITransferPort.m */; };
 		0827DAD324198EAC00A025D4 /* HeLogModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0827DAD224198EAC00A025D4 /* HeLogModel.m */; };
 		0827DAD724199C9E00A025D4 /* HeLogView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0827DAD624199C9E00A025D4 /* HeLogView.m */; };
@@ -336,6 +337,8 @@
 		08250ADF228112C000FC497C /* XGWedis.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = XGWedis.m; sourceTree = "<group>"; };
 		0825AFF11F748F67003B86C7 /* NSObject+Extension.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+Extension.h"; sourceTree = "<group>"; };
 		0825AFF21F748F67003B86C7 /* NSObject+Extension.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+Extension.m"; sourceTree = "<group>"; };
+		0825E3C72F81513500CEDEB4 /* SMGUtilsTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SMGUtilsTest.h; sourceTree = "<group>"; };
+		0825E3C82F81513500CEDEB4 /* SMGUtilsTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SMGUtilsTest.m; sourceTree = "<group>"; };
 		082709D029EC1A5E0045EE22 /* AITransferPort.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AITransferPort.h; sourceTree = "<group>"; };
 		082709D129EC1A5E0045EE22 /* AITransferPort.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AITransferPort.m; sourceTree = "<group>"; };
 		0827DAD124198EAC00A025D4 /* HeLogModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HeLogModel.h; sourceTree = "<group>"; };
@@ -1208,6 +1211,8 @@
 			children = (
 				084F132026FF6E1200E9D455 /* AITest.h */,
 				084F132126FF6E1200E9D455 /* AITest.m */,
+				0825E3C72F81513500CEDEB4 /* SMGUtilsTest.h */,
+				0825E3C82F81513500CEDEB4 /* SMGUtilsTest.m */,
 			);
 			path = Test;
 			sourceTree = "<group>";
@@ -2311,6 +2316,7 @@
 				084542342EF315DE00568A0B /* DoubleObjMapModel.m in Sources */,
 				08E6885B22FA562600653545 /* BorderLabel.m in Sources */,
 				08EA48C7202929A40038B982 /* ImvAlgsModelBase.m in Sources */,
+				0825E3C92F81513500CEDEB4 /* SMGUtilsTest.m in Sources */,
 				08F27D7629ED958B0063E71B /* TCCanset.m in Sources */,
 				0858C5AE2194F5DA00951BA5 /* CarView.m in Sources */,
 				086733922D850B920073DCD5 /* AIVisionAlgsModelV2.m in Sources */,

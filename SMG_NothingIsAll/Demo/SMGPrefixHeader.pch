@@ -21,6 +21,7 @@
 #import "FoodView.h"
 #import "NSLog+Extension.h"
 #import "AITest.h"
+#import "SMGUtilsTest.h"
 #import "RLTrainer.h"
 #import "XGDebug.h"
 #import "XGDebugModel.h"

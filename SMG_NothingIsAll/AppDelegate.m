@@ -147,6 +147,8 @@
     //10. 视觉训练工具
     self.imgTrainerView = [[ImgTrainerView alloc] init];
     [self.window addSubview:self.imgTrainerView];
+    
+    [[SMGUtilsTest new] test];
     return YES;
 }
 
