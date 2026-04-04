@@ -37,6 +37,7 @@
  * - 确认x段排序和合并逻辑
  */
 -(void) test {
+    NSLog(@"\n========== 并集面积计算测试 ==========\n");
     [self test_Case1_SingleRectangle];
     [self test_Case2_TwoNonOverlappingRectangles];
     [self test_Case3_TwoCompletelyOverlappingRectangles];
@@ -47,6 +48,16 @@
     [self test_Case8_EmptyArray];
     [self test_Case9_FourRectanglesGrid];
     [self test_Case10_ComplexRealWorldScenario];
+    
+    NSLog(@"\n========== 矩形去重测试 ==========\n");
+    [self testRemoveRepeat_Case1_EmptyArray];
+    [self testRemoveRepeat_Case2_SingleRect];
+    [self testRemoveRepeat_Case3_NoOverlap];
+    [self testRemoveRepeat_Case4_CompletelyDuplicate];
+    [self testRemoveRepeat_Case5_PartialOverlap];
+    [self testRemoveRepeat_Case6_OneContainsAnother];
+    [self testRemoveRepeat_Case7_MultipleNearIdentical];
+    [self testRemoveRepeat_Case8_ComplexMixed];
 }
 
 /**
@@ -317,6 +328,203 @@
     NSLog(@"  结果: %s\n", fabs(result - 1750.0) < 0.01 ? "PASS" : "FAIL");
     
     // XCTAssertEqualWithAccuracy(result, 1750.0, 0.01);
+}
+
+// ============================================================
+// =========== 矩形去重测试（removeRepeat4Rects） ============
+// ============================================================
+
+/**
+ * ========== 去重测试 1: 空数组 ==========
+ * 说明: 输入空数组，应返回空数组
+ * 输入: []
+ * 期望输出: []
+ * 预期结果: 数组长度=0
+ */
+- (void)testRemoveRepeat_Case1_EmptyArray {
+    NSArray *rects = @[];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 1] 空数组");
+    NSLog(@"  输入: []");
+    NSLog(@"  期望输出: []");
+    NSLog(@"  实际输出: %ld 个矩形", (long)result.count);
+    NSLog(@"  结果: %s\n", result.count == 0 ? "PASS" : "FAIL");
+}
+
+/**
+ * ========== 去重测试 2: 单个矩形 ==========
+ * 说明: 只有一个矩形，直接返回
+ * 输入: [(0,0,10,10)]
+ * 期望输出: [(0,0,10,10)]
+ * 预期结果: 数组长度=1
+ */
+- (void)testRemoveRepeat_Case2_SingleRect {
+    NSArray *rects = @[[NSValue valueWithCGRect:CGRectMake(0, 0, 10, 10)]];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 2] 单个矩形");
+    NSLog(@"  输入: [(0,0,10,10)]");
+    NSLog(@"  期望输出: [(0,0,10,10)]");
+    NSLog(@"  实际输出: %ld 个矩形", (long)result.count);
+    NSLog(@"  结果: %s\n", result.count == 1 ? "PASS" : "FAIL");
+}
+
+/**
+ * ========== 去重测试 3: 多个不重叠矩形 ==========
+ * 说明: 多个矩形完全分离，全部保留
+ * 输入: [(0,0,5,5), (10,10,5,5), (20,20,5,5)]
+ * 期望输出: 3 个矩形（全部保留）
+ * 预期结果: 数组长度=3
+ */
+- (void)testRemoveRepeat_Case3_NoOverlap {
+    NSArray *rects = @[
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 5, 5)],
+        [NSValue valueWithCGRect:CGRectMake(10, 10, 5, 5)],
+        [NSValue valueWithCGRect:CGRectMake(20, 20, 5, 5)]
+    ];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 3] 多个不重叠矩形");
+    NSLog(@"  输入: 3个不重叠的 5×5 矩形");
+    NSLog(@"  期望输出: 3 个矩形（全部保留）");
+    NSLog(@"  实际输出: %ld 个矩形", (long)result.count);
+    NSLog(@"  结果: %s\n", result.count == 3 ? "PASS" : "FAIL");
+}
+
+/**
+ * ========== 去重测试 4: 完全相同的矩形 ==========
+ * 说明: 多个完全相同的矩形，应只保留一个（或去重）
+ * 输入: [(0,0,10,10), (0,0,10,10), (0,0,10,10)]
+ * 期望输出: 1 个矩形（去重后）
+ * 预期结果: 数组长度=1
+ */
+- (void)testRemoveRepeat_Case4_CompletelyDuplicate {
+    NSArray *rects = @[
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 10, 10)],
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 10, 10)],
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 10, 10)]
+    ];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 4] 完全相同的矩形");
+    NSLog(@"  输入: 3个相同的 (0,0,10,10) 矩形");
+    NSLog(@"  期望输出: 1 个矩形（去重后）");
+    NSLog(@"  实际输出: %ld 个矩形", (long)result.count);
+    NSLog(@"  结果: %s\n", result.count == 1 ? "PASS" : "FAIL");
+}
+
+/**
+ * ========== 去重测试 5: 部分重叠矩形 ==========
+ * 说明: 两个部分重叠的矩形
+ * 输入: [(0,0,10,10), (5,5,10,10)]
+ * 期望输出: 2 个矩形（部分重叠，都保留）
+ * 预期结果: 数组长度=2
+ */
+- (void)testRemoveRepeat_Case5_PartialOverlap {
+    NSArray *rects = @[
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 10, 10)],
+        [NSValue valueWithCGRect:CGRectMake(5, 5, 10, 10)]
+    ];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 5] 部分重叠矩形");
+    NSLog(@"  输入: 两个部分重叠的矩形");
+    NSLog(@"        (0,0,10,10) 和 (5,5,10,10)");
+    NSLog(@"  期望输出: 2 个矩形（都保留）");
+    NSLog(@"  实际输出: %ld 个矩形", (long)result.count);
+    NSLog(@"  结果: %s\n", result.count == 2 ? "PASS" : "FAIL");
+}
+
+/**
+ * ========== 去重测试 6: 包含关系 ==========
+ * 说明: 一个矩形完全包含另一个，小矩形应被去除
+ * 输入: [(0,0,20,20), (5,5,10,10)]
+ * 期望输出: 1 个矩形（只保留大矩形）
+ * 预期结果: 数组长度=1
+ */
+- (void)testRemoveRepeat_Case6_OneContainsAnother {
+    NSArray *rects = @[
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 20, 20)],
+        [NSValue valueWithCGRect:CGRectMake(5, 5, 10, 10)]
+    ];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 6] 包含关系（大包含小）");
+    NSLog(@"  输入: 大矩形 (0,0,20,20) 包含小矩形 (5,5,10,10)");
+    NSLog(@"  期望输出: 1 个矩形（只保留小矩形）");
+    NSLog(@"  实际输出: %ld 个矩形", (long)result.count);
+    NSLog(@"  结果: %s\n", result.count == 1 ? "PASS" : "FAIL");
+}
+
+/**
+ * ========== 去重测试 7: 多个近似相同矩形 ==========
+ * 说明: 多个几乎相同但有微小差异的矩形
+ * 输入: [(0,0,10,10), (0,0,10,10), (0,0,10.5,10.5)]
+ * 期望输出: 根据实现逻辑决定（可能2-3个）
+ * 预期结果: 数组长度>=1
+ */
+- (void)testRemoveRepeat_Case7_MultipleNearIdentical {
+    NSArray *rects = @[
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 10, 10)],
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 10, 10)],
+        [NSValue valueWithCGRect:CGRectMake(0.1, 0.1, 10, 10)]
+    ];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 7] 多个近似相同矩形");
+    NSLog(@"  输入: 3个几乎相同的矩形");
+    NSLog(@"        (0,0,10,10), (0,0,10,10), (0.1,0.1,10,10)");
+    NSLog(@"  期望输出: 2 个矩形（根据去重容差）");
+    NSLog(@"  实际输出: %ld 个矩形", (long)result.count);
+    NSLog(@"  结果: %s\n", result.count == 2 ? "PASS" : "FAIL");
+}
+
+/**
+ * ========== 去重测试 8: 复杂混合场景 ==========
+ * 说明: 混合包含、重叠、相同等情况
+ * 输入:
+ *   - 大矩形1: (0, 0, 30, 30)
+ *   - 小矩形1: (5, 5, 10, 10)    被矩形1包含
+ *   - 中矩形1: (25, 25, 20, 20)  与矩形1部分重叠
+ *   - 大矩形2: (0, 0, 30, 30)    与矩形1完全相同
+ *   - 无关矩形: (50, 50, 10, 10)
+ *
+ * 期望输出逻辑：
+ *   - 大矩形1 和 大矩形2 相同 → 保留1个
+ *   - 小矩形1 被包含 → 删除
+ *   - 中矩形1 部分重叠 → 保留
+ *   - 无关矩形 → 保留
+ *   结果：3-4 个矩形
+ */
+- (void)testRemoveRepeat_Case8_ComplexMixed {
+    NSArray *rects = @[
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 30, 30)],      // 大1
+        [NSValue valueWithCGRect:CGRectMake(5, 5, 10, 10)],      // 小1（被包含）
+        [NSValue valueWithCGRect:CGRectMake(25, 25, 20, 20)],    // 中1（部分重叠）
+        [NSValue valueWithCGRect:CGRectMake(0, 0, 30, 30)],      // 大2（重复）
+        [NSValue valueWithCGRect:CGRectMake(50, 50, 10, 10)]     // 无关
+    ];
+    
+    NSArray *result = [SMGUtils removeRepeat4Rects:rects];
+    
+    NSLog(@"[去重 8] 复杂混合场景");
+    NSLog(@"  输入: 5个矩形混合（包含、重叠、重复、无关）");
+    NSLog(@"        - (0,0,30,30) 大矩形1");
+    NSLog(@"        - (5,5,10,10) 小矩形（被包含）");
+    NSLog(@"        - (25,25,20,20) 中矩形（部分重叠）");
+    NSLog(@"        - (0,0,30,30) 大矩形2（重复）");
+    NSLog(@"        - (50,50,10,10) 无关矩形");
+    NSLog(@"  期望输出: 3 个矩形");
+    NSLog(@"  实际输出: %ld 个矩形 %@", (long)result.count, result);
+    NSLog(@"  结果: %s\n", result.count >= 3 && result.count <= 4 ? "PASS" : "FAIL");
 }
 
 @end

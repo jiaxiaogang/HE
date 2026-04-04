@@ -823,12 +823,13 @@
 // rects防重（如果内部有别的rect则包含它的rect无效。
 +(NSArray*) removeRepeat4Rects:(NSArray*)rects {
     // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
-    return [SMGUtils filterArr:rects checkValid:^BOOL(NSValue *check) {
+    rects = [SMGUtils filterArr:rects checkValid:^BOOL(NSValue *check) {
         // 内部有没有详情信息，需要根据其rect有没有全含另一个item的rect来判断。
         return ![SMGUtils filterSingleFromArr:rects checkValid:^BOOL(NSValue *other) {
             return CGRectContainsRect(check.CGRectValue, other.CGRectValue) && !CGRectEqualToRect(check.CGRectValue, other.CGRectValue);
         }];
     }];
+    return [SMGUtils removeRepeat:rects];
 }
 
 /**
