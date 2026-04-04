@@ -46,6 +46,12 @@
 -(void) run4CountRatio:(NSInteger)max;
 @property (assign, nonatomic) CGFloat countRatio;
 
+/**
+ *  MARK:--------------------辅因子：环境占用率（防不完整）（参考36143-方案）--------------------
+ */
+-(void) run4EnvMatchRate:(CGRect)protoGTRect;
+@property (assign, nonatomic) CGFloat envMatchRate;
+
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;
 

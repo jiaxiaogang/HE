@@ -112,19 +112,32 @@
     self.countRatio = (float)self.bestSTs.count / max;
 }
 
+/**
+ *  MARK:--------------------辅因子：环境占用率（防不完整）（参考36143-方案）--------------------
+ */
+-(void) run4EnvMatchRate:(CGRect)protoGTRect {
+    // 所有bestSTs中，每个st的bestGVs_Proto区域并集Rect
+    CGRect bestSTs_Proto = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *stGroup) {
+        return stGroup.bestGVs_Proto;
+    }];
+    
+    // 求出Rect交集率
+    self.envMatchRate = [SMGUtils rate4IntersectionRectV2:bestSTs_Proto bRect:protoGTRect];
+}
+
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore {
     // 先不计self.stMatchDegree，因为GV的符合度，到GT识别时，已经算隔层了，再算进来，等于掐断形似匹配。
     // return self.gtMatchValue * self.gtMatchDegree * self.countRatio * (self.gtMatchCountRatio * self.stMatchCountRatio);
-    return self.gtMatchValue * (self.gtMatchCountRatio * self.stMatchCountRatio);
+    return self.gtMatchValue * (self.gtMatchCountRatio * self.stMatchCountRatio) * self.envMatchRate;
 }
 
 // GTModel综合评分的描述。
 -(NSString*) zonHeDesc {
     //return STRFORMAT(@"匹配度:%.2f 符合度:%.2f 匹配数(防过抽):%.2f (%02ld/%02ld) 匹配率(防过具):%.2f = 综合得分:%.3f",
     //                 self.gtMatchValue,self.gtMatchDegree,self.countRatio,self.bestSTs.count,self.baseGT.count,self.gtMatchCountRatio * self.stMatchCountRatio,self.zonHeScore);
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f = 综合得分:%.3f",
-                     self.gtMatchValue,self.gtMatchCountRatio * self.stMatchCountRatio,self.zonHeScore);
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 占用率:%.2f = 综合得分:%.3f",
+                     self.gtMatchValue,(self.gtMatchCountRatio * self.stMatchCountRatio),self.envMatchRate,self.zonHeScore);
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
