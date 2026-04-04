@@ -116,13 +116,20 @@
  *  MARK:--------------------辅因子：环境占用率（防不完整）（参考36143-方案）--------------------
  */
 -(void) run4EnvMatchRate:(CGRect)protoGTRect {
-    // 所有bestSTs中，每个st的bestGVs_Proto区域并集Rect
-    CGRect bestSTs_Proto = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *stGroup) {
+    // 求出匹配到的在protoGT中的区域占用率。
+    CGRect bestSTs_ProtoGT = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *stGroup) {
         return stGroup.bestGVs_Proto;
     }];
+    CGFloat protoRate = [SMGUtils rate4IntersectionRectV2:bestSTs_ProtoGT bRect:protoGTRect];
     
-    // 求出Rect交集率
-    self.envMatchRate = [SMGUtils rate4IntersectionRectV2:bestSTs_Proto bRect:protoGTRect];
+    // 求出匹配到的在assGT中的区域占用率。
+    CGRect bestSTs_AssGT = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *stGroup) {
+        return stGroup.bestGVs_ST;
+    }];
+    CGFloat assRate = [SMGUtils rate4IntersectionRectV2:bestSTs_AssGT bRect:self.baseGT.rect];
+    
+    // 取两者的较小值，作为环境占用率（防不完整）。
+    self.envMatchRate = MIN(protoRate, assRate);
 }
 
 // GTModel综合评分（用于GT识别竞争）。
