@@ -49,7 +49,7 @@
 /**
  *  MARK:--------------------辅因子：环境占用率（防不完整）（参考36143-方案）--------------------
  */
--(void) run4EnvMatchRate:(CGRect)protoGTRect;
+-(void) run4EnvMatchRate:(CGFloat)protoGTArea;
 @property (assign, nonatomic) CGFloat envMatchRate;
 
 // GTModel综合评分（用于GT识别竞争）。

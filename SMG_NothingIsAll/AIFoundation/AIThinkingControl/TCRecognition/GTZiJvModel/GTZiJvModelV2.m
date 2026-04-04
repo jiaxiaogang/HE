@@ -114,22 +114,16 @@
 
 /**
  *  MARK:--------------------辅因子：环境占用率（防不完整）（参考36143-方案）--------------------
+ *  @desc 计算所有有效GVs的总着色面积（去重交集），除以protoGT面积，得占用率。
+ *  @param protoGTArea protoGT的细节面积（作为分母基准）。
  */
--(void) run4EnvMatchRate:(CGRect)protoGTRect {
-    // 求出匹配到的在protoGT中的区域占用率。
-    CGRect bestSTs_ProtoGT = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *stGroup) {
-        return stGroup.bestGVs_Proto;
-    }];
-    CGFloat protoRate = [SMGUtils rate4IntersectionRectV2:bestSTs_ProtoGT bRect:protoGTRect];
+-(void) run4EnvMatchRate:(CGFloat)protoGTArea {
+    // 计算union area：所有validGVs的矩形并集面积（去重交集）。
+    CGFloat totalUnionArea = [SMGUtils computeArea4STGroups:self.bestSTs.allValues];
     
-    // 求出匹配到的在assGT中的区域占用率。
-    CGRect bestSTs_AssGT = [SMGUtils convertArr2Rect:self.bestSTs.allValues itemRectBlock:^CGRect(STZiJvModelV2 *stGroup) {
-        return stGroup.bestGVs_ST;
-    }];
-    CGFloat assRate = [SMGUtils rate4IntersectionRectV2:bestSTs_AssGT bRect:self.baseGT.rect];
-    
-    // 取两者的较小值，作为环境占用率（防不完整）。
-    self.envMatchRate = MIN(protoRate, assRate);
+    // 环境占用率 = 所有有效GVs的union面积 / protoGT面积（裁剪到0~1）
+    CGFloat rate = (protoGTArea > 0) ? (totalUnionArea / protoGTArea) : 0;
+    self.envMatchRate = MIN(1.0f, MAX(0.0f, rate));
 }
 
 // GTModel综合评分（用于GT识别竞争）。

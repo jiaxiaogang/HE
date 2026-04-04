@@ -788,6 +788,164 @@
     return CGRectMake((int)(protoRect.origin.x+0.5f), (int)(protoRect.origin.y+0.5f), (int)(protoRect.size.width+0.5f), (int)(protoRect.size.height+0.5f));
 }
 
+// 根据模型取所有高亮细节区域的总面积1。
++(CGFloat) computeArea4STGroups:(NSArray*)stGroups {
+    // 转成allGVRects
+    NSArray *allGVRects = [SMGUtils convertArr:stGroups convertItemArrBlock:^NSArray *(STZiJvModelV2 *stGroup) {
+        return [SMGUtils convertArr:stGroup.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *gvItem) {
+            return @(gvItem.bestGVAtProtoTRect);
+        }];
+    }];
+    
+    // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
+    NSArray *validGVRects = [SMGUtils removeRepeat4Rects:allGVRects];
+    
+    // 计算union area：所有validGVs的矩形并集面积（去重交集）。
+    return [SMGUtils computeUnionAreaOfRects:validGVRects];
+}
+
+// 根据模型取所有高亮细节区域的总面积2。
++(CGFloat) computeArea4STModels:(NSArray*)stModels {
+    // 转成allGVRects
+    NSArray *allGVRects = [SMGUtils convertArr:stModels convertItemArrBlock:^NSArray *(AIFeatureJvBuModel *stModel) {
+        return [SMGUtils convertArr:stModel.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *gvItem) {
+            return @(gvItem.bestGVAtProtoTRect);
+        }];
+    }];
+    
+    // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
+    NSArray *validGVRects = [SMGUtils removeRepeat4Rects:allGVRects];
+    
+    // 计算union area：所有validGVs的矩形并集面积（去重交集）。
+    return [SMGUtils computeUnionAreaOfRects:validGVRects];
+}
+
+// rects防重（如果内部有别的rect则包含它的rect无效。
++(NSArray*) removeRepeat4Rects:(NSArray*)rects {
+    // 把那些有内部详细信息的背景去掉：如果gvItem包含了另一个item，则此item为背景，排除掉。
+    return [SMGUtils filterArr:rects checkValid:^BOOL(NSValue *check) {
+        // 内部有没有详情信息，需要根据其rect有没有全含另一个item的rect来判断。
+        return ![SMGUtils filterSingleFromArr:rects checkValid:^BOOL(NSValue *other) {
+            return CGRectContainsRect(check.CGRectValue, other.CGRectValue) && !CGRectEqualToRect(check.CGRectValue, other.CGRectValue);
+        }];
+    }];
+}
+
+/**
+ *  MARK:--------------------辅助函数：计算矩形并集面积--------------------
+ *  @desc 用扫描线算法计算多个矩形的并集面积（去重交集）。
+ *  @param rects NSArray<NSValue *> 包含CGRect的NSValue数组。
+ *  @return 并集面积（CGFloat）。
+ */
++(CGFloat) computeUnionAreaOfRects:(NSArray *)rects {
+    if (rects.count == 0) return 0;
+    if (rects.count == 1) {
+        CGRect r = [ARR_INDEX(rects, 0) CGRectValue];
+        return r.size.width * r.size.height;
+    }
+    
+    // 收集所有y坐标（扫描线）
+    NSMutableSet *yCoords = [NSMutableSet new];
+    for (NSValue *val in rects) {
+        CGRect r = [val CGRectValue];
+        [yCoords addObject:@(r.origin.y)];
+        [yCoords addObject:@(r.origin.y + r.size.height)];
+    }
+    NSArray *sortedYs = [[yCoords allObjects] sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
+        return [a compare:b];
+    }];
+    
+    // 扫描线算法：遍历相邻的y区间，计算每个区间内的宽度并集
+    CGFloat totalArea = 0;
+    for (NSUInteger i = 0; i < sortedYs.count - 1; i++) {
+        CGFloat y1 = [ARR_INDEX(sortedYs, i) doubleValue];
+        CGFloat y2 = [ARR_INDEX(sortedYs, i + 1) doubleValue];
+        CGFloat height = y2 - y1;
+        if (height <= 0) continue;
+        
+        // 收集此y区间与所有rect相交的x段
+        NSMutableArray *xSegments = [NSMutableArray new];
+        for (NSValue *val in rects) {
+            CGRect r = [val CGRectValue];
+            // 检查rect是否与[y1, y2)相交
+            if (r.origin.y < y2 && r.origin.y + r.size.height > y1) {
+                // 相交，记录x段 [x1, x2]
+                [xSegments addObject:@[@(r.origin.x), @(r.origin.x + r.size.width)]];
+            }
+        }
+        
+        // 计算x段的并集长度
+        if (xSegments.count > 0) {
+            CGFloat xUnionLength = [self computeUnionLengthOfSegments:xSegments];
+            totalArea += xUnionLength * height;
+        }
+    }
+    
+    return totalArea;
+}
+
+/**
+ *  MARK:--------------------辅助函数：计算线段并集长度--------------------
+ *  @desc 给定一组线段[x1, x2]，计算它们并集的总长度。
+ *  @param segments NSArray<NSArray *> 其中每个内数组为 @[@(x1), @(x2)]。
+ *  @return 并集长度（CGFloat）。
+ */
++(CGFloat) computeUnionLengthOfSegments:(NSArray *)segments {
+    if (segments.count == 0) return 0;
+    
+    // 转换为数值对并排序
+    NSMutableArray *sortedSegments = [NSMutableArray new];
+    for (NSArray *seg in segments) {
+        CGFloat x1 = [ARR_INDEX(seg, 0) doubleValue];
+        CGFloat x2 = [ARR_INDEX(seg, 1) doubleValue];
+        if (x1 > x2) {
+            CGFloat tmp = x1; x1 = x2; x2 = tmp;
+        }
+        [sortedSegments addObject:@[@(x1), @(x2)]];
+    }
+    
+    // 按起点排序
+    [sortedSegments sortUsingComparator:^NSComparisonResult(NSArray *a, NSArray *b) {
+        CGFloat aVal = [ARR_INDEX(a, 0) doubleValue];
+        CGFloat bVal = [ARR_INDEX(b, 0) doubleValue];
+        return [@(aVal) compare:@(bVal)];
+    }];
+    
+    // 合并相交或相邻的线段
+    NSMutableArray *merged = [NSMutableArray new];
+    for (NSArray *seg in sortedSegments) {
+        CGFloat x1 = [ARR_INDEX(seg, 0) doubleValue];
+        CGFloat x2 = [ARR_INDEX(seg, 1) doubleValue];
+        
+        if (merged.count == 0) {
+            [merged addObject:@[@(x1), @(x2)]];
+        } else {
+            NSArray *last = ARR_INDEX(merged, merged.count - 1);
+            CGFloat lastX2 = [ARR_INDEX(last, 1) doubleValue];
+            
+            if (x1 <= lastX2) {
+                // 相交或相邻，合并
+                CGFloat newX2 = MAX(x2, lastX2);
+                [merged removeLastObject];
+                [merged addObject:@[ARR_INDEX(last, 0), @(newX2)]];
+            } else {
+                // 不相交，新增
+                [merged addObject:@[@(x1), @(x2)]];
+            }
+        }
+    }
+    
+    // 计算总长度
+    CGFloat totalLength = 0;
+    for (NSArray *seg in merged) {
+        CGFloat x1 = [ARR_INDEX(seg, 0) doubleValue];
+        CGFloat x2 = [ARR_INDEX(seg, 1) doubleValue];
+        totalLength += (x2 - x1);
+    }
+    
+    return totalLength;
+}
+
 /**
  *  MARK:--------------------将arr转成dic--------------------
  */

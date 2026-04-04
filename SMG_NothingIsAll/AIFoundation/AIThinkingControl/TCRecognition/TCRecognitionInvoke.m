@@ -651,7 +651,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSInteger maxMatchCount = [SMGUtils filterBestScore:allGTGroups scoreBlock:^CGFloat(GTZiJvModelV2 *item) {
         return item.bestSTs.count;
     }];
-    CGRect protoGTRect = protoGT.rect;
+    CGFloat protoGTArea = [SMGUtils computeArea4STModels:stModels];
     for (GTZiJvModelV2 *gtGroup in allGTGroups) {
         [gtGroup run4GTMatchValue];
         [gtGroup run4GTMatchDegree];
@@ -660,7 +660,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4STMatchCountRatio];
         [gtGroup run4GTValidAbs_ps];
         [gtGroup run4CountRatio:maxMatchCount];
-        [gtGroup run4EnvMatchRate:protoGTRect];
+        [gtGroup run4EnvMatchRate:protoGTArea];
     }
     AddDebugCodeBlock_KeyV3();
     

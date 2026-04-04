@@ -206,6 +206,31 @@
 // 将rect的origin和size的x/y都取整（四舍五入），以去掉小数点（因为在某些场景下，rect的小数部分会导致一些问题，比如无法正确匹配等）。
 +(CGRect) rectNoDot:(CGRect)protoRect;
 
+// 根据模型取所有高亮细节区域的总面积1。
++(CGFloat) computeArea4STGroups:(NSArray*)stGroups;
+
+// 根据模型取所有高亮细节区域的总面积2。
++(CGFloat) computeArea4STModels:(NSArray*)stModels;
+
+// rects防重（如果内部有别的rect则包含它的rect无效。
++(NSArray*) removeRepeat4Rects:(NSArray*)rects;
+
+/**
+ *  MARK:--------------------辅助函数：计算矩形并集面积--------------------
+ *  @desc 用扫描线算法计算多个矩形的并集面积（去重交集）。
+ *  @param rects NSArray<NSValue *> 包含CGRect的NSValue数组。
+ *  @return 并集面积（CGFloat）。
+ */
++(CGFloat) computeUnionAreaOfRects:(NSArray *)rects;
+
+/**
+ *  MARK:--------------------辅助函数：计算线段并集长度--------------------
+ *  @desc 给定一组线段[x1, x2]，计算它们并集的总长度。
+ *  @param segments NSArray<NSArray *> 其中每个内数组为 @[@(x1), @(x2)]。
+ *  @return 并集长度（CGFloat）。
+ */
++(CGFloat) computeUnionLengthOfSegments:(NSArray *)segments;
+
 //将arr转成dic
 +(NSDictionary*) convertArr2Dic:(NSArray*)objs kvBlock:(NSArray*(^)(id obj))kvBlock;
 //将dic转成dic
