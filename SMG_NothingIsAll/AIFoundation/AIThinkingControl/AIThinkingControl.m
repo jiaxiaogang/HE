@@ -207,14 +207,15 @@ static AIThinkingControl *_instance;
     for (NSString *ds in dsArr) {
         //2. 装箱（稀疏码的：单码层 和 组码层）。
         NSArray *hsbGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:ds logDesc:logDesc];
-        
-        //2025.10.18: 自动改成有内容的(hsbGroupModels.count > 5)再跑识别类比等。
-        if (hsbGroupModels.count > 5) [TCRecognitionInvoke recognitionFeature:algsModel.bColors whSize:algsModel.whSize at:algsType ds:ds logDesc:logDesc];
+        if (hsbGroupModels.count < 5) continue;
         
         //3、构建具象特征。
         //3. 异步构建一下默认三分粒度的protoT，不过不用于识别，只用于以后被识别。
-        //TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）。
-        [self createSplitFor9BlockV2_Step2:hsbGroupModels at:algsType ds:ds logDesc:logDesc];
+        //TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）（必须是留一段时间，发现在稳定性上竞争太靠后的时候，才应该遗忘，新的不允许就遗忘掉）。
+        AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:algsType ds:ds logDesc:logDesc];
+        
+        //2025.10.18: 自动改成有内容的(hsbGroupModels.count > 5)再跑识别类比等。
+        [TCRecognitionInvoke recognitionFeature:algsModel.bColors whSize:algsModel.whSize at:algsType ds:ds logDesc:logDesc protoST:protoST];
     }
 }
 

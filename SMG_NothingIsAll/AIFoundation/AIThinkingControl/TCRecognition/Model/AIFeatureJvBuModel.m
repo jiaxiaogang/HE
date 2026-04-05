@@ -268,6 +268,34 @@
     return (float)self.bestGVs.count / self.assT.count;
 }
 
+/**
+ *  MARK:--------------------辅因子：完整性（参考36144-方案2）--------------------
+ *  @desc 计算所有有效GVs的总着色面积（去重交集），除以protoT面积，得完整性。
+ */
+-(void) run4IntactRate {
+    // 1、在protoGT环境占用率 = 所有有效GVs的union面积 / protoGT面积
+    CGFloat assT_AssT = [SMGUtils computeUnionAreaOfRects:[SMGUtils removeRepeat4Rects:self.assT.rects]]; // assT自身的高亮面积。
+    CGRect assTRect = self.assT.rect;
+    CGFloat assProtoRate = (self.assST_ProtoRect.size.width * self.assST_ProtoRect.size.height) / (assTRect.size.width * assTRect.size.height);
+    CGFloat assT_Proto = assT_AssT * assProtoRate; // assT在protoST中的高亮面积。
+    CGFloat bests_Proto = [SMGUtils computeArea4STModels_Proto:@[self]];
+    CGFloat protoRate = (assT_Proto > 0) ? (bests_Proto / assT_Proto) : 0;
+    
+    // 2、在assGT环境占用率 = 所有有效GVs的union面积 / assGT面积
+    CGFloat bests_AssT = [SMGUtils computeUnionAreaOfRects:[SMGUtils removeRepeat4Rects:[SMGUtils convertArr:self.bestGVs.allKeys convertBlock:^id(NSNumber *key) {
+        return ARR_INDEX(self.assT.rects, key.integerValue);
+    }]]]; // bests_AssT的高亮面积。
+    CGFloat assRate = (assT_AssT > 0) ? (bests_AssT / assT_AssT) : 0;
+    
+    // 3、二者取其小（参考如下两例，所以得取小）。
+    // 示例1、当bests占用proto为100%，但占用assGT为40%时（比如：assGT是0，proto是1，bests只是assGT=0左侧的竖1）。
+    // 示例2、当bests占用assGT为100%，但占用proto为40%时（比如：assGT是1，proto是0，bests只匹配到proto=0的左侧）。
+    self.intactRate = MIN(protoRate, assRate);
+    
+    // 4、裁剪到0~1
+    self.intactRate = MIN(1.0f, MAX(0.0f, self.intactRate));
+}
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore {
     // v1
@@ -277,7 +305,7 @@
     // return self.matchValue * self.modelMatchCountScore * self.absPortStrongScore;
     
     // v3：GT识别仅识别具层，只保留匹配度匹配率（参考36131）。
-    return self.matchValue * self.modelMatchRatio;
+    return self.matchValue * self.modelMatchRatio * self.intactRate;
 }
 
 -(NSString*) stScoreDesc {
@@ -285,7 +313,7 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 抽象强度(%02ld):%.2f = 总分:%.2f",self.matchValue,self.modelMatchCountScore,self.validAbsSTPorts.count,self.absPortStrongScore,self.stScore);
     
     // v3：GT识别仅识别具层，只保留匹配度匹配率（参考36131）。
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f = 总分:%.2f",self.matchValue,self.modelMatchRatio,self.stScore);
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 总分:%.2f",self.matchValue,self.modelMatchRatio,self.intactRate,self.stScore);
 }
 
 @end

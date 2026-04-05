@@ -196,7 +196,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //单通道
 //TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
 //连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
-+(void) recognitionFeature:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
++(void) recognitionFeature:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
     // 初始化缓存池数据。
     [self resetPool];
     _curMaxSize = whSize;
@@ -282,7 +282,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds logDesc:logDesc];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds logDesc:logDesc protoST:protoST];
     NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
     
     // 单特征类比：借助bestGVs来类比。
@@ -515,7 +515,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
     // bestGVs根据匹配度末尾淘汰20%。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model filter4MatchValue];
@@ -528,6 +528,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // [model run4AdjacentScore]; // 计算相邻度
         // [model run4CenterScore]; // 中心度
         [model run4ValidAbsSTPorts]; // 计算有效抽象
+        [model run4IntactRate]; // 完整性
     }
     
     // 抽象强度得分
@@ -660,7 +661,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4STMatchCountRatio];
         [gtGroup run4GTValidAbs_ps];
         [gtGroup run4CountRatio:maxMatchCount];
-        [gtGroup run4EnvMatchRate:protoGTArea];
+        [gtGroup run4IntactRate:protoGTArea];
     }
     AddDebugCodeBlock_KeyV3();
     
@@ -811,7 +812,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
                 //a. 通过组码做单特征识别。
                 AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel protoColorDic:nil ds:nil logDesc:nil];
+                [self recognitionFeatureV2_Step2:jvBuModel protoColorDic:nil ds:nil logDesc:nil protoST:nil];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = nil;//[self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.stModels dotSize:1];

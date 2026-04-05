@@ -104,6 +104,12 @@
 // 匹配率
 -(CGFloat)modelMatchRatio;
 
+/**
+ *  MARK:--------------------辅因子：完整性（参考36144-方案2）--------------------
+ */
+-(void) run4IntactRate;
+@property (assign, nonatomic) CGFloat intactRate;
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
 -(NSString*) stScoreDesc;

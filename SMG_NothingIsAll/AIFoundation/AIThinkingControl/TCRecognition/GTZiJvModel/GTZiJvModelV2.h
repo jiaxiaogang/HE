@@ -47,10 +47,10 @@
 @property (assign, nonatomic) CGFloat countRatio;
 
 /**
- *  MARK:--------------------辅因子：环境占用率（防不完整）（参考36143-方案）--------------------
+ *  MARK:--------------------辅因子：完整性（参考36143-方案）--------------------
  */
--(void) run4EnvMatchRate:(CGFloat)protoGTArea;
-@property (assign, nonatomic) CGFloat envMatchRate;
+-(void) run4IntactRate:(CGFloat)protoGTArea;
+@property (assign, nonatomic) CGFloat intactRate;
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;

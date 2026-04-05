@@ -14,7 +14,7 @@
 //MARK:===============================================================
 //MARK:                     < 单特征识别 >
 //MARK:===============================================================
-+(void) recognitionFeature:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc;
++(void) recognitionFeature:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST;
 
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >

@@ -113,11 +113,11 @@
 }
 
 /**
- *  MARK:--------------------辅因子：环境占用率（防不完整）（参考36143-方案）--------------------
+ *  MARK:--------------------辅因子：完整性（参考36143-方案）--------------------
  *  @desc 计算所有有效GVs的总着色面积（去重交集），除以protoGT面积，得占用率。
  *  @param protoGTArea protoGT的细节面积（作为分母基准）。
  */
--(void) run4EnvMatchRate:(CGFloat)protoGTArea {
+-(void) run4IntactRate:(CGFloat)protoGTArea {
     // 1、在protoGT环境占用率 = 所有有效GVs的union面积 / protoGT面积
     CGFloat bests_Proto = [SMGUtils computeArea4STGroups_Proto:self.bestSTs.allValues];
     CGFloat protoRate = (protoGTArea > 0) ? (bests_Proto / protoGTArea) : 0;
@@ -130,25 +130,25 @@
     // 3、二者取其小（参考如下两例，所以得取小）。
     // 示例1、当bests占用proto为100%，但占用assGT为40%时（比如：assGT是0，proto是1，bests只是assGT=0左侧的竖1）。
     // 示例2、当bests占用assGT为100%，但占用proto为40%时（比如：assGT是1，proto是0，bests只匹配到proto=0的左侧）。
-    self.envMatchRate = MIN(protoRate, assRate);
+    self.intactRate = MIN(protoRate, assRate);
     
     // 4、裁剪到0~1
-    self.envMatchRate = MIN(1.0f, MAX(0.0f, self.envMatchRate));
+    self.intactRate = MIN(1.0f, MAX(0.0f, self.intactRate));
 }
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore {
     // 先不计self.stMatchDegree，因为GV的符合度，到GT识别时，已经算隔层了，再算进来，等于掐断形似匹配。
     // return self.gtMatchValue * self.gtMatchDegree * self.countRatio * (self.gtMatchCountRatio * self.stMatchCountRatio);
-    return self.gtMatchValue * (self.gtMatchCountRatio * self.stMatchCountRatio) * self.envMatchRate;
+    return self.gtMatchValue * (self.gtMatchCountRatio * self.stMatchCountRatio) * self.intactRate;
 }
 
 // GTModel综合评分的描述。
 -(NSString*) zonHeDesc {
     //return STRFORMAT(@"匹配度:%.2f 符合度:%.2f 匹配数(防过抽):%.2f (%02ld/%02ld) 匹配率(防过具):%.2f = 综合得分:%.3f",
     //                 self.gtMatchValue,self.gtMatchDegree,self.countRatio,self.bestSTs.count,self.baseGT.count,self.gtMatchCountRatio * self.stMatchCountRatio,self.zonHeScore);
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 占用率:%.2f = 综合得分:%.3f",
-                     self.gtMatchValue,(self.gtMatchCountRatio * self.stMatchCountRatio),self.envMatchRate,self.zonHeScore);
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 综合得分:%.3f",
+                     self.gtMatchValue,(self.gtMatchCountRatio * self.stMatchCountRatio),self.intactRate,self.zonHeScore);
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
