@@ -505,7 +505,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [assSTCounted setObject:@(oldCount + 1) forKey:@(model.assT.pId)];
         
         // 最多100条（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
-        if (result.count > 100) break;
+        if (result.count > 300) break;
     }
     return result;
 }
@@ -529,6 +529,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // [model run4CenterScore]; // 中心度
         [model run4ValidAbsSTPorts]; // 计算有效抽象
         [model run4IntactRate]; // 完整性
+        [model run4AverageContentStrong]; // 稳定性
     }
     
     // 抽象强度得分
@@ -545,6 +546,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
+    
+    // 竞争淘汰（非归一化的竞争因子，单独做淘汰）。
+    NSArray *filterSort = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.averageContentStrong;
+    }];
+    filterSort = ARR_SUB(filterSort, 0, MIN(3, filterSort.count * 0.3f));
     
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
@@ -572,7 +579,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
-        [AINetUtils insertRefPorts_General:model.assT.p content_ps:model.assT.content_ps difStrong:1 header:model.assT.header];
+        [AINetUtils insertRefPorts_General:model.assT.p content_ps:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return obj.baseGV_p;
+        }] difStrong:1 header:model.assT.header];
+        [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%02ld. 单特征识别结果:T%ld (%02ld/%02ld) %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.stScoreDesc);

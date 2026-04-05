@@ -280,6 +280,24 @@
     return result;
 }
 
+// 更新某些下标的contentPort强度
+-(void) updateContentPortStrong:(NSArray*)indexes difStrong:(NSInteger)difStrong {
+    for (NSNumber *index in indexes) {
+        AIPort *contentPort = ARR_INDEX(self.contentPorts, index.integerValue);
+        contentPort.strong.value += difStrong;
+    }
+    [SMGUtils insertNode:self];
+}
+
+// 获取某些下标的contentPort的平均强度
+-(double) getAverageContentStrong:(NSArray*)indexes {
+    double sum = [SMGUtils sumOfArr:indexes convertBlock:^double(NSNumber *index) {
+        AIPort *itemPort = ARR_INDEX(self.contentPorts, index.integerValue);
+        return itemPort.strong.value;
+    }];
+    return indexes.count > 0 ? sum / indexes.count : 0;
+}
+
 /**
  *  MARK:--------------------NSCoding--------------------
  */

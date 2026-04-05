@@ -110,6 +110,12 @@
 -(void) run4IntactRate;
 @property (assign, nonatomic) CGFloat intactRate;
 
+/**
+ *  MARK:--------------------辅因子：稳定性（参考36145-方案）--------------------
+ */
+-(void) run4AverageContentStrong;
+@property (assign, nonatomic) CGFloat averageContentStrong;
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
 -(NSString*) stScoreDesc;

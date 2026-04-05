@@ -296,6 +296,13 @@
     self.intactRate = MIN(1.0f, MAX(0.0f, self.intactRate));
 }
 
+/**
+ *  MARK:--------------------辅因子：稳定性（参考36145-方案）--------------------
+ */
+-(void) run4AverageContentStrong {
+    self.averageContentStrong = [self.assT getAverageContentStrong:self.bestGVs.allKeys];
+}
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore {
     // v1
@@ -313,7 +320,7 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 抽象强度(%02ld):%.2f = 总分:%.2f",self.matchValue,self.modelMatchCountScore,self.validAbsSTPorts.count,self.absPortStrongScore,self.stScore);
     
     // v3：GT识别仅识别具层，只保留匹配度匹配率（参考36131）。
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 总分:%.2f",self.matchValue,self.modelMatchRatio,self.intactRate,self.stScore);
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 总分:%.2f (稳定性:%.2f)",self.matchValue,self.modelMatchRatio,self.intactRate,self.stScore,self.averageContentStrong);
 }
 
 @end

@@ -109,6 +109,12 @@
 //取全下标
 -(NSArray*) indexes;
 
+// 更新某些下标的contentPort强度
+-(void) updateContentPortStrong:(NSArray*)indexes difStrong:(NSInteger)difStrong;
+
+// 获取某些下标的contentPort的平均强度
+-(double) getAverageContentStrong:(NSArray*)indexes;
+
 //记录抽象层数。
 @property (assign, nonatomic) NSInteger absLevel;
 
