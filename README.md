@@ -4,7 +4,7 @@
 
 #### he4o是一个螺旋熵减机，旨在实现一种通用人工智能（AGI）系统：
 
-> 手稿：<https://github.com/jiaxiaogang/HELIX_THEORY> 在手写笔记目录下  
+> 手稿：<https://github.com/jiaxiaogang/HELIX_THEORY> 在手稿目录下  
 
 [![](https://img.shields.io/badge/%20QQ-在线交谈%20-orange.svg)](http://wpa.qq.com/msgrd?v=3&uin=283636001&site=qq&menu=yes)
 ![](https://img.shields.io/badge/%20Wechat-17636342724%20-orange.svg)
@@ -131,11 +131,11 @@
 
 | 螺旋论：含三大要素：定义、相对和循环，共同呈现螺旋形。 |
 | --- |
-| https://github.com/jiaxiaogang/HELIX_THEORY#%E7%86%B5%E5%87%8F%E6%9C%BA |
+| https://github.com/jiaxiaogang/HELIX_THEORY?tab=readme-ov-file#%E8%9E%BA%E6%97%8B%E7%86%B5%E5%87%8F%E7%90%86%E8%AE%BA |
 
 | 模型：由内而外相对循环，拆分为以下螺旋形模型图。 |
 | --- |
-| ![](https://github.com/jiaxiaogang/HELIX_THEORY/blob/master/%E6%89%8B%E5%86%99%E7%AC%94%E8%AE%B0/assets/508_%E4%BF%A1%E6%81%AF%E7%86%B5%E5%87%8F%E6%9C%BA202107%E5%8A%A8%E5%9B%BE%E7%89%88.gif?raw=true) |
+| ![](https://github.com/jiaxiaogang/HELIX_THEORY/blob/master/手稿/assets/508_%E4%BF%A1%E6%81%AF%E7%86%B5%E5%87%8F%E6%9C%BA202107%E5%8A%A8%E5%9B%BE%E7%89%88.gif?raw=true) |
 | 1. 此图从内外双向、动静转化、主客角度，三种方式来解读。 |
 | 2. 每外一个模块,与内所有模块之和相对循环 (如神经网络与思维,智能体与现实世界) |
 | 注: 一切都是从无到有,相对与循环。 |
@@ -155,7 +155,7 @@ HE系统是基于螺旋论的系统实现，该名称意为“和”的拼音，
 
 ##### 四、推进市场化：`筹备中`。
 
-| 架构图 | ![](https://github.com/jiaxiaogang/HELIX_THEORY/raw/master/%E6%89%8B%E5%86%99%E7%AC%94%E8%AE%B0/assets/730_HE%E6%9E%B6%E6%9E%84%E5%9B%BEV5.png) |
+| 架构图 | ![](https://github.com/jiaxiaogang/HELIX_THEORY/raw/master/手稿/assets/730_HE%E6%9E%B6%E6%9E%84%E5%9B%BEV5.png) |
 | --- | --- |
 | 实践说明 | 理论由内向外，实践由外向内，二者衔接（如越细节越偏向可行性探索而非完全由理论解释） |
 | 架构设计 | 由螺旋论展开成螺旋熵减机模型,再由螺旋熵减机模型展开为系统架构 |
@@ -206,7 +206,7 @@ HE系统是基于螺旋论的系统实现，该名称意为“和”的拼音，
 ## 七、-------------开发：时间线-------------
 
 > ##### 2026.03.28 `至今`
-> - 测特征识别竞争浮现
+> - 测特征识别竞争浮现：`新竞争因子：完整性`、`新竞争因子：稳定性`
 
 > ##### 2026.03.07 `耗时21天`
 > - 修ST&GV错位问题：`GT自举减维到GV层`、`GT类比降维到GV层`、`GT自举用切图实现`

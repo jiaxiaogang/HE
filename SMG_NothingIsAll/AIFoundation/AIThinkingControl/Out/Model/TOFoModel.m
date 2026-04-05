@@ -86,7 +86,7 @@
 
 /**
  *  MARK:--------------------Real映射第1步: 初始数据 (参考31154-方案2-todo1)--------------------
- *  @本算法示图: https://github.com/jiaxiaogang/HELIX_THEORY/blob/master/%E6%89%8B%E5%86%99%E7%AC%94%E8%AE%B0/assets/717_Canset%E7%9A%84%E5%88%9D%E5%A7%8BIndexDic%E5%88%86%E6%9E%90.png?raw=true
+ *  @本算法示图: https://github.com/jiaxiaogang/HELIX_THEORY/blob/master/手稿/assets/717_Canset%E7%9A%84%E5%88%9D%E5%A7%8BIndexDic%E5%88%86%E6%9E%90.png?raw=true
  *             说明: 此图说明了,此方法中base和self的关系,及初始indexDic计算方式
  *  @desc 在xvModel赋值后执行: 在TO中,cansetFo迁移xv之后(xvModel赋值后),将sceneTo和cansetTo已发生部分的映射存下来 (参考31154-方案2-todo1);
  *        另注: 在TI中,时序识别预测后,也会将预测matchFo和实际发生maskFo中已发生的部分存下来 (不在此方法中,在AIMatchFoModel的realMaskFo和indexDic2中);
