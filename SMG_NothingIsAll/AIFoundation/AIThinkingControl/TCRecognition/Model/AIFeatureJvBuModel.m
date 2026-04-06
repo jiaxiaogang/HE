@@ -312,10 +312,13 @@
     // return self.matchValue * self.modelMatchCountScore * self.absPortStrongScore;
     
     // v3：GT识别仅识别具层，只保留匹配度匹配率（参考36131）。
-    return self.matchValue * self.modelMatchRatio;
+    // return self.matchValue * self.modelMatchRatio;
     
     // v4：完整性替代匹配率（参考36144）。
-    return self.matchValue * self.intactRate;
+    // return self.matchValue * self.intactRate;
+    
+    // v5：ST按道理来说不要求完整性，主要还是要求稳定性（本来局部特征就提倡复用到各个GT中）。
+    return self.matchValue * self.bestGVs.count;
 }
 
 -(NSString*) stScoreDesc {
@@ -323,10 +326,13 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 抽象强度(%02ld):%.2f = 总分:%.2f",self.matchValue,self.modelMatchCountScore,self.validAbsSTPorts.count,self.absPortStrongScore,self.stScore);
     
     // v3：GT识别仅识别具层，只保留匹配度匹配率（参考36131）。
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f = 总分:%.2f",self.matchValue,self.modelMatchRatio,self.stScore);
+    // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f = 总分:%.2f",self.matchValue,self.modelMatchRatio,self.stScore);
     
     // v4：完整性替代匹配率（参考36144）。
-    return STRFORMAT(@"匹配度:%.2f 完整性:%.2f = 总分:%.2f (稳定性:%.2f)",self.matchValue,self.intactRate,self.stScore,self.averageContentStrong);
+    // return STRFORMAT(@"匹配度:%.2f 完整性:%.2f = 总分:%.2f (稳定性:%.2f)",self.matchValue,self.intactRate,self.stScore,self.averageContentStrong);
+    
+    // v5：ST按道理来说不要求完整性，主要还是要求稳定性（本来局部特征就提倡复用到各个GT中）。
+    return STRFORMAT(@"匹配度:%.2f 匹配数:%ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.bestGVs.count,self.stScore,self.averageContentStrong);
 }
 
 @end

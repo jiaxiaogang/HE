@@ -41,6 +41,12 @@
 @property (assign, nonatomic) CGFloat stMatchCountRatio;
 
 /**
+ *  MARK:--------------------匹配率V2：直接按bestGVs总数 / GT的总gv数--------------------
+ */
+-(void) run4MatchCountRatioV2;
+@property (assign, nonatomic) CGFloat matchCountRatioV2;
+
+/**
  *  MARK:--------------------匹配数归一化值--------------------
  */
 -(void) run4CountRatio:(NSInteger)max;
@@ -49,8 +55,17 @@
 /**
  *  MARK:--------------------辅因子：完整性（参考36143-方案）--------------------
  */
--(void) run4IntactRate:(CGFloat)protoGTArea;
-@property (assign, nonatomic) CGFloat intactRate;
+-(void) run4IntactRate_All:(CGFloat)protoGTArea;
+@property (assign, nonatomic) CGFloat intactRate_All;
+
+-(void) run4IntactRate_Proto:(CGFloat)protoGTArea;
+@property (assign, nonatomic) CGFloat intactRate_Proto;
+
+/**
+ *  MARK:--------------------辅因子：稳定性（参考36145-方案）--------------------
+ */
+-(void) run4AverageContentStrong;
+@property (assign, nonatomic) CGFloat averageContentStrong;
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;

@@ -106,6 +106,28 @@
 }
 
 /**
+ *  MARK:--------------------匹配率V2：直接按bestGVs总数 / GT的总gv数--------------------
+ */
+-(void) run4MatchCountRatioV2 {
+    NSInteger allBestCount = [self allBestCount];
+    NSInteger allGVCount = [self allGVCount];
+    self.matchCountRatioV2 = allGVCount > 0 ? (float)allBestCount / allGVCount : 0;
+}
+
+-(NSInteger) allBestCount {
+    return [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
+        return stGroup.bestGVs.count;
+    }];
+}
+
+-(NSInteger) allGVCount {
+    return [SMGUtils sumOfArr:self.baseGT.content_ps convertBlock:^double(AIKVPointer *st_p) {
+        AIFeatureNode *st = [SMGUtils searchNode:st_p];
+        return st.count;
+    }];
+}
+
+/**
  *  MARK:--------------------匹配数归一化值--------------------
  */
 -(void) run4CountRatio:(NSInteger)max {
@@ -117,7 +139,7 @@
  *  @desc 计算所有有效GVs的总着色面积（去重交集），除以protoGT面积，得占用率。
  *  @param protoGTArea protoGT的细节面积（作为分母基准）。
  */
--(void) run4IntactRate:(CGFloat)protoGTArea {
+-(void) run4IntactRate_All:(CGFloat)protoGTArea {
     // 1、在protoGT环境占用率 = 所有有效GVs的union面积 / protoGT面积
     CGFloat bests_Proto = [SMGUtils computeArea4STGroups_Proto:self.bestSTs.allValues];
     CGFloat protoRate = (protoGTArea > 0) ? (bests_Proto / protoGTArea) : 0;
@@ -130,25 +152,50 @@
     // 3、二者取其小（参考如下两例，所以得取小）。
     // 示例1、当bests占用proto为100%，但占用assGT为40%时（比如：assGT是0，proto是1，bests只是assGT=0左侧的竖1）。
     // 示例2、当bests占用assGT为100%，但占用proto为40%时（比如：assGT是1，proto是0，bests只匹配到proto=0的左侧）。
-    self.intactRate = MIN(protoRate, assRate);
+    self.intactRate_All = MIN(protoRate, assRate);
     
     // 4、裁剪到0~1
-    self.intactRate = MIN(1.0f, MAX(0.0f, self.intactRate));
+    self.intactRate_All = MIN(1.0f, MAX(0.0f, self.intactRate_All));
+}
+
+-(void) run4IntactRate_Proto:(CGFloat)protoGTArea {
+    // 1、在protoGT环境占用率 = 所有有效GVs的union面积 / protoGT面积
+    CGFloat bests_Proto = [SMGUtils computeArea4STGroups_Proto:self.bestSTs.allValues];
+    CGFloat protoRate = (protoGTArea > 0) ? (bests_Proto / protoGTArea) : 0;
+    
+    // 示例2、当bests占用assGT为100%，但占用proto为40%时（比如：assGT是1，proto是0，bests只匹配到proto=0的左侧）。
+    self.intactRate_Proto = protoRate;
+}
+
+/**
+ *  MARK:--------------------辅因子：稳定性（参考36145-方案）--------------------
+ */
+-(void) run4AverageContentStrong {
+    self.averageContentStrong = [self.baseGT getAverageContentStrong:self.bestSTs.allKeys];
 }
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore {
-    // 先不计self.stMatchDegree，因为GV的符合度，到GT识别时，已经算隔层了，再算进来，等于掐断形似匹配。
+    // v1: 先不计self.stMatchDegree，因为GV的符合度，到GT识别时，已经算隔层了，再算进来，等于掐断形似匹配。
     // return self.gtMatchValue * self.gtMatchDegree * self.countRatio * (self.gtMatchCountRatio * self.stMatchCountRatio);
-    return self.gtMatchValue * (self.gtMatchCountRatio * self.stMatchCountRatio) * self.intactRate;
+    
+    // v2
+    // return self.gtMatchValue * (self.gtMatchCountRatio * self.stMatchCountRatio) * self.intactRate;
+    
+    // v3: 完整性彻底替代匹配率。
+    return self.gtMatchValue * self.matchCountRatioV2 * self.intactRate_Proto;
 }
 
 // GTModel综合评分的描述。
 -(NSString*) zonHeDesc {
-    //return STRFORMAT(@"匹配度:%.2f 符合度:%.2f 匹配数(防过抽):%.2f (%02ld/%02ld) 匹配率(防过具):%.2f = 综合得分:%.3f",
-    //                 self.gtMatchValue,self.gtMatchDegree,self.countRatio,self.bestSTs.count,self.baseGT.count,self.gtMatchCountRatio * self.stMatchCountRatio,self.zonHeScore);
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 综合得分:%.3f",
-                     self.gtMatchValue,(self.gtMatchCountRatio * self.stMatchCountRatio),self.intactRate,self.zonHeScore);
+    // v1
+    //return STRFORMAT(@"匹配度:%.2f 符合度:%.2f 匹配数(防过抽):%.2f (%02ld/%02ld) 匹配率(防过具):%.2f = 综合得分:%.3f",self.gtMatchValue,self.gtMatchDegree,self.countRatio,self.bestSTs.count,self.baseGT.count,self.gtMatchCountRatio * self.stMatchCountRatio,self.zonHeScore);
+    
+    // v2
+    // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 综合得分:%.3f",self.gtMatchValue,(self.gtMatchCountRatio * self.stMatchCountRatio),self.intactRate,self.zonHeScore);
+    
+    // v3: 完整性彻底替代匹配率 & 加上稳定性。
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 综合得分:%.3f（稳定性:%.2f）（%ld/%ld）",self.gtMatchValue,self.matchCountRatioV2,self.intactRate_Proto,self.zonHeScore,self.averageContentStrong,[self allBestCount],[self allGVCount]);
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。

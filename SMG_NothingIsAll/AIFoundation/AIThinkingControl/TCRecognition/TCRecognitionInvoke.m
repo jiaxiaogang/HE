@@ -575,10 +575,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
             return obj.baseGV_p;
         }] difStrong:1 header:model.assT.header];
+        
+        // 更新内容强度（用于计算稳定性）。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%03ld (%02ld/%02ld) %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.stScoreDesc);
+        NSLog(@"%02ld. 单特征识别结果:T%03ld (%02ld/%02ld) %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.bestGVs.count,model.assT.count,model.stScoreDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -662,9 +664,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4GTMatchCountRatio];
         [gtGroup run4STMatchDegree];
         [gtGroup run4STMatchCountRatio];
+        [gtGroup run4MatchCountRatioV2];
         [gtGroup run4GTValidAbs_ps];
         [gtGroup run4CountRatio:maxMatchCount];
-        [gtGroup run4IntactRate:protoGTArea];
+        [gtGroup run4IntactRate_All:protoGTArea];
+        [gtGroup run4IntactRate_Proto:protoGTArea];
+        [gtGroup run4AverageContentStrong];
     }
     AddDebugCodeBlock_KeyV3();
     
@@ -689,8 +694,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%02ld. 组特征识别结果:T%03ld \t%@ %@",[resultModels indexOfObject:model],model.baseGT.pId,model.zonHeDesc,CLEANSTR([model.baseGT getLogDesc:true]));
+        NSLog(@"%02ld. 组特征识别结果:T%03ld \t%@ %@",[resultModels indexOfObject:model]+1,model.baseGT.pId,model.zonHeDesc,CLEANSTR([model.baseGT getLogDesc:true]));
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
+        
+        // 更新内容强度（用于计算稳定性）。
+        for (STZiJvModelV2 *stGroup in model.bestSTs.allValues) {
+            [stGroup.baseST updateContentPortStrong:stGroup.bestGVs.allKeys difStrong:1];
+        }
+        [model.baseGT updateContentPortStrong:model.bestSTs.allKeys difStrong:1];
         
         // 组特征识别结果可视化（参考34176）。
         [SMGUtils runByMainQueue:^{
@@ -1627,7 +1638,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
                 AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGV:itemGV_p olds_Proto:targetGT_Proto colorDic:colorDic ds:ds];
-                if (!gvResult || gvResult.matchValue < 0.6f) continue;
+                if (!gvResult || gvResult.matchValue < 0.8f) continue;
                 [curSTResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
                 
                 // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
@@ -1681,7 +1692,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //1. 即输入和谁都不完全相似时
     //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
     //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
-    if (!best || best.matchValue < 0.6f) return nil;
+    if (!best || best.matchValue < 0.8f) return nil;
     
     //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
     //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
