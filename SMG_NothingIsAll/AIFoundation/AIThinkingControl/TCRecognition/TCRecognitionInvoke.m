@@ -524,12 +524,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model run4MatchValue];
-        // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio]; // 符合度等
-        // [model run4AdjacentScore]; // 计算相邻度
-        // [model run4CenterScore]; // 中心度
-        [model run4ValidAbsSTPorts]; // 计算有效抽象
-        [model run4IntactRate]; // 完整性
-        [model run4AverageContentStrong]; // 稳定性
+        // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];   // 符合度等
+        // [model run4AdjacentScore];                                   // 计算相邻度
+        // [model run4CenterScore];                                     // 中心度
+        [model run4ValidAbsSTPorts];                                    // 计算有效抽象
+        [model run4BestGvsAtProtoTRect];                                // 计算bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
+        [model run4AssST_ProtoRect];                                    // 计算assST_ProtoRect（计算完整性要用到）
+        [model run4IntactRate];                                         // 完整性
+        [model run4AverageContentStrong];                               // 稳定性
     }
     
     // 抽象强度得分
@@ -567,15 +569,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
     
-    // 计算assST_Proto和bestGVs_Proto。
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        // bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
-        [model run4BestGvsAtProtoTRect];
-        
-        // run4AssST_ProtoRect
-        [model run4AssST_ProtoRect];
-    }
-    
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
@@ -585,7 +578,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%ld (%02ld/%02ld) %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.stScoreDesc);
+        NSLog(@"%02ld. 单特征识别结果:T%03ld (%02ld/%02ld) %@",[decoratorJvBuModel.stModels indexOfObject:model],model.assT.pId,model.bestGVs.count,model.assT.count,model.stScoreDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
