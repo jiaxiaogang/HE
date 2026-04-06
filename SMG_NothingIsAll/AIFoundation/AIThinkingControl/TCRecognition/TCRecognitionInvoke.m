@@ -271,7 +271,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // 统一进行ST识别：通过组码识别。
-    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:allRefPorts];
+    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:allRefPorts protoST:protoST];
     [jvBuModel.stModels addObjectsFromArray:itemSTModels];
     
     //31. 单特征识别无结果则跳过。
@@ -325,6 +325,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [protoGT updateLogDescItem:logDesc];
     CGRect jvs_ProtoGTRect = [SMGUtils convertArr2Rect:gtOrders itemRectBlock:^CGRect(InputGroupFeatureModel *item) { return item.rect; }]; // ProtoGT不一定是全局，如果只是一部分，处理下显示时的marginTop和marginLeft。
     [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoGT.pId) left:0 top:0 tvId:5];
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:jvs_ProtoGTRect.origin.x top:jvs_ProtoGTRect.origin.y tvId:5];
     }];
     NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
@@ -406,7 +407,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept dotSize:(CGFloat)dotSize stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts {
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept dotSize:(CGFloat)dotSize stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoST:(AIFeatureNode*)protoST {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
@@ -420,9 +421,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
     for (MapModel *valid in sorts) {
+        // 自身防重。
+        AIPort *refPort = valid.v2;
+        if ([refPort.target_p isEqual:protoST.p]) continue;
         
         // 同一个assST只有10次准入机会（参考36037-TODO1）。
-        AIPort *refPort = valid.v2;
         NSInteger oldCount = NUMTOOK([assSTCounted objectForKey:@(refPort.target_p.pointerId)]).integerValue;
         if (oldCount > 9) continue;
         
