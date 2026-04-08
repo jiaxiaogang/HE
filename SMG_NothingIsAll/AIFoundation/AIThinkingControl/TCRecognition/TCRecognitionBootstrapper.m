@@ -189,6 +189,8 @@
                               colorDic:(NSDictionary*)colorDic
                                     ds:(NSString*)ds {
 
+    // TODO: 要根据已有bestGV，计算出四个方向的锚点（最多四个)，然后新的assGV，在这个锚点约束的范围方向上，进行远近十等份GV自举，找出最准确的切图。
+    
     // ==================== Step 1: 选手1计算 - assGT确定大致切图方向范围 ====================
     AnchorDirectionRange *directionRange = [self calculateDirectionRangeFromAssGT:assGT
                                                                            protoST:protoST
@@ -711,6 +713,8 @@
                                colorDic:(NSDictionary*)colorDic
                                      ds:(NSString*)ds {
 
+    // TODO: 要根据已有bestST，计算出四个方向的锚点（最多四个)，然后新的assST，在这个锚点约束的范围方向上，进行远近十等份ST自举，找出最准确的自举切图综合结果。
+    
     STZiJvModelV2 *stResult = [STZiJvModelV2 new];
     stResult.baseST = itemST;
 
