@@ -350,6 +350,11 @@
             continue; // 不在范围内，跳过
         }
 
+        
+        // TODO: 在这个方向上，只是避免切到空白区域。
+        // 1. 根据assGV知道自己要切的方向后，在这个方向上找出所有的protoGV，然后求出这些protoGV的最近的minDistance和最远距离的maxDistance。
+        // 2. 把assGV在这个距离minDistance到maxDistance间，分成十份（这十份切图要近小远大），分别对protoImgDic进行切图，把最准的一份找出来。
+        
         // 3. 计算这个点的置信度（基于颜色值等）
         CGFloat confidence = [self calculateConfidenceForGV:gv_p
                                                      rect:gvRect
@@ -399,6 +404,8 @@
                            colorDic:(NSDictionary*)colorDic
                                  ds:(NSString*)ds {
 
+    // TODO: 这个切图要和TCRecognitionInvoke中的Pool一样，加个复用池，避免重复计算。
+    
     // 1. 切图获取颜色值
     NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:rect];
     if (!ARRISOK(subDots)) return 0;
@@ -700,7 +707,7 @@
                              itemSTRect:(CGRect)itemSTRect
                                 stIndex:(NSInteger)stIndex
                                gtResult:(GTZiJvModelV2*)gtResult
-              defaultTargetGT_Proto:(CGRect)defaultTargetGT_Proto
+                  defaultTargetGT_Proto:(CGRect)defaultTargetGT_Proto
                                colorDic:(NSDictionary*)colorDic
                                      ds:(NSString*)ds {
 
@@ -710,6 +717,9 @@
     // 1. 根据已收集，估算整个targetGT_Proto
     CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? gtResult.hopeProtoRectByAll : defaultTargetGT_Proto;
 
+    
+    // TODO: 这里从curAssST到下个nextAssST也有方向，然后在这个方向上找protoST，求出这个方向上protoST的高亮点，再根据高亮点的位置来计算锚点，最后再根据锚点来求下个ST的候选rect，这样会更准确。
+    
     // 2. 计算缩放锚点
     CGPoint anchor = [SMGUtils convertAnchorByOldRect:itemSTRect newRect:itemST_GT];
     NSArray *scales = @[@(1), @(1.1), @(0.9), @(1.2), @(0.8)];

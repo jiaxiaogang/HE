@@ -117,6 +117,7 @@
 		0858C5E921950CAA00951BA5 /* FoodView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0858C5E821950CAA00951BA5 /* FoodView.xib */; };
 		0859C5BA2DB483150049F4CD /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0859C5B52DB481B00049F4CD /* AVFoundation.framework */; };
 		085BA9F4241C421500829450 /* HeLogUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 085BA9F3241C421500829450 /* HeLogUtil.m */; };
+		085EDD182F86A8730036F58F /* TCRecognitionBootstrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 085EDD162F86A8730036F58F /* TCRecognitionBootstrapper.m */; };
 		085F8E1D27EEC46A00836F21 /* TVUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 085F8E1C27EEC46A00836F21 /* TVUtil.m */; };
 		0860A3BB22C9851800A48682 /* CustomAddNodeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 0860A3BA22C9851800A48682 /* CustomAddNodeWindow.m */; };
 		0860A3BD22C9859200A48682 /* CustomAddNodeWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0860A3BC22C9859200A48682 /* CustomAddNodeWindow.xib */; };
@@ -475,6 +476,8 @@
 		0859C5B52DB481B00049F4CD /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		085BA9F2241C421500829450 /* HeLogUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HeLogUtil.h; sourceTree = "<group>"; };
 		085BA9F3241C421500829450 /* HeLogUtil.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HeLogUtil.m; sourceTree = "<group>"; };
+		085EDD162F86A8730036F58F /* TCRecognitionBootstrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCRecognitionBootstrapper.m; sourceTree = "<group>"; };
+		085EDD172F86A8730036F58F /* TCRecognitionBootstrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCRecognitionBootstrapper.h; sourceTree = "<group>"; };
 		085F8E1B27EEC46A00836F21 /* TVUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TVUtil.h; sourceTree = "<group>"; };
 		085F8E1C27EEC46A00836F21 /* TVUtil.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TVUtil.m; sourceTree = "<group>"; };
 		0860A3B922C9851800A48682 /* CustomAddNodeWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CustomAddNodeWindow.h; sourceTree = "<group>"; };
@@ -1365,6 +1368,8 @@
 				083680412853863E003F91FE /* AIAnalyst.m */,
 				0872E1662779EF7C0067C97D /* TCRecognitionInvoke.h */,
 				0872E1672779EF7C0067C97D /* TCRecognitionInvoke.m */,
+				085EDD172F86A8730036F58F /* TCRecognitionBootstrapper.h */,
+				085EDD162F86A8730036F58F /* TCRecognitionBootstrapper.m */,
 			);
 			path = TCRecognition;
 			sourceTree = "<group>";
@@ -2191,6 +2196,7 @@
 				0839819F24DB7F8C00A020D2 /* HEView.m in Sources */,
 				081B3ADB1F6E2CCD008A7F36 /* AINet.m in Sources */,
 				083680422853863E003F91FE /* AIAnalyst.m in Sources */,
+				085EDD182F86A8730036F58F /* TCRecognitionBootstrapper.m in Sources */,
 				08C6C2632518E49400DDE6BF /* NSLog+Extension.m in Sources */,
 				0858C5E021950BB300951BA5 /* TreeView.m in Sources */,
 				0892BAED277808F80024B43C /* TCActYes.m in Sources */,

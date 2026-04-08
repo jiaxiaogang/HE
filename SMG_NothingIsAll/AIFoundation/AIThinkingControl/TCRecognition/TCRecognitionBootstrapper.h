@@ -25,7 +25,6 @@
 
 #import <Foundation/Foundation.h>
 #import "AIHeader.h"
-#import "TCRecognitionHeader.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
