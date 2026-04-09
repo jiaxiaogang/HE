@@ -1699,13 +1699,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIFeatureJvBuItem *value = [oldBestGVs objectForKey:key];
         CGRect gv_Proto = value.bestGVAtProtoTRect;
         
-        //TODO: 原来的锚点是根据olds_Proto和new_Proto来计算的，现在改为：
-        // 1. 本来newGV与四个方向最近的oldGV本来的距离根据各自的gv_Ass能算出，得到：gv_AssDistance。
-        // 2. 而newGV实际的newProto，与oldGV两个gv_Proto也能计算出距离，得到：gv_ProtoDistance。
-        // 3. gv_AssDistance与gv_ProtoDistance本来是有一个比例的。
-        // 4. 但这个比例随着proto中新的切图元素，会互相挤占空间。
-        // 5. 所以newGV_Proto并不是单纯的不变，而是会被这四个方向上的锚点挤占空间：得到挤占后的new_Proto。
-        // 6. 这些挤占，也只是给了一个范围，在这个范围内我们分成十等份，从这些等份里，找出最准的bestItem。
+        //TODO: 原来的锚点是根据olds_Proto和new_Proto来计算的，现在改为在minX,maxX,minY,maxY分别计算四个锚点。
+        
+        
+
     }
     
     //23. 找出锚点。
