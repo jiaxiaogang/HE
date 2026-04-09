@@ -251,21 +251,14 @@ static AIThinkingControl *_instance;
         AIFeatureNode *passedT = ARR_INDEX(self.tempModels, i);
         NSValue *beginRectV = ARR_INDEX(passedT.rects, 0);
         AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:passedT beginAssIndex:0 beginGV_ProtoRect:beginRectV.CGRectValue];
-        for (NSInteger j = 0; j < passedT.count; j++) {
-            //4. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
-            //4. 从passedT中一个个gv与protoColorDic做自举。
-            NSValue *passedRectV = ARR_INDEX(passedT.rects, j);
-            CGRect passedRect = passedRectV.CGRectValue;
-            
-            //5. 用passedT的gv从proto切块。
-            NSArray *subDots = [ThinkingUtils getSubDots:colorDic gvRect:passedRect];
-            NSDictionary *gvIndex = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
-            
-            //7. 收集起来自举算法结果。
-            AIFeatureJvBuItem *bestItem = [TCRecognitionInvoke stZiJv:j assT:passedT lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds];
-            if (!bestItem) continue;
-            [model.bestGVs setObject:bestItem forKey:@(j)];
-        }
+        
+        //4. 这里就先直接由assT的GV来自举测试下，因为切入点不太好找，测试时，没必要真去找切入点。
+        //4. 从passedT中一个个gv与protoColorDic做自举。
+        CGRect passedRect = [passedT rectByIndex:0];
+        
+        //7. 收集起来自举算法结果。
+        [TCRecognitionInvoke stZiJv:passedT beginAssIndex:0 lastProtoRect:passedRect lastAtAssRect:passedRect protoColorDic:colorDic ds:ds stModel:model];
+        
         //8. 收集
         [result addObject:model];
     }

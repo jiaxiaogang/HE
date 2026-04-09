@@ -484,19 +484,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [model updateBestGVs:beginBestGVItem assIndex:beginAssIndex];
         }
         
-        //21. 自举：每个assT一条条自举自身的gv。
-        for (NSInteger i = 1; i < assT.count; i++) {
-            NSInteger curIndex = (beginAssIndex + i) % assT.count;
-            
-            // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
-            BOOL havOld = [model getBestGVByAssIndex:curIndex];
-            if (havOld) continue;
-            
-            AIFeatureJvBuItem *bestItem = [self stZiJv:curIndex assT:assT lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds];
-            //2025.08.10: 此处有一条不成直接break不妥，毕竟有虚线或遮挡的也得能识别，改成continue。
-            if (!bestItem) continue;
-            [model updateBestGVs:bestItem assIndex:curIndex];
-        }
+        //21. 自举：每个assT一条条自举自身的gv（移到stZiJvWithAssT方法中循环并整体返回）。
+        [self stZiJv:assT beginAssIndex:beginAssIndex lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds stModel:model];
         
         //53. 成功识别过的区域防重：如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了（参考35042-TODO4）。
         [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
@@ -1667,41 +1656,50 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return gtResult;
 }
 
-+(AIFeatureJvBuItem*) stZiJv:(NSInteger)curIndex assT:(AIFeatureNode*)assT lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
-    // 数据准备
-    AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
-    NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
-    CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
-    
-    //22. 根据比例估算下一条protoGV的取值范围。
-    //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
-    CGFloat wRate = lastProtoRect.size.width / lastAtAssRect.size.width;            //ass&proto缩放量（如lastP宽6，lastA宽9，则比例为2/3）
-    CGFloat hRate = lastProtoRect.size.height / lastAtAssRect.size.height;          //ass&proto缩放量
-    CGFloat assDeltaX = curAtAssRect.origin.x - lastAtAssRect.origin.x;             //ass平移量（如lastA.x=9，curA.x=0，则平移为-9）
-    CGFloat assDeltaY = curAtAssRect.origin.y - lastAtAssRect.origin.y;             //ass平移量
-    CGFloat protoDeltaX = assDeltaX * wRate;                                        //proto平移量（如ass平移=-9，则proto平移=-9*2/3=-6）
-    CGFloat protoDeltaY = assDeltaY * hRate;                                        //proto平移量
-    CGRect defaultCurProtoRect = CGRectMake(lastProtoRect.origin.x + protoDeltaX,   //如lastP.x=0，平移-6后，得curP.x=-6。
-                                            lastProtoRect.origin.y + protoDeltaY,
-                                            curAtAssRect.size.width * wRate,        //如curA宽27，比例为2/3，得curP宽18。
-                                            curAtAssRect.size.height * hRate);
-    
-    // GV自举（按上条lastProtoRect来计算缩放锚点）。
-    AIFeatureJvBuItem *best = [self gvZiJv:defaultCurProtoRect newGV:curAssGV_p olds_Proto:lastProtoRect colorDic:protoColorDic ds:ds];
-    
-    //41. 有中断匹配不上的gv，直接计为自举审核失败。
-    //2025.05.10: 这里要注意冷启，如果有条中断立马就停，那像虚线画的图就没法识别到了，还是先去掉>0.1的判断。
-    //2025.05.10: gv太多了，如果中断还继续，性能极大浪费，也会导致真正后来者准确时，却失去自举的机会（虚线画的图也是在宏观一级层面识别它，而非虚线层面）。
-    //1. 即输入和谁都不完全相似时
-    //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
-    //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
-    if (!best || best.matchValue < 0.8f) return nil;
-    
-    //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
-    //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
-    //lastAtAssRect = curAtAssRect;
-    // NSLog(@"%p: 识别assST%ld.%ld %@ %@ 匹配度:%.2f",model,assT.pId,curIndex,Rect2Str(lastAtAssRect),Rect2Str(lastProtoRect),gMatchValue);
-    return best;
+/**
+ *  MARK:--------------------自举：每个assT一条条自举自身的gv--------------------
+ *  @return 返回所有成功自举的bestItem数组（按curIndex顺序）
+ */
++(AIFeatureJvBuModel*) stZiJv:(AIFeatureNode*)assT beginAssIndex:(NSInteger)beginAssIndex lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds stModel:(AIFeatureJvBuModel*)stModel {
+
+    // 21. 自举：每个assT一条条自举自身的gv。
+    for (NSInteger i = 1; i < assT.count; i++) {
+        NSInteger curIndex = (beginAssIndex + i) % assT.count;
+
+        // 数据准备
+        AIKVPointer *curAssGV_p = ARR_INDEX(assT.content_ps, curIndex);
+        NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
+        CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
+        
+        //22. 根据比例估算下一条protoGV的取值范围。
+        //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
+        CGFloat wRate = lastProtoRect.size.width / lastAtAssRect.size.width;            //ass&proto缩放量（如lastP宽6，lastA宽9，则比例为2/3）
+        CGFloat hRate = lastProtoRect.size.height / lastAtAssRect.size.height;          //ass&proto缩放量
+        CGFloat assDeltaX = curAtAssRect.origin.x - lastAtAssRect.origin.x;             //ass平移量（如lastA.x=9，curA.x=0，则平移为-9）
+        CGFloat assDeltaY = curAtAssRect.origin.y - lastAtAssRect.origin.y;             //ass平移量
+        CGFloat protoDeltaX = assDeltaX * wRate;                                        //proto平移量（如ass平移=-9，则proto平移=-9*2/3=-6）
+        CGFloat protoDeltaY = assDeltaY * hRate;                                        //proto平移量
+        CGRect defaultCurProtoRect = CGRectMake(lastProtoRect.origin.x + protoDeltaX,   //如lastP.x=0，平移-6后，得curP.x=-6。
+                                                lastProtoRect.origin.y + protoDeltaY,
+                                                curAtAssRect.size.width * wRate,        //如curA宽27，比例为2/3，得curP宽18。
+                                                curAtAssRect.size.height * hRate);
+        
+        // GV自举（按上条lastProtoRect来计算缩放锚点）。
+        AIFeatureJvBuItem *best = [self gvZiJv:defaultCurProtoRect newGV:curAssGV_p olds_Proto:lastProtoRect colorDic:protoColorDic ds:ds];
+        
+        //41. 有中断匹配不上的gv，直接计为自举审核失败。
+        //2025.05.10: 这里要注意冷启，如果有条中断立马就停，那像虚线画的图就没法识别到了，还是先去掉>0.1的判断。
+        //2025.05.10: gv太多了，如果中断还继续，性能极大浪费，也会导致真正后来者准确时，却失去自举的机会（虚线画的图也是在宏观一级层面识别它，而非虚线层面）。
+        //1. 即输入和谁都不完全相似时
+        //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
+        //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
+        if (!best || best.matchValue < 0.8f) continue;
+
+        //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
+        //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
+        [stModel updateBestGVs:best assIndex:curIndex];
+    }
+    return stModel;
 }
 
 /**
