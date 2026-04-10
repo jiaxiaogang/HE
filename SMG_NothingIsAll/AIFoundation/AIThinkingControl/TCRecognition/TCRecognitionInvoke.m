@@ -1611,7 +1611,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
                 AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGVIndex:gvIndex olds_Proto:targetGT_Proto colorDic:colorDic ds:ds baseST:curSTResult.baseST oldBestGVs:curSTResult.bestGVs];
-                if (!gvResult || gvResult.matchValue < 0.8f) continue;
+                if (!gvResult || gvResult.matchValue < 0.7f) continue;
                 [curSTResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
                 
                 // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
@@ -1673,7 +1673,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //1. 即输入和谁都不完全相似时
         //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
         //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
-        if (!best || best.matchValue < 0.8f) continue;
+        if (!best || best.matchValue < 0.7f) continue;
 
         //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
         //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
