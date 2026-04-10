@@ -463,9 +463,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 无复用时新建并识别。
         AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
         
-        // 防重：一个assIndex只收集一次bestGV，剩下的全防重掉（参考35123-方案2）（状态:关）。
-        BOOL havOld = [model getBestGVByAssIndex:beginAssIndex];
-        
         //21. 自举：每个assT一条条自举自身的gv（移到stZiJvWithAssT方法中循环并整体返回）。
         [self stZiJv:assT beginAssIndex:beginAssIndex lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds stModel:model];
         
@@ -1700,6 +1697,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         CGRect gv_Proto = value.bestGVAtProtoTRect;
         
         //TODO: 原来的锚点是根据olds_Proto和new_Proto来计算的，现在改为在minX,maxX,minY,maxY分别计算四个锚点。
+        // 用baseST.rects就可以计算预期对齐，然后再用gv_Proto计算真实的对齐。
         
         
 
