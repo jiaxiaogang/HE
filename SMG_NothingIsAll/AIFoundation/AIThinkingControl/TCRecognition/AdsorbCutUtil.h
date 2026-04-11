@@ -1,5 +1,5 @@
 //
-//  ZiJvUtil.h
+//  WeightedSumCutUtil.h
 //  SMG_NothingIsAll
 //
 //  Created by jia on 2026/4/10.
@@ -8,7 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
-@interface ZiJvUtil : NSObject
+/**
+ *  MARK:--------------------加权求和切图法（又称：吸附切图算法）--------------------
+ */
+@interface WeightedSumCutUtil : NSObject
 
 /**
  *  MARK:--------------------获取切图候选范围（返回十条）--------------------

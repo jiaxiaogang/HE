@@ -1580,7 +1580,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         STZiJvModelV2 *bestSTResult = nil;
         
         // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
-        NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:targetGT curIndex:stIndex baseT_Proto:targetGT_Proto];
+        NSArray *cut_Protos = [WeightedSumCutUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:targetGT curIndex:stIndex baseT_Proto:targetGT_Proto];
         for (NSValue *cut_Proto in cut_Protos) {
             // checkST_Proto已经算出st在proto中的rect。
             CGRect checkST_Proto = cut_Proto.CGRectValue;
@@ -1655,7 +1655,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AIKVPointer *newGV = ARR_INDEX(baseST.content_ps, newGVIndex);
     
     // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
-    NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:oldBestGVs baseT:baseST curIndex:newGVIndex baseT_Proto:baseST_Proto];
+    NSArray *cut_Protos = [WeightedSumCutUtil calcAdsorbProtoRects:oldBestGVs baseT:baseST curIndex:newGVIndex baseT_Proto:baseST_Proto];
     AIFeatureJvBuItem *best = nil;
     for (NSValue *cut_Proto in cut_Protos) {
         CGRect checkCurProtoRect = cut_Proto.CGRectValue;

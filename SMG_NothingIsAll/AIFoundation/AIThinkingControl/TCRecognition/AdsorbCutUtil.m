@@ -1,14 +1,17 @@
 //
-//  ZiJvUtil.m
+//  WeightedSumCutUtil.m
 //  SMG_NothingIsAll
 //
 //  Created by jia on 2026/4/10.
 //  Copyright © 2026 XiaoGang. All rights reserved.
 //
 
-#import "ZiJvUtil.h"
+#import "WeightedSumCutUtil.h"
 
-@implementation ZiJvUtil
+/**
+ *  MARK:--------------------加权求和切图法（又称：吸附切图算法）--------------------
+ */
+@implementation WeightedSumCutUtil
 
 /**
  *  MARK:--------------------吸附公式--------------------

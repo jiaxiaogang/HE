@@ -82,7 +82,7 @@
 #import "GTItemV2.h"
 #import "GTZiJvModelV2.h"
 #import "STZiJvModelV2.h"
-#import "ZiJvUtil.h"
+#import "WeightedSumCutUtil.h"
 
 //短时记忆
 #import "TOAlgModel.h"
