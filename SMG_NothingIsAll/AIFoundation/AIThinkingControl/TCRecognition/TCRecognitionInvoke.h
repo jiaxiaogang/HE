@@ -48,7 +48,4 @@
 //+(void) recognitionCansetAlg:(AIAlgNodeBase*)protoAlg sceneFo:(AIFoNodeBase*)sceneFo inModel:(AIShortMatchModel*)inModel;
 //+(void) recognitionCansetFo:(AIKVPointer*)newCanset_p sceneFo:(AIKVPointer*)sceneFo_p es:(EffectStatus)es;
 
-
-+(AIFeatureJvBuModel*) stZiJv:(AIFeatureNode*)assT beginAssIndex:(NSInteger)beginAssIndex lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds stModel:(AIFeatureJvBuModel*)stModel;
-
 @end

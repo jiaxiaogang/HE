@@ -80,7 +80,7 @@
 -(CGRect) getItemGV_ProtoRect:(NSInteger)itemAssIndex;
 // 计算整个assST_ProtoRect
 @property (assign, nonatomic) CGRect assST_ProtoRect;
--(void) run4AssST_ProtoRect;
+-(CGRect) run4AssST_ProtoRect;
 
 // bestGVs根据匹配度末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4MatchValue;

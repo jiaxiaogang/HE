@@ -168,14 +168,18 @@
 }
 
 // 计算整个assST_ProtoRect
--(void) run4AssST_ProtoRect {
+-(CGRect) run4AssST_ProtoRect {
     CGRect bestGVs_AssST = [SMGUtils convertArr2Rect:self.bestGVs.allKeys itemRectBlock:^CGRect(NSNumber *item) {
         return [self.assT rectByIndex:item.integerValue];
     }];
     CGRect assSTRect = [SMGUtils convertArr2Rect:self.assT.rects itemRectBlock:^CGRect(NSValue *item) {
         return item.CGRectValue;
     }];
-    self.assST_ProtoRect = [SMGUtils convertBAtAWithCAtA:self.bestGVsAtProtoTRect cAtB:bestGVs_AssST B:assSTRect];
+    CGRect bestGVs_Proto = [SMGUtils convertArr2Rect:self.bestGVs.allValues itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+        return item.bestGVAtProtoTRect;
+    }];
+    self.assST_ProtoRect = [SMGUtils convertBAtAWithCAtA:bestGVs_Proto cAtB:bestGVs_AssST B:assSTRect];
+    return self.assST_ProtoRect;
 }
 
 // bestGVs根据匹配度末尾淘汰20%（参考35138-TODO1）。

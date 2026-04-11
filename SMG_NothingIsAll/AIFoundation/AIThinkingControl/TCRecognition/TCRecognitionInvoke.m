@@ -460,11 +460,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIFeatureJvBuModel *oldModel = [self getSTModelFromPoolV2:result runedSTModelsPool:stModels newBeginGV_ProtoRect:lastProtoRect newBeginAssIndex:beginAssIndex assST:assT];
         if (oldModel) continue;
         
-        // 无复用时新建并识别。
-        AIFeatureJvBuModel *model = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
-        
         //21. 自举：每个assT一条条自举自身的gv（移到stZiJvWithAssT方法中循环并整体返回）。
-        [self stZiJv:assT beginAssIndex:beginAssIndex lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds stModel:model];
+        CGRect beginGV_AssT = [assT rectByIndex:beginAssIndex];
+        CGRect beginGV_Proto = protoRect;
+        CGRect defaultBaseST_Proto = [SMGUtils convertNewAAtCWithAAtB:beginGV_AssT aAtC:beginGV_Proto newAAtB:assT.rect];
+        AIFeatureJvBuModel *model = [self stZiJv:assT beginAssIndex:beginAssIndex lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds defaultBaseST_Proto:defaultBaseST_Proto];
         
         //53. 成功识别过的区域防重：如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了（参考35042-TODO4）。
         [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
@@ -1583,32 +1583,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
         NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:targetGT curIndex:stIndex];
         for (NSValue *cut_Proto in cut_Protos) {
+            // checkST_Proto已经算出st在proto中的rect。
             CGRect checkST_Proto = cut_Proto.CGRectValue;
             checkST_Proto = [SMGUtils rectNoDot:checkST_Proto];
-            
-            // TODOTOMORROW20260411: checkST_Proto已经算出st在proto中的rect，下面不需要计算gv_GT了，itemGV_Proto应该在gvZiJv()中用不着了。
             
             STZiJvModelV2 *curSTResult = [STZiJvModelV2 new];
             curSTResult.baseST = itemST;
             for (NSInteger gvIndex = 0; gvIndex < itemST.count; gvIndex++) {
                 
-                CGRect itemGV_ST = [curSTResult.baseST rectByIndex:gvIndex];
-                
-                // ==================== Step3: 先根据已收集，估算出，当前itemGV_Proto（参考36114）====================
-                
-                // 1. 根据已收集，估算整个targetGT_Proto。
-                CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? gtResult.hopeProtoRectByAll : defaultTargetGT_Proto;
-                
-                // 2. 计算itemGV_TargetGT。
-                CGRect itemGV_TargetGT = [SMGUtils convertAAtCWithAAtB:itemGV_ST bAtC:itemST_GT protoBSize:itemSTRect.size];
-                
-                // 3. 算出itemGV_Proto。
-                CGRect itemGV_Proto = [SMGUtils convertAAtCWithAAtB:itemGV_TargetGT bAtC:targetGT_Proto protoBSize:targetGTRect.size];
-                
                 // ==================== Step4: GV切图自举，计算itemGV与实际Proto的匹配度等（参考36112）====================
                 
                 // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
-                AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGVIndex:gvIndex olds_Proto:targetGT_Proto colorDic:colorDic ds:ds baseST:curSTResult.baseST oldBestGVs:curSTResult.bestGVs];
+                AIFeatureJvBuItem *gvResult = [self gvZiJv:gvIndex colorDic:colorDic ds:ds baseST:curSTResult.baseST oldBestGVs:curSTResult.bestGVs baseST_Proto:checkST_Proto];
                 if (!gvResult) continue;
                 [curSTResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
                 
@@ -1639,31 +1625,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  MARK:--------------------自举：每个assT一条条自举自身的gv--------------------
  *  @return 返回所有成功自举的bestItem数组（按curIndex顺序）
  */
-+(AIFeatureJvBuModel*) stZiJv:(AIFeatureNode*)assT beginAssIndex:(NSInteger)beginAssIndex lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds stModel:(AIFeatureJvBuModel*)stModel {
-
++(AIFeatureJvBuModel*) stZiJv:(AIFeatureNode*)assT beginAssIndex:(NSInteger)beginAssIndex lastProtoRect:(CGRect)lastProtoRect lastAtAssRect:(CGRect)lastAtAssRect protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds defaultBaseST_Proto:(CGRect)defaultBaseST_Proto {
+    // 无复用时新建并识别。
+    AIFeatureJvBuModel *stModel = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
+    
     // 21. 自举：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < assT.count; i++) {
         NSInteger curIndex = (beginAssIndex + i) % assT.count;
-
-        // 数据准备
-        NSValue *curAtAssRectValue = ARR_INDEX(assT.rects, curIndex);
-        CGRect curAtAssRect = curAtAssRectValue.CGRectValue;
         
-        //22. 根据比例估算下一条protoGV的取值范围。
-        //2025.05.09: bugfix-原来计算错误有NaN的情况，改为明确按缩放+平移来完成（ass和proto缩放量一致，平移量成正例）。
-        CGFloat wRate = lastProtoRect.size.width / lastAtAssRect.size.width;            //ass&proto缩放量（如lastP宽6，lastA宽9，则比例为2/3）
-        CGFloat hRate = lastProtoRect.size.height / lastAtAssRect.size.height;          //ass&proto缩放量
-        CGFloat assDeltaX = curAtAssRect.origin.x - lastAtAssRect.origin.x;             //ass平移量（如lastA.x=9，curA.x=0，则平移为-9）
-        CGFloat assDeltaY = curAtAssRect.origin.y - lastAtAssRect.origin.y;             //ass平移量
-        CGFloat protoDeltaX = assDeltaX * wRate;                                        //proto平移量（如ass平移=-9，则proto平移=-9*2/3=-6）
-        CGFloat protoDeltaY = assDeltaY * hRate;                                        //proto平移量
-        CGRect defaultCurProtoRect = CGRectMake(lastProtoRect.origin.x + protoDeltaX,   //如lastP.x=0，平移-6后，得curP.x=-6。
-                                                lastProtoRect.origin.y + protoDeltaY,
-                                                curAtAssRect.size.width * wRate,        //如curA宽27，比例为2/3，得curP宽18。
-                                                curAtAssRect.size.height * hRate);
+        // baseST_Proto最初时，由lastProtoRect估算，收集到stModel.bestGVs后再以bestGVs来估算。
+        CGRect baseST_Proto = stModel.bestGVs.count > 0 ? [stModel run4AssST_ProtoRect] : defaultBaseST_Proto;
         
         // GV自举（按上条lastProtoRect来计算缩放锚点）。
-        AIFeatureJvBuItem *best = [self gvZiJv:defaultCurProtoRect newGVIndex:curIndex olds_Proto:lastProtoRect colorDic:protoColorDic ds:ds baseST:stModel.assT oldBestGVs:stModel.bestGVs];
+        AIFeatureJvBuItem *best = [self gvZiJv:curIndex colorDic:protoColorDic ds:ds baseST:stModel.assT oldBestGVs:stModel.bestGVs baseST_Proto:baseST_Proto];
         
         //41. 有中断匹配不上的gv，直接计为自举审核失败。
         if (!best) continue;
@@ -1677,11 +1651,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 /**
  *  MARK:--------------------GV自举（通过CutImg切图实现）--------------------
- *  @param olds_Proto : 用来计算缩放锚点（为保持：缩放时受即有范围影响，整体相对位置不变）。
  *  @param oldBestGVs : 已收集到的bestGVs
  */
-+(AIFeatureJvBuItem*) gvZiJv:(CGRect)new_Proto newGVIndex:(NSInteger)newGVIndex olds_Proto:(CGRect)olds_Proto colorDic:(NSDictionary*)colorDic ds:(NSString*)ds baseST:(AIFeatureNode*)baseST oldBestGVs:(NSDictionary*)oldBestGVs {
++(AIFeatureJvBuItem*) gvZiJv:(NSInteger)newGVIndex colorDic:(NSDictionary*)colorDic ds:(NSString*)ds baseST:(AIFeatureNode*)baseST oldBestGVs:(NSDictionary*)oldBestGVs baseST_Proto:(CGRect)baseST_Proto {
     AIKVPointer *newGV = ARR_INDEX(baseST.content_ps, newGVIndex);
+    
+    
+    // TODOTOMORROW20260411: 把这里将计算cut_Protos改为cut_STs，然后与传入的baseST_Proto进行综合计算，求出切图cut_Proto。
     
     // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
     NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:oldBestGVs baseT:baseST curIndex:newGVIndex];
