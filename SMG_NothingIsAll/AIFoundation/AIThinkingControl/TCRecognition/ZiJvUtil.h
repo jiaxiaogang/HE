@@ -11,13 +11,9 @@
 @interface ZiJvUtil : NSObject
 
 /**
- *  MARK:--------------------计算吸附后的assRect--------------------
- *  @param bestGVs           本体bestGVs字典
- *  @param baseT             本体AIFeatureNode
- *  @param curIndex          本体下标
- *  @param force             吸附强度调整参数 (0~1)，越大吸附越强烈（为1时最近的100%匹配则完全吸附，为0.5时最近的100%匹配也只吸一半）
- *  @return                  吸附后的protoRect
+ *  MARK:--------------------获取切图候选范围（返回十条）--------------------
+ *  @desc 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
  */
-+ (CGRect) calcAdsorbAssRect:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex force:(CGFloat)force;
++ (NSArray*) calcAdsorbProtoRects:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex;
 
 @end

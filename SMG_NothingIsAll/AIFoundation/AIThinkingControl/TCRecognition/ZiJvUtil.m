@@ -59,8 +59,11 @@
 + (CGFloat) calcAdsorbEdgeWithBaseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex bestGVs:(NSDictionary*)bestGVs edgeBlock:(CGFloat(^)(CGRect))edgeBlock max:(CGFloat)max force:(CGFloat)force {
     CGFloat curValue = edgeBlock([baseT rectByIndex:curIndex]) / max;
     return [self adsorbWithBaseValue_Multi:curValue envs:bestGVs.allKeys envBlock:^NSDictionary *(NSNumber *key) {
+        // cur和other之间对齐：先取出envValue值（参考37024-TODO6）。
         CGFloat envValue = edgeBlock([baseT rectByIndex:key.integerValue]) / max;
         AIFeatureJvBuItem *value = [bestGVs objectForKey:key];
+        
+        // cur和other之间对齐：计算curValue与envValue对齐值（越近越对齐，越远越对不齐）（参考37024-TODO6）。
         CGFloat distanceWeight = 1.0 - fabs(envValue - curValue);
         
         // 综合考虑距离和匹配度：权重为距离乘匹配度（参考37024-TODO7）。
@@ -98,6 +101,42 @@
     CGFloat adsorW = (adsorCurMaxX - adsorCurMinX) * width;
     CGFloat adsorH = (adsorCurMaxY - adsorCurMinY) * height;
     return CGRectMake(adsorX, adsorY, adsorW, adsorH);
+}
+
+/**
+ *  MARK:--------------------获取切图候选范围（返回十条）--------------------
+ *  @desc 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
+ */
++ (NSArray*) calcAdsorbProtoRects:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex {
+    // 求出已有部分在ass和proto的rect。
+    CGRect bests_Proto = [SMGUtils convertArr2Rect:bestGVs.allValues itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+        return item.bestGVAtProtoTRect;
+    }];
+    CGRect bests_Ass = [SMGUtils convertArr2Rect:bestGVs.allKeys itemRectBlock:^CGRect(NSNumber *key) {
+        return [baseT rectByIndex:key.integerValue];
+    }];
+    
+    // 根据吸附强度分别：计算在Ass的始终切图范围（参考37024-TODO8&9）。
+    CGRect new_AssFrom = [self calcAdsorbAssRect:bestGVs baseT:baseT curIndex:curIndex force:0.5f];
+    CGRect new_AssTo = [self calcAdsorbAssRect:bestGVs baseT:baseT curIndex:curIndex force:1.0f];
+    
+    // 转换为在Proto的始终切图范围（参考37024-TODO4）。
+    CGRect new_ProtoFrom = [SMGUtils convertNewAAtCWithAAtB:bests_Ass aAtC:bests_Proto newAAtB:new_AssFrom];
+    CGRect new_ProtoTo = [SMGUtils convertNewAAtCWithAAtB:bests_Ass aAtC:bests_Proto newAAtB:new_AssTo];
+
+    // 从from到to，平均取十帧rect，转成数组返回（参考37024-TODO10）。
+    NSMutableArray *result = [NSMutableArray array];
+    CGFloat fromX = CGRectGetMinX(new_ProtoFrom), fromY = CGRectGetMinY(new_ProtoFrom), fromW = new_ProtoFrom.size.width, fromH = new_ProtoFrom.size.height;
+    CGFloat toX = CGRectGetMinX(new_ProtoTo), toY = CGRectGetMinY(new_ProtoTo), toW = new_ProtoTo.size.width, toH = new_ProtoTo.size.height;
+    for (NSInteger i = 0; i < 10; i++) {
+        CGFloat t = i / 9.0f; // 0~1（10条分成9份，是为了包含首尾）。
+        CGFloat x = fromX + (toX - fromX) * t;
+        CGFloat y = fromY + (toY - fromY) * t;
+        CGFloat w = fromW + (toW - fromW) * t;
+        CGFloat h = fromH + (toH - fromH) * t;
+        [result addObject:[NSValue valueWithCGRect:CGRectMake(x, y, w, h)]];
+    }
+    return result;
 }
 
 @end

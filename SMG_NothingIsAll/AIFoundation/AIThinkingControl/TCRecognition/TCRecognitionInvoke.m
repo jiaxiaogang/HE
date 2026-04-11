@@ -1579,13 +1579,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // 找出最好的stResult结果。
         STZiJvModelV2 *bestSTResult = nil;
-        CGPoint anchor = [SMGUtils convertAnchorByOldRect:itemSTRect newRect:itemST_GT];
-        NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)]; // @[@(1)]
-        for (NSNumber *scale in scales) {
+        
+        // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
+        NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:targetGT curIndex:stIndex];
+        for (NSValue *cut_Proto in cut_Protos) {
+            CGRect checkST_Proto = cut_Proto.CGRectValue;
+            checkST_Proto = [SMGUtils rectNoDot:checkST_Proto];
             
-            // 根据锚点，求出新st的rect。
-            CGRect itemST_GT_Scaled = [SMGUtils convertRectByAnchor:anchor scale:scale.floatValue protoRect:itemST_GT];
-            itemST_GT_Scaled = [SMGUtils rectNoDot:itemST_GT_Scaled];
+            // TODOTOMORROW20260411: checkST_Proto已经算出st在proto中的rect，下面不需要计算gv_GT了，itemGV_Proto应该在gvZiJv()中用不着了。
             
             STZiJvModelV2 *curSTResult = [STZiJvModelV2 new];
             curSTResult.baseST = itemST;
@@ -1608,7 +1609,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 
                 // GV自举（按整个taqrgetGT_Proto来计算缩放锚点）。
                 AIFeatureJvBuItem *gvResult = [self gvZiJv:itemGV_Proto newGVIndex:gvIndex olds_Proto:targetGT_Proto colorDic:colorDic ds:ds baseST:curSTResult.baseST oldBestGVs:curSTResult.bestGVs];
-                if (!gvResult || gvResult.matchValue < 0.7f) continue;
+                if (!gvResult) continue;
                 [curSTResult.bestGVs setObject:gvResult forKey:@(gvIndex)];
                 
                 // 每收集一条bestGV，就把stResult.hopeProtoRectByAllCache置为null，以及时更新。
@@ -1665,12 +1666,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIFeatureJvBuItem *best = [self gvZiJv:defaultCurProtoRect newGVIndex:curIndex olds_Proto:lastProtoRect colorDic:protoColorDic ds:ds baseST:stModel.assT oldBestGVs:stModel.bestGVs];
         
         //41. 有中断匹配不上的gv，直接计为自举审核失败。
-        //2025.05.10: 这里要注意冷启，如果有条中断立马就停，那像虚线画的图就没法识别到了，还是先去掉>0.1的判断。
-        //2025.05.10: gv太多了，如果中断还继续，性能极大浪费，也会导致真正后来者准确时，却失去自举的机会（虚线画的图也是在宏观一级层面识别它，而非虚线层面）。
-        //1. 即输入和谁都不完全相似时
-        //2. 或现在还没抽象特征时，从具象中竞争出匹配度高的。
-        //3. 卡的太严这里就断了，看下是否改成（全跑完再竞争匹配度，或一条条ref.target跑下一条gv，边跑边竞争末尾淘汰）。
-        if (!best || best.matchValue < 0.7f) continue;
+        if (!best) continue;
 
         //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
         //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
@@ -1687,35 +1683,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(AIFeatureJvBuItem*) gvZiJv:(CGRect)new_Proto newGVIndex:(NSInteger)newGVIndex olds_Proto:(CGRect)olds_Proto colorDic:(NSDictionary*)colorDic ds:(NSString*)ds baseST:(AIFeatureNode*)baseST oldBestGVs:(NSDictionary*)oldBestGVs {
     AIKVPointer *newGV = ARR_INDEX(baseST.content_ps, newGVIndex);
     
-    // 计算锚点。
-    for (NSNumber *key in oldBestGVs.allKeys) {
-        // 根据oldBestGVs的key做下标，可以从baseST节点取到gv_Ass。
-        CGRect gv_Ass = [baseST rectByIndex:key.integerValue];
-        
-        // 根据oldBestGVs的value（AIFeatureJvBuItem类型），可以直接取到gv_Proto。
-        AIFeatureJvBuItem *value = [oldBestGVs objectForKey:key];
-        CGRect gv_Proto = value.bestGVAtProtoTRect;
-        
-        //TODO: 原来的锚点是根据olds_Proto和new_Proto来计算的，现在改为在minX,maxX,minY,maxY分别计算四个锚点。
-        // 用baseST.rects就可以计算预期对齐，然后再用gv_Proto计算真实的对齐。
-        
-        
-
-    }
-    
-    //23. 找出锚点。
-    CGPoint anchor = [SMGUtils convertAnchorByOldRect:olds_Proto newRect:new_Proto];
-    
-    //31. 根据估算，到proto色值字典中，找匹配度最高的新切gv粒度比例（从缩小2倍，到增大2倍，中间每层1.3倍，一个个尝试，哪个最相近）。
-    //2025.06.12：调整成只有1测试先，现在废弃组特征后，刚开始测bug应该还比较多，单纯1都测不过来，加更多更难测修bug了。
-    //2026.03.28：在估算的附近多做尝试，尝试找出偏移最准（现在有锚点，所以先只缩放不平移）（参考36114-TODO）。
-    NSArray *scales = @[@(1),@(1.1),@(0.9),@(1.2),@(0.8)]; // @[@(1)]
+    // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
+    NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:oldBestGVs baseT:baseST curIndex:newGVIndex];
     AIFeatureJvBuItem *best = nil;
-    for (NSNumber *item in scales) {
-        CGFloat scale = item.floatValue;
-        //32. 锚点不变，求出各比例下的protoRect（缩放时，锚点与中心点的xy偏移量与之正相关）。
-        //x = anchorX + (CGRectGetMidX(curProtoRect) - anchorX) * scale - curProtoRect.size.width * scale * 0.5;
-        CGRect checkCurProtoRect = [SMGUtils convertRectByAnchor:anchor scale:scale protoRect:new_Proto];
+    for (NSValue *cut_Proto in cut_Protos) {
+        CGRect checkCurProtoRect = cut_Proto.CGRectValue;
         
         // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
         // 2025.06.20：更提前转成int，因为在getSubDots的时候，就需要是正确的int值了。
@@ -1757,8 +1729,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 // 记录diff匹配度。
                 if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
             }
-            CGFloat matchDegree = MIN(1, scale) / MAX(1, scale);
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:matchDegree diffValue:curDiffMatchValue baseGV_p:newGV];
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:1 diffValue:curDiffMatchValue baseGV_p:newGV];
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(newGV.pointerId)];
