@@ -1572,20 +1572,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSInteger stIndex = (beginIndex + i) % targetGT.count;
         AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, stIndex);
         AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
-        CGRect itemST_GT = [gtResult.baseGT rectByIndex:stIndex];
-        CGRect itemSTRect = itemST.rect;
         
         // ==================== step2. 根据当前itemST目标，对微观一级allGV进行自举 ====================
+        CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? [gtResult hopeProtoRectByAll] : defaultTargetGT_Proto;
         
         // 找出最好的stResult结果。
         STZiJvModelV2 *bestSTResult = nil;
         
         // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
-        NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:targetGT curIndex:stIndex];
+        NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:targetGT curIndex:stIndex baseT_Proto:targetGT_Proto];
         for (NSValue *cut_Proto in cut_Protos) {
             // checkST_Proto已经算出st在proto中的rect。
             CGRect checkST_Proto = cut_Proto.CGRectValue;
-            checkST_Proto = [SMGUtils rectNoDot:checkST_Proto];
             
             STZiJvModelV2 *curSTResult = [STZiJvModelV2 new];
             curSTResult.baseST = itemST;
@@ -1656,11 +1654,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(AIFeatureJvBuItem*) gvZiJv:(NSInteger)newGVIndex colorDic:(NSDictionary*)colorDic ds:(NSString*)ds baseST:(AIFeatureNode*)baseST oldBestGVs:(NSDictionary*)oldBestGVs baseST_Proto:(CGRect)baseST_Proto {
     AIKVPointer *newGV = ARR_INDEX(baseST.content_ps, newGVIndex);
     
-    
-    // TODOTOMORROW20260411: 把这里将计算cut_Protos改为cut_STs，然后与传入的baseST_Proto进行综合计算，求出切图cut_Proto。
-    
     // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
-    NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:oldBestGVs baseT:baseST curIndex:newGVIndex];
+    NSArray *cut_Protos = [ZiJvUtil calcAdsorbProtoRects:oldBestGVs baseT:baseST curIndex:newGVIndex baseT_Proto:baseST_Proto];
     AIFeatureJvBuItem *best = nil;
     for (NSValue *cut_Proto in cut_Protos) {
         CGRect checkCurProtoRect = cut_Proto.CGRectValue;

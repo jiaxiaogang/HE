@@ -76,7 +76,7 @@
 }
 
 /**
- *  MARK:--------------------计算吸附后的assRect--------------------
+ *  MARK:--------------------计算吸附后的curGV_BaseT--------------------
  *  @param bestGVs           本体bestGVs字典
  *  @param baseT             本体AIFeatureNode
  *  @param curIndex          本体下标
@@ -106,23 +106,22 @@
 /**
  *  MARK:--------------------获取切图候选范围（返回十条）--------------------
  *  @desc 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
+ *  @param baseT_Proto : baseT给的总空间非常重要，对每个bestGV最终能切到多少有决定性作用（并且baseST也往往是吸附锚点算出来的，所以必须得传过来）。
  */
-+ (NSArray*) calcAdsorbProtoRects:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex {
-    // 求出已有部分在ass和proto的rect。
-    CGRect bests_Proto = [SMGUtils convertArr2Rect:bestGVs.allValues itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-        return item.bestGVAtProtoTRect;
-    }];
-    CGRect bests_Ass = [SMGUtils convertArr2Rect:bestGVs.allKeys itemRectBlock:^CGRect(NSNumber *key) {
-        return [baseT rectByIndex:key.integerValue];
-    }];
++ (NSArray*) calcAdsorbProtoRects:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex baseT_Proto:(CGRect)baseT_Proto {
+    // 求出baseT的总rect。
+    CGRect baseTRect = baseT.rect;
     
     // 根据吸附强度分别：计算在Ass的始终切图范围（参考37024-TODO8&9）。
-    CGRect new_AssFrom = [self calcAdsorbAssRect:bestGVs baseT:baseT curIndex:curIndex force:0.5f];
-    CGRect new_AssTo = [self calcAdsorbAssRect:bestGVs baseT:baseT curIndex:curIndex force:1.0f];
+    CGRect new_BaseTFrom = [self calcAdsorbAssRect:bestGVs baseT:baseT curIndex:curIndex force:0.5f];
+    CGRect new_BaseTTo = [self calcAdsorbAssRect:bestGVs baseT:baseT curIndex:curIndex force:1.0f];
     
     // 转换为在Proto的始终切图范围（参考37024-TODO4）。
-    CGRect new_ProtoFrom = [SMGUtils convertNewAAtCWithAAtB:bests_Ass aAtC:bests_Proto newAAtB:new_AssFrom];
-    CGRect new_ProtoTo = [SMGUtils convertNewAAtCWithAAtB:bests_Ass aAtC:bests_Proto newAAtB:new_AssTo];
+    CGRect new_ProtoFrom = [SMGUtils convertAAtCWithAAtB:new_BaseTFrom bAtC:baseT_Proto protoBSize:baseTRect.size];
+    CGRect new_ProtoTo = [SMGUtils convertAAtCWithAAtB:new_BaseTTo bAtC:baseT_Proto protoBSize:baseTRect.size];
+    
+    // bestGVs为空时，from和to都是切入GV自身，不必返回10条，只返回自己一条就行。
+    if (CGRectEqualToRect(new_ProtoFrom, new_ProtoTo)) return @[@(new_ProtoFrom)];
 
     // 从from到to，平均取十帧rect，转成数组返回（参考37024-TODO10）。
     NSMutableArray *result = [NSMutableArray array];
