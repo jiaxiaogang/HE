@@ -7,8 +7,6 @@
 //
 
 #import "ZiJvUtil.h"
-#import "AIFeatureNode.h"
-#import "AIFeatureJvBuItem.h"
 
 @implementation ZiJvUtil
 
@@ -55,37 +53,44 @@
  *  @param bestGVs           环境字典
  *  @param edgeBlock         边提取函数
  *  @param max               分母（宽或高）
+ *  @param force             吸附强度调整参数 (0~1)，越大吸附越强烈（为1时最近的100%匹配则完全吸附，为0.5时最近的100%匹配也只吸一半）
  *  @return                  吸附后的边值
  */
-+ (CGFloat) calcAdsorbEdgeWithBaseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex bestGVs:(NSDictionary*)bestGVs edgeBlock:(CGFloat(^)(CGRect))edgeBlock max:(CGFloat)max {
++ (CGFloat) calcAdsorbEdgeWithBaseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex bestGVs:(NSDictionary*)bestGVs edgeBlock:(CGFloat(^)(CGRect))edgeBlock max:(CGFloat)max force:(CGFloat)force {
     CGFloat curValue = edgeBlock([baseT rectByIndex:curIndex]) / max;
     return [self adsorbWithBaseValue_Multi:curValue envs:bestGVs.allKeys envBlock:^NSDictionary *(NSNumber *key) {
         CGFloat envValue = edgeBlock([baseT rectByIndex:key.integerValue]) / max;
         AIFeatureJvBuItem *value = [bestGVs objectForKey:key];
         CGFloat distanceWeight = 1.0 - fabs(envValue - curValue);
+        
+        // 综合考虑距离和匹配度：权重为距离乘匹配度（参考37024-TODO7）。
         CGFloat weight = distanceWeight * value.matchValue;
+        
+        // 乘以一个force参数来调整吸附强度（参考37023-锚点抖动范围）。
+        weight *= force;
         return @{@"value": @(envValue), @"weight": @(weight)};
     }];
 }
 
 /**
- *  MARK:--------------------计算吸附后的protoRect--------------------
+ *  MARK:--------------------计算吸附后的assRect--------------------
  *  @param bestGVs           本体bestGVs字典
  *  @param baseT             本体AIFeatureNode
  *  @param curIndex          本体下标
+ *  @param force             吸附强度调整参数 (0~1)，越大吸附越强烈（为1时最近的100%匹配则完全吸附，为0.5时最近的100%匹配也只吸一半）
  *  @return                  吸附后的protoRect
  */
-+ (CGRect) calcAdsorbAssRect:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex {
++ (CGRect) calcAdsorbAssRect:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex force:(CGFloat)force {
     // 取整体宽高。
     CGRect baseTRect = baseT.rect;
     CGFloat width = baseTRect.size.width;
     CGFloat height = baseTRect.size.height;
     
     // 四条边分别计算吸附值，范围都是0~1。
-    CGFloat adsorCurMinX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinX(rect); } max:width];
-    CGFloat adsorCurMaxX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxX(rect); } max:width];
-    CGFloat adsorCurMinY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinY(rect); } max:height];
-    CGFloat adsorCurMaxY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxY(rect); } max:height];
+    CGFloat adsorCurMinX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinX(rect); } max:width force:force];
+    CGFloat adsorCurMaxX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxX(rect); } max:width force:force];
+    CGFloat adsorCurMinY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinY(rect); } max:height force:force];
+    CGFloat adsorCurMaxY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxY(rect); } max:height force:force];
     
     // 计算到吸附值后，根据四条边，再拼回rect返回。
     CGFloat adsorX = adsorCurMinX * width;

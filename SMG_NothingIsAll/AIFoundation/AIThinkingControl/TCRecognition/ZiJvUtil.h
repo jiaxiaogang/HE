@@ -7,9 +7,6 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <CoreGraphics/CoreGraphics.h>
-
-@class AIFeatureNode, AIFeatureJvBuItem;
 
 @interface ZiJvUtil : NSObject
 
@@ -18,8 +15,9 @@
  *  @param bestGVs           本体bestGVs字典
  *  @param baseT             本体AIFeatureNode
  *  @param curIndex          本体下标
+ *  @param force             吸附强度调整参数 (0~1)，越大吸附越强烈（为1时最近的100%匹配则完全吸附，为0.5时最近的100%匹配也只吸一半）
  *  @return                  吸附后的protoRect
  */
-+ (CGRect) calcAdsorbAssRect:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex;
++ (CGRect) calcAdsorbAssRect:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex force:(CGFloat)force;
 
 @end
