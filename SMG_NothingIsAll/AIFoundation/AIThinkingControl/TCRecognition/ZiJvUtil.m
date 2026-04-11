@@ -17,16 +17,28 @@
     return baseValue * (1.0f - envWeight) + envValue * envWeight;
 }
 
-+ (CGFloat) adsorbWithBaseValue_Multi:(CGFloat)baseValue envs:(NSArray<id>*)envs valueBlock:(CGFloat(^)(id env))valueBlock weightBlock:(CGFloat(^)(id env))weightBlock {
++ (CGFloat) adsorbWithBaseValue_Multi:(CGFloat)baseValue envs:(NSArray<id>*)envs envBlock:(NSDictionary *(^)(id))envBlock {
     if (envs.count == 0) return baseValue;
 
     CGFloat sum = 0;
     for (id env in envs) {
-        CGFloat envValue = valueBlock(env);
-        CGFloat envWeight = weightBlock(env);
+        NSDictionary *envInfo = envBlock(env);
+        CGFloat envValue = [envInfo[@"value"] floatValue];
+        CGFloat envWeight = [envInfo[@"weight"] floatValue];
         sum += [self adsorbWithBaseValue_Single:baseValue envValue:envValue envWeight:envWeight];
     }
     return sum / envs.count;
+}
+
++ (CGFloat) calcAdsorbEdgeWithBaseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex bestGVs:(NSDictionary*)bestGVs edgeBlock:(CGFloat(^)(CGRect))edgeBlock max:(CGFloat)max {
+    CGFloat curValue = edgeBlock([baseT rectByIndex:curIndex]) / max;
+    return [self adsorbWithBaseValue_Multi:curValue envs:bestGVs.allKeys envBlock:^NSDictionary *(NSNumber *key) {
+        CGFloat envValue = edgeBlock([baseT rectByIndex:key.integerValue]) / max;
+        AIFeatureJvBuItem *value = [bestGVs objectForKey:key];
+        CGFloat distanceWeight = 1.0 - fabs(envValue - curValue);
+        CGFloat weight = distanceWeight * value.matchValue;
+        return @{@"value": @(envValue), @"weight": @(weight)};
+    }];
 }
 
 + (CGRect) calcAdsorbProtoRect:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex {
@@ -34,37 +46,13 @@
     CGRect baseTRect = baseT.rect;
     CGFloat width = baseTRect.size.width;
     CGFloat height = baseTRect.size.height;
+
+    CGFloat adsorCurMinX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinX(rect); } max:width];
+    CGFloat adsorCurMaxX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxX(rect); } max:width];
+    CGFloat adsorCurMinY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinY(rect); } max:height];
+    CGFloat adsorCurMaxY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestGVs:bestGVs edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxY(rect); } max:height];
     
-    // 取本体的四条边的归一化值。
-    CGRect curRect = [baseT rectByIndex:curIndex];
-    CGFloat curMinX = CGRectGetMinX(curRect) / width;
-    CGFloat curMaxX = CGRectGetMaxX(curRect) / width;
-    CGFloat curMinY = CGRectGetMinX(curRect) / height;
-    CGFloat curMaxY = CGRectGetMaxY(curRect) / height;
-    
-    // 取环境的四条边的归一化值，并计算吸附后的值。
-    CGFloat adsorCurMinX = [self adsorbWithBaseValue_Multi:curMinX envs:bestGVs.allKeys valueBlock:^CGFloat(NSNumber *key) {
-        CGRect bestRect = [baseT rectByIndex:key.integerValue];
-        return CGRectGetMinX(bestRect) / width;
-    } weightBlock:^CGFloat(NSNumber *key) {
-        CGRect bestRect = [baseT rectByIndex:key.integerValue];
-        CGFloat envValue = CGRectGetMinX(bestRect) / width;
-        AIFeatureJvBuItem *value = [bestGVs objectForKey:key];
-        CGFloat distanceWeight = 1.0 - fabs(envValue - curMinX);
-        return distanceWeight * value.matchValue;
-    }];
-    
-    CGFloat adsorCurMaxX = [self adsorbWithBaseValue_Multi:curMaxX envs:bestGVs.allKeys valueBlock:^CGFloat(NSNumber *key) {
-        CGRect bestRect = [baseT rectByIndex:key.integerValue];
-        return CGRectGetMaxX(bestRect) / width;
-    } weightBlock:^CGFloat(NSNumber *key) {
-        CGRect bestRect = [baseT rectByIndex:key.integerValue];
-        CGFloat envValue = CGRectGetMaxX(bestRect) / width;
-        AIFeatureJvBuItem *value = [bestGVs objectForKey:key];
-        CGFloat distanceWeight = 1.0 - fabs(envValue - curMaxX);
-        return distanceWeight * value.matchValue;
-    }];
-    
+    // 计算到吸附值后，根据四条边，再拼回rect返回。
     
     // TODO: 实现吸附后的protoRect计算
     return CGRectZero;

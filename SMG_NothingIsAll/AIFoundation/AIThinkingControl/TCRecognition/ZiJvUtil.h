@@ -32,20 +32,30 @@ NS_ASSUME_NONNULL_BEGIN
  *  MARK:--------------------多环境吸附--------------------
  *  @param baseValue         本体值 (0~1)
  *  @param envs              环境数组 (NSArray<id>)
- *  @param valueBlock        读取环境值的block
- *  @param weightBlock       读取环境权重的block
+ *  @param envBlock          返回环境值和权重的block @{@"value": @(值), @"weight": @(权重)}
  *  @return                  各环境吸附结果的平均值
  */
-+ (CGFloat) adsorbWithBaseValue_Multi:(CGFloat)baseValue envs:(NSArray<id>*)envs valueBlock:(CGFloat(^)(id env))valueBlock weightBlock:(CGFloat(^)(id env))weightBlock;
++ (CGFloat) adsorbWithBaseValue_Multi:(CGFloat)baseValue envs:(NSArray<id>*)envs envBlock:(NSDictionary*(^)(id env))envBlock;
+
+/**
+ *  MARK:--------------------计算单条边的吸附值--------------------
+ *  @param baseT             本体AIFeatureNode
+ *  @param curIndex          本体下标
+ *  @param bestGVs           环境字典
+ *  @param edgeFunc          边提取函数
+ *  @param denominator       分母（宽或高）
+ *  @return                  吸附后的边值
+ */
++ (CGFloat) calcAdsorbEdgeWithBaseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex bestGVs:(NSDictionary*)bestGVs edgeFunc:(CGFloat(^)(CGRect))edgeFunc denominator:(CGFloat)denominator;
 
 /**
  *  MARK:--------------------计算吸附后的protoRect--------------------
- *  @param bestGVs           本体bestGVs数组
+ *  @param bestGVs           本体bestGVs字典
  *  @param baseT             本体AIFeatureNode
  *  @param curIndex          本体下标
  *  @return                  吸附后的protoRect
  */
-+ (CGRect) calcAdsorbProtoRect:(NSArray<AIFeatureJvBuItem*>*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex;
++ (CGRect) calcAdsorbProtoRect:(NSDictionary*)bestGVs baseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex;
 
 @end
 
