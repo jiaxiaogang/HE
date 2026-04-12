@@ -590,6 +590,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *allGTGroups = [NSMutableArray new];
     
     // assST层。
+    NSInteger pass = 0, total = 0;
     for (AIFeatureJvBuModel *stModel in stModels) {
         
         // absST层：有效（全含）absST。
@@ -602,7 +603,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 逐个求refGT。
             AddDebugCodeBlock_KeyV3();
             for (AIPort *refPort in refPorts) {
+                total++;
                 if ([refPort.target_p isEqual:protoGT.p]) continue;
+                pass++;
                 AddDebugCodeBlock_KeyV3();
                 
                 if (refPort.target_p.isJiao) continue;
@@ -622,6 +625,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
         }
     }
+    NSLog(@"TODOTOMORROW20260612查GT识别结果少问题 %ld/%ld",pass,total);
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。
     AddDebugCodeBlock_KeyV3();
