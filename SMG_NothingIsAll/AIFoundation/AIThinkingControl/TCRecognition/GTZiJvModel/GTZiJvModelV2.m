@@ -221,7 +221,7 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:(%03ld/%03ld) = 综合得分:%.3f（稳定性:%.2f）",self.gtMatchValue,self.matchCountRatioV2,self.allBestCount,self.allGVCount,self.zonHeScore,self.averageContentStrong);
     
     // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
-    return STRFORMAT(@"匹配度:%.2f (%03ld/%03ld) = 综合得分:%.3f（稳定性:%.2f）",self.gtMatchValue,self.allBestCount,self.allGVCount,self.zonHeScore,self.averageContentStrong);
+    return STRFORMAT(@"匹配度:%.2f (%02ld/%02ld) = 总分:%.3f（稳定性:%.2f）",self.gtMatchValue,self.bestSTs.count,self.baseGT.count,self.zonHeScore,self.averageContentStrong);
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。

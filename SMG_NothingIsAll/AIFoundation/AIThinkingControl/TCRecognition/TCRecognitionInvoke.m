@@ -538,7 +538,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%04ld (%02ld/%02ld) %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.bestGVs.count,model.assT.count,model.stScoreDesc);
+        NSLog(@"%02ld. 单特征识别结果:T%04ld %@ %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc,CLEANSTR([model.assT getLogDesc:true]));
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -683,7 +683,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%02ld. 组特征识别结果:T%03ld \t%@ %@",[resultModels indexOfObject:model]+1,model.baseGT.pId,model.zonHeDesc,CLEANSTR([model.baseGT getLogDesc:true]));
+        NSLog(@"%02ld. 组特征识别结果:T%04ld %@ %@",[resultModels indexOfObject:model]+1,model.baseGT.pId,model.zonHeDesc,CLEANSTR([model.baseGT getLogDesc:true]));
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 更新内容强度（用于计算稳定性）。
