@@ -507,12 +507,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
-    // 竞争淘汰（非归一化的竞争因子，单独做淘汰）。
-    NSArray *filterSort = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.averageContentStrong;
-    }];
-    filterSort = ARR_SUB(filterSort, 0, MIN(3, filterSort.count * 0.3f));
-    
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
@@ -669,10 +663,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AddDebugCodeBlock_KeyV3();
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
-    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvModelV2 *obj) {
-        return @(obj.baseGT.pId);
-    }];
-    AddDebugCodeBlock_KeyV3();
+    //resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvModelV2 *obj) {
+    //    return @(obj.baseGT.pId);
+    //}];z
     
     // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
     NSInteger count = resultModels.count;
