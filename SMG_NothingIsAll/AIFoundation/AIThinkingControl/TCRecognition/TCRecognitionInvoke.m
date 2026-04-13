@@ -590,7 +590,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *allGTGroups = [NSMutableArray new];
     
     // assST层。
-    NSInteger pass = 0, total = 0;
+    NSInteger pass = 0, total = 0, refWin = 0, refTotal = 0;;
     for (AIFeatureJvBuModel *stModel in stModels) {
         
         // absST层：有效（全含）absST。
@@ -600,7 +600,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // broST层。
             NSArray *bro_ps = [SMGUtils collectArrA:Ports2Pits([AINetUtils conPorts_All:absST]) arrB:@[abs_p]];
             for (AIKVPointer *bro_p in bro_ps) {
+                refTotal++;
                 NSArray *refPorts = [AINetUtils refPorts_All:bro_p];
+                refWin += refPorts.count > 0;
                 
                 // 性能优化、减少refPorts的切入点。
                 refPorts = ARR_SUB(refPorts, 0, MAX(3, refPorts.count * 0.3f));
@@ -631,7 +633,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
         }
     }
-    NSLog(@"TODOTOMORROW20260612查GT识别结果少问题 %ld/%ld",pass,total);
+    
+    // 查bro.ref不到GT的原因。
+    NSLog(@"TODOTOMORROW20260612查GT识别结果少问题 %ld/%ld %ld/%ld",refWin,refTotal,pass,total);
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。
     AddDebugCodeBlock_KeyV3();
@@ -1560,16 +1564,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     CGRect assGTRect = assGT.rect;
     
     // ==================== step0. 根据切入点，推算出targetGT默认在Proto中的Rect ====================
-    AIKVPointer *beginST_p = ARR_INDEX(assGT.content_ps, beginIndex);
-    AIFeatureNode *beginST = [SMGUtils searchNode:beginST_p];
+    AIKVPointer *broST_p = ARR_INDEX(assGT.content_ps, beginIndex);
+    AIFeatureNode *broST = [SMGUtils searchNode:broST_p];
     NSArray *conPorts = [AINetUtils conPorts_All:absST];
     AIPort *assConPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginSTModel.assT.p]; }];
-    AIPort *broConPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginST.p]; }];
+    
+    // 取absST_BroST
+    CGRect absST_BroST = CGRectZero;
+    if ([broST isEqual:absST]) {
+        absST_BroST = absST.rect;
+    } else {
+        AIPort *broConPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:broST.p]; }];
+        absST_BroST = broConPort.rect;
+    }
     
     // 得出bro在assST中的rect。
     CGRect absST_AssST = assConPort.rect;
-    CGRect absST_BroST = broConPort.rect;
-    CGRect fullBroRect = beginST.rect;
+    CGRect fullBroRect = broST.rect;
     CGRect broST_AssST = [SMGUtils convertNewAAtCWithAAtB:absST_BroST aAtC:absST_AssST newAAtB:fullBroRect];
     
     // 得出broST_Proto。
