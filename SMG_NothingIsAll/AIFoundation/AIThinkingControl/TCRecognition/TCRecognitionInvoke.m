@@ -595,6 +595,38 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // absST层：有效（全含）absST。
         for (AIKVPointer *abs_p in stModel.allValidAbsST_ps) {
+            
+            //// ========= 模式1、ass->abs通路 =========
+            //NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
+            //
+            //// 性能优化、减少refPorts的切入点。
+            //refPorts = ARR_SUB(refPorts, 0, MAX(3, refPorts.count * 0.3f));
+            //
+            //// 逐个求refGT。
+            //AddDebugCodeBlock_KeyV3();
+            //for (AIPort *refPort in refPorts) {
+            //    total++;
+            //    if ([refPort.target_p isEqual:protoGT.p]) continue;
+            //    pass++;
+            //    AddDebugCodeBlock_KeyV3();
+            //
+            //    if (refPort.target_p.isJiao) continue;
+            //
+            //    // assGT。
+            //    AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+            //    NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
+            //
+            //    // gt自举算法。
+            //    AddDebugCodeBlock_KeyV3();
+            //    GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds];
+            //    if (gtZiJvModel.bestSTs.count == 0) continue;
+            //
+            //    // 收集。
+            //    [allGTGroups addObject:gtZiJvModel];
+            //    AddDebugCodeBlock_KeyV3();
+            //}
+            
+            // ========= 模式2、ass->abs->bro通路 =========
             AIFeatureNode *absST = [SMGUtils searchNode:abs_p];
             
             // broST层。
@@ -1558,6 +1590,27 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  */
 +(GTZiJvModelV2*) gtZiJvV10:(AIGroupFeatureNode*)assGT beginIndex:(NSInteger)beginIndex beginSTModel:(AIFeatureJvBuModel*)beginSTModel colorDic:(NSDictionary*)colorDic ds:(NSString*)ds absST:(AIFeatureNode*)absST {
     
+    // ============ 模式1、ass->abs通路 ============
+    //// 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
+    //GTZiJvModelV2 *old = [gtZiJvGTPool objectForKey:@(assGT.pId)];
+    //if (old) return old;
+    //CGRect assGTRect = assGT.rect;
+    //
+    //// ==================== step0. 根据切入点，推算出assGT默认在Proto中的Rect ====================
+    //AIKVPointer *beginST_p = ARR_INDEX(AssGT.content_ps, beginIndex);
+    //AIFeatureNode *beginST = [SMGUtils searchNode:beginST_p];
+    //NSArray *conPorts = [AINetUtils conPorts_All:beginST];
+    //AIPort *conPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginSTModel.assT.p]; }];
+    //// 1. 根据assST_Proto 和 beginST_AssST = 求出beginST_Proto。
+    //CGRect beginST_AssST = conPort.rect;
+    //CGRect assST_Proto = beginSTModel.assST_ProtoRect;
+    //CGRect beginST_Proto = [SMGUtils convertAAtCWithAAtB:beginST_AssST bAtC:assST_Proto protoBSize:beginSTModel.assT.rect.size];
+    //
+    //// 2. 根据beginST_Proto 和 beginST_AssGT = 求出assGT_Proto。
+    //CGRect beginST_AssGT = [assGT rectByIndex:beginIndex];
+    //CGRect defaultAssGT_Proto = [SMGUtils convertNewAAtCWithAAtB:beginST_AssGT aAtC:beginST_Proto newAAtB:assGTRect];
+    
+    // ============ 模式2、ass->abs->bro通路 ============
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
     GTZiJvModelV2 *old = [gtZiJvGTPool objectForKey:@(assGT.pId)];
     if (old) return old;
