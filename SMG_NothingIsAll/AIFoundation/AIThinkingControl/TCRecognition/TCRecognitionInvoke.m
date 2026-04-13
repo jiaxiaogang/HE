@@ -595,33 +595,39 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // absST层：有效（全含）absST。
         for (AIKVPointer *abs_p in stModel.allValidAbsST_ps) {
-            NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
+            AIFeatureNode *absST = [SMGUtils searchNode:abs_p];
             
-            // 性能优化、减少refPorts的切入点。
-            refPorts = ARR_SUB(refPorts, 0, MAX(3, refPorts.count * 0.3f));
-            
-            // 逐个求refGT。
-            AddDebugCodeBlock_KeyV3();
-            for (AIPort *refPort in refPorts) {
-                total++;
-                if ([refPort.target_p isEqual:protoGT.p]) continue;
-                pass++;
+            // broST层。
+            NSArray *bro_ps = [SMGUtils collectArrA:Ports2Pits([AINetUtils conPorts_All:absST]) arrB:@[abs_p]];
+            for (AIKVPointer *bro_p in bro_ps) {
+                NSArray *refPorts = [AINetUtils refPorts_All:bro_p];
+                
+                // 性能优化、减少refPorts的切入点。
+                refPorts = ARR_SUB(refPorts, 0, MAX(3, refPorts.count * 0.3f));
+                
+                // 逐个求refGT。
                 AddDebugCodeBlock_KeyV3();
-                
-                if (refPort.target_p.isJiao) continue;
-                
-                // assGT。
-                AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
-                NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
-                
-                // gt自举算法。
-                AddDebugCodeBlock_KeyV3();
-                GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds];
-                if (gtZiJvModel.bestSTs.count == 0) continue;
-                
-                // 收集。
-                [allGTGroups addObject:gtZiJvModel];
-                AddDebugCodeBlock_KeyV3();
+                for (AIPort *refPort in refPorts) {
+                    total++;
+                    if ([refPort.target_p isEqual:protoGT.p]) continue;
+                    pass++;
+                    AddDebugCodeBlock_KeyV3();
+                    
+                    if (refPort.target_p.isJiao) continue;
+                    
+                    // assGT。
+                    AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+                    NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
+                    
+                    // gt自举算法。
+                    AddDebugCodeBlock_KeyV3();
+                    GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds absST:absST];
+                    if (gtZiJvModel.bestSTs.count == 0) continue;
+                    
+                    // 收集。
+                    [allGTGroups addObject:gtZiJvModel];
+                    AddDebugCodeBlock_KeyV3();
+                }
             }
         }
     }
@@ -1544,47 +1550,55 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
 /**
  *  MARK:--------------------GT自举算法--------------------
- *  @param targetGT 即assGT，会取它的itemST分别进行判断匹配，然后还会再马itemST展开成itemGV，进行判断匹配（参考36074-方案）。
+ *  @param assGT 取它的itemST分别进行判断匹配，然后还会再马itemST展开成itemGV，进行判断匹配（参考36074-方案）。
  */
-+(GTZiJvModelV2*) gtZiJvV10:(AIGroupFeatureNode*)targetGT beginIndex:(NSInteger)beginIndex beginSTModel:(AIFeatureJvBuModel*)beginSTModel colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
++(GTZiJvModelV2*) gtZiJvV10:(AIGroupFeatureNode*)assGT beginIndex:(NSInteger)beginIndex beginSTModel:(AIFeatureJvBuModel*)beginSTModel colorDic:(NSDictionary*)colorDic ds:(NSString*)ds absST:(AIFeatureNode*)absST {
     
     // 同一个Img识别的同一个ST，只进行一次GT自举（参考36074-TODO6 & TODO7）（复用率：39 / 77 = 50.6%）。
-    GTZiJvModelV2 *old = [gtZiJvGTPool objectForKey:@(targetGT.pId)];
+    GTZiJvModelV2 *old = [gtZiJvGTPool objectForKey:@(assGT.pId)];
     if (old) return old;
-    CGRect targetGTRect = targetGT.rect;
+    CGRect assGTRect = assGT.rect;
     
     // ==================== step0. 根据切入点，推算出targetGT默认在Proto中的Rect ====================
-    AIKVPointer *beginST_p = ARR_INDEX(targetGT.content_ps, beginIndex);
+    AIKVPointer *beginST_p = ARR_INDEX(assGT.content_ps, beginIndex);
     AIFeatureNode *beginST = [SMGUtils searchNode:beginST_p];
-    NSArray *conPorts = [AINetUtils conPorts_All:beginST];
-    AIPort *conPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginSTModel.assT.p]; }];
-    // 1. 根据assST_Proto 和 beginST_AssST = 求出beginST_Proto。
-    CGRect beginST_AssST = conPort.rect;
-    CGRect assST_Proto = beginSTModel.assST_ProtoRect;
-    CGRect beginST_Proto = [SMGUtils convertAAtCWithAAtB:beginST_AssST bAtC:assST_Proto protoBSize:beginSTModel.assT.rect.size];
+    NSArray *conPorts = [AINetUtils conPorts_All:absST];
+    AIPort *assConPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginSTModel.assT.p]; }];
+    AIPort *broConPort = [SMGUtils filterSingleFromArr:conPorts checkValid:^BOOL(AIPort *item) { return [item.target_p isEqual:beginST.p]; }];
     
-    // 2. 根据beginST_Proto 和 beginST_TargetGT = 求出targetGT_Proto。
-    CGRect beginST_TargetGT = [targetGT rectByIndex:beginIndex];
-    CGRect defaultTargetGT_Proto = [SMGUtils convertNewAAtCWithAAtB:beginST_TargetGT aAtC:beginST_Proto newAAtB:targetGTRect];
+    // 得出bro在assST中的rect。
+    CGRect absST_AssST = assConPort.rect;
+    CGRect absST_BroST = broConPort.rect;
+    CGRect fullBroRect = beginST.rect;
+    CGRect broST_AssST = [SMGUtils convertNewAAtCWithAAtB:absST_BroST aAtC:absST_AssST newAAtB:fullBroRect];
+    
+    // 得出broST_Proto。
+    CGRect assST_Proto = beginSTModel.assST_ProtoRect;
+    CGRect fullAssSTRect = beginSTModel.assT.rect;
+    CGRect broST_Proto = [SMGUtils convertAAtCWithAAtB:broST_AssST bAtC:assST_Proto protoBSize:fullAssSTRect.size];
+    
+    // 得出assGT_Proto。
+    CGRect broST_AssGT = [assGT rectByIndex:beginIndex];
+    CGRect defaultAssGT_Proto = [SMGUtils convertNewAAtCWithAAtB:broST_AssGT aAtC:broST_Proto newAAtB:assGTRect];
     
     // ==================== step1. 根据当前assGT目标，对微观一级allST进行自举 ====================
     
     // 依次自举absGV
     GTZiJvModelV2 *gtResult = [GTZiJvModelV2 new];
-    gtResult.baseGT = targetGT;
-    for (NSInteger i = 0; i < targetGT.count; i++) {
-        NSInteger stIndex = (beginIndex + i) % targetGT.count;
-        AIKVPointer *itemST_p = ARR_INDEX(targetGT.content_ps, stIndex);
+    gtResult.baseGT = assGT;
+    for (NSInteger i = 0; i < assGT.count; i++) {
+        NSInteger stIndex = (beginIndex + i) % assGT.count;
+        AIKVPointer *itemST_p = ARR_INDEX(assGT.content_ps, stIndex);
         AIFeatureNode *itemST = [SMGUtils searchNode:itemST_p];
         
         // ==================== step2. 根据当前itemST目标，对微观一级allGV进行自举 ====================
-        CGRect targetGT_Proto = gtResult.bestSTs.count > 0 ? [gtResult hopeProtoRectByAll] : defaultTargetGT_Proto;
+        CGRect assGT_Proto = gtResult.bestSTs.count > 0 ? [gtResult hopeProtoRectByAll] : defaultAssGT_Proto;
         
         // 找出最好的stResult结果。
         STZiJvModelV2 *bestSTResult = nil;
         
         // 锚点交由权重求和来计算：根据锚点，求出十种newST_Proto。
-        NSArray *cut_Protos = [WeightedSumCutUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:targetGT curIndex:stIndex baseT_Proto:targetGT_Proto];
+        NSArray *cut_Protos = [WeightedSumCutUtil calcAdsorbProtoRects:gtResult.bestSTs baseT:assGT curIndex:stIndex baseT_Proto:assGT_Proto];
         for (NSValue *cut_Proto in cut_Protos) {
             // checkST_Proto已经算出st在proto中的rect。
             CGRect checkST_Proto = cut_Proto.CGRectValue;
@@ -1619,7 +1633,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // 结果加入缓存池。
-    [gtZiJvGTPool setObject:gtResult forKey:@(targetGT.pId)];
+    [gtZiJvGTPool setObject:gtResult forKey:@(assGT.pId)];
     return gtResult;
 }
 
