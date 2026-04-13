@@ -96,4 +96,14 @@
     return stMatchDegree;
 }
 
+// bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
+-(void) filter4MatchValue {
+    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.matchValue;
+    }];
+    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * 0.2f);
+    [self.bestGVs removeObjectsForKeys:rmKeys];
+}
+
 @end

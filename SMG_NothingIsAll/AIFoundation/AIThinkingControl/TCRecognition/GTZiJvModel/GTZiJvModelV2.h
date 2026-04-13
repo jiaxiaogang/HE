@@ -67,6 +67,9 @@
 -(void) run4AverageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrong;
 
+// bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
+-(void) filter4MatchValue;
+
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;
 

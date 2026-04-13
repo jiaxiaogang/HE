@@ -474,7 +474,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
-    // bestGVs根据匹配度末尾淘汰20%。
+    // 内部bests根据匹配度进行末尾淘汰。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model filter4MatchValue];
     }
@@ -522,7 +522,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
     NSInteger count = validModels.count;
     float needRate = count < 5 ? 1 : count < 15 ? 0.8 : count < 30 ? 0.6 : count < 60 ? 0.4 : 0.2;
-    validModels = ARR_SUB(validModels, 0, MIN(30, validModels.count * needRate));
+    validModels = ARR_SUB(validModels, 0, MIN(20, validModels.count * needRate));
     
     //60. 更新赋值回去。
     decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
@@ -577,7 +577,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *allGTGroups = [NSMutableArray new];
     
     // assST层。
-    NSInteger pass = 0, total = 0, refWin = 0, refTotal = 0;;
     for (AIFeatureJvBuModel *stModel in stModels) {
         
         // absST层：有效（全含）absST。
@@ -592,8 +591,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 逐个求refGT。
             for (AIPort *refPort in refPorts) {
                 if ([refPort.target_p isEqual:protoGT.p]) continue;
-
-                if (refPort.target_p.isJiao) continue;
 
                 // assGT。
                 AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
@@ -637,6 +634,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             //    }
             //}
         }
+    }
+    
+    // 内部bests根据匹配度进行末尾淘汰。
+    for (GTZiJvModelV2 *gtGroup in allGTGroups) {
+        [gtGroup filter4MatchValue];
     }
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。

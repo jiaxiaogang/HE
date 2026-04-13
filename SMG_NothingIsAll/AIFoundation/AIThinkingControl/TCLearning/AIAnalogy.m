@@ -428,7 +428,7 @@
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.baseGT] at:at ds:ds isOut:isOut isJiao:true];
     
     //41. 更新logDesc。
-    [absGT updateLogDescItem:logDesc rate:gtModel.zonHeScore];
+    [absGT updateLogDescItem:logDesc rate:gtModel.gtMatchValue];
     [absGT updateLogDescDic:gtModel.baseGT.logDesc];
     
     //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。

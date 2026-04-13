@@ -174,6 +174,20 @@
     self.averageContentStrong = [self.baseGT getAverageContentStrong:self.bestSTs.allKeys];
 }
 
+// bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
+-(void) filter4MatchValue {
+    for (STZiJvModelV2 *stGroup in self.bestSTs.allValues) {
+        [stGroup filter4MatchValue];
+    }
+    
+    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestSTs.allKeys compareBlock:^double(NSNumber *key) {
+        STZiJvModelV2 *value = [self.bestSTs objectForKey:key];
+        return value.stMatchValue;
+    }];
+    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * 0.2f);
+    [self.bestSTs removeObjectsForKeys:rmKeys];
+}
+
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore {
     // v1: 先不计self.stMatchDegree，因为GV的符合度，到GT识别时，已经算隔层了，再算进来，等于掐断形似匹配。
@@ -183,7 +197,13 @@
     // return self.gtMatchValue * (self.gtMatchCountRatio * self.stMatchCountRatio) * self.intactRate;
     
     // v3: 完整性彻底替代匹配率。
-    return self.gtMatchValue * self.matchCountRatioV2 * self.intactRate_Proto;
+    // return self.gtMatchValue * self.matchCountRatioV2 * self.intactRate_Proto;
+    
+    // v4: 放开交层（向ST识别对齐）。
+    // return self.gtMatchValue * self.matchCountRatioV2 * self.allBestCount;
+    
+    // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
+    return self.gtMatchValue;
 }
 
 // GTModel综合评分的描述。
@@ -195,7 +215,13 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 综合得分:%.3f",self.gtMatchValue,(self.gtMatchCountRatio * self.stMatchCountRatio),self.intactRate,self.zonHeScore);
     
     // v3: 完整性彻底替代匹配率 & 加上稳定性。
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 综合得分:%.3f（稳定性:%.2f）（%ld/%ld）",self.gtMatchValue,self.matchCountRatioV2,self.intactRate_Proto,self.zonHeScore,self.averageContentStrong,[self allBestCount],[self allGVCount]);
+    // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 完整性:%.2f = 综合得分:%.3f（稳定性:%.2f）（%ld/%ld）",self.gtMatchValue,self.matchCountRatioV2,self.intactRate_Proto,self.zonHeScore,self.averageContentStrong,[self allBestCount],[self allGVCount]);
+    
+    // v4: 放开交层（向ST识别对齐）。
+    // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:(%03ld/%03ld) = 综合得分:%.3f（稳定性:%.2f）",self.gtMatchValue,self.matchCountRatioV2,self.allBestCount,self.allGVCount,self.zonHeScore,self.averageContentStrong);
+    
+    // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
+    return STRFORMAT(@"匹配度:%.2f (%03ld/%03ld) = 综合得分:%.3f（稳定性:%.2f）",self.gtMatchValue,self.allBestCount,self.allGVCount,self.zonHeScore,self.averageContentStrong);
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
