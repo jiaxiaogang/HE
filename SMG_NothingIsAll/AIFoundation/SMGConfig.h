@@ -105,3 +105,6 @@
 //不打印NSLog日志开关
 static BOOL cNSLogSwitch = true;
 #define cNSLogSwitchIsOpenTypes @[@"TI",@"TO",@"MA",@"OT"]
+
+// 在TCRecognition中,对bestGVs根据匹配度末尾淘汰的比例 (参考35138-TODO1);
+#define cBestsFilterRate 0.0f

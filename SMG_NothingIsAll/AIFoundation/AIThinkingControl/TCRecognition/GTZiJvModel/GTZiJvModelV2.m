@@ -184,7 +184,7 @@
         STZiJvModelV2 *value = [self.bestSTs objectForKey:key];
         return value.stMatchValue;
     }];
-    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * 0.2f);
+    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
     [self.bestSTs removeObjectsForKeys:rmKeys];
 }
 
@@ -203,7 +203,7 @@
     // return self.gtMatchValue * self.matchCountRatioV2 * self.allBestCount;
     
     // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
-    return self.gtMatchValue * self.averageContentStrong;
+    return self.gtMatchValue;
 }
 
 // GTModel综合评分的描述。

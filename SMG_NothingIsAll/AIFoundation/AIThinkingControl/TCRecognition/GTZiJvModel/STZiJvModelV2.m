@@ -102,7 +102,7 @@
         AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
         return value.matchValue;
     }];
-    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * 0.2f);
+    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
     [self.bestGVs removeObjectsForKeys:rmKeys];
 }
 

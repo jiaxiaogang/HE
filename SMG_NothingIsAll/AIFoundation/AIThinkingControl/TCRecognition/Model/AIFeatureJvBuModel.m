@@ -189,7 +189,7 @@
         AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
         return value.matchValue;
     }];
-    NSArray *invalidKeys = ARR_SUB(sort, 0, sort.count * 0.2f);
+    NSArray *invalidKeys = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
     [self.bestGVs removeObjectsForKeys:invalidKeys];
     
     // 方案2：直接把matchValue<0.6的过滤掉（参考35138-TODO1）。
@@ -329,7 +329,7 @@
     // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return self.matchValue * self.averageContentStrong;
+    return self.matchValue;
 }
 
 -(NSString*) stScoreDesc {
