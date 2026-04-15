@@ -537,6 +537,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
+        
+        // 如果一个正竖的1，和一个斜1，要加权求和切图，那新的gv不仅不应该0.5-1，反而应该是1-1.5才对，不然不可能匹配上。
+        NSString *matchDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return STRFORMAT(@"%.2f",obj.matchValue);
+        }]);
+        NSString *rectDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
+            return Rect2Str(obj.bestGVAtProtoTRect);
+        }]);
+        NSLog(@"%@",matchDesc);
+        NSLog(@"%@",rectDesc);
     }
     
     //61. debugLog
