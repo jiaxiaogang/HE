@@ -326,10 +326,10 @@
     // return self.matchValue * self.bestGVs.count;
     
     // v6：打开交层了：匹配数防过具 和 匹配率防过抽 都需要。
-    return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
+    // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    // return self.matchValue;
+    return self.matchValue * self.modelMatchRatio * self.modelMatchRatio;
 }
 
 -(NSString*) stScoreDesc {
@@ -346,10 +346,10 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配数:%ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.bestGVs.count,self.stScore,self.averageContentStrong);
     
     // v6：打开交层了：匹配数防过具 和 匹配率防过抽 都需要。
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:%02ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.stScore,self.averageContentStrong);
+    // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:%02ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.stScore,self.averageContentStrong);
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    // return STRFORMAT(@"匹配度:%.2f (%02ld/%02ld) = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.bestGVs.count,self.assT.count,self.stScore,self.averageContentStrong);
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f (%02ld/%02ld) = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.assT.count,self.stScore,self.averageContentStrong);
 }
 
 @end

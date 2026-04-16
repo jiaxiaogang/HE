@@ -538,15 +538,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
         
-        // 如果一个正竖的1，和一个斜1，要加权求和切图，那新的gv不仅不应该0.5-1，反而应该是1-1.5才对，不然不可能匹配上。
-        NSString *matchDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
-            return STRFORMAT(@"%.2f",obj.matchValue);
-        }]);
-        NSString *rectDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
-            return Rect2Str(obj.bestGVAtProtoTRect);
-        }]);
-        NSLog(@"%@",matchDesc);
-        NSLog(@"%@",rectDesc);
+        // TODOTOMORROW20260416：查为什么用1识别结果0或1的匹配度差不多。
+        //NSString *matchDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
+        //    return STRFORMAT(@"%.2f",obj.matchValue);
+        //}]);
+        //NSString *rectDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
+        //    return Rect2Str(obj.bestGVAtProtoTRect);
+        //}]);
+        //NSLog(@"%@",matchDesc);
+        //NSLog(@"%@",rectDesc);
     }
     
     //61. debugLog
@@ -1685,6 +1685,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 无复用时新建并识别。
     AIFeatureJvBuModel *stModel = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
     
+    // DEBUG: 记录调用参数
+    NSString *protoColorInfo = protoColorDic ? [NSString stringWithFormat:@"protoColorDic有值(count=%lu)", (unsigned long)protoColorDic.count] : @"protoColorDic为nil";
+    NSLog(@"[stZiJv] 调用参数: assT.count=%ld, beginAssIndex=%ld, protoColorInfo=%@, ds=%@", (long)assT.count, (long)beginAssIndex, protoColorInfo, ds);
+    
     // 21. 自举：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < assT.count; i++) {
         NSInteger curIndex = (beginAssIndex + i) % assT.count;
@@ -1726,6 +1730,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
         //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
         [stModel updateBestGVs:best assIndex:curIndex];
+        
+        // DEBUG: 记录每次循环的关键信息
+        NSLog(@"itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f", (long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.matchValue);
+        
+        CGRect bestGV_AssST = [stModel.assT rectByIndex:curIndex];
+        NSLog(@"   对比切图范围：%@ => %@ xDelta:%.2f yDelta:%.2f",Rect2Str(bestGV_AssST),Rect2Str(best.bestGVAtProtoTRect),
+              bestGV_AssST.origin.x + baseST_Proto.origin.x - best.bestGVAtProtoTRect.origin.x,
+              bestGV_AssST.origin.y + baseST_Proto.origin.y - best.bestGVAtProtoTRect.origin.y);
     }
     return stModel;
 }
