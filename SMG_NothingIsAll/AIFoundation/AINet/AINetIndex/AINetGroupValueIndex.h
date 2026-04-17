@@ -12,13 +12,15 @@
 #define GVIndexTypeOfDirection 0
 #define GVIndexTypeOfDiffNum 1
 #define GVIndexTypeOfPinJunNum 2
+#define GVIndexTypeOfSepNum 3
 
 @interface AINetGroupValueIndex : NSObject
 
 +(NSArray*) gvIndexKeys:(NSString*)ds;
++(NSString*) sepKey:(NSString*)ds;
 
 /**
- *  MARK:--------------------根据组节点取 三个索引的数据（参考34082-方案2）--------------------
+ *  MARK:--------------------根据组节点取 四个索引的数据（均值、差值、方向、分隔点）--------------------
  */
 +(NSDictionary*) convertGVIndexData:(NSArray*)subDots ds:(NSString*)ds;
 
