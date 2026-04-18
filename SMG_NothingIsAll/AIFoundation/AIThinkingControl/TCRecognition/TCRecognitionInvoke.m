@@ -475,10 +475,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
-    // 内部bests根据匹配度进行末尾淘汰：关掉filterBests识别结果（识别只是识别它是什么，抽象是识别没匹配到的自会剔除）。
-    //for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-    //    [model filter4OuterShapeMatchValue];
-    //}
+    // 内部bests根据匹配度进行末尾淘汰：匹配度差的就该被竞争淘汰剔除掉（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [model filter4OuterShapeMatchValue];
+    }
     
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
@@ -634,10 +634,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
     }
     
-    // 内部bests根据匹配度进行末尾淘汰：关掉filterBests识别结果（识别只是识别它是什么，抽象是识别没匹配到的自会剔除）。
-    //for (GTZiJvModelV2 *gtGroup in allGTGroups) {
-    //    [gtGroup filter4MatchValue];
-    //}
+    // 内部bests根据匹配度进行末尾淘汰：匹配度差的就该被竞争淘汰剔除掉（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
+    for (GTZiJvModelV2 *gtGroup in allGTGroups) {
+        [gtGroup filter4OuterShapeMatchValue];
+    }
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。
     AddDebugCodeBlock_KeyV3();

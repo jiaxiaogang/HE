@@ -188,6 +188,19 @@
     [self.bestSTs removeObjectsForKeys:rmKeys];
 }
 
+-(void) filter4OuterShapeMatchValue {
+    for (STZiJvModelV2 *stGroup in self.bestSTs.allValues) {
+        [stGroup filter4OuterShapeMatchValue];
+    }
+    
+    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestSTs.allKeys compareBlock:^double(NSNumber *key) {
+        STZiJvModelV2 *value = [self.bestSTs objectForKey:key];
+        return value.stOuterShapeMatchValue;
+    }];
+    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
+    [self.bestSTs removeObjectsForKeys:rmKeys];
+}
+
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore {
     // v1: 先不计self.stMatchDegree，因为GV的符合度，到GT识别时，已经算隔层了，再算进来，等于掐断形似匹配。

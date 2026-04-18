@@ -76,10 +76,13 @@
         } else if (ISOK(obj, STZiJvModelV2.class)) {
             matchValue = ((STZiJvModelV2*)obj).stMatchValue;
         }
-        CGFloat weight = distanceWeight * matchValue;
+        
+        // 距离和匹配度，都按冷却曲线，避免远处的影响太大（参考37033B-2疑点）。
+        CGFloat cooledDistanceValue = [MathUtils getCooledValue:1 - distanceWeight finishValue:0.02f];
+        CGFloat cooledMatchValue = [MathUtils getCooledValue:1 - matchValue finishValue:0.02f];
         
         // 乘以一个force参数来调整吸附强度（参考37023-锚点抖动范围）。
-        weight *= force;
+        CGFloat weight = cooledDistanceValue * cooledMatchValue * force;
         return @{@"value": @(envValue), @"weight": @(weight)};
     }];
 }

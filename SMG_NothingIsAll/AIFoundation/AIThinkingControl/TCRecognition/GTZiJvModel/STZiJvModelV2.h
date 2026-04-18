@@ -34,6 +34,7 @@
 
 // bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4MatchValue;
+-(void) filter4OuterShapeMatchValue;
 
 @property (strong, nonatomic) AIFeatureNode *absST; // 类比gtGroup时，先把stGroup中的bestGVs抽象成absST。
 @property (assign, nonatomic) CGRect absST_BaseST; // 类比后，取得absST_BaseST

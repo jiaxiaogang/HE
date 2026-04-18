@@ -69,6 +69,7 @@
 
 // bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4MatchValue;
+-(void) filter4OuterShapeMatchValue;
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;

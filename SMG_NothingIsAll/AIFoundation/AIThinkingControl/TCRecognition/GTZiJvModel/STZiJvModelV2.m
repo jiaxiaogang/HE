@@ -106,6 +106,15 @@
 -(void) filter4MatchValue {
     NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
         AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.matchValue;
+    }];
+    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
+    [self.bestGVs removeObjectsForKeys:rmKeys];
+}
+
+-(void) filter4OuterShapeMatchValue {
+    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
         return value.outerShapeMatchValue;
     }];
     NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
