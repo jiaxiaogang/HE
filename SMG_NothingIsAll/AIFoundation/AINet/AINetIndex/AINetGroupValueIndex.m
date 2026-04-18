@@ -78,7 +78,7 @@
     //3. 平均值精度。
     pinJunNum = roundf(pinJunNum * jinDu) / jinDu;
     
-    // 分隔点：直接用小区占比来。
+    // 分隔点：直接用小区占比来（参考37033-TODO1）。
     float sepValue = (float)smallIndexs.count / subDots.count;
     
     //3. 如果纯色，直接返回四个索引：均值、差值=0、方向=0、分隔点=0.5。

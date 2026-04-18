@@ -1792,6 +1792,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
                 curGMatchValue *= vMatchValue;
                 
+                // TODOTOMORROW20260418:
+                // 1、外形（方向和分隔点）需要protoT与assT一致（参考37033-TODO2）。
+                // 2、内征（色差和色均值）需要在assT的各元素间保持过滤平缓（参考37033-TODO3）。
+                
                 // 记录diff匹配度。
                 if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
             }
