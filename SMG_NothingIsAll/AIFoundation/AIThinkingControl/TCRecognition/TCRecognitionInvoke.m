@@ -599,7 +599,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if (gtZiJvModel.bestSTs.count == 0) continue;
 
                 // 收集。
-                [allGTGroups addObject:gtZiJvModel];
+                if (![allGTGroups containsObject:gtZiJvModel]) [allGTGroups addObject:gtZiJvModel];
             }
             
             //// ========= 模式2、ass->abs->bro通路 =========
@@ -1680,8 +1680,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AIFeatureJvBuModel *stModel = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
     
     // DEBUG: 记录调用参数
-    NSString *protoColorInfo = protoColorDic ? [NSString stringWithFormat:@"protoColorDic有值(count=%lu)", (unsigned long)protoColorDic.count] : @"protoColorDic为nil";
-    NSLog(@"assT%ld.%p [stZiJv] 调用参数: assT.count=%ld, beginAssIndex=%ld, protoColorInfo=%@, ds=%@",assT.pId,stModel,(long)assT.count, (long)beginAssIndex, protoColorInfo, ds);
+    // NSString *protoColorInfo = protoColorDic ? [NSString stringWithFormat:@"protoColorDic有值(count=%lu)", (unsigned long)protoColorDic.count] : @"protoColorDic为nil";
+    // NSLog(@"assT%ld.%p [stZiJv] 调用参数: assT.count=%ld, beginAssIndex=%ld, protoColorInfo=%@, ds=%@",assT.pId,stModel,(long)assT.count, (long)beginAssIndex, protoColorInfo, ds);
     
     // 21. 自举：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < assT.count; i++) {
@@ -1717,12 +1717,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [stModel updateBestGVs:best assIndex:curIndex];
         
         // DEBUG: 记录每次循环的关键信息
-        NSLog(@"assT%ld.%p itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f",assT.pId,stModel,(long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.outerShapeMatchValue);
-        
-        CGRect bestGV_AssST = [stModel.assT rectByIndex:curIndex];
-        NSLog(@"   对比Rect：Ass%@ => Proto%@ xDelta:%.2f yDelta:%.2f",Rect2Str(bestGV_AssST),Rect2Str(best.bestGVAtProtoTRect),
-              bestGV_AssST.origin.x + baseST_Proto.origin.x - best.bestGVAtProtoTRect.origin.x,
-              bestGV_AssST.origin.y + baseST_Proto.origin.y - best.bestGVAtProtoTRect.origin.y);
+        //NSLog(@"assT%ld.%p itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f",assT.pId,stModel,(long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.outerShapeMatchValue);
+        //CGRect bestGV_AssST = [stModel.assT rectByIndex:curIndex];
+        //NSLog(@"   对比Rect：Ass%@ => Proto%@ xDelta:%.2f yDelta:%.2f",Rect2Str(bestGV_AssST),Rect2Str(best.bestGVAtProtoTRect),
+        //      bestGV_AssST.origin.x + baseST_Proto.origin.x - best.bestGVAtProtoTRect.origin.x,
+        //      bestGV_AssST.origin.y + baseST_Proto.origin.y - best.bestGVAtProtoTRect.origin.y);
     }
     return stModel;
 }
