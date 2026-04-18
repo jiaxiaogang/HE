@@ -421,6 +421,7 @@
 +(void) fori:(NSArray *)arr min:(NSInteger)min max:(NSInteger)max run:(BOOL(^)(id item,NSInteger i))run forward:(BOOL)forward;
 
 +(double) sumOfArr:(NSArray *)arr convertBlock:(double(^)(id obj))convertBlock;
++(double) productOfArr:(NSArray *)arr convertBlock:(double(^)(id obj))convertBlock;
 
 //返回点数的层级（比如81返回4）
 +(int) convertDotSize2Level:(CGFloat)dotSize;

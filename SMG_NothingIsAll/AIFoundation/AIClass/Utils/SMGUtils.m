@@ -1517,6 +1517,16 @@
     return sumResult;
 }
 
++(double) productOfArr:(NSArray *)arr convertBlock:(double(^)(id obj))convertBlock {
+    //1. 数据准备;
+    arr = ARRTOOK(arr);
+    double sumResult = 1;
+    
+    //2. 转换
+    for (id obj in arr) sumResult *= convertBlock(obj);
+    return sumResult;
+}
+
 //返回点数的层级（比如81返回4）
 +(int) convertDotSize2Level:(CGFloat)dotSize {
     return (int)(log(dotSize) / log(3) + 0.1999f);//因为高层级时，它有精度问题，导致4.9999998 强转Int后变成4，所以另外加上0.1999。

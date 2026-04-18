@@ -706,23 +706,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // debugLog
     [TCRecognitionInvoke printLogDescRate:resultModels protoLogDesc:nil prefix:STRFORMAT(@"组特征") convertNodeBlock:^NSArray*(GTZiJvModelV2 *obj) {
-        //return [SMGUtils convertArr:obj.validAbs_ps convertBlock:^id(AIKVPointer *obj) {
-        //    return [SMGUtils searchNode:obj];
-        //}];
-        return @[obj.baseGT];
+        return [SMGUtils convertArr:obj.validAbs_ps convertBlock:^id(AIKVPointer *obj) {
+            return [SMGUtils searchNode:obj];
+        }];
+        // return @[obj.baseGT];
     } convertMatchBlock:^float(GTZiJvModelV2 *obj) {
         return obj.zonHeScore;
     }];
     AddDebugCodeBlock_KeyV3();
     
     // 更新logDesc到assT（参考36052）。
-    //for (GTZiJvModelV2 *model in resultModels) {
-    //    //[model.baseGT updateLogDescItem:logDesc rate:model.zonHeScore];
-    //    for (AIKVPointer *validAbs_p in model.validAbs_ps) {
-    //        AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
-    //        [validAbs updateLogDescItem:logDesc];
-    //    }
-    //}
+    for (GTZiJvModelV2 *model in resultModels) {
+        //[model.baseGT updateLogDescItem:logDesc rate:model.zonHeScore];
+        for (AIKVPointer *validAbs_p in model.validAbs_ps) {
+            AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
+            [validAbs updateLogDescItem:logDesc rate:model.zonHeScore];
+        }
+    }
     AddDebugCodeBlock_KeyV3();
     PrintDebugCodeBlock_KeyV3();
     return resultModels;
@@ -1702,20 +1702,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //01. 单特征识别结果:T0235 匹配度:0.50 (17/19) = 总分:0.50（稳定性:1.00） {Mnist1 = 1.00;}
         //02. 单特征识别结果:T0066 匹配度:0.49 (44/45) = 总分:0.49（稳定性:68.32） {Mnist1 = 0.48;Mnist0 = 3.00;}
         //03. 单特征识别结果:T0066 匹配度:0.48 (45/45) = 总分:0.48（稳定性:68.07） {Mnist1 = 0.48;Mnist0 = 3.00;}
-        //04. 单特征识别结果:T0066 匹配度:0.48 (16/45) = 总分:0.48（稳定性:73.38） {Mnist1 = 0.48;Mnist0 = 3.00;}
-        //05. 单特征识别结果:T0066 匹配度:0.47 (15/45) = 总分:0.47（稳定性:73.40） {Mnist1 = 0.48;Mnist0 = 3.00;}
-        //06. 单特征识别结果:T0066 匹配度:0.44 (44/45) = 总分:0.44（稳定性:68.32） {Mnist1 = 0.48;Mnist0 = 3.00;}
-        //07. 单特征识别结果:T0066 匹配度:0.43 (44/45) = 总分:0.43（稳定性:68.18） {Mnist1 = 0.48;Mnist0 = 3.00;}
-        //08. 单特征识别结果:T0033 匹配度:0.43 (37/38) = 总分:0.43（稳定性:111.81） {Mnist1 = 5.69;Mnist0 = 97.74;}
-        //09. 单特征识别结果:T0133 匹配度:0.43 (39/39) = 总分:0.43（稳定性:42.38） {Mnist1 = 0.43;Mnist0 = 6.42;}
-        //10. 单特征识别结果:T0097 匹配度:0.41 (07/36) = 总分:0.41（稳定性:15.29） {Mnist0 = 1.00;}
-        //11. 单特征识别结果:T0235 匹配度:0.41 (19/19) = 总分:0.41（稳定性:1.00） {Mnist1 = 1.00;}
-        //12. 单特征识别结果:T0033 匹配度:0.40 (25/38) = 总分:0.40（稳定性:119.24） {Mnist1 = 5.69;Mnist0 = 97.74;}
         
         // 如上：日志第1和第11条是用1识别1，别的全是用1识别0，但从匹配度来看，第1和第11条也没明显优势。
         // 所以：把它们的每个gv的匹配度和rect打出来看看，看为什么对的和错的，区别不大。
-        
-        // 思路：要不别取平均了，取乘法，避免有任何不准确的细节。
         
         
         

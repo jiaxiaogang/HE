@@ -59,21 +59,24 @@
 
 -(void) run4MatchValue {
     //1. 匹配度。
-    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils productOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.matchValue;
-    }] / self.bestGVs.count;
+    }];
 }
 
 -(void) run4OuterShapeMatchValue {
-    self.outerShapeMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+    self.outerShapeMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils productOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.outerShapeMatchValue;
-    }] / self.bestGVs.count;
+    }];
+    //self.outerShapeMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+    //    return obj.outerShapeMatchValue;
+    //}] / self.bestGVs.count;
 }
 
 -(void) run4InnerEigenMatchValue {
-    self.innerEigenMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+    self.innerEigenMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils productOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.innerEigenMatchValue;
-    }] / self.bestGVs.count;
+    }];
 }
 
 -(void) run4BestGvsAtProtoTRect {
@@ -351,7 +354,7 @@
     // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return self.outerShapeMatchValue; // * self.modelMatchRatio * self.modelMatchRatio;
+    return self.outerShapeMatchValue * self.bestGVs.count; // * self.modelMatchRatio * self.modelMatchRatio;
 }
 
 -(NSString*) stScoreDesc {
