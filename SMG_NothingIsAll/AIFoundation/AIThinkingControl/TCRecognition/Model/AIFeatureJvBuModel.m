@@ -41,9 +41,9 @@
     //4. 匹配率
     self.matchAssRatio = self.bestGVs.count / (float)self.assT.count;
     
-    //5. 色似度
-    self.matchDiffValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.diffValue;
+    //ST内征匹配度（37033-TODO3）。
+    self.innerEigenMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        return obj.innerEigenMatchValue;
     }] / self.bestGVs.count;
     
     //6. 视角匹配度。
@@ -61,6 +61,18 @@
     //1. 匹配度。
     self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.matchValue;
+    }] / self.bestGVs.count;
+}
+
+-(void) run4OuterShapeMatchValue {
+    self.outerShapeMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        return obj.outerShapeMatchValue;
+    }] / self.bestGVs.count;
+}
+
+-(void) run4InnerEigenMatchValue {
+    self.innerEigenMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        return obj.innerEigenMatchValue;
     }] / self.bestGVs.count;
 }
 
@@ -154,7 +166,7 @@
     AIFeatureJvBuItem *old = [self getBestGVByAssIndex:assIndex];
     
     // 没旧的 或 有旧的但更好 => 则收集（参考35105-TODO6.4）。
-    if (!old || newBestGV.matchValue > old.matchValue) {
+    if (!old || newBestGV.outerShapeMatchValue > old.outerShapeMatchValue) {
         [self.bestGVs setObject:newBestGV forKey:@(assIndex)];
     }
 }
@@ -198,6 +210,16 @@
     //    return value.matchValue < 0.6f;
     //}];
     //[self.bestGVs removeObjectsForKeys:invalidKeys];
+}
+
+-(void) filter4OuterShapeMatchValue {
+    // 方案1：竞争末尾淘汰20%（参考35138-TODO1）。
+    NSArray *sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.outerShapeMatchValue;
+    }];
+    NSArray *invalidKeys = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
+    [self.bestGVs removeObjectsForKeys:invalidKeys];
 }
 
 -(void) run4ValidAbsSTPorts {
@@ -329,7 +351,7 @@
     // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return self.matchValue * self.modelMatchRatio * self.modelMatchRatio;
+    return self.outerShapeMatchValue * self.modelMatchRatio * self.modelMatchRatio;
 }
 
 -(NSString*) stScoreDesc {
@@ -349,7 +371,7 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:%02ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.stScore,self.averageContentStrong);
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f (%02ld/%02ld) = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.assT.count,self.stScore,self.averageContentStrong);
+    return STRFORMAT(@"外形匹配度:%.2f 匹配率:%.2f (%02ld/%02ld) = 总分:%.2f（稳定性:%.2f）",self.outerShapeMatchValue,self.modelMatchRatio,self.bestGVs.count,self.assT.count,self.stScore,self.averageContentStrong);
 }
 
 @end

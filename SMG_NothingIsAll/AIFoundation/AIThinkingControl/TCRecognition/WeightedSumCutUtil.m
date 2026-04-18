@@ -72,7 +72,7 @@
         // 综合考虑距离和匹配度：权重为距离乘匹配度（参考37024-TODO7）。
         CGFloat matchValue = 0;
         if (ISOK(obj, AIFeatureJvBuItem.class)) {
-            matchValue = ((AIFeatureJvBuItem*)obj).matchValue;
+            matchValue = ((AIFeatureJvBuItem*)obj).outerShapeMatchValue;
         } else if (ISOK(obj, STZiJvModelV2.class)) {
             matchValue = ((STZiJvModelV2*)obj).stMatchValue;
         }

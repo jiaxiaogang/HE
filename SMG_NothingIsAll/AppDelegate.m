@@ -148,10 +148,7 @@
     //10. 视觉训练工具
     self.imgTrainerView = [[ImgTrainerView alloc] init];
     [self.window addSubview:self.imgTrainerView];
-
-    //11. 测试分隔点
-    [GVIndexTest testGVIndexSeparator];
-
+    
     return YES;
 }
 

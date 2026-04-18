@@ -13,17 +13,19 @@
  */
 @interface AIFeatureJvBuItem : NSObject
 
-+(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree diffValue:(CGFloat)diffValue baseGV_p:(AIKVPointer*)baseGV_p;
++(id) new:(CGRect)bestGVAtProtoTRect outerShapeMatchValue:(CGFloat)outerShapeMatchValue matchDegree:(CGFloat)matchDegree innerEigenMatchValue:(CGFloat)innerEigenMatchValue baseGV_p:(AIKVPointer*)baseGV_p;
 
 //每一条bestGV都可以把rect存下来（可用于计算bestGVsAtProtoTRect）。
 @property (assign, nonatomic) CGRect bestGVAtProtoTRect;
-//每个bestGV的匹配度。
-@property (assign, nonatomic) CGFloat matchValue;
+//GV外形匹配度（37033-TODO2）。
+@property (assign, nonatomic) CGFloat outerShapeMatchValue;
 //每个bestGV的符合度。
 @property (assign, nonatomic) CGFloat matchDegree;
-//GV信息量（用diff来表示）
-@property (assign, nonatomic) CGFloat diffValue;
+//GV内征匹配度（37033-TODO3）。
+@property (assign, nonatomic) CGFloat innerEigenMatchValue;
 // baseGV
 @property (strong, nonatomic) AIKVPointer *baseGV_p;
+//每个bestGV的匹配度。
+-(CGFloat) matchValue;
 
 @end

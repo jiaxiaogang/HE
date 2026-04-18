@@ -19,6 +19,12 @@
 +(NSArray*) gvIndexKeys:(NSString*)ds;
 +(NSString*) sepKey:(NSString*)ds;
 
+// 是否外形 (dataSource是否用于外形判断)
++(BOOL) isOuterShape:(NSString*)ds;
+
+// 是否内征 (dataSource是否用于内征判断)
++(BOOL) isInnerEigen:(NSString*)ds;
+
 /**
  *  MARK:--------------------根据组节点取 四个索引的数据（均值、差值、方向、分隔点）--------------------
  */

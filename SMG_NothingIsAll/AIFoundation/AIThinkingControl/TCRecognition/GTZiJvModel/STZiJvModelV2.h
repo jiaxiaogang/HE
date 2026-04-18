@@ -22,6 +22,7 @@
 -(CGRect) bestGVs_Proto;
 
 -(CGFloat) stMatchValue;
+-(CGFloat) stOuterShapeMatchValue;
 -(CGFloat) stMatchDegree;
 -(CGFloat) stMatchCountRatio;
 

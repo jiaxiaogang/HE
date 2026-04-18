@@ -477,12 +477,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
     // 内部bests根据匹配度进行末尾淘汰。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model filter4MatchValue];
+        [model filter4OuterShapeMatchValue];
     }
     
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model run4MatchValue];
+        [model run4OuterShapeMatchValue];                               // 外形
+        [model run4InnerEigenMatchValue];                               // 内征
         // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];   // 符合度等
         // [model run4AdjacentScore];                                   // 计算相邻度
         // [model run4CenterScore];                                     // 中心度
@@ -1732,7 +1733,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [stModel updateBestGVs:best assIndex:curIndex];
         
         // DEBUG: 记录每次循环的关键信息
-        NSLog(@"itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f", (long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.matchValue);
+        NSLog(@"itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f", (long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.outerShapeMatchValue);
         
         CGRect bestGV_AssST = [stModel.assT rectByIndex:curIndex];
         NSLog(@"   对比切图范围：%@ => %@ xDelta:%.2f yDelta:%.2f",Rect2Str(bestGV_AssST),Rect2Str(best.bestGVAtProtoTRect),
@@ -1766,6 +1767,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         MapModel *rectKey = [self getIndexsOfProtoRect:checkCurProtoRect];
         AIFeatureJvBuItem *curBestGVItem = [bestGVsPoolV2 objectV5ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(newGV.pointerId)];
         bestGVsPoolTotalCount ++;
+        NSDictionary *lastProtoGVIndex = nil;
         if ([@"isNull" isEqual:curBestGVItem]) return nil; //占位空，则说明上次已经失败过，还按失败处理（此处防重掉18%）。
         if (!curBestGVItem) {
             bestGVsPoolMissCount ++;
@@ -1782,27 +1784,35 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
             
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
-            CGFloat curGMatchValue = 1, curDiffMatchValue = 0;
+            CGFloat outerShapeMatchValue = 1, innerEigenMatchValue = 1;
             AIGroupValueNode *curAssGV = [SMGUtils searchNode:newGV];
             for (AIKVPointer *assV in curAssGV.content_ps) {
+                // 数据准备
                 CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
                 NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
-                double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
                 AIValueInfo *vInfo = [vInfoCache objectForKey:assV.dataSource];
-                CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
-                curGMatchValue *= vMatchValue;
                 
-                // TODOTOMORROW20260418:
-                // 1、外形（方向和分隔点）需要protoT与assT一致（参考37033-TODO2）。
-                // 2、内征（色差和色均值）需要在assT的各元素间保持过滤平缓（参考37033-TODO3）。
-                
-                // 记录diff匹配度。
-                if ([assV.dataSource isEqual:STRFORMAT(@"%@_diff",ds)]) curDiffMatchValue = vMatchValue;
+                // 内征（色差和色均值）需要在assT的各元素间保持过滤平缓（参考37033-TODO3）。
+                if ([AINetGroupValueIndex isInnerEigen:assV.dataSource]) {
+                    // 判断当前protoData与上一帧protoData的匹配度（性能好）|| 或改为判断当前protoData与周边protoData的匹配度（性能差）。
+                    CGFloat lastProtoData = NUMTOOK([lastProtoGVIndex objectForKey:assV.dataSource]).floatValue;
+                    CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
+                    innerEigenMatchValue *= vMatchValue;
+                }
+                // 外形（方向和分隔点）需要protoT与assT一致（参考37033-TODO2）。
+                else {
+                    double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
+                    CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
+                    outerShapeMatchValue *= vMatchValue;
+                }
             }
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:curGMatchValue matchDegree:1 diffValue:curDiffMatchValue baseGV_p:newGV];
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect outerShapeMatchValue:outerShapeMatchValue matchDegree:1 innerEigenMatchValue:innerEigenMatchValue baseGV_p:newGV];
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(newGV.pointerId)];
+            
+            // 记录protoGVIndex，以供内征分析用。
+            lastProtoGVIndex = protoGVIndex;
         }
         
         //35. 保留最匹配的一条。

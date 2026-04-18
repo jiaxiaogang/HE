@@ -30,6 +30,16 @@
     return STRFORMAT(@"%@_sep",ds);
 }
 
+// 是否外形 (dataSource是否用于外形判断)
++(BOOL) isOuterShape:(NSString*)ds {
+    return [ds hasSuffix:@"_direction"] || [ds hasSuffix:@"_sep"];
+}
+
+// 是否内征 (dataSource是否用于内征判断)
++(BOOL) isInnerEigen:(NSString*)ds {
+    return [ds hasSuffix:@"_diff"] || [ds hasSuffix:@"_jun"];
+}
+
 /**
  *  MARK:--------------------根据组节点取 三个索引的数据（参考34082-方案2）--------------------
  *  @param subDots MapModel类型: v1=colorValue v2=x(0-2) v3-y(0-2)

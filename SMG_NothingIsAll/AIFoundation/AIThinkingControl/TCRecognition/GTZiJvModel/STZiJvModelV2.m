@@ -75,6 +75,12 @@
     }] / self.bestGVs.count;
 }
 
+-(CGFloat) stOuterShapeMatchValue {
+    return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
+        return gv.outerShapeMatchValue;
+    }] / self.bestGVs.count;
+}
+
 -(CGFloat) stMatchDegree {
     return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
         return gv.matchDegree;
@@ -100,7 +106,7 @@
 -(void) filter4MatchValue {
     NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
         AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.matchValue;
+        return value.outerShapeMatchValue;
     }];
     NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
     [self.bestGVs removeObjectsForKeys:rmKeys];

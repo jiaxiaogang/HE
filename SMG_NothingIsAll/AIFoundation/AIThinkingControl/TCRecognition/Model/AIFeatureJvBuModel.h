@@ -36,18 +36,20 @@
 
 //用bestGVs每一条gv求平均得出匹配度。
 @property (assign, nonatomic) CGFloat matchValue;
+@property (assign, nonatomic) CGFloat outerShapeMatchValue; // ST外形匹配度（37033-TODO2）。
+@property (assign, nonatomic) CGFloat innerEigenMatchValue; // ST内征匹配度（37033-TODO3）。
 //用bestGVs每一条gv求平均得出符合度。
 @property (assign, nonatomic) CGFloat matchDegree;
 //用bestGVs条数得出健全度。
 @property (assign, nonatomic) CGFloat matchAssProtoRatio;
 //用bestGVs条数/assT总长度=得出匹配率。
 @property (assign, nonatomic) CGFloat matchAssRatio;
-//色似度：信息量-用bestGVs每一条diff求平均得出整个信息量（避免越来越趋向于识别出纯色无意义的特征结果，有时单T识别结果是全是纯黑的gvs）。
-@property (assign, nonatomic) CGFloat matchDiffValue;
 //protoRect和assRect视角匹配度（用于调试日志用）。
 @property (assign, nonatomic) CGFloat matchRectValue;
 
 -(void) run4MatchValue;
+-(void) run4OuterShapeMatchValue;
+-(void) run4InnerEigenMatchValue;
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;
 -(void) run4BestGvsAtAssTRect;
@@ -84,6 +86,7 @@
 
 // bestGVs根据匹配度末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4MatchValue;
+-(void) filter4OuterShapeMatchValue;
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
 @property (strong, nonatomic) NSArray *validAbsSTPorts;
