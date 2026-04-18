@@ -534,7 +534,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%04ld %@ %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc,CLEANSTR([model.assT getLogDesc:true]));
+        NSLog(@"%02ld. 单特征识别结果:T%04ld.%p %@ %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model,model.stScoreDesc,CLEANSTR([model.assT getLogDesc:true]));
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -1688,7 +1688,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // DEBUG: 记录调用参数
     NSString *protoColorInfo = protoColorDic ? [NSString stringWithFormat:@"protoColorDic有值(count=%lu)", (unsigned long)protoColorDic.count] : @"protoColorDic为nil";
-    NSLog(@"[stZiJv] 调用参数: assT.count=%ld, beginAssIndex=%ld, protoColorInfo=%@, ds=%@", (long)assT.count, (long)beginAssIndex, protoColorInfo, ds);
+    NSLog(@"assT%ld.%p [stZiJv] 调用参数: assT.count=%ld, beginAssIndex=%ld, protoColorInfo=%@, ds=%@",assT.pId,stModel,(long)assT.count, (long)beginAssIndex, protoColorInfo, ds);
     
     // 21. 自举：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < assT.count; i++) {
@@ -1698,7 +1698,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         CGRect baseST_Proto = stModel.bestGVs.count > 0 ? [stModel run4AssST_ProtoRect] : defaultBaseST_Proto;
         
         
-        // 查：为什么识别对和错的结果，没明显区别。
+        // TODOTOMORROW20260418：查：为什么识别对和错的结果，没明显区别。
         //01. 单特征识别结果:T0235 匹配度:0.50 (17/19) = 总分:0.50（稳定性:1.00） {Mnist1 = 1.00;}
         //02. 单特征识别结果:T0066 匹配度:0.49 (44/45) = 总分:0.49（稳定性:68.32） {Mnist1 = 0.48;Mnist0 = 3.00;}
         //03. 单特征识别结果:T0066 匹配度:0.48 (45/45) = 总分:0.48（稳定性:68.07） {Mnist1 = 0.48;Mnist0 = 3.00;}
@@ -1714,6 +1714,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // 如上：日志第1和第11条是用1识别1，别的全是用1识别0，但从匹配度来看，第1和第11条也没明显优势。
         // 所以：把它们的每个gv的匹配度和rect打出来看看，看为什么对的和错的，区别不大。
+        
+        // 思路：要不别取平均了，取乘法，避免有任何不准确的细节。
         
         
         
@@ -1733,10 +1735,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [stModel updateBestGVs:best assIndex:curIndex];
         
         // DEBUG: 记录每次循环的关键信息
-        NSLog(@"itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f", (long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.outerShapeMatchValue);
+        NSLog(@"assT%ld.%p itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f",assT.pId,stModel,(long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.outerShapeMatchValue);
         
         CGRect bestGV_AssST = [stModel.assT rectByIndex:curIndex];
-        NSLog(@"   对比切图范围：%@ => %@ xDelta:%.2f yDelta:%.2f",Rect2Str(bestGV_AssST),Rect2Str(best.bestGVAtProtoTRect),
+        NSLog(@"   对比Rect：Ass%@ => Proto%@ xDelta:%.2f yDelta:%.2f",Rect2Str(bestGV_AssST),Rect2Str(best.bestGVAtProtoTRect),
               bestGV_AssST.origin.x + baseST_Proto.origin.x - best.bestGVAtProtoTRect.origin.x,
               bestGV_AssST.origin.y + baseST_Proto.origin.y - best.bestGVAtProtoTRect.origin.y);
     }
