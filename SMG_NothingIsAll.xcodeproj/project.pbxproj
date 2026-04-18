@@ -95,6 +95,7 @@
 		084F132226FF6E1200E9D455 /* AITest.m in Sources */ = {isa = PBXBuildFile; fileRef = 084F132126FF6E1200E9D455 /* AITest.m */; };
 		0850859B2A25B26F00ED63F2 /* TCRecognitionUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 0850859A2A25B26F00ED63F2 /* TCRecognitionUtil.m */; };
 		0851F78D2999362900977B98 /* RTQueueModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0851F78C2999362900977B98 /* RTQueueModel.m */; };
+		0855EB212F927328002DCD9F /* GVIndexTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0855EB202F927328002DCD9F /* GVIndexTest.m */; };
 		08586DE527E80C8B008D2F8C /* TVLineView.m in Sources */ = {isa = PBXBuildFile; fileRef = 08586DE427E80C8B008D2F8C /* TVLineView.m */; };
 		0858C5AE2194F5DA00951BA5 /* CarView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0858C5AD2194F5DA00951BA5 /* CarView.m */; };
 		0858C5B02194F5E400951BA5 /* CarView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0858C5AF2194F5E400951BA5 /* CarView.xib */; };
@@ -433,6 +434,8 @@
 		0850859A2A25B26F00ED63F2 /* TCRecognitionUtil.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TCRecognitionUtil.m; sourceTree = "<group>"; };
 		0851F78B2999362900977B98 /* RTQueueModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTQueueModel.h; sourceTree = "<group>"; };
 		0851F78C2999362900977B98 /* RTQueueModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RTQueueModel.m; sourceTree = "<group>"; };
+		0855EB1F2F927328002DCD9F /* GVIndexTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GVIndexTest.h; sourceTree = "<group>"; };
+		0855EB202F927328002DCD9F /* GVIndexTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GVIndexTest.m; sourceTree = "<group>"; };
 		08586DE327E80C8B008D2F8C /* TVLineView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TVLineView.h; sourceTree = "<group>"; };
 		08586DE427E80C8B008D2F8C /* TVLineView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TVLineView.m; sourceTree = "<group>"; };
 		0858C5AC2194F5DA00951BA5 /* CarView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CarView.h; sourceTree = "<group>"; };
@@ -1216,6 +1219,8 @@
 				084F132126FF6E1200E9D455 /* AITest.m */,
 				0825E3C72F81513500CEDEB4 /* SMGUtilsTest.h */,
 				0825E3C82F81513500CEDEB4 /* SMGUtilsTest.m */,
+				0855EB1F2F927328002DCD9F /* GVIndexTest.h */,
+				0855EB202F927328002DCD9F /* GVIndexTest.m */,
 			);
 			path = Test;
 			sourceTree = "<group>";
@@ -2226,6 +2231,7 @@
 				08E74B372D9393100052D8C2 /* AIRecognitionCache.m in Sources */,
 				0858C5CD2194F8B000951BA5 /* MASConstraintMaker.m in Sources */,
 				88BC09DA20B4ECAB0006ABEF /* XGRedisUtil.m in Sources */,
+				0855EB212F927328002DCD9F /* GVIndexTest.m in Sources */,
 				08D01CA228F70296003688ED /* TVSettingWindow.m in Sources */,
 				083112F21F05E12600051DE6 /* MBProgressHUD+Add.m in Sources */,
 				0863B8BC2F887E2A0012673B /* WeightedSumCutUtil.m in Sources */,

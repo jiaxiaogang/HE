@@ -78,12 +78,15 @@
     //3. 平均值精度。
     pinJunNum = roundf(pinJunNum * jinDu) / jinDu;
     
+    // 分隔点：直接用小区占比来。
+    float sepValue = (float)smallIndexs.count / subDots.count;
+    
     //3. 如果纯色，直接返回四个索引：均值、差值=0、方向=0、分隔点=0.5。
     if (smallIndexs.count == 0 || bigerIndexs.count == 0) {
         return @{[self directionKey:ds]: @(0),
                  [self diffKey:ds]: @(0),
                  [self junKey:ds]: @(pinJunNum),
-                 [self sepKey:ds]: @(0.5f)};
+                 [self sepKey:ds]: @(sepValue)};
     }
     
     //4. 差值：求出大小区各自的均值（参考34082-TODO2）。
@@ -120,64 +123,6 @@
     CGFloat rads = atan2f(smallPinJunY - bigerPinJunY,smallPinJunX - bigerPinJunX);
     float protoParam = (rads / M_PI + 1) / 2;//然后归1化
     float direction = roundf(protoParam * 360) / 360;//再然后保留10度精度
-
-    //7. 分隔点：直接枚举9个格子位置，找一个使得分隔线两侧色值之和最接近的点。
-    //    用0-1表示该点在方向线上的位置（0=小区中心，1=大区中心）。
-    float sepValue = 0.5f;
-    if (smallIndexs.count > 0 && bigerIndexs.count > 0) {
-        // 垂直于方向的方向向量（法线方向）
-        CGFloat perpX = -sinf(rads);
-        CGFloat perpY = cosf(rads);
-
-        // 向量：从小区域中心指向大区域中心（用于投影计算t值）
-        CGFloat dirX = smallPinJunX - bigerPinJunX;
-        CGFloat dirY = smallPinJunY - bigerPinJunY;
-        CGFloat dirLen = sqrtf(dirX * dirX + dirY * dirY);
-
-        float bestDiff = FLT_MAX;
-        float bestT = 0.5f;
-
-        // 枚举每个格子作为分隔点
-        for (NSInteger i = 0; i < subDots.count; i++) {
-            CGFloat px = NUMTOOK(ARR_INDEX(xs, i)).integerValue + 0.5f;
-            CGFloat py = NUMTOOK(ARR_INDEX(ys, i)).integerValue + 0.5f;
-
-            // 计算该点到大小区域中心连线的投影比例 t（0=大区中心，1=小区中心）
-            // 向量：从小区域中心指向该点
-            CGFloat vx = px - bigerPinJunX;
-            CGFloat vy = py - bigerPinJunY;
-            // 投影到方向线上
-            CGFloat t = (dirLen > 0) ? (vx * dirX + vy * dirY) / (dirLen * dirLen) : 0.5f;
-            t = MAX(0, MIN(1, t)); // 限制在0-1范围
-
-            // 计算分隔线两侧的色值之和
-            float leftSum = 0, rightSum = 0;
-            CGFloat sepX = bigerPinJunX + dirX * t;
-            CGFloat sepY = bigerPinJunY + dirY * t;
-            for (NSInteger j = 0; j < subDots.count; j++) {
-                CGFloat curX = NUMTOOK(ARR_INDEX(xs, j)).integerValue + 0.5f;
-                CGFloat curY = NUMTOOK(ARR_INDEX(ys, j)).integerValue + 0.5f;
-                float colorValue = NUMTOOK(ARR_INDEX(contentNums, j)).floatValue;
-
-                // 点积：判断在分隔线的哪一侧
-                CGFloat proj = (curX - sepX) * perpX + (curY - sepY) * perpY;
-                if (proj < 0) {
-                    leftSum += colorValue;
-                } else {
-                    rightSum += colorValue;
-                }
-            }
-
-            // 找最接近的
-            float diff = fabsf(leftSum - rightSum);
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                bestT = t;
-            }
-        }
-
-        sepValue = roundf(bestT * jinDu) / jinDu;
-    }
 
     //8. 创建四个索引的指针地址：均值、差值、方向、分隔点。
     return @{[self directionKey:ds]: @(direction),
