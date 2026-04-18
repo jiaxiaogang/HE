@@ -62,9 +62,9 @@
  */
 -(void) run4GTMatchValue {
     // 需此时self为单GTGroup
-    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
+    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils productOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
         return stGroup.stMatchValue;
-    }] / self.bestSTs.count;
+    }];
 }
 
 /**

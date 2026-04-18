@@ -475,13 +475,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
-    // 内部bests根据匹配度进行末尾淘汰。
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model filter4OuterShapeMatchValue];
-    }
+    // 内部bests根据匹配度进行末尾淘汰：关掉filterBests识别结果（识别只是识别它是什么，抽象是识别没匹配到的自会剔除）。
+    //for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+    //    [model filter4OuterShapeMatchValue];
+    //}
     
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [model run4MatchValue];                                         // 匹配度（外形 * 内征）
         [model run4OuterShapeMatchValue];                               // 外形
         [model run4InnerEigenMatchValue];                               // 内征
         // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];   // 符合度等
@@ -538,16 +539,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
-        
-        // TODOTOMORROW20260416：查为什么用1识别结果0或1的匹配度差不多。
-        //NSString *matchDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
-        //    return STRFORMAT(@"%.2f",obj.matchValue);
-        //}]);
-        //NSString *rectDesc = CLEANSTR([SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
-        //    return Rect2Str(obj.bestGVAtProtoTRect);
-        //}]);
-        //NSLog(@"%@",matchDesc);
-        //NSLog(@"%@",rectDesc);
     }
     
     //61. debugLog
@@ -564,7 +555,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // [model.assT updateLogDescItem:logDesc rate:model.matchValue];
         for (AIPort *validAbsPort in model.validAbsSTPorts) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
-            [validAbs updateLogDescItem:logDesc];
+            CGFloat absMatch = [validAbs getConMatchValue:model.assT.p];
+            [validAbs updateLogDescItem:logDesc rate:absMatch * model.matchValue];
         }
     }
 }
@@ -642,10 +634,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
     }
     
-    // 内部bests根据匹配度进行末尾淘汰。
-    for (GTZiJvModelV2 *gtGroup in allGTGroups) {
-        [gtGroup filter4MatchValue];
-    }
+    // 内部bests根据匹配度进行末尾淘汰：关掉filterBests识别结果（识别只是识别它是什么，抽象是识别没匹配到的自会剔除）。
+    //for (GTZiJvModelV2 *gtGroup in allGTGroups) {
+    //    [gtGroup filter4MatchValue];
+    //}
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。
     AddDebugCodeBlock_KeyV3();
@@ -720,7 +712,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //[model.baseGT updateLogDescItem:logDesc rate:model.zonHeScore];
         for (AIKVPointer *validAbs_p in model.validAbs_ps) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
-            [validAbs updateLogDescItem:logDesc rate:model.zonHeScore];
+            CGFloat absMatch = [validAbs getConMatchValue:model.baseGT.p];
+            [validAbs updateLogDescItem:logDesc rate:absMatch * model.gtMatchValue];
         }
     }
     AddDebugCodeBlock_KeyV3();
