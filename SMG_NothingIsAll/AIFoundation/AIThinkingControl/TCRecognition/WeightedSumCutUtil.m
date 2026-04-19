@@ -54,16 +54,18 @@
  *  @param baseT             本体AIFeatureNode
  *  @param curIndex          本体下标
  *  @param bestDic           环境字典
- *  @param edgeBlock         边提取函数
+ *  @param curEdgeBlock      个体边提取函数
+ *  @param envEdgeBlock      环境边提取函数
  *  @param max               分母（宽或高）
  *  @param force             吸附强度调整参数 (0~1)，越大吸附越强烈（为1时最近的100%匹配则完全吸附，为0.5时最近的100%匹配也只吸一半）
  *  @return                  吸附后的边值
  */
-+ (CGFloat) calcAdsorbEdgeWithBaseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex bestDic:(NSDictionary*)bestDic edgeBlock:(CGFloat(^)(CGRect))edgeBlock max:(CGFloat)max force:(CGFloat)force {
-    CGFloat curValue = edgeBlock([baseT rectByIndex:curIndex]) / max;
++ (CGFloat) calcAdsorbEdgeWithBaseT:(AIFeatureNode*)baseT curIndex:(NSInteger)curIndex bestDic:(NSDictionary*)bestDic max:(CGFloat)max force:(CGFloat)force
+                       curEdgeBlock:(CGFloat(^)(CGRect))curEdgeBlock envEdgeBlock:(CGFloat(^)(CGRect))envEdgeBlock {
+    CGFloat curValue = curEdgeBlock([baseT rectByIndex:curIndex]) / max;
     return [self adsorbWithBaseValue_Multi:curValue envs:bestDic.allKeys envBlock:^NSDictionary *(NSNumber *key) {
         // cur和other之间对齐：先取出envValue值（参考37024-TODO6）。
-        CGFloat envValue = edgeBlock([baseT rectByIndex:key.integerValue]) / max;
+        CGFloat envValue = envEdgeBlock([baseT rectByIndex:key.integerValue]) / max;
         id obj = [bestDic objectForKey:key];
         
         // cur和other之间对齐：计算curValue与envValue对齐值（越近越对齐，越远越对不齐）（参考37024-TODO6）。
@@ -74,7 +76,7 @@
         if (ISOK(obj, AIFeatureJvBuItem.class)) {
             matchValue = ((AIFeatureJvBuItem*)obj).outerShapeMatchValue;
         } else if (ISOK(obj, STZiJvModelV2.class)) {
-            matchValue = ((STZiJvModelV2*)obj).stMatchValue;
+            matchValue = ((STZiJvModelV2*)obj).stOuterShapeMatchValue;
         }
         
         // 距离和匹配度，都按冷却曲线，避免远处的影响太大（参考37033B-2疑点）。
@@ -101,11 +103,19 @@
     CGFloat width = baseTRect.size.width;
     CGFloat height = baseTRect.size.height;
     
-    // 四条边分别计算吸附值，范围都是0~1。
-    CGFloat adsorCurMinX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinX(rect); } max:width force:force];
-    CGFloat adsorCurMaxX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxX(rect); } max:width force:force];
-    CGFloat adsorCurMinY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMinY(rect); } max:height force:force];
-    CGFloat adsorCurMaxY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic edgeBlock:^CGFloat(CGRect rect) { return CGRectGetMaxY(rect); } max:height force:force];
+    // 四条边分别计算吸附值，范围都是0~1（上对下、下对上、左对右、右对左，参考37036）。
+    CGFloat adsorCurMinX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic max:width force:force
+                                            curEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMinX(r); }
+                                            envEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMaxX(r); }];
+    CGFloat adsorCurMaxX = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic max:width force:force
+                                            curEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMaxX(r); }
+                                            envEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMinX(r); }];
+    CGFloat adsorCurMinY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic max:height force:force
+                                            curEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMinY(r); }
+                                            envEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMaxY(r); }];
+    CGFloat adsorCurMaxY = [self calcAdsorbEdgeWithBaseT:baseT curIndex:curIndex bestDic:bestDic max:height force:force
+                                            curEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMaxY(r); }
+                                            envEdgeBlock:^CGFloat(CGRect r) { return CGRectGetMinY(r); }];
     
     // 计算到吸附值后，根据四条边，再拼回rect返回。
     CGFloat adsorX = adsorCurMinX * width;
@@ -139,8 +149,8 @@
     NSMutableArray *result = [NSMutableArray array];
     CGFloat fromX = CGRectGetMinX(new_ProtoFrom), fromY = CGRectGetMinY(new_ProtoFrom), fromW = new_ProtoFrom.size.width, fromH = new_ProtoFrom.size.height;
     CGFloat toX = CGRectGetMinX(new_ProtoTo), toY = CGRectGetMinY(new_ProtoTo), toW = new_ProtoTo.size.width, toH = new_ProtoTo.size.height;
-    for (NSInteger i = 0; i < 10; i++) {
-        CGFloat t = i / 9.0f; // 0~1（10条分成9份，是为了包含首尾）。
+    for (NSInteger i = 0; i < 5; i++) {
+        CGFloat t = i / 4.0f; // 0~1（10条分成9份，是为了包含首尾）。
         CGFloat x = fromX + (toX - fromX) * t;
         CGFloat y = fromY + (toY - fromY) * t;
         CGFloat w = fromW + (toW - fromW) * t;
