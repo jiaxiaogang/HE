@@ -61,7 +61,7 @@
     //1. 匹配度。
     self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.matchValue;
-    }];
+    }] / self.bestGVs.count;
 }
 
 -(void) run4OuterShapeMatchValue {
