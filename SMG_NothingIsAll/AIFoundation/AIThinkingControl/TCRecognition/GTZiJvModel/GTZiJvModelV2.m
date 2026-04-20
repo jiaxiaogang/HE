@@ -238,7 +238,7 @@
     // return self.gtMatchValue * self.matchCountRatioV2 * self.allBestCount;
     
     // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
-    return self.gtMatchValue;
+    return self.gtMatchValue * self.matchCountRatioV2 * self.allBestCount;
 }
 
 // GTModel综合评分的描述。
