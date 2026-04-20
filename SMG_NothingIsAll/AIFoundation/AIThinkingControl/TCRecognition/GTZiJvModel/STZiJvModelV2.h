@@ -40,4 +40,7 @@
 @property (assign, nonatomic) CGRect absST_BaseST; // 类比后，取得absST_BaseST
 @property (assign, nonatomic) CGRect absST_BaseGT; // item类比后，算出absST_BaseGT
 
+// 末尾淘汰。
+-(void) filter4ZonHe;
+
 @end

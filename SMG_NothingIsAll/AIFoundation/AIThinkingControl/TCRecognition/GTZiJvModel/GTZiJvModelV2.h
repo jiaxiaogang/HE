@@ -45,6 +45,7 @@
  */
 -(void) run4MatchCountRatioV2;
 @property (assign, nonatomic) CGFloat matchCountRatioV2;
+-(NSInteger) allBestCount;
 
 /**
  *  MARK:--------------------匹配数归一化值--------------------
@@ -70,6 +71,7 @@
 // bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4MatchValue;
 -(void) filter4OuterShapeMatchValue;
+-(void) filter4ZonHe;
 
 // GTModel综合评分（用于GT识别竞争）。
 -(CGFloat) zonHeScore;

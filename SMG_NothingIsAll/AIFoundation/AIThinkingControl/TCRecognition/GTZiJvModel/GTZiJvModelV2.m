@@ -62,7 +62,7 @@
  */
 -(void) run4GTMatchValue {
     // 需此时self为单GTGroup
-    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils productOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
+    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
         return stGroup.stMatchValue;
     }];
 }
@@ -199,6 +199,28 @@
     }];
     NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
     [self.bestSTs removeObjectsForKeys:rmKeys];
+}
+
+// 末尾淘汰。
+-(void) filter4ZonHe {
+    for (STZiJvModelV2 *stGroup in self.bestSTs.allValues) {
+        [stGroup filter4ZonHe];
+    }
+    
+    NSArray *sorts = [SMGUtils sortSmall2Big:self.bestSTs.allKeys compareBlock:^double(NSNumber *key) {
+        STZiJvModelV2 *value = [self.bestSTs objectForKey:key];
+        return value.stOuterShapeMatchValue;
+    }];
+    NSArray *rms1 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    sorts = [SMGUtils sortSmall2Big:self.bestSTs.allKeys compareBlock:^double(NSNumber *key) {
+        STZiJvModelV2 *value = [self.bestSTs objectForKey:key];
+        return value.stMatchValue;
+    }];
+    NSArray *rms2 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    [self.bestSTs removeObjectsForKeys:rms1];
+    [self.bestSTs removeObjectsForKeys:rms2];
 }
 
 // GTModel综合评分（用于GT识别竞争）。

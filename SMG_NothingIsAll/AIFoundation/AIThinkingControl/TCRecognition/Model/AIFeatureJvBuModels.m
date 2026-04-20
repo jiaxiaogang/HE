@@ -100,4 +100,33 @@
     }
 }
 
+// 每个条件都末尾淘汰20%（参考35138-TODO1）。
+-(void) filter4ZonHe {
+    NSArray *sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+        return model.outerShapeMatchValue;
+    }];
+    NSArray *invalids1 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
+    
+    sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+        return model.bestGVs.count;
+    }];
+    NSArray *invalids2 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
+    
+    sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+        return model.modelMatchRatio;
+    }];
+    NSArray *invalids3 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
+    
+    sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+        return model.averageContentStrong;
+    }];
+    NSArray *invalids4 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
+    
+    // 每个条件都末尾淘汰。
+    [self.stModels removeObjectsInArray:invalids1];
+    [self.stModels removeObjectsInArray:invalids2];
+    [self.stModels removeObjectsInArray:invalids3];
+    [self.stModels removeObjectsInArray:invalids4];
+}
+
 @end

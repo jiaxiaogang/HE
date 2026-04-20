@@ -15,4 +15,7 @@
  */
 +(NSDictionary*) getVImportanceDic:(AIShortMatchModel*)inModel;
 
+// gtGroups末尾淘汰。
++(NSMutableArray*) filter4ZonHe:(NSMutableArray*)allGTGroups;
+
 @end

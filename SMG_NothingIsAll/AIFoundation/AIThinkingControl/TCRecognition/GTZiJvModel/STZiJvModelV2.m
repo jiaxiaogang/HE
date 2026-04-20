@@ -121,4 +121,29 @@
     [self.bestGVs removeObjectsForKeys:rmKeys];
 }
 
+// 末尾淘汰。
+-(void) filter4ZonHe {
+    NSArray *sorts = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.matchValue;
+    }];
+    NSArray *rms1 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    sorts = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.outerShapeMatchValue;
+    }];
+    NSArray *rms2 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    sorts = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.innerEigenMatchValue;
+    }];
+    NSArray *rms3 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    [self.bestGVs removeObjectsForKeys:rms1];
+    [self.bestGVs removeObjectsForKeys:rms2];
+    [self.bestGVs removeObjectsForKeys:rms3];
+}
+
 @end

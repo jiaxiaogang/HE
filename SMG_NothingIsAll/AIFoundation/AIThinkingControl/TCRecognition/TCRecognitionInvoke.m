@@ -475,9 +475,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
-    // 内部bests根据匹配度进行末尾淘汰：匹配度差的就该被竞争淘汰剔除掉（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
+    // bestGVs末尾淘汰（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model filter4OuterShapeMatchValue];
+        [model filter4ZonHe];
     }
     
     //43. 处理匹配度
@@ -510,6 +510,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
+    // stModels末尾淘汰。
+    [decoratorJvBuModel filter4ZonHe];
+    
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
@@ -535,7 +538,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%04ld.%p %@ %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model,model.stScoreDesc,CLEANSTR([model.assT getLogDesc:true]));
+        NSLog(@"%02ld. 单特征识别结果:T%04ld %@ %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc,CLEANSTR([model.assT getLogDesc:true]));
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -636,7 +639,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 内部bests根据匹配度进行末尾淘汰：匹配度差的就该被竞争淘汰剔除掉（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
     for (GTZiJvModelV2 *gtGroup in allGTGroups) {
-        [gtGroup filter4OuterShapeMatchValue];
+        [gtGroup filter4ZonHe];
     }
     
     // 竞争因子：匹配度 & 匹配数（防过抽）。
@@ -659,6 +662,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4AverageContentStrong];
     }
     AddDebugCodeBlock_KeyV3();
+    
+    // 末尾淘汰。
+    [TCRecognitionUtil filter4ZonHe:allGTGroups];
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvModelV2 *obj) {

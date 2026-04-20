@@ -225,4 +225,27 @@
     return importanceDic;
 }
 
+// gtGroups末尾淘汰。
++(NSMutableArray*) filter4ZonHe:(NSMutableArray*)allGTGroups {
+    NSArray *sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+        return gtModel.gtMatchValue;
+    }];
+    NSArray *rms1 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+        return gtModel.allBestCount;
+    }];
+    NSArray *rms2 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+        return gtModel.matchCountRatioV2;
+    }];
+    NSArray *rms3 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
+    [allGTGroups removeObjectsInArray:rms1];
+    [allGTGroups removeObjectsInArray:rms2];
+    [allGTGroups removeObjectsInArray:rms3];
+    return allGTGroups;
+}
+
 @end
