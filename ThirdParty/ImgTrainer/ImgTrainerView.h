@@ -30,6 +30,7 @@
 -(void) setDataForAlgs:(NSArray*)models tvId:(NSInteger)tvId;
 
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
+-(void) setDataForFeatureV2:(AIFeatureNode*)tNode lab:(NSString*)lab canvasRect:(CGRect)canvasRect tvId:(NSInteger)tvId; // 显示到showRect指定画布大小。
 -(void) setDataForGTModel:(GTModel*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
 -(void) setDataForGTModelV2:(GTModelV2*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;
 -(void) setDataForGTModelV3:(GTZiJvModelV2*)gtGroup lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId;

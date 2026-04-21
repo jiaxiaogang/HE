@@ -260,6 +260,22 @@
     [[self getPreviewTV:tvId] reloadData];
 }
 
+// 显示到showRect指定画布大小。
+-(void) setDataForFeatureV2:(AIFeatureNode*)tNode lab:(NSString*)lab canvasRect:(CGRect)canvasRect tvId:(NSInteger)tvId {
+    NSArray *gvModels = [tNode convert2GVModels:nil];
+    
+    // 转为实际在proto中显示的大小。
+    CGRect objRect = tNode.rect;
+    for (InputGroupValueModel *gvModel in gvModels) {
+        gvModel.rect = [SMGUtils convertAAtCWithAAtB:gvModel.rect bAtC:canvasRect protoBSize:objRect.size];
+    }
+    
+    // 可视化显示。
+    ImgTrainerPreview *preview = [self getOrCreate:lab tvId:tvId];
+    [preview setData:tNode gvModels:gvModels lab:lab left:0 top:0];
+    [[self getPreviewTV:tvId] reloadData];
+}
+
 -(void) setDataForGTModel:(GTModel*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
     // 为GT全显示。
     NSArray *indexes = nil; //[SMGUtils convertArr:gtModel.items convertBlock:^id(GTItem *gtItem) { return @(gtItem.assIndex); }];

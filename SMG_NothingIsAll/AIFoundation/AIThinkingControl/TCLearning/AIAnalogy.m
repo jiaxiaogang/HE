@@ -259,7 +259,7 @@
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex {
     AIFeatureNode *absST = [self analogyFeatureV3:jvBuModel.bestGVs baseST:jvBuModel.assT stMatchValue:jvBuModel.matchValue protoTLogDesc:protoTLogDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
         // 1. 把后面会用到的一些数据存下来。
-        jvBuModel.bestGVs4NoZeRen = [SMGUtils convertArr:validBestGVs convertBlock:^id(MapModel *obj) { return obj.v2; }];
+        jvBuModel.bestGVs4NoZeRen = validBestGVs;
     } debug:true];
     
     // 2. 完成后数据处理。
@@ -274,26 +274,9 @@
 
 +(AIFeatureNode*) analogyFeatureV3:(NSDictionary*)bestGVs baseST:(AIFeatureNode*)baseST stMatchValue:(CGFloat)stMatchValue protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex finishBlock:(void(^)(NSArray *validBestGVs, NSValue *bestGVs_AssT))finishBlock debug:(BOOL)debug {
     
-    //NSLog(@"==============> 特征类比Step1：protoT%ld assT%ld",protoFeature.pId,assFeature.pId);
-    // 剔除主责：GV类比: 进行共同点抽象 (参考29025-11)。
-    NSArray *models = [SMGUtils convertArr:bestGVs.allKeys convertBlock:^id(NSNumber *key) {
-        return [MapModel newWithV1:key v2:[bestGVs objectForKey:key]];
-    }];
-    NSArray *validBestGVs = models;
-    
-    // 关闭过滤（识别已竞争过，不必画蛇添足）。
-    //validBestGVs = [SMGUtils filterArr:models checkValid:^BOOL(MapModel *model) {
-    //    AIFeatureJvBuItem *item = model.v2;
-    //    return [TCLearningUtil noZeRenForPingJun:item.matchValue bigerMatchValue:stMatchValue fanForce:2.0f];
-    //}];
-    
     //14. 根据validIndexDic求出newAbsT在protoT和assT中的rect。
-    NSArray *sortValidItems = [SMGUtils sortSmall2Big:validBestGVs compareBlock:^double(MapModel *obj) {
-        NSNumber *assIndex = obj.v1;
-        return assIndex.integerValue;
-    }];
-    NSArray *assContentIndexes = [SMGUtils convertArr:sortValidItems convertBlock:^id(MapModel *obj) {
-        return obj.v1;
+    NSArray *assContentIndexes = [SMGUtils sortSmall2Big:bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        return key.integerValue;
     }];
     CGRect bestGVs_AssT = [AINetUtils convertPartOfFeatureContent2Rect:baseST contentIndexes:assContentIndexes];
     
@@ -303,8 +286,7 @@
     
     //15. 转为List<InputGroupValueModel>模型。
     NSMutableArray *absGVModels = [NSMutableArray new];
-    for (MapModel *obj in sortValidItems) {
-        NSNumber *assIndex = obj.v1;
+    for (NSNumber *assIndex in assContentIndexes) {
         AIKVPointer *assGV_p = ARR_INDEX(baseST.content_ps, assIndex.integerValue);
         
         //16A. 方案1、采用bestGV at assT的位置，做absT的元素位置分布：将gvRect在assT的范围，转成在newAbsT中的位置。
@@ -361,8 +343,12 @@
     
     //41. debugLog
     if (debug) {
+        CGRect bestGVs_Proto = [SMGUtils convertArr2Rect:bestGVs.allValues itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+            return item.bestGVAtProtoTRect;
+        }];
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld-T%ld->抽%ld(%ld)",prefixIndex,baseST.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:2];
+            [theApp.imgTrainerView setDataForFeatureV2:absT lab:STRFORMAT(@"%ld-T%ld->抽%ld(%ld)",prefixIndex,baseST.pId,absT.pId,absT.count) canvasRect:bestGVs_Proto tvId:2];
+            // [theApp.imgTrainerView setDataForFeature:absT lab:STRFORMAT(@"%ld-T%ld->抽%ld(%ld)",prefixIndex,baseST.pId,absT.pId,absT.count) left:bestGVs_AssT.origin.x top:bestGVs_AssT.origin.y tvId:2];
         }];
     }
     
@@ -370,7 +356,7 @@
     if (Log4Ana) NSLog(@"\n单特征类比结果(%@) ======================> \nAssT%ld（GV数:%ld）%@\n%@AbsT%ld（GV数:%ld）：%@\n%@",baseST.ds,
                                baseST.pId,baseST.count,CLEANSTR([baseST getLogDesc:false]),FeatureDesc(baseST.p,1),
                                absT.pId,sortGroupModels.count,CLEANSTR([absT getLogDesc:false]),FeatureDesc(absT.p,1));
-    if (finishBlock) finishBlock(validBestGVs,@(bestGVs_AssT));
+    if (finishBlock) finishBlock(bestGVs.allValues,@(bestGVs_AssT));
     return absT;
 }
 
