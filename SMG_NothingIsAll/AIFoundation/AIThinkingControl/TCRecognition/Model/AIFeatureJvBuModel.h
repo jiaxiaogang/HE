@@ -114,6 +114,7 @@
  */
 -(void) run4AverageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrong;
+@property (assign, nonatomic) CGFloat averageContentStrongScore;
 
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;

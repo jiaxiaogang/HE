@@ -333,7 +333,7 @@
     // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return self.outerShapeMatchValue * self.innerEigenMatchValue * self.bestGVs.count * self.modelMatchRatio;
+    return self.outerShapeMatchValue * self.innerEigenMatchValue * self.bestGVs.count * self.modelMatchRatio * self.averageContentStrongScore;
 }
 
 -(NSString*) stScoreDesc {

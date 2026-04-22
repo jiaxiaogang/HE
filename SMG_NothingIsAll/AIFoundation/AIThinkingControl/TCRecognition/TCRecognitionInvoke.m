@@ -494,11 +494,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model run4AverageContentStrong];                               // 稳定性
     }
     
-    // 抽象强度得分
-    [decoratorJvBuModel run4AbsPortStrongScore];
-    
-    // 匹配数归一化：防过抽。
-    [decoratorJvBuModel run4ModelMatchCountScore];
+    [decoratorJvBuModel run4AbsPortStrongScore];        // 抽象强度得分
+    [decoratorJvBuModel run4ModelMatchCountScore];      // 匹配数归一化：防过抽。
+    [decoratorJvBuModel run4AverageContentStrongScore]; // 强度归一化得分
     
     // 竞争因子计算：防止过度抽象匹配数。
     // [decoratorJvBuModel run4BestGVsCountRatio];
@@ -662,6 +660,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4AverageContentStrong];
     }
     AddDebugCodeBlock_KeyV3();
+    
+    // 强度归一化得分。
+    NSArray *sorts = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvModelV2 *obj) {
+        return obj.averageContentStrong;
+    }];
+    for (NSInteger i = 0; i < sorts.count; i++) {
+        GTZiJvModelV2 *item = ARR_INDEX(sorts, i);
+        item.averageContentStrongScore = (sorts.count - i) / (CGFloat)sorts.count;
+    }
     
     // 末尾淘汰。
     [TCRecognitionUtil filter4ZonHe:allGTGroups];

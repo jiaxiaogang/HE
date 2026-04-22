@@ -100,6 +100,17 @@
     }
 }
 
+// 计算强度归一化得分。
+-(void) run4AverageContentStrongScore {
+    NSArray *sorts = [SMGUtils sortBig2Small:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.averageContentStrong;
+    }];
+    for (NSInteger i = 0; i < sorts.count; i++) {
+        AIFeatureJvBuModel *item = ARR_INDEX(sorts, i);
+        item.averageContentStrongScore = (float)(sorts.count - i) / sorts.count;
+    }
+}
+
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4ZonHe {
     NSArray *sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {

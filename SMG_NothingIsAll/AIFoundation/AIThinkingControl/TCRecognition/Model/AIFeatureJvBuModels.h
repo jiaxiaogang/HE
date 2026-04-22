@@ -43,6 +43,9 @@
 // 计算stModel的抽象强度得分。
 -(void) run4AbsPortStrongScore;
 
+// 计算强度归一化得分。
+-(void) run4AverageContentStrongScore;
+
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4ZonHe;
 
