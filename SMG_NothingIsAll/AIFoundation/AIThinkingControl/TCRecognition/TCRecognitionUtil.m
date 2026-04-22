@@ -228,7 +228,7 @@
 // gtGroups末尾淘汰。
 +(NSMutableArray*) filter4ZonHe:(NSMutableArray*)allGTGroups {
     NSArray *sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
-        return gtModel.gtMatchValue;
+        return gtModel.gtOuterShapeMatchValue;
     }];
     NSArray *rms1 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
     
@@ -242,9 +242,15 @@
     }];
     NSArray *rms3 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
     
+    sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+        return gtModel.gtInnerEigenMatchValue;
+    }];
+    NSArray *rms4 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    
     [allGTGroups removeObjectsInArray:rms1];
     [allGTGroups removeObjectsInArray:rms2];
     [allGTGroups removeObjectsInArray:rms3];
+    [allGTGroups removeObjectsInArray:rms4];
     return allGTGroups;
 }
 

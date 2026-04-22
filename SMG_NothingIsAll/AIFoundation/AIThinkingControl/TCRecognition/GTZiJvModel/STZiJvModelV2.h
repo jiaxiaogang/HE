@@ -21,8 +21,8 @@
 -(CGRect) bestGVs_ST;
 -(CGRect) bestGVs_Proto;
 
--(CGFloat) stMatchValue;
 -(CGFloat) stOuterShapeMatchValue;
+-(CGFloat) stInnerEigenMatchValue;
 -(CGFloat) stMatchDegree;
 -(CGFloat) stMatchCountRatio;
 
@@ -32,9 +32,9 @@
  */
 -(CGFloat) stMatchDegree:(CGRect)hopeRect;
 
-// bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
--(void) filter4MatchValue;
+// 末尾淘汰。
 -(void) filter4OuterShapeMatchValue;
+-(void) filter4InnerEigenMatchValue;
 
 @property (strong, nonatomic) AIFeatureNode *absST; // 类比gtGroup时，先把stGroup中的bestGVs抽象成absST。
 @property (assign, nonatomic) CGRect absST_BaseST; // 类比后，取得absST_BaseST

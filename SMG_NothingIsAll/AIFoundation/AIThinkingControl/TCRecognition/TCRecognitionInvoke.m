@@ -482,7 +482,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model run4MatchValue];                                         // 匹配度（外形 * 内征）
         [model run4OuterShapeMatchValue];                               // 外形
         [model run4InnerEigenMatchValue];                               // 内征
         // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];   // 符合度等
@@ -559,7 +558,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         for (AIPort *validAbsPort in model.validAbsSTPorts) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
             CGFloat absMatch = [validAbs getConMatchValue:model.assT.p];
-            [validAbs updateLogDescItem:logDesc rate:absMatch * model.matchValue];
+            [validAbs updateLogDescItem:logDesc rate:absMatch * model.outerShapeMatchValue * model.innerEigenMatchValue];
         }
     }
 }
@@ -649,7 +648,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     CGFloat protoGTArea = [SMGUtils computeArea4STModels_Proto:stModels];
     for (GTZiJvModelV2 *gtGroup in allGTGroups) {
-        [gtGroup run4GTMatchValue];
+        [gtGroup run4GTOuterShapeMatchValue];
+        [gtGroup run4GTInnerEigenMatchValue];
         [gtGroup run4GTMatchDegree];
         [gtGroup run4GTMatchCountRatio];
         [gtGroup run4STMatchDegree];
@@ -719,7 +719,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         for (AIKVPointer *validAbs_p in model.validAbs_ps) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
             CGFloat absMatch = [validAbs getConMatchValue:model.baseGT.p];
-            [validAbs updateLogDescItem:logDesc rate:absMatch * model.gtMatchValue];
+            [validAbs updateLogDescItem:logDesc rate:absMatch * model.gtOuterShapeMatchValue * model.gtInnerEigenMatchValue];
         }
     }
     AddDebugCodeBlock_KeyV3();
@@ -1805,7 +1805,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
         
         //35. 保留最匹配的一条。
-        if (!best || best.matchValue < curBestGVItem.matchValue) {
+        if (!best || best.outerShapeMatchValue * best.innerEigenMatchValue < curBestGVItem.outerShapeMatchValue * curBestGVItem.innerEigenMatchValue) {
             best = curBestGVItem;
         }
     }

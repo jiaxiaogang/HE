@@ -60,10 +60,17 @@
 /**
  *  MARK:--------------------主因子：匹配度--------------------
  */
--(void) run4GTMatchValue {
+-(void) run4GTOuterShapeMatchValue {
     // 需此时self为单GTGroup
-    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
-        return stGroup.stMatchValue;
+    self.gtOuterShapeMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
+        return stGroup.stOuterShapeMatchValue;
+    }] / self.bestSTs.count;
+}
+
+-(void) run4GTInnerEigenMatchValue {
+    // 需此时self为单GTGroup
+    self.gtInnerEigenMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
+        return stGroup.stInnerEigenMatchValue;
     }] / self.bestSTs.count;
 }
 
@@ -175,20 +182,20 @@
 }
 
 // bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
--(void) filter4MatchValue {
+-(void) filter4OuterShapeMatchValue {
     for (STZiJvModelV2 *stGroup in self.bestSTs.allValues) {
-        [stGroup filter4MatchValue];
+        [stGroup filter4OuterShapeMatchValue];
     }
     
     NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestSTs.allKeys compareBlock:^double(NSNumber *key) {
         STZiJvModelV2 *value = [self.bestSTs objectForKey:key];
-        return value.stMatchValue;
+        return value.stOuterShapeMatchValue;
     }];
     NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
     [self.bestSTs removeObjectsForKeys:rmKeys];
 }
 
--(void) filter4OuterShapeMatchValue {
+-(void) filter4InnerMatchValue {
     for (STZiJvModelV2 *stGroup in self.bestSTs.allValues) {
         [stGroup filter4OuterShapeMatchValue];
     }
@@ -215,7 +222,7 @@
     
     sorts = [SMGUtils sortSmall2Big:self.bestSTs.allKeys compareBlock:^double(NSNumber *key) {
         STZiJvModelV2 *value = [self.bestSTs objectForKey:key];
-        return value.stMatchValue;
+        return value.stInnerEigenMatchValue;
     }];
     NSArray *rms2 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
     
@@ -238,7 +245,7 @@
     // return self.gtMatchValue * self.matchCountRatioV2 * self.allBestCount;
     
     // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
-    return self.gtMatchValue * self.matchCountRatioV2 * self.allBestCount;
+    return self.gtOuterShapeMatchValue * self.gtInnerEigenMatchValue * self.matchCountRatioV2 * self.allBestCount;
 }
 
 // GTModel综合评分的描述。
@@ -256,7 +263,7 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:(%03ld/%03ld) = 综合得分:%.3f（稳定性:%.2f）",self.gtMatchValue,self.matchCountRatioV2,self.allBestCount,self.allGVCount,self.zonHeScore,self.averageContentStrong);
     
     // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
-    return STRFORMAT(@"匹配度:%.2f (%02ld/%02ld) 稳定性:%.2f = 总分:%.3f",self.gtMatchValue,self.bestSTs.count,self.baseGT.count,self.averageContentStrong,self.zonHeScore);
+    return STRFORMAT(@"外形:%.2f 内征:%.2f (%02ld/%02ld) 稳定性:%.2f = 总分:%.3f",self.gtOuterShapeMatchValue,self.gtInnerEigenMatchValue,self.bestSTs.count,self.baseGT.count,self.averageContentStrong,self.zonHeScore);
 }
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。

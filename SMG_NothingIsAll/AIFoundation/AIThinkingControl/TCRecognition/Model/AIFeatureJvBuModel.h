@@ -35,7 +35,6 @@
 @property (strong, nonatomic) AIKVPointer *abs_p;
 
 //用bestGVs每一条gv求平均得出匹配度。
-@property (assign, nonatomic) CGFloat matchValue;
 @property (assign, nonatomic) CGFloat outerShapeMatchValue; // ST外形匹配度（37033-TODO2）。
 @property (assign, nonatomic) CGFloat innerEigenMatchValue; // ST内征匹配度（37033-TODO3）。
 //用bestGVs每一条gv求平均得出符合度。
@@ -47,14 +46,11 @@
 //protoRect和assRect视角匹配度（用于调试日志用）。
 @property (assign, nonatomic) CGFloat matchRectValue;
 
--(void) run4MatchValue;
 -(void) run4OuterShapeMatchValue;
 -(void) run4InnerEigenMatchValue;
 -(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
 -(void) run4BestGvsAtProtoTRect;
 -(void) run4BestGvsAtAssTRect;
--(CGFloat) getGTMatch;
--(NSString*) getGTMatchDesc;
 
 @property (assign, nonatomic) CGFloat areaRankSum; // 考试名次之和（越大越好）。
 @property (assign, nonatomic) NSInteger areaRankNum; // 考试次数（用于计算均排名）。
@@ -84,8 +80,7 @@
 @property (assign, nonatomic) CGRect assST_ProtoRect;
 -(CGRect) run4AssST_ProtoRect;
 
-// bestGVs根据匹配度末尾淘汰20%（参考35138-TODO1）。
--(void) filter4MatchValue;
+// 末尾淘汰
 -(void) filter4OuterShapeMatchValue;
 -(void) filter4ZonHe;
 

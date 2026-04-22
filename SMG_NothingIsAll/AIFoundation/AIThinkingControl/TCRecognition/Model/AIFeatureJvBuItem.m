@@ -20,8 +20,4 @@
     return result;
 }
 
--(CGFloat) matchValue {
-    return self.outerShapeMatchValue * self.innerEigenMatchValue;
-}
-
 @end

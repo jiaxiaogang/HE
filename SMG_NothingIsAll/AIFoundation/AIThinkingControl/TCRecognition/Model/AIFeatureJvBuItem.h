@@ -25,7 +25,5 @@
 @property (assign, nonatomic) CGFloat innerEigenMatchValue;
 // baseGV
 @property (strong, nonatomic) AIKVPointer *baseGV_p;
-//每个bestGV的匹配度。
--(CGFloat) matchValue;
 
 @end

@@ -69,15 +69,15 @@
     }];
 }
 
--(CGFloat) stMatchValue {
-    return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
-        return gv.matchValue;
-    }] / self.bestGVs.count;
-}
-
 -(CGFloat) stOuterShapeMatchValue {
     return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
         return gv.outerShapeMatchValue;
+    }] / self.bestGVs.count;
+}
+
+-(CGFloat) stInnerEigenMatchValue {
+    return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
+        return gv.innerEigenMatchValue;
     }] / self.bestGVs.count;
 }
 
@@ -102,16 +102,7 @@
     return stMatchDegree;
 }
 
-// bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
--(void) filter4MatchValue {
-    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.matchValue;
-    }];
-    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
-    [self.bestGVs removeObjectsForKeys:rmKeys];
-}
-
+// 末尾淘汰。
 -(void) filter4OuterShapeMatchValue {
     NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
         AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
@@ -121,15 +112,18 @@
     [self.bestGVs removeObjectsForKeys:rmKeys];
 }
 
+-(void) filter4InnerEigenMatchValue {
+    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
+        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
+        return value.innerEigenMatchValue;
+    }];
+    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
+    [self.bestGVs removeObjectsForKeys:rmKeys];
+}
+
 // 末尾淘汰。
 -(void) filter4ZonHe {
     NSArray *sorts = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.matchValue;
-    }];
-    NSArray *rms1 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
-    
-    sorts = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
         AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
         return value.outerShapeMatchValue;
     }];
@@ -141,7 +135,6 @@
     }];
     NSArray *rms3 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
     
-    [self.bestGVs removeObjectsForKeys:rms1];
     [self.bestGVs removeObjectsForKeys:rms2];
     [self.bestGVs removeObjectsForKeys:rms3];
 }

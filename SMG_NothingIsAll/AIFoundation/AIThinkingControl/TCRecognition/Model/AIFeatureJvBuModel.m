@@ -55,13 +55,6 @@
     [self run4BestGvsAtProtoTRect];
 }
 
--(void) run4MatchValue {
-    //1. 匹配度。
-    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.matchValue;
-    }] / self.bestGVs.count;
-}
-
 -(void) run4OuterShapeMatchValue {
     self.outerShapeMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.outerShapeMatchValue;
@@ -87,16 +80,6 @@
         CGRect itemGV_AssSTRect = [self.assT rectByIndex:assIndex.integerValue];
         self.bestGVsAtAssTRect = CGRectUnion(self.bestGVsAtAssTRect, itemGV_AssSTRect);
     }
-}
-
-//2025.08.26: 组特征竞争要避免太抽象-匹配率高即为抽象显著的（参考35068-方案1）。
--(CGFloat) getGTMatch {
-    return self.matchValue * self.matchAssRatio * self.matchAssRatio;// * self.matchDiffValue;
-}
-
--(NSString*) getGTMatchDesc {
-    //return STRFORMAT(@"\t匹配度:%.2f",self.matchValue);
-    return STRFORMAT(@"\t匹配度:%.2f\t匹配率:%.1f",self.matchValue,self.matchAssRatio);
 }
 
 // 平均名次（越大越好）（求平均原因：参考35076-TODO2.3）。
@@ -126,7 +109,7 @@
     // 方案1、区域综合竞争后，打分时，对防抽防具最后30%名进行降权（参考36096-TODO3.3）。
     // 2026.01.21: 去掉防过具，改为准确中取具象（因为很难对撞上，所有有效全含的抽象全算识别结果）（参考35152-TODO1 & 35153）。
     zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.matchValue * self.modelMatchCountScore/* * self.modelMatchRatioScore*/;
+        return obj.outerShapeMatchValue * obj.innerEigenMatchValue * self.modelMatchCountScore/* * self.modelMatchRatioScore*/;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
@@ -192,24 +175,6 @@
     return self.assST_ProtoRect;
 }
 
-// bestGVs根据匹配度末尾淘汰20%（参考35138-TODO1）。
--(void) filter4MatchValue {
-    // 方案1：竞争末尾淘汰20%（参考35138-TODO1）。
-    NSArray *sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.matchValue;
-    }];
-    NSArray *invalidKeys = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
-    [self.bestGVs removeObjectsForKeys:invalidKeys];
-    
-    // 方案2：直接把matchValue<0.6的过滤掉（参考35138-TODO1）。
-    //NSArray *invalidKeys = [SMGUtils filterArr:self.bestGVs.allKeys checkValid:^BOOL(NSNumber *key) {
-    //    AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-    //    return value.matchValue < 0.6f;
-    //}];
-    //[self.bestGVs removeObjectsForKeys:invalidKeys];
-}
-
 -(void) filter4OuterShapeMatchValue {
     // 方案1：竞争末尾淘汰20%（参考35138-TODO1）。
     NSArray *sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
@@ -224,12 +189,6 @@
 -(void) filter4ZonHe {
     NSArray *sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
         AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.matchValue;
-    }];
-    NSArray *invalidKeys1 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
-    
-    sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
         return value.outerShapeMatchValue;
     }];
     NSArray *invalidKeys2 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
@@ -241,7 +200,6 @@
     NSArray *invalidKeys3 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
     
     // 每个条件都末尾淘汰。
-    [self.bestGVs removeObjectsForKeys:invalidKeys1];
     [self.bestGVs removeObjectsForKeys:invalidKeys2];
     [self.bestGVs removeObjectsForKeys:invalidKeys3];
 }
