@@ -135,7 +135,7 @@
     CGRect baseTRect = baseT.rect;
     
     // 根据吸附强度分别：计算在Ass的始终切图范围（参考37024-TODO8&9）。
-    CGRect new_BaseTFrom = [self calcAdsorbAssRect:bestDic baseT:baseT curIndex:curIndex force:0.5f];
+    CGRect new_BaseTFrom = [self calcAdsorbAssRect:bestDic baseT:baseT curIndex:curIndex force:0.7f];
     CGRect new_BaseTTo = [self calcAdsorbAssRect:bestDic baseT:baseT curIndex:curIndex force:1.0f];
     
     // 转换为在Proto的始终切图范围（参考37024-TODO4）。
@@ -149,8 +149,8 @@
     NSMutableArray *result = [NSMutableArray array];
     CGFloat fromX = CGRectGetMinX(new_ProtoFrom), fromY = CGRectGetMinY(new_ProtoFrom), fromW = new_ProtoFrom.size.width, fromH = new_ProtoFrom.size.height;
     CGFloat toX = CGRectGetMinX(new_ProtoTo), toY = CGRectGetMinY(new_ProtoTo), toW = new_ProtoTo.size.width, toH = new_ProtoTo.size.height;
-    for (NSInteger i = 0; i < 5; i++) {
-        CGFloat t = i / 4.0f; // 0~1（10条分成9份，是为了包含首尾）。
+    for (NSInteger i = 0; i < 3; i++) {
+        CGFloat t = i / 2.0f; // 0~1（10条分成9份，是为了包含首尾）。
         CGFloat x = fromX + (toX - fromX) * t;
         CGFloat y = fromY + (toY - fromY) * t;
         CGFloat w = fromW + (toW - fromW) * t;

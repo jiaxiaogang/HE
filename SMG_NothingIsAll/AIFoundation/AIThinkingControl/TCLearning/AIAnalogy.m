@@ -262,10 +262,10 @@
         jvBuModel.bestGVs4NoZeRen = validBestGVs;
     } debug:true];
     
-    // 2. 完成后数据处理。
-    if (![absST.p isEqual:jvBuModel.assT.p]) {
-        [jvBuModel run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
-    }
+    // 2. 完成后数据处理（现在并不排除主责，所以不需要重新计算竞争因子）。
+    //if (![absST.p isEqual:jvBuModel.assT.p]) {
+    //    [jvBuModel run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];
+    //}
     
     // 3. 把后面会用到的一些数据存下来。
     jvBuModel.abs_p = absST.p;
