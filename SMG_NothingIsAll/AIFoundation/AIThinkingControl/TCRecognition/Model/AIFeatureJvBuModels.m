@@ -113,31 +113,30 @@
 
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4ZonHe {
-    NSArray *sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+    CGFloat outerJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
         return model.outerShapeMatchValue;
-    }];
-    NSArray *invalids1 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
-    
-    sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+    }] / self.stModels.count;
+    CGFloat innerJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
+        return model.innerEigenMatchValue;
+    }] / self.stModels.count;
+    CGFloat bestCountJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
         return model.bestGVs.count;
-    }];
-    NSArray *invalids2 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
-    
-    sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+    }] / self.stModels.count;
+    CGFloat matchRatioJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
         return model.modelMatchRatio;
-    }];
-    NSArray *invalids3 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
-    
-    sort = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *model) {
+    }] / self.stModels.count;
+    CGFloat averageContentJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
         return model.averageContentStrong;
-    }];
-    NSArray *invalids4 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
+    }] / self.stModels.count;
     
-    // 每个条件都末尾淘汰。
-    [self.stModels removeObjectsInArray:invalids1];
-    [self.stModels removeObjectsInArray:invalids2];
-    [self.stModels removeObjectsInArray:invalids3];
-    [self.stModels removeObjectsInArray:invalids4];
+    self.stModels = [SMGUtils filterArr:self.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
+        if (![TCLearningUtil noZeRenForPingJun:model.outerShapeMatchValue bigerMatchValue:outerJun]) return false;
+        if (![TCLearningUtil noZeRenForPingJun:model.innerEigenMatchValue bigerMatchValue:innerJun]) return false;
+        if (![TCLearningUtil noZeRenForPingJun:model.bestGVs.count bigerMatchValue:bestCountJun]) return false;
+        if (![TCLearningUtil noZeRenForPingJun:model.modelMatchRatio bigerMatchValue:matchRatioJun]) return false;
+        if (![TCLearningUtil noZeRenForPingJun:model.averageContentStrong bigerMatchValue:averageContentJun]) return false;
+        return true;
+    }];
 }
 
 @end

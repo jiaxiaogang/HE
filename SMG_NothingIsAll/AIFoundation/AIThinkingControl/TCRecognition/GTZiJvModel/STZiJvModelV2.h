@@ -32,10 +32,6 @@
  */
 -(CGFloat) stMatchDegree:(CGRect)hopeRect;
 
-// 末尾淘汰。
--(void) filter4OuterShapeMatchValue;
--(void) filter4InnerEigenMatchValue;
-
 @property (strong, nonatomic) AIFeatureNode *absST; // 类比gtGroup时，先把stGroup中的bestGVs抽象成absST。
 @property (assign, nonatomic) CGRect absST_BaseST; // 类比后，取得absST_BaseST
 @property (assign, nonatomic) CGRect absST_BaseGT; // item类比后，算出absST_BaseGT

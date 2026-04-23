@@ -102,41 +102,15 @@
     return stMatchDegree;
 }
 
-// 末尾淘汰。
--(void) filter4OuterShapeMatchValue {
-    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.outerShapeMatchValue;
-    }];
-    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
-    [self.bestGVs removeObjectsForKeys:rmKeys];
-}
-
--(void) filter4InnerEigenMatchValue {
-    NSArray *sortKeys = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.innerEigenMatchValue;
-    }];
-    NSArray *rmKeys = ARR_SUB(sortKeys, 0, sortKeys.count * cBestsFilterRate);
-    [self.bestGVs removeObjectsForKeys:rmKeys];
-}
-
-// 末尾淘汰。
+// 定责淘汰（参考37071）。
 -(void) filter4ZonHe {
-    NSArray *sorts = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.outerShapeMatchValue;
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:value.outerShapeMatchValue bigerMatchValue:self.stOuterShapeMatchValue];
     }];
-    NSArray *rms2 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
     
-    sorts = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.innerEigenMatchValue;
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:value.innerEigenMatchValue bigerMatchValue:self.stInnerEigenMatchValue];
     }];
-    NSArray *rms3 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
-    
-    [self.bestGVs removeObjectsForKeys:rms2];
-    [self.bestGVs removeObjectsForKeys:rms3];
 }
 
 @end

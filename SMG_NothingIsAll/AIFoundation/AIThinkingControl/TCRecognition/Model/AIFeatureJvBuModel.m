@@ -175,33 +175,18 @@
     return self.assST_ProtoRect;
 }
 
--(void) filter4OuterShapeMatchValue {
-    // 方案1：竞争末尾淘汰20%（参考35138-TODO1）。
-    NSArray *sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.outerShapeMatchValue;
-    }];
-    NSArray *invalidKeys = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
-    [self.bestGVs removeObjectsForKeys:invalidKeys];
-}
-
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4ZonHe {
-    NSArray *sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.outerShapeMatchValue;
-    }];
-    NSArray *invalidKeys2 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
+    [self run4OuterShapeMatchValue];
+    [self run4InnerEigenMatchValue];
     
-    sort = [SMGUtils sortSmall2Big:self.bestGVs.allKeys compareBlock:^double(NSNumber *key) {
-        AIFeatureJvBuItem *value = [self.bestGVs objectForKey:key];
-        return value.innerEigenMatchValue;
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:value.outerShapeMatchValue bigerMatchValue:self.outerShapeMatchValue];
     }];
-    NSArray *invalidKeys3 = ARR_SUB(sort, 0, sort.count * cBestsFilterRate);
     
-    // 每个条件都末尾淘汰。
-    [self.bestGVs removeObjectsForKeys:invalidKeys2];
-    [self.bestGVs removeObjectsForKeys:invalidKeys3];
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:value.innerEigenMatchValue bigerMatchValue:self.innerEigenMatchValue];
+    }];
 }
 
 -(void) run4ValidAbsSTPorts {

@@ -225,32 +225,35 @@
     return importanceDic;
 }
 
-// gtGroups末尾淘汰。
+// gtGroups定责淘汰（参考37071）。
 +(NSMutableArray*) filter4ZonHe:(NSMutableArray*)allGTGroups {
-    NSArray *sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+    // 取整体均值。
+    CGFloat jun1 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
         return gtModel.gtOuterShapeMatchValue;
-    }];
-    NSArray *rms1 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
-    
-    sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+    }] / allGTGroups.count;
+    CGFloat jun2 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
         return gtModel.allBestCount;
-    }];
-    NSArray *rms2 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
-    
-    sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+    }] / allGTGroups.count;
+    CGFloat jun3 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
         return gtModel.matchCountRatioV2;
-    }];
-    NSArray *rms3 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
-    
-    sorts = [SMGUtils sortSmall2Big:allGTGroups compareBlock:^double(GTZiJvModelV2 *gtModel) {
+    }] / allGTGroups.count;
+    CGFloat jun4 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
         return gtModel.gtInnerEigenMatchValue;
-    }];
-    NSArray *rms4 = ARR_SUB(sorts, 0, sorts.count * cBestsFilterRate);
+    }] / allGTGroups.count;
     
-    [allGTGroups removeObjectsInArray:rms1];
-    [allGTGroups removeObjectsInArray:rms2];
-    [allGTGroups removeObjectsInArray:rms3];
-    [allGTGroups removeObjectsInArray:rms4];
+    // 按责任淘汰。
+    allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
+        return [TCLearningUtil noZeRenForPingJun:gtModel.gtOuterShapeMatchValue bigerMatchValue:jun1];
+    }];
+    allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
+        return [TCLearningUtil noZeRenForPingJun:gtModel.allBestCount bigerMatchValue:jun2];
+    }];
+    allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
+        return [TCLearningUtil noZeRenForPingJun:gtModel.matchCountRatioV2 bigerMatchValue:jun3];
+    }];
+    allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
+        return [TCLearningUtil noZeRenForPingJun:gtModel.gtInnerEigenMatchValue bigerMatchValue:jun4];
+    }];
     return allGTGroups;
 }
 
