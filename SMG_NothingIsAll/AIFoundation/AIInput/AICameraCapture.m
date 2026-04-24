@@ -210,7 +210,7 @@ static AICameraCapture *_instance;
 
     // 缩放到200x200
     if (image) {
-        UIImage *resized = [self resizeImage:image toSize:CGSizeMake(200, 200)];
+        UIImage *resized = [self resizeImage:image toSize:CGSizeMake(100, 100)]; // 向下切3的n次方宽高，比如100时视觉只处理81x81像素，因为当前九宫切图是按3倍数来粒度展开的。
         [self callCompletionWithImage:resized];
     } else {
         [self callCompletionWithImage:nil];

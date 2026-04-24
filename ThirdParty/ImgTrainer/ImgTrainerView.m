@@ -611,6 +611,12 @@
 
                 // 保存到相册
                 UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+                
+                // 清空旧显示
+                [self removePreviewDatas];
+                
+                // 提交视觉
+                [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_0"];
             }
 
             // 恢复预览session（如果之前是开启的）
