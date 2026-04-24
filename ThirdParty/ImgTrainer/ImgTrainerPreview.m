@@ -23,7 +23,7 @@
 
 -(void) initView {
     //self
-    [self setFrame:CGRectMake(0, 0, cPreviewCellWidth, cPreviewCellWidth + 75)];
+    [self setFrame:CGRectMake(0, 0, cPreviewCellWidth, cPreviewCellWidth + 15)];
     [self.layer setBorderWidth:1];
     [self.layer setBorderColor:UIColor.redColor.CGColor];
 
@@ -33,7 +33,7 @@
     [self.lab setTextColor:UIColor.whiteColor];
     [self.lab setTextAlignment:NSTextAlignmentCenter];
     [self.lab setAdjustsFontSizeToFitWidth:true]; // 改为自适应宽度，避免6号字太小看不清
-    self.lab.minimumScaleFactor = 0.3f; // 设置最小缩放比例，避免字体过小看不清
+    self.lab.minimumScaleFactor = 0.15f; // 设置最小缩放比例，避免字体过小看不清
     [self addSubview:self.lab];
     
     //透明图层
