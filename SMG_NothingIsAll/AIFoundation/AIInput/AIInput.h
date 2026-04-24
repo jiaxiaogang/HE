@@ -6,7 +6,7 @@
 //  Copyright © 2017年 XiaoGang. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 /**
  *  MARK:--------------------输入(计算机视觉,听觉,文字,触觉,网络等)--------------------
@@ -25,5 +25,20 @@
 +(void) commitIMV:(MVType)type from:(CGFloat)from to:(CGFloat)to;
 +(void) commitCustom:(CustomInputType)type value:(NSInteger)value;
 +(void) commitView:(UIView*)selfView targetView:(UIView*)targetView rect:(CGRect)rect fromObserver:(BOOL)fromObserver;
+
+/**
+ *  拍照（返回200x200的UIImage）
+ */
++ (void)capturePhotoWithCompletion:(void(^)(UIImage *image))completion;
+
+/**
+ *  启动摄像头会话
+ */
++ (void)startCameraSession;
+
+/**
+ *  停止摄像头会话
+ */
++ (void)stopCameraSession;
 
 @end

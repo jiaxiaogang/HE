@@ -14,6 +14,7 @@
 #import "XGLabCell.h"
 #import "ImgTrainerItemModel.h"
 #import "ImgTrainerPreview.h"
+#import "AICameraCapture.h"
 
 @interface ImgTrainerView () <UITableViewDelegate,UITableViewDataSource>
 
@@ -87,6 +88,22 @@
         [tv.layer setBorderWidth:1.0f];
         [tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
     }
+
+    // 添加"拍一张"按钮
+    UIButton *captureBtn = [UIButton buttonWithType:UIButtonTypeSystem];
+    [captureBtn setTitle:@"拍一张" forState:UIControlStateNormal];
+    captureBtn.backgroundColor = [UIColor systemGreenColor];
+    [captureBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    captureBtn.titleLabel.font = [UIFont systemFontOfSize:11];
+    captureBtn.layer.cornerRadius = 4;
+    [captureBtn addTarget:self action:@selector(captureBtnOnClick:) forControlEvents:UIControlEventTouchUpInside];
+    [self.containerView addSubview:captureBtn];
+    [captureBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerY.equalTo(self.playBtn);
+        make.leading.mas_equalTo(self.playBtn.mas_trailing).offset(10);
+        make.width.mas_equalTo(60);
+        make.height.mas_equalTo(24);
+    }];
 }
 
 -(void) initData{
@@ -461,6 +478,23 @@
 
 - (IBAction)closeBtnOnClick:(id)sender {
     [self close];
+}
+
+- (void)captureBtnOnClick:(id)sender {
+    // 启动摄像头会话
+    [AICameraCapture startSession];
+
+    // 延迟一点时间确保会话准备好
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [AICameraCapture capturePhotoWithCompletion:^(UIImage *image) {
+            if (image) {
+                // 显示到curImgView
+                [self.curImgView setImage:image];
+                // 也可以提交给AI处理
+                // [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_capture"];
+            }
+        }];
+    });
 }
 
 

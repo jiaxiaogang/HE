@@ -94,6 +94,7 @@
 		084DF15A2DCF2271001FC42B /* DDic.m in Sources */ = {isa = PBXBuildFile; fileRef = 084DF1592DCF2271001FC42B /* DDic.m */; };
 		084F132226FF6E1200E9D455 /* AITest.m in Sources */ = {isa = PBXBuildFile; fileRef = 084F132126FF6E1200E9D455 /* AITest.m */; };
 		0850859B2A25B26F00ED63F2 /* TCRecognitionUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 0850859A2A25B26F00ED63F2 /* TCRecognitionUtil.m */; };
+		08515B292F9B1F6A00214FCA /* AICameraCapture.m in Sources */ = {isa = PBXBuildFile; fileRef = 08515B282F9B1F6700214FCA /* AICameraCapture.m */; };
 		0851F78D2999362900977B98 /* RTQueueModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0851F78C2999362900977B98 /* RTQueueModel.m */; };
 		0855EB212F927328002DCD9F /* GVIndexTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 0855EB202F927328002DCD9F /* GVIndexTest.m */; };
 		08586DE527E80C8B008D2F8C /* TVLineView.m in Sources */ = {isa = PBXBuildFile; fileRef = 08586DE427E80C8B008D2F8C /* TVLineView.m */; };
@@ -432,6 +433,8 @@
 		084F132126FF6E1200E9D455 /* AITest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AITest.m; sourceTree = "<group>"; };
 		085085992A25B26F00ED63F2 /* TCRecognitionUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCRecognitionUtil.h; sourceTree = "<group>"; };
 		0850859A2A25B26F00ED63F2 /* TCRecognitionUtil.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TCRecognitionUtil.m; sourceTree = "<group>"; };
+		08515B272F9B1F6500214FCA /* AICameraCapture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AICameraCapture.h; sourceTree = "<group>"; };
+		08515B282F9B1F6700214FCA /* AICameraCapture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AICameraCapture.m; sourceTree = "<group>"; };
 		0851F78B2999362900977B98 /* RTQueueModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RTQueueModel.h; sourceTree = "<group>"; };
 		0851F78C2999362900977B98 /* RTQueueModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RTQueueModel.m; sourceTree = "<group>"; };
 		0855EB1F2F927328002DCD9F /* GVIndexTest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GVIndexTest.h; sourceTree = "<group>"; };
@@ -1666,6 +1669,8 @@
 		08CC99181FE9E2A100743ABE /* AIInput */ = {
 			isa = PBXGroup;
 			children = (
+				08515B272F9B1F6500214FCA /* AICameraCapture.h */,
+				08515B282F9B1F6700214FCA /* AICameraCapture.m */,
 				08C84A8C1E9A866200897D8B /* AIInput.h */,
 				08C84A8D1E9A866200897D8B /* AIInput.m */,
 			);
@@ -2185,6 +2190,7 @@
 				080DF69F2DBB0CE1000EC837 /* ImgTrainerView.m in Sources */,
 				0825AFF31F748F67003B86C7 /* NSObject+Extension.m in Sources */,
 				08616986284CF2D300A39473 /* TCSolutionUtil.m in Sources */,
+				08515B292F9B1F6A00214FCA /* AICameraCapture.m in Sources */,
 				88E1F851211591E50036B616 /* DemandModel.m in Sources */,
 				0881965F21800F2B00D5DB36 /* BirdLivePage.m in Sources */,
 				0819F4F427583AA9007396D0 /* TCFeedback.m in Sources */,

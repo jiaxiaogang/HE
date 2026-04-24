@@ -8,6 +8,7 @@
 
 #import "AIInput.h"
 #import "AIReactorControl.h"
+#import "AICameraCapture.h"
 
 @implementation AIInput
 
@@ -44,6 +45,18 @@
     //2024.07.23: 先打开被动触发的视觉 (参考32111-方案2);
     //if (!fromObserver) return;//把非广播触发的视觉关掉;
     [AIReactorControl commitView:selfView targetView:targetView rect:rect];
+}
+
++ (void)capturePhotoWithCompletion:(void(^)(UIImage *))completion {
+    [AICameraCapture capturePhotoWithCompletion:completion];
+}
+
++ (void)startCameraSession {
+    [AICameraCapture startSession];
+}
+
++ (void)stopCameraSession {
+    [AICameraCapture stopSession];
 }
 
 @end
