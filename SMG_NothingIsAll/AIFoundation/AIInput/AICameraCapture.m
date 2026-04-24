@@ -80,7 +80,7 @@ static AICameraCapture *_instance;
 
     // 检查摄像头权限
     AVAuthorizationStatus status = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
-    NSLog(@"AICameraCapture: 摄像头权限状态: %ld", (long)status);
+    // NSLog(@"AICameraCapture: 摄像头权限状态: %ld", (long)status);
 
     if (status == AVAuthorizationStatusNotDetermined) {
         // 第一次请求权限，会弹出系统弹窗
@@ -126,7 +126,7 @@ static AICameraCapture *_instance;
 
     // 检查权限状态
     AVAuthorizationStatus status = [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
-    NSLog(@"AICameraCapture: 拍照时权限状态: %ld", (long)status);
+    // NSLog(@"AICameraCapture: 拍照时权限状态: %ld", (long)status);
 
     if (status == AVAuthorizationStatusNotDetermined) {
         // 第一次请求权限
@@ -203,6 +203,11 @@ static AICameraCapture *_instance;
 
     UIImage *image = [UIImage imageWithData:imageData];
 
+    // 修正图片方向
+    if (image) {
+        image = [self fixImageOrientation:image];
+    }
+
     // 缩放到200x200
     if (image) {
         UIImage *resized = [self resizeImage:image toSize:CGSizeMake(200, 200)];
@@ -213,11 +218,78 @@ static AICameraCapture *_instance;
 }
 
 - (UIImage *)resizeImage:(UIImage *)image toSize:(CGSize)size {
+    // 1. 先裁剪成正方形（从中间裁剪）
+    CGFloat width = image.size.width;
+    CGFloat height = image.size.height;
+    CGFloat squareSize = MIN(width, height);
+
+    CGRect cropRect = CGRectMake((width - squareSize) / 2, (height - squareSize) / 2, squareSize, squareSize);
+
+    CGImageRef cgImage = image.CGImage;
+    CGImageRef croppedCGImage = CGImageCreateWithImageInRect(cgImage, cropRect);
+    UIImage *croppedImage = [UIImage imageWithCGImage:croppedCGImage scale:image.scale orientation:image.imageOrientation];
+    CGImageRelease(croppedCGImage);
+
+    // 2. 缩放到目标尺寸
     UIGraphicsBeginImageContextWithOptions(size, YES, 1.0);
-    [image drawInRect:CGRectMake(0, 0, size.width, size.height)];
+    [croppedImage drawInRect:CGRectMake(0, 0, size.width, size.height)];
     UIImage *resized = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return resized;
+}
+
+- (UIImage *)fixImageOrientation:(UIImage *)image {
+    // NSLog(@"AICameraCapture: 原图方向=%ld, 尺寸=%@", (long)image.imageOrientation, NSStringFromCGSize(image.size));
+
+    if (image.imageOrientation == UIImageOrientationUp) {
+        return image;
+    }
+
+    // 根据原始方向进行旋转
+    UIImage *fixedImage = nil;
+    switch (image.imageOrientation) {
+        case UIImageOrientationDown:
+        case UIImageOrientationDownMirrored:
+            fixedImage = [self rotateImage:image angle:M_PI];
+            break;
+        case UIImageOrientationLeft:
+        case UIImageOrientationLeftMirrored:
+            fixedImage = [self rotateImage:image angle:M_PI_2];
+            break;
+        case UIImageOrientationRight:
+        case UIImageOrientationRightMirrored:
+            fixedImage = [self rotateImage:image angle:-M_PI_2];
+            break;
+        default:
+            fixedImage = image;
+            break;
+    }
+
+    // NSLog(@"AICameraCapture: 修正后方向=%ld", (long)fixedImage.imageOrientation);
+    return fixedImage;
+}
+
+- (UIImage *)rotateImage:(UIImage *)image angle:(CGFloat)angle {
+    CGFloat rad = angle;
+    CGFloat sinVal = sin(rad);
+    CGFloat cosVal = cos(rad);
+
+    CGAffineTransform transform = CGAffineTransformMakeRotation(rad);
+    CGRect newRect = CGRectApplyAffineTransform(CGRectMake(0, 0, image.size.width, image.size.height), transform);
+
+    CGSize rotatedSize = CGSizeMake(fabs(newRect.size.width), fabs(newRect.size.height));
+
+    UIGraphicsBeginImageContextWithOptions(rotatedSize, NO, image.scale);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+
+    CGContextTranslateCTM(context, rotatedSize.width / 2, rotatedSize.height / 2);
+    CGContextRotateCTM(context, rad);
+    [image drawInRect:CGRectMake(-image.size.width / 2, -image.size.height / 2, image.size.width, image.size.height)];
+
+    UIImage *rotatedImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+
+    return rotatedImage;
 }
 
 - (void)callCompletionWithImage:(UIImage *)image {

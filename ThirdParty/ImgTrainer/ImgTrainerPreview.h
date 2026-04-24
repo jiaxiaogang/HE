@@ -8,6 +8,9 @@
 
 #import <UIKit/UIKit.h>
 
+
+#define cPreviewCellWidth 70
+
 @interface ImgTrainerPreview : UIView
 
 @property (strong, nonatomic) UILabel *lab;

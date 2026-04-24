@@ -3,7 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string> 上帝说要有光 </string>
+	<string>拍照用于视觉感官</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>保存拍摄的照片到相册</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

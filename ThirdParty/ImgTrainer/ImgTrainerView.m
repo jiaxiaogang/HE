@@ -29,6 +29,12 @@
 @property (weak, nonatomic) IBOutlet UIButton *playBtn;
 @property (weak, nonatomic) IBOutlet UIImageView *curImgView;
 @property (strong, nonatomic) NSMutableArray *tvDatas;
+
+// 摄像头相关
+@property (nonatomic, strong) AVCaptureSession *captureSession;
+@property (nonatomic, strong) AVCaptureVideoDataOutput *videoOutput;
+@property (nonatomic, strong) dispatch_queue_t videoQueue;
+@property (nonatomic, assign) BOOL isCameraPreviewOn;
 @property (assign, nonatomic) NSInteger curSelectRow;
 @property (weak, nonatomic) IBOutlet UITextField *picNumLab;
 @property (weak, nonatomic) IBOutlet UISwitch *autoNextSwitch;
@@ -52,8 +58,8 @@
 
 -(void) initView{
     //self
-    CGFloat width = ScreenWidth - 50;
-    [self setFrame:CGRectMake(ScreenWidth - width - 20, 64, width, ScreenHeight - 128)];
+    CGFloat width = ScreenWidth;
+    [self setFrame:CGRectMake(ScreenWidth - width, 44, width, ScreenHeight - 44)];
     
     //containerView
     [[NSBundle mainBundle] loadNibNamed:NSStringFromClass(self.class) owner:self options:nil];
@@ -89,21 +95,31 @@
         [tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
     }
 
-    // 添加"拍一张"按钮
-    UIButton *captureBtn = [UIButton buttonWithType:UIButtonTypeSystem];
-    [captureBtn setTitle:@"拍一张" forState:UIControlStateNormal];
-    captureBtn.backgroundColor = [UIColor systemGreenColor];
-    [captureBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    captureBtn.titleLabel.font = [UIFont systemFontOfSize:11];
-    captureBtn.layer.cornerRadius = 4;
-    [captureBtn addTarget:self action:@selector(captureBtnOnClick:) forControlEvents:UIControlEventTouchUpInside];
-    [self.containerView addSubview:captureBtn];
-    [captureBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.equalTo(self.playBtn);
-        make.leading.mas_equalTo(self.playBtn.mas_trailing).offset(10);
-        make.width.mas_equalTo(60);
-        make.height.mas_equalTo(24);
-    }];
+    // 摄像头预览视图 - 默认显示
+    self.cameraPreviewView.backgroundColor = [UIColor whiteColor];
+    self.cameraPreviewView.layer.cornerRadius = 4;
+    self.cameraPreviewView.clipsToBounds = YES;
+    self.cameraPreviewView.layer.borderWidth = 1.0f;
+    self.cameraPreviewView.layer.borderColor = [UIColor blackColor].CGColor;
+    self.cameraPreviewView.userInteractionEnabled = YES;
+
+    // 给摄像头预览视图添加双击手势（拍照）
+    UITapGestureRecognizer *cameraDoubleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(cameraPreviewViewDoubleTapped:)];
+    cameraDoubleTap.numberOfTapsRequired = 2;
+    [self.cameraPreviewView addGestureRecognizer:cameraDoubleTap];
+
+    // 单击手势（切换预览开关）
+    UITapGestureRecognizer *cameraTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(cameraPreviewViewTapped:)];
+    [self.cameraPreviewView addGestureRecognizer:cameraTap];
+
+    // 单击手势失败时才触发双击（避免冲突）
+    [cameraTap requireGestureRecognizerToFail:cameraDoubleTap];
+
+    // 初始化摄像头
+    [self setupCameraCapture];
+
+    // 摄像头预览默认关闭
+    self.isCameraPreviewOn = NO;
 }
 
 -(void) initData{
@@ -111,6 +127,97 @@
     for (NSInteger i = 0; i < self.previewTVs.count; i++) {
         [self.previewDatas addObject:[NSMutableArray new]];
     }
+}
+
+#pragma mark - 摄像头相关
+
+- (void)setupCameraCapture {
+    // 创建捕获会话
+    self.captureSession = [[AVCaptureSession alloc] init];
+    self.captureSession.sessionPreset = AVCaptureSessionPresetMedium;
+
+    // 获取后置摄像头
+    AVCaptureDevice *videoDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+    if (!videoDevice) {
+        NSLog(@"没有找到可用的摄像头");
+        return;
+    }
+
+    NSError *error = nil;
+    AVCaptureDeviceInput *videoInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
+    if (error) {
+        NSLog(@"创建摄像头输入失败: %@", error);
+        return;
+    }
+
+    if ([self.captureSession canAddInput:videoInput]) {
+        [self.captureSession addInput:videoInput];
+    }
+
+    // 创建视频输出
+    self.videoOutput = [[AVCaptureVideoDataOutput alloc] init];
+    self.videoOutput.videoSettings = @{(id)kCVPixelBufferPixelFormatTypeKey: @(kCVPixelFormatType_32BGRA)};
+    self.videoQueue = dispatch_queue_create("videoQueue", DISPATCH_QUEUE_SERIAL);
+    self.videoOutput.alwaysDiscardsLateVideoFrames = YES;
+    [self.videoOutput setSampleBufferDelegate:self queue:self.videoQueue];
+
+    if ([self.captureSession canAddOutput:self.videoOutput]) {
+        [self.captureSession addOutput:self.videoOutput];
+    }
+}
+
+- (void)startCameraPreview {
+    if (self.captureSession && !self.captureSession.isRunning) {
+        dispatch_async(self.videoQueue, ^{
+            [self.captureSession startRunning];
+        });
+    }
+}
+
+- (void)stopCameraPreview {
+    if (self.captureSession && self.captureSession.isRunning) {
+        dispatch_async(self.videoQueue, ^{
+            [self.captureSession stopRunning];
+        });
+    }
+    // 清除预览图像，显示白色背景
+    self.cameraPreviewView.image = nil;
+}
+
+#pragma mark - AVCaptureVideoDataOutputSampleBufferDelegate
+
+- (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
+    UIImage *image = [self imageFromSampleBuffer:sampleBuffer];
+    if (image) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.cameraPreviewView.image = image;
+        });
+    }
+}
+
+- (UIImage *)imageFromSampleBuffer:(CMSampleBufferRef)sampleBuffer {
+    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    if (!imageBuffer) return nil;
+
+    CIImage *ciImage = [CIImage imageWithCVPixelBuffer:imageBuffer];
+    CIContext *context = [CIContext contextWithOptions:nil];
+    CGImageRef cgImage = [context createCGImage:ciImage fromRect:ciImage.extent];
+    if (!cgImage) return nil;
+
+    UIImage *image = [UIImage imageWithCGImage:cgImage];
+    CGImageRelease(cgImage);
+
+    // 裁剪成正方形（从中间裁剪）
+    CGFloat width = image.size.width;
+    CGFloat height = image.size.height;
+    CGFloat squareSize = MIN(width, height);
+
+    CGRect cropRect = CGRectMake((width - squareSize) / 2, (height - squareSize) / 2, squareSize, squareSize);
+    CGImageRef croppedCGImage = CGImageCreateWithImageInRect(image.CGImage, cropRect);
+    UIImage *croppedImage = [UIImage imageWithCGImage:croppedCGImage];
+    CGImageRelease(croppedCGImage);
+
+    return croppedImage;
 }
 
 -(void) initDisplay {
@@ -374,6 +481,9 @@
     [self setHidden:false];
 }
 -(void) close{
+    // 关闭摄像头预览
+    [self stopCameraPreview];
+    self.isCameraPreviewOn = NO;
     [self setHidden:true];
 }
 
@@ -481,20 +591,51 @@
 }
 
 - (void)captureBtnOnClick:(id)sender {
-    // 启动摄像头会话
-    [AICameraCapture startSession];
+    // 只有在预览开启时才停止/恢复session
+    BOOL wasRunning = self.isCameraPreviewOn && self.captureSession.isRunning;
 
-    // 延迟一点时间确保会话准备好
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    // 停止预览session（避免与AICameraCapture的session冲突）
+    if (wasRunning) {
+        dispatch_async(self.videoQueue, ^{
+            [self.captureSession stopRunning];
+        });
+    }
+
+    // 使用AICameraCapture拍照
+    [AICameraCapture startSession];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [AICameraCapture capturePhotoWithCompletion:^(UIImage *image) {
             if (image) {
                 // 显示到curImgView
                 [self.curImgView setImage:image];
-                // 也可以提交给AI处理
-                // [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_capture"];
+
+                // 保存到相册
+                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
+            }
+
+            // 恢复预览session（如果之前是开启的）
+            if (wasRunning) {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), self.videoQueue, ^{
+                    [self.captureSession startRunning];
+                });
             }
         }];
     });
+}
+
+- (void)cameraPreviewViewTapped:(UITapGestureRecognizer *)gesture {
+    // 单击切换预览开关
+    if (self.isCameraPreviewOn) {
+        [self stopCameraPreview];
+    } else {
+        [self startCameraPreview];
+    }
+    self.isCameraPreviewOn = !self.isCameraPreviewOn;
+}
+
+- (void)cameraPreviewViewDoubleTapped:(UITapGestureRecognizer *)gesture {
+    // 双击拍照，调用captureBtnOnClick的逻辑
+    [self captureBtnOnClick:nil];
 }
 
 
@@ -530,7 +671,7 @@
     return cell;
 }
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    if ([self.previewTVs containsObject:tableView]) return 115;
+    if ([self.previewTVs containsObject:tableView]) return cPreviewCellWidth + 15;
     return 20;
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {

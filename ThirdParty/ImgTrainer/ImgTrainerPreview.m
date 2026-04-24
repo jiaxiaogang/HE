@@ -23,24 +23,25 @@
 
 -(void) initView {
     //self
-    [self setFrame:CGRectMake(0, 0, 100, 115)];
+    [self setFrame:CGRectMake(0, 0, cPreviewCellWidth, cPreviewCellWidth + 75)];
     [self.layer setBorderWidth:1];
     [self.layer setBorderColor:UIColor.redColor.CGColor];
 
     //lab
-    self.lab = [[UILabel alloc] initWithFrame:CGRectMake(0, 100, 100, 15)];
+    self.lab = [[UILabel alloc] initWithFrame:CGRectMake(0, cPreviewCellWidth, cPreviewCellWidth, 15)];
     [self.lab setBackgroundColor:UIColor.blueColor];
     [self.lab setTextColor:UIColor.whiteColor];
     [self.lab setTextAlignment:NSTextAlignmentCenter];
     [self.lab setAdjustsFontSizeToFitWidth:true]; // 改为自适应宽度，避免6号字太小看不清
-    self.lab.minimumScaleFactor = 0.5f; // 设置最小缩放比例，避免字体过小看不清
+    self.lab.minimumScaleFactor = 0.3f; // 设置最小缩放比例，避免字体过小看不清
     [self addSubview:self.lab];
     
     //透明图层
+    CGFloat dotW = cPreviewCellWidth / 20.0f;
     for (NSInteger i = 0; i < 20; i++) {
         for (NSInteger j = 0; j < 20; j++) {
             if (i % 2 == j % 2) {
-                UIView *block = [[UIView alloc] initWithFrame:CGRectMake(i * 5, j * 5, 5, 5)];
+                UIView *block = [[UIView alloc] initWithFrame:CGRectMake(i * dotW, j * dotW, dotW, dotW)];
                 [block setBackgroundColor:UIColorWithRGBHex(0xDDDDDD)];
                 [self addSubview:block];
             }
@@ -48,7 +49,7 @@
     }
     
     //lightGroupView
-    self.lightGroupView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
+    self.lightGroupView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, cPreviewCellWidth, cPreviewCellWidth)];
     [self addSubview:self.lightGroupView];
     [self.lightGroupView.layer setMasksToBounds:true];
 }

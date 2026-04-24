@@ -7,9 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <AVFoundation/AVFoundation.h>
 
 @class AIFeatureNode,AIFeatureJvBuModel,AIFeatureZenTiModel,GTModel,GTModelV2,GTZiJvModelV2;
-@interface ImgTrainerView : UIView
+@interface ImgTrainerView : UIView <AVCaptureVideoDataOutputSampleBufferDelegate>
+
+@property (weak, nonatomic) IBOutlet UIImageView *cameraPreviewView;
 
 -(void) open;
 
