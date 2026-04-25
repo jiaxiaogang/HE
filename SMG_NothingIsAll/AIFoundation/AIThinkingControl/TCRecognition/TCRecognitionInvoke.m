@@ -190,18 +190,17 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 }
 
 //MARK:===============================================================
-//MARK:                     < 特征识别 >
+//MARK:                     < 识别入口 >
 //MARK:===============================================================
 
-//单通道
-//TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
-//连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
-+(void) recognitionFeature:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
+// 识别前初始化
++(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
     // 初始化缓存池数据。
     [self resetPool];
     _curMaxSize = whSize;
     
     // 加载稀疏码相关缓存池。
+    // TODO: 随后测下这里有没用，没用删掉，忘了什么时候写的什么作用了。
     NSArray *gvIndexKeys = [AINetGroupValueIndex gvIndexKeys:ds];
     for (NSString *valueDS in gvIndexKeys) {
         // 初始化indexPsPool。
@@ -228,50 +227,28 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
         [valueGroupDataCache setObject:itemValueGroupDataCache forKey:valueDS];
     }
+}
+
++(void) recognition:(NSString*)at ds:(NSString*)ds
+           colorDic:(NSDictionary*)colorDic
+            excepts:(DDic*)excepts curRect:(CGRect)curRect
+      beginGVExcept:(NSMutableDictionary*)beginGVExcept
+       gvRectExcept:(NSMutableDictionary*)gvRectExcept
+          jvBuModel:(AIFeatureJvBuModels*)jvBuModel
+            protoST:(AIFeatureNode*)protoST
+            logDesc:(NSString*)logDesc {
     
-    //1. 对未切粒度的color字典进行自适应粒度并识别。
-    NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
-    DDic *excepts = [DDic new];
-    AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
-    jvBuModel.debug = [GroupDebug new];
-    NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
-    NSMutableArray *allRefPorts = [NSMutableArray new];
+    //14. 切出当前gv：九宫。
+    //2025.12.11: 切图复用（参考35105-TODO3.1）。
+    MapModel *rectKey = [self getIndexsOfProtoRect:curRect];
+    NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
+    if (!DICISOK(gvIndex)) return;
     
-    // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
-    CGFloat dotSize = whSize / 6.0f;
-    while (dotSize > 1) {
-        //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
-        NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
-        
-        //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
-        int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
-        for (NSInteger startX = 0; startX < length; startX++) {
-            for (NSInteger startY = 0; startY < length; startY++) {
-                //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
-                //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在单特征识别算法中实现防重的）。
-                CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
-                
-                //14. 切出当前gv：九宫。
-                //2025.12.11: 切图复用（参考35105-TODO3.1）。
-                MapModel *rectKey = [self getIndexsOfProtoRect:curRect];
-                NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
-                if (!DICISOK(gvIndex)) continue;
-                
-                // 当前粒度层取到的gv.refPorts收集起来。
-                NSArray *itemRefPorts = [TCRecognitionInvoke recognitionFeatureV2_Step0:gvIndex at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
-                [allRefPorts addObjectsFromArray:itemRefPorts];
-                
-                // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
-                [beginRectExcept addObject:@(curRect)];
-            }
-        }
-            
-        //22. 下一层粒度/1.3（参考35026-1）。
-        dotSize /= 1.3f;
-    }
+    // 当前粒度层取到的gv.refPorts收集起来。
+    NSArray *itemRefPorts = [TCRecognitionInvoke recognitionFeatureV2_Step0:gvIndex at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
     
     // 统一进行ST识别：通过组码识别。
-    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept dotSize:dotSize stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:allRefPorts protoST:protoST];
+    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemRefPorts protoST:protoST];
     [jvBuModel.stModels addObjectsFromArray:itemSTModels];
     
     //31. 单特征识别无结果则跳过。
@@ -279,7 +256,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSLog(@"第1步、所有粒度层ST识别结果0条 finish ------------------------------------------------");
         return;
     }
-    NSLog(@"第1步、特征识别结果:dotSize:%.2f st条数:%ld gt条数:%ld",dotSize,jvBuModel.stModels.count,jvBuModel.gtModels.count);
+    NSLog(@"第1步、特征识别结果st条数:%ld gt条数:%ld",jvBuModel.stModels.count,jvBuModel.gtModels.count);
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds logDesc:logDesc protoST:protoST];
@@ -345,6 +322,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
 }
 
+//MARK:===============================================================
+//MARK:                     < 特征识别 >
+//MARK:===============================================================
+
 +(NSArray*) recognitionFeatureV2_Step0:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     
     //1. 单码排序。
@@ -402,7 +383,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept dotSize:(CGFloat)dotSize stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoST:(AIFeatureNode*)protoST {
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoST:(AIFeatureNode*)protoST {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
