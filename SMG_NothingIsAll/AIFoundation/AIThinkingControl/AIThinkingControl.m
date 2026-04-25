@@ -233,13 +233,15 @@ static AIThinkingControl *_instance;
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
-    NSMutableArray *allGTResults = [NSMutableArray new];
     
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
     CGFloat dotSize = whSize / 6.0f;
     while (dotSize > 1) {
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
+        
+        // 每个粒度层，单独进行覆盖防重：因为粗粒度全扫过，细粒度肯定得重来，不能粗的扫过，细的就没资格切入了。
+        NSMutableArray *allGTResults = [NSMutableArray new];
         
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
@@ -250,12 +252,20 @@ static AIThinkingControl *_instance;
                 CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
                 
                 // 切入点防重：识别过区域覆盖防重（通过连续视觉注视可重启）。
-                if ([SMGUtils filterArr:allGTResults checkValid:^BOOL(GTZiJvModelV2 *item) {
-                    
-                    // TODO20260425: 不仅切入点，整个识别到过的rect全防重。
-                    //todotomorrow20260425: 继续写这个。。
-                    return true;
-                } limit:3].count == 3) continue;
+                NSInteger repeatNum = 0;
+                for (GTZiJvModelV2 *gtGroup in allGTResults) {
+                    for (STZiJvModelV2 *stGroup in gtGroup.bestSTs.allValues) {
+                        for (AIFeatureJvBuItem *gvItem in stGroup.bestGVs.allValues) {
+                            if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) {
+                                repeatNum ++;
+                            }
+                            if (repeatNum >= 2) break;
+                        }
+                        if (repeatNum >= 2) break;
+                    }
+                    if (repeatNum >= 2) break;
+                }
+                if (repeatNum >= 2) continue;
                 
                 // 调用识别。
                 NSArray *gtResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];

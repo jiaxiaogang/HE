@@ -71,8 +71,7 @@
 @property (assign, nonatomic) CGFloat averageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrongScore;
 
-// bests根据匹配度末尾淘汰20%（参考35138-TODO1）。
--(void) filter4MatchValue;
+// 定责淘汰。
 -(void) filter4ZonHe;
 
 // GTModel综合评分（用于GT识别竞争）。
