@@ -233,6 +233,7 @@ static AIThinkingControl *_instance;
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
+    NSMutableArray *allGTResults = [NSMutableArray new];
     
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
     CGFloat dotSize = whSize / 6.0f;
@@ -248,11 +249,19 @@ static AIThinkingControl *_instance;
                 //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在单特征识别算法中实现防重的）。
                 CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
                 
+                // 切入点防重：识别过区域覆盖防重（通过连续视觉注视可重启）。
+                if ([SMGUtils filterArr:allGTResults checkValid:^BOOL(GTZiJvModelV2 *item) {
+                    
+                    // TODO20260425: 不仅切入点，整个识别到过的rect全防重。
+                    //todotomorrow20260425: 继续写这个。。
+                    return true;
+                } limit:3].count == 3) continue;
+                
                 // 调用识别。
-                [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
+                NSArray *gtResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
                 
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
-                // TODO20260425: 不仅切入点，整个识别到过的rect全防重。
+                if (gtResults) [allGTResults addObjectsFromArray:gtResults];
                 [beginRectExcept addObject:@(curRect)];
             }
         }

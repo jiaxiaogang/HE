@@ -16,14 +16,16 @@
 //MARK:===============================================================
 +(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST;
 
-+(void) recognition:(NSString*)at ds:(NSString*)ds
-           colorDic:(NSDictionary*)colorDic
-            excepts:(DDic*)excepts curRect:(CGRect)curRect
-      beginGVExcept:(NSMutableDictionary*)beginGVExcept
-       gvRectExcept:(NSMutableDictionary*)gvRectExcept
-          jvBuModel:(AIFeatureJvBuModels*)jvBuModel
-            protoST:(AIFeatureNode*)protoST
-            logDesc:(NSString*)logDesc;
++(NSArray*) recognition:(NSString*)at
+                     ds:(NSString*)ds
+               colorDic:(NSDictionary*)colorDic
+                excepts:(DDic*)excepts
+                curRect:(CGRect)curRect
+          beginGVExcept:(NSMutableDictionary*)beginGVExcept
+           gvRectExcept:(NSMutableDictionary*)gvRectExcept
+              jvBuModel:(AIFeatureJvBuModels*)jvBuModel
+                protoST:(AIFeatureNode*)protoST
+                logDesc:(NSString*)logDesc;
 
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >

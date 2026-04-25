@@ -229,20 +229,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
 }
 
-+(void) recognition:(NSString*)at ds:(NSString*)ds
-           colorDic:(NSDictionary*)colorDic
-            excepts:(DDic*)excepts curRect:(CGRect)curRect
-      beginGVExcept:(NSMutableDictionary*)beginGVExcept
-       gvRectExcept:(NSMutableDictionary*)gvRectExcept
-          jvBuModel:(AIFeatureJvBuModels*)jvBuModel
-            protoST:(AIFeatureNode*)protoST
-            logDesc:(NSString*)logDesc {
++(NSArray*) recognition:(NSString*)at
+                     ds:(NSString*)ds
+               colorDic:(NSDictionary*)colorDic
+                excepts:(DDic*)excepts
+                curRect:(CGRect)curRect
+          beginGVExcept:(NSMutableDictionary*)beginGVExcept
+           gvRectExcept:(NSMutableDictionary*)gvRectExcept
+              jvBuModel:(AIFeatureJvBuModels*)jvBuModel
+                protoST:(AIFeatureNode*)protoST
+                logDesc:(NSString*)logDesc {
     
     //14. 切出当前gv：九宫。
     //2025.12.11: 切图复用（参考35105-TODO3.1）。
     MapModel *rectKey = [self getIndexsOfProtoRect:curRect];
     NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
-    if (!DICISOK(gvIndex)) return;
+    if (!DICISOK(gvIndex)) return nil;
     
     // 当前粒度层取到的gv.refPorts收集起来。
     NSArray *itemRefPorts = [TCRecognitionInvoke recognitionFeatureV2_Step0:gvIndex at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
@@ -254,7 +256,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //31. 单特征识别无结果则跳过。
     if (!ARRISOK(jvBuModel.stModels)) {
         NSLog(@"第1步、所有粒度层ST识别结果0条 finish ------------------------------------------------");
-        return;
+        return nil;
     }
     NSLog(@"第1步、特征识别结果st条数:%ld gt条数:%ld",jvBuModel.stModels.count,jvBuModel.gtModels.count);
     
@@ -285,7 +287,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     if (gtOrders.count == 0) {
         NSLog(@"第3步、单特征识别类比 finish ------------------------------------------------");
-        return;
+        return nil;
     }
     
     // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
@@ -320,6 +322,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // debug
     NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
     NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
+    return assGTs;
 }
 
 //MARK:===============================================================
