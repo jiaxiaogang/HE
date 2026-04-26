@@ -254,11 +254,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [jvBuModel.stModels addObjectsFromArray:itemSTModels];
     
     //31. 单特征识别无结果则跳过。
-    if (!ARRISOK(jvBuModel.stModels)) {
-        NSLog(@"第1步、所有粒度层ST识别结果0条 finish ------------------------------------------------");
-        return nil;
-    }
-    NSLog(@"第1步、特征识别结果st条数:%ld gt条数:%ld",jvBuModel.stModels.count,jvBuModel.gtModels.count);
+    if (!ARRISOK(itemSTModels)) return nil;
+    NSLog(@"第1步、特征识别结果st条数:%ld gt条数:%ld",itemSTModels.count,jvBuModel.gtModels.count);
+    
+    // todotomorrow20260426: 把识别 和 竞争类比 分开做。
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds logDesc:logDesc protoST:protoST];
