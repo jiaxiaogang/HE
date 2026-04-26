@@ -259,68 +259,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // todotomorrow20260426: 把识别 和 竞争类比 分开做。
     
-    // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel protoColorDic:colorDic ds:ds logDesc:logDesc protoST:protoST];
-    NSLog(@"第2步、单特征竞争后条数:%ld",jvBuModel.stModels.count);
-    
-    // 单特征类比：借助bestGVs来类比。
-    for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoTLogDesc:logDesc prefixIndex:[jvBuModel.stModels indexOfObject:model] + 1];
-    }
-    
-    // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。
-    NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
-    
-    // 方案1、========== 用assST来构建ProtoGT（参考35136）==========
-    //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-    //    return [InputGroupFeatureModel new:model.assT.p rect:model.assST_ProtoRect];
-    //}];
-    
-    // 方案2、========== 用absST来构建ProtoGT ==========
-    NSArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-        if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
-        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return item.bestGVAtProtoTRect;
-        }];
-        return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
-    }];
-    if (gtOrders.count == 0) {
-        NSLog(@"第3步、单特征识别类比 finish ------------------------------------------------");
-        return nil;
-    }
-    
-    // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
-    gtOrders = [ThinkingUtils sortInputGroupFeatureModels:gtOrders];
-    
-    // 防重：orders
-    gtOrders = [SMGUtils removeRepeat:gtOrders convertBlock:^id(InputGroupFeatureModel *obj) {
-        return STRFORMAT(@"%ld_%@",obj.feature_p.pointerId,@(obj.rect));
-    }];
-    
-    // TODO: 2026.03.22: 其实这里的ProtoGT已经没什么用了，后面的识别和类比全不必用它，后面删掉？可是要没有第一个ProtoGT，怎么能有后面的识别结果呢？
-    // 把absSTs结果打包成protoGT（参考35072-TODO2 & 35074-方案v3 & TODOv4）。
-    AIGroupFeatureNode *protoGT = [AIGeneralNodeCreater createGroupFeatureNode:gtOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
-    [protoGT updateLogDescItem:logDesc];
-    CGRect jvs_ProtoGTRect = [SMGUtils convertArr2Rect:gtOrders itemRectBlock:^CGRect(InputGroupFeatureModel *item) { return item.rect; }]; // ProtoGT不一定是全局，如果只是一部分，处理下显示时的marginTop和marginLeft。
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoGT.pId) left:0 top:0 tvId:5];
-        [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:jvs_ProtoGTRect.origin.x top:jvs_ProtoGTRect.origin.y tvId:5];
-    }];
-    NSLog(@"第3步、构建protoGT条数:%ld",protoGT.count);
-    
     // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV9:jvBuModel.stModels logDesc:logDesc protoGT:protoGT colorDic:colorDic ds:ds];
+    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc protoGT:nil colorDic:colorDic ds:ds];
+    [jvBuModel.gtModels addObjectsFromArray:assGTs];
     NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
     
-    // 组特征类比V5：用子元素assSTs来类比。
-    for (GTZiJvModelV2 *assGT in assGTs) {
-        [AIAnalogy analogyGroupFeatureV10:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[assGTs indexOfObject:assGT] + 1];
-    }
-    NSLog(@"第5步、特征识别类比 finish ------------------------------------------------");
-    
-    // debug
-    NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
-    NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
     return assGTs;
 }
 
@@ -553,7 +496,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2026.01.29: v7-提升对撞率，识别通路调整：“assST -> absST -> broST -> assGT”（参考36011）。
  *      2026.03.13: v9-迭代为ZiJvGroup模型，减维至GV层来实现GT自举，从而解决ST错位的问题（参考36074-方案）。
  */
-+(NSArray*) recognitionGroupFeatureV9:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
++(NSArray*) recognitionGroupFeatureV9_Step1:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
     // 数据准备
     NSMutableArray *allGTGroups = [NSMutableArray new];
     
@@ -565,22 +508,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // ========= 模式1、ass->abs通路 =========
             NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
-
+            
             // 性能优化、减少refPorts的切入点。
             refPorts = ARR_SUB(refPorts, 0, MAX(3, refPorts.count * 0.3f));
-
+            
             // 逐个求refGT。
             for (AIPort *refPort in refPorts) {
-                if ([refPort.target_p isEqual:protoGT.p]) continue;
-
+                if (protoGT && [refPort.target_p isEqual:protoGT.p]) continue;
+                
                 // assGT。
                 AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
                 NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
-
+                
                 // gt自举算法。
                 GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds absST:nil];
                 if (gtZiJvModel.bestSTs.count == 0) continue;
-
+                
                 // 收集。
                 if (![allGTGroups containsObject:gtZiJvModel]) [allGTGroups addObject:gtZiJvModel];
             }
@@ -643,9 +586,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4AverageContentStrong];
     }
     AddDebugCodeBlock_KeyV3();
+    return allGTGroups;
+}
+
++(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
     
     // 强度归一化得分。
-    NSArray *sorts = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvModelV2 *obj) {
+    NSArray *sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(GTZiJvModelV2 *obj) {
         return obj.averageContentStrong;
     }];
     for (NSInteger i = 0; i < sorts.count; i++) {
@@ -654,10 +601,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     
     // 末尾淘汰。
-    [TCRecognitionUtil filter4ZonHe:allGTGroups];
+    [TCRecognitionUtil filter4ZonHe:decoratorJvBuModel.gtModels];
     
     // 最后进行综合竞争，把最符合的找出来。
-    NSArray *resultModels = [SMGUtils sortBig2Small:allGTGroups compareBlock:^double(GTZiJvModelV2 *obj) {
+    NSArray *resultModels = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(GTZiJvModelV2 *obj) {
         return obj.zonHeScore;
     }];
     AddDebugCodeBlock_KeyV3();
@@ -714,7 +661,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
     AddDebugCodeBlock_KeyV3();
     PrintDebugCodeBlock_KeyV3();
-    return resultModels;
+    decoratorJvBuModel.gtModels = [[NSMutableArray alloc] initWithArray:resultModels];
+    
+    // debug
+    NSLog(@"切图池复用率：%d / %d = %.2f",cutImgPoolTotalCount - cutImgPoolMissCount,cutImgPoolTotalCount,(float)(cutImgPoolTotalCount - cutImgPoolMissCount) / cutImgPoolTotalCount);
+    NSLog(@"BestGV池复用率：%d / %d = %.2f",bestGVsPoolTotalCount - bestGVsPoolMissCount,bestGVsPoolTotalCount,(float)(bestGVsPoolTotalCount - bestGVsPoolMissCount) / bestGVsPoolTotalCount);
 }
 
 //MARK:===============================================================

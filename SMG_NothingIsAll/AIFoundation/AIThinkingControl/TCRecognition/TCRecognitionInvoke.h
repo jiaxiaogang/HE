@@ -30,7 +30,9 @@
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >
 //MARK:===============================================================
-+(NSArray*) recognitionGroupFeatureV9:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT colorDic:(NSDictionary*)colorDic ds:(NSString*)ds;
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST;
++(NSArray*) recognitionGroupFeatureV9_Step1:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT colorDic:(NSDictionary*)colorDic ds:(NSString*)ds;
++(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc colorDic:(NSDictionary*)colorDic ds:(NSString*)ds;
 
 //MARK:===============================================================
 //MARK:                     < 概念识别 >
