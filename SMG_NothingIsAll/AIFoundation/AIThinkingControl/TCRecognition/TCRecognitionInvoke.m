@@ -49,11 +49,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 }
 
 //MARK:===============================================================
-//MARK:                     < 稀疏码识别 >
+//MARK:                     < 单稀疏码识别 >
 //MARK:===============================================================
 
 /**
- *  MARK:--------------------稀疏码识别--------------------
+ *  MARK:--------------------单稀疏码识别--------------------
  *  @version
  *      xxxx.xx.xx: 返回limit不能太小,不然概念识别时,没交集了 (参考26075);
  *      2022.05.23: 初版,排序和限制limit条数放到此处,原来getIndex_ps()方法里并没有相近度排序 (参考26096-BUG5);
@@ -121,13 +121,127 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 }
 
 //MARK:===============================================================
-//MARK:                     < 组码识别 >
+//MARK:                     < 识别入口 >
 //MARK:===============================================================
 
-/**
- *  MARK:--------------------组码识别--------------------
- */
-+(NSArray*) recognitionGroupValueV4:(NSArray*)vModels at:(NSString*)at isOut:(BOOL)isOut rate:(CGFloat)rate minLimit:(NSInteger)minLimit forProtoGV:(AIKVPointer*)forProtoGV {
+// 识别前初始化
++(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
+    // 初始化缓存池数据。
+    [self resetPool];
+    _curMaxSize = whSize;
+    
+    // 加载稀疏码相关缓存池。
+    // TODO: 随后测下这里有没用，没用删掉，忘了什么时候写的什么作用了。
+    NSArray *gvIndexKeys = [AINetGroupValueIndex gvIndexKeys:ds];
+    for (NSString *valueDS in gvIndexKeys) {
+        // 初始化indexPsPool。
+        NSArray *index_ps = [AINetIndex getIndex_ps:at ds:valueDS isOut:false];
+        [indexPsPool setObject:index_ps forKey:valueDS];
+        
+        // 提前加载好vInfo缓存，后面复用。
+        AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:valueDS isOut:false];
+        [vInfoCache setObject:vInfo forKey:valueDS];
+        
+        // 提前加载好dataDic缓存，后面复用。
+        NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:valueDS isOut:false];
+        [dataDicCache setObject:dataDic forKey:valueDS];
+        
+        // 提前加载好单稀疏码分组（参考35107-TODO3.1）。
+        NSMutableArray *itemValueGroupDataCache = [NSMutableArray new];
+        NSArray *groupScores = [SMGUtils convertArr:index_ps convertBlock:^id(AIKVPointer *obj) { return [AINetIndex getData:obj fromDataDic:dataDic]; }];
+        groupScores = [SMGUtils sortSmall2Big:groupScores compareBlock:^double(NSNumber *obj) { return obj.doubleValue; }];
+        NSInteger groupCount = MIN(groupScores.count, 100);
+        CGFloat groupStep = groupCount > 0 ? groupScores.count / groupCount : 0;
+        for (int i = 1; i < groupCount + 1; i++) { // 1-100
+            NSInteger index = i == groupCount ? groupScores.count - 1 : (int)(i * groupStep) - 1; // 0-99（避免越界）（可能不包含0，但绝对包含最后一条）。
+            [itemValueGroupDataCache addObject:ARR_INDEX(groupScores, index)];
+        }
+        [valueGroupDataCache setObject:itemValueGroupDataCache forKey:valueDS];
+    }
+}
+
++(NSArray*) recognition:(NSString*)at
+                     ds:(NSString*)ds
+               colorDic:(NSDictionary*)colorDic
+                excepts:(DDic*)excepts
+                curRect:(CGRect)curRect
+          beginGVExcept:(NSMutableDictionary*)beginGVExcept
+           gvRectExcept:(NSMutableDictionary*)gvRectExcept
+              jvBuModel:(AIFeatureJvBuModels*)jvBuModel
+                protoST:(AIFeatureNode*)protoST
+                logDesc:(NSString*)logDesc {
+    
+    // 稀疏码识别。
+    NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:curRect colorDic:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
+    NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
+    
+    // ST识别。
+    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemGVsAndRefPorts protoST:protoST];
+    if (!ARRISOK(itemSTModels)) return nil; // 单特征识别无结果则跳过。
+    [jvBuModel.stModels addObjectsFromArray:itemSTModels];
+    NSLog(@"第1步、特征识别结果st条数:%ld",itemSTModels.count);
+    
+    // GT识别。
+    NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc protoGT:nil colorDic:colorDic ds:ds];
+    [jvBuModel.gtModels addObjectsFromArray:itemGTModels];
+    NSLog(@"第2步、组特征识别条数:%ld",itemGTModels.count);
+    return itemGTModels;
+}
+
+//MARK:===============================================================
+//MARK:                     < 稀疏码识别 >
+//MARK:===============================================================
+
++(NSArray*) recognitionSVAndGV_Caller:(CGRect)curRect colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
+    //14. 切出当前gv：九宫。
+    //2025.12.11: 切图复用（参考35105-TODO3.1）。
+    MapModel *rectKey = [self getIndexsOfProtoRect:curRect];
+    NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
+    if (!DICISOK(gvIndex)) return nil;
+    
+    //1. 单码排序。
+    NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+        return [XGRedisUtil compareStrA:obj1 strB:obj2];
+    }];
+    //2. 并将单码转为MapModels格式。
+    NSArray *vModels = [SMGUtils convertArr:sortDS convertBlock:^id(NSString *ds) {
+        return [MapModel newWithV1:ds v2:[gvIndex objectForKey:ds]];
+    }];
+    //3. 组码cacheKey。
+    NSString *gvKey = CLEANSTR([SMGUtils convertArr:vModels convertBlock:^id(MapModel *obj) {
+        CGFloat value = NUMTOOK(obj.v2).floatValue;
+        return STRFORMAT(@"%@_%.2f",obj.v1,value);
+    }]);
+    
+    //4. 组码识别
+    NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
+        return [self recognitionSVAndGV_Invoke:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
+    }];
+    
+    //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
+    NSMutableArray *alls = [NSMutableArray new];
+    for (AIMatchModel *gModel in gMatchModels) {
+        // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
+        NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
+        if (!gvIdProtoRects) {
+            gvIdProtoRects = [NSMutableArray new];
+            [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
+        }
+        [gvIdProtoRects addObject:@(protoRect)];
+        
+        //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
+        if (gModel.matchValue < 0.6) continue;
+        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        
+        // 所有refPorts全收集起来。
+        for (AIPort *refPort in refPorts) {
+            [alls addObject:[MapModel newWithV1:gModel v2:refPort v3:@(protoRect) v4:gvIndex]];
+        }
+    }
+    return alls;
+}
+
++(NSArray*) recognitionSVAndGV_Invoke:(NSArray*)vModels at:(NSString*)at isOut:(BOOL)isOut rate:(CGFloat)rate minLimit:(NSInteger)minLimit forProtoGV:(AIKVPointer*)forProtoGV {
     //1. 数据准备
     NSMutableDictionary *resultDic = [[NSMutableDictionary alloc] init];
     
@@ -190,130 +304,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 }
 
 //MARK:===============================================================
-//MARK:                     < 识别入口 >
-//MARK:===============================================================
-
-// 识别前初始化
-+(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
-    // 初始化缓存池数据。
-    [self resetPool];
-    _curMaxSize = whSize;
-    
-    // 加载稀疏码相关缓存池。
-    // TODO: 随后测下这里有没用，没用删掉，忘了什么时候写的什么作用了。
-    NSArray *gvIndexKeys = [AINetGroupValueIndex gvIndexKeys:ds];
-    for (NSString *valueDS in gvIndexKeys) {
-        // 初始化indexPsPool。
-        NSArray *index_ps = [AINetIndex getIndex_ps:at ds:valueDS isOut:false];
-        [indexPsPool setObject:index_ps forKey:valueDS];
-        
-        // 提前加载好vInfo缓存，后面复用。
-        AIValueInfo *vInfo = [AINetIndex getValueInfo:at ds:valueDS isOut:false];
-        [vInfoCache setObject:vInfo forKey:valueDS];
-        
-        // 提前加载好dataDic缓存，后面复用。
-        NSDictionary *dataDic = [AINetIndexUtils searchDataDic:at ds:valueDS isOut:false];
-        [dataDicCache setObject:dataDic forKey:valueDS];
-        
-        // 提前加载好单稀疏码分组（参考35107-TODO3.1）。
-        NSMutableArray *itemValueGroupDataCache = [NSMutableArray new];
-        NSArray *groupScores = [SMGUtils convertArr:index_ps convertBlock:^id(AIKVPointer *obj) { return [AINetIndex getData:obj fromDataDic:dataDic]; }];
-        groupScores = [SMGUtils sortSmall2Big:groupScores compareBlock:^double(NSNumber *obj) { return obj.doubleValue; }];
-        NSInteger groupCount = MIN(groupScores.count, 100);
-        CGFloat groupStep = groupCount > 0 ? groupScores.count / groupCount : 0;
-        for (int i = 1; i < groupCount + 1; i++) { // 1-100
-            NSInteger index = i == groupCount ? groupScores.count - 1 : (int)(i * groupStep) - 1; // 0-99（避免越界）（可能不包含0，但绝对包含最后一条）。
-            [itemValueGroupDataCache addObject:ARR_INDEX(groupScores, index)];
-        }
-        [valueGroupDataCache setObject:itemValueGroupDataCache forKey:valueDS];
-    }
-}
-
-+(NSArray*) recognition:(NSString*)at
-                     ds:(NSString*)ds
-               colorDic:(NSDictionary*)colorDic
-                excepts:(DDic*)excepts
-                curRect:(CGRect)curRect
-          beginGVExcept:(NSMutableDictionary*)beginGVExcept
-           gvRectExcept:(NSMutableDictionary*)gvRectExcept
-              jvBuModel:(AIFeatureJvBuModels*)jvBuModel
-                protoST:(AIFeatureNode*)protoST
-                logDesc:(NSString*)logDesc {
-    
-    //14. 切出当前gv：九宫。
-    //2025.12.11: 切图复用（参考35105-TODO3.1）。
-    MapModel *rectKey = [self getIndexsOfProtoRect:curRect];
-    NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
-    if (!DICISOK(gvIndex)) return nil;
-    
-    // 当前粒度层取到的gv.refPorts收集起来。
-    NSArray *itemRefPorts = [TCRecognitionInvoke recognitionFeatureV2_Step0:gvIndex at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
-    
-    // 统一进行ST识别：通过组码识别。
-    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemRefPorts protoST:protoST];
-    [jvBuModel.stModels addObjectsFromArray:itemSTModels];
-    
-    //31. 单特征识别无结果则跳过。
-    if (!ARRISOK(itemSTModels)) return nil;
-    NSLog(@"第1步、特征识别结果st条数:%ld gt条数:%ld",itemSTModels.count,jvBuModel.gtModels.count);
-    
-    // todotomorrow20260426: 把识别 和 竞争类比 分开做。
-    
-    // 组特征识别：GT识别V5。
-    NSArray *assGTs = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc protoGT:nil colorDic:colorDic ds:ds];
-    [jvBuModel.gtModels addObjectsFromArray:assGTs];
-    NSLog(@"第4步、组特征识别条数:%ld",assGTs.count);
-    
-    return assGTs;
-}
-
-//MARK:===============================================================
 //MARK:                     < 特征识别 >
 //MARK:===============================================================
-
-+(NSArray*) recognitionFeatureV2_Step0:(NSDictionary*)gvIndex at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
-    
-    //1. 单码排序。
-    NSArray *sortDS = [gvIndex.allKeys sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
-        return [XGRedisUtil compareStrA:obj1 strB:obj2];
-    }];
-    //2. 并将单码转为MapModels格式。
-    NSArray *vModels = [SMGUtils convertArr:sortDS convertBlock:^id(NSString *ds) {
-        return [MapModel newWithV1:ds v2:[gvIndex objectForKey:ds]];
-    }];
-    //3. 组码cacheKey。
-    NSString *gvKey = CLEANSTR([SMGUtils convertArr:vModels convertBlock:^id(MapModel *obj) {
-        CGFloat value = NUMTOOK(obj.v2).floatValue;
-        return STRFORMAT(@"%@_%.2f",obj.v1,value);
-    }]);
-    
-    //4. 组码识别
-    NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
-        return [self recognitionGroupValueV4:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
-    }];
-    
-    //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
-    NSMutableArray *alls = [NSMutableArray new];
-    for (AIMatchModel *gModel in gMatchModels) {
-        // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
-        NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
-        if (!gvIdProtoRects) {
-            gvIdProtoRects = [NSMutableArray new];
-            [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
-        }
-        [gvIdProtoRects addObject:@(protoRect)];
-        
-        //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
-        if (gModel.matchValue < 0.6) continue;
-        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
-        
-        // 所有refPorts全收集起来。
-        for (AIPort *refPort in refPorts) {
-            [alls addObject:[MapModel newWithV1:gModel v2:refPort v3:@(protoRect) v4:gvIndex]];
-        }
-    }
-    return alls;
-}
 
 /**
  *  MARK:--------------------单特征识别--------------------
