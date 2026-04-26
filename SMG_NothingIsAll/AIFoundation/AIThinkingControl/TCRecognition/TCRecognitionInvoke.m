@@ -173,18 +173,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 稀疏码识别。
     NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:curRect colorDic:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
-    NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
+    // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
     
     // ST识别。
     NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemGVsAndRefPorts protoST:protoST];
     if (!ARRISOK(itemSTModels)) return nil; // 单特征识别无结果则跳过。
     [jvBuModel.stModels addObjectsFromArray:itemSTModels];
-    NSLog(@"第1步、特征识别结果st条数:%ld",itemSTModels.count);
+    // NSLog(@"第1步、特征识别结果st条数:%ld",itemSTModels.count);
     
     // GT识别。
     NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc protoGT:nil colorDic:colorDic ds:ds];
     [jvBuModel.gtModels addObjectsFromArray:itemGTModels];
-    NSLog(@"第2步、组特征识别条数:%ld",itemGTModels.count);
+    // NSLog(@"第2步、组特征识别条数:%ld",itemGTModels.count);
     return itemGTModels;
 }
 
@@ -321,6 +321,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
 +(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoST:(AIFeatureNode*)protoST {
+    
+    // todotomorrow20260426: 查为什么gvs有很多结果，但在dotSize的while前期，却识别到的st结果全是0条呢？
+    
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
