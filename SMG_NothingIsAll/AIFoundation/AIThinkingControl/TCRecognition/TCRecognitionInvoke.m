@@ -172,8 +172,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 logDesc:(NSString*)logDesc {
     
     // 稀疏码识别。
-    NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:curRect colorDic:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
+    NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
     // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
+    
+    // todotomorrow20260426: 查为什么gvs有很多结果，但在dotSize的while前期，却识别到的st结果全是0条呢？
+    // 1. 有时有st结果，却没有gt结果，并且，如果st和gt都没结果呢？难道要把while全跑完？所以，必须以gv识别结果来防重才行，不能依赖st甚至gt结果。
+    // 2. 这里的gv识别结果，倒是一直有，不过只有curRect也没法防重。
+    // 3. 看来还是得继续向st和gt找：哪怕只是前走一小步，把识别哪怕最终失败的st，识别过程中的protoRect收集起来，用于防重。
+    
+    
     
     // ST识别。
     NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemGVsAndRefPorts protoST:protoST];
@@ -192,11 +199,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //MARK:                     < 稀疏码识别 >
 //MARK:===============================================================
 
-+(NSArray*) recognitionSVAndGV_Caller:(CGRect)curRect colorDic:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
++(NSArray*) recognitionSVAndGV_Caller:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     //14. 切出当前gv：九宫。
     //2025.12.11: 切图复用（参考35105-TODO3.1）。
-    MapModel *rectKey = [self getIndexsOfProtoRect:curRect];
-    NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:curRect rectKey:rectKey protoColorDic:colorDic ds:ds];
+    MapModel *rectKey = [self getIndexsOfProtoRect:protoRect];
+    NSDictionary *gvIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:protoRect rectKey:rectKey protoColorDic:colorDic ds:ds];
     if (!DICISOK(gvIndex)) return nil;
     
     //1. 单码排序。
@@ -321,9 +328,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
 +(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoST:(AIFeatureNode*)protoST {
-    
-    // todotomorrow20260426: 查为什么gvs有很多结果，但在dotSize的while前期，却识别到的st结果全是0条呢？
-    
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
