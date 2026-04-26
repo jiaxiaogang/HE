@@ -339,7 +339,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (MapModel *valid in sorts) {
         // 自身防重。
         AIPort *refPort = valid.v2;
-        if (refPort.target_p.isJiao) continue;
         if ([refPort.target_p isEqual:protoST.p]) continue;
         
         // 同一个assST只有10次准入机会（参考36037-TODO1）。
