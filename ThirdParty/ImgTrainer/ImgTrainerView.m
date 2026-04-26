@@ -598,9 +598,20 @@
     if (wasRunning) {
         dispatch_async(self.videoQueue, ^{
             [self.captureSession stopRunning];
+            // 等待session真正停止
+            while (self.captureSession.isRunning) {
+                [NSThread sleepForTimeInterval:0.05];
+            }
+            // session停止后，开始拍照流程
+            [self doCaptureAfterStopSession:wasRunning];
         });
+    } else {
+        // 没有预览session，直接拍照
+        [self doCaptureAfterStopSession:wasRunning];
     }
+}
 
+- (void)doCaptureAfterStopSession:(BOOL)shouldResumePreview {
     // 使用AICameraCapture拍照
     [AICameraCapture startSession];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
@@ -611,18 +622,24 @@
 
                 // 保存到相册
                 UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil);
-                
+
                 // 清空旧显示
                 [self removePreviewDatas];
-                
+
                 // 提交视觉
                 [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_0"];
             }
 
             // 恢复预览session（如果之前是开启的）
-            if (wasRunning) {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), self.videoQueue, ^{
+            if (shouldResumePreview) {
+                dispatch_async(self.videoQueue, ^{
                     [self.captureSession startRunning];
+                    // 等待session真正启动
+                    NSInteger waitCount = 0;
+                    while (!self.captureSession.isRunning && waitCount < 20) {
+                        [NSThread sleepForTimeInterval:0.1];
+                        waitCount++;
+                    }
                 });
             }
         }];

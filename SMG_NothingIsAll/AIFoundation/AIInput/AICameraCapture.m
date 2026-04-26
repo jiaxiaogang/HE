@@ -169,9 +169,27 @@ static AICameraCapture *_instance;
         [instance.captureSession startRunning];
     }
 
-    // 等待一小段时间确保会话准备好
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [instance takePhoto];
+    // 等待会话真正启动后再拍照（最多等待2秒）
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        NSInteger waitCount = 0;
+        NSInteger maxWaitCount = 20; // 20 * 0.1s = 2秒
+        while (!instance.captureSession.isRunning && waitCount < maxWaitCount) {
+            [NSThread sleepForTimeInterval:0.1];
+            waitCount++;
+        }
+
+        // 确保 session 真的在运行
+        if (instance.captureSession.isRunning) {
+            [instance takePhoto];
+        } else {
+            NSLog(@"AICameraCapture: session 启动超时");
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (instance.captureCompletion) {
+                    instance.captureCompletion(nil);
+                    instance.captureCompletion = nil;
+                }
+            });
+        }
     });
 }
 
