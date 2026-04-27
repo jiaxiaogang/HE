@@ -241,7 +241,7 @@ static AIThinkingControl *_instance;
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         
         // 每个粒度层，单独进行覆盖防重：因为粗粒度全扫过，细粒度肯定得重来，不能粗的扫过，细的就没资格切入了。
-        NSMutableArray *allGTResults = [NSMutableArray new];
+        NSMutableArray *dotSizeResults = [NSMutableArray new];
         
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
@@ -253,25 +253,38 @@ static AIThinkingControl *_instance;
                 
                 // 切入点防重：识别过区域覆盖防重（通过连续视觉注视可重启）。
                 NSInteger repeatNum = 0;
-                for (GTZiJvModelV2 *gtGroup in allGTResults) {
-                    for (STZiJvModelV2 *stGroup in gtGroup.bestSTs.allValues) {
-                        for (AIFeatureJvBuItem *gvItem in stGroup.bestGVs.allValues) {
-                            if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) {
-                                repeatNum ++;
-                            }
-                            if (repeatNum >= 2) break;
+                
+                // 第一种：根据gt识别结果防重。
+                //for (GTZiJvModelV2 *gtGroup in dotSizeResults) {
+                //    for (STZiJvModelV2 *stGroup in gtGroup.bestSTs.allValues) {
+                //        for (AIFeatureJvBuItem *gvItem in stGroup.bestGVs.allValues) {
+                //            if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) {
+                //                repeatNum ++;
+                //            }
+                //            if (repeatNum >= 2) break;
+                //        }
+                //        if (repeatNum >= 2) break;
+                //    }
+                //    if (repeatNum >= 2) break;
+                //}
+                
+                // 第二种：根据st识别结果防重。
+                for (AIFeatureJvBuModel *stItem in dotSizeResults) {
+                    for (AIFeatureJvBuItem *gvItem in stItem.bestGVs.allValues) {
+                        if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) {
+                            repeatNum ++;
                         }
-                        if (repeatNum >= 2) break;
+                        if (repeatNum >= 1) break;
                     }
-                    if (repeatNum >= 2) break;
+                    if (repeatNum >= 1) break;
                 }
                 if (repeatNum >= 2) continue;
                 
                 // 调用识别。
-                NSArray *gtResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
+                NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
                 
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
-                if (gtResults) [allGTResults addObjectsFromArray:gtResults];
+                if (itemResults) [dotSizeResults addObjectsFromArray:itemResults];
                 [beginRectExcept addObject:@(curRect)];
             }
         }

@@ -179,6 +179,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 1. 有时有st结果，却没有gt结果，并且，如果st和gt都没结果呢？难道要把while全跑完？所以，必须以gv识别结果来防重才行，不能依赖st甚至gt结果。
     // 2. 这里的gv识别结果，倒是一直有，不过只有curRect也没法防重。
     // 3. 看来还是得继续向st和gt找：哪怕只是前走一小步，把识别哪怕最终失败的st，识别过程中的protoRect收集起来，用于防重。
+    // 4. 问题是走了哪怕一小步了，说明st已经返回了。
+    // 5. 先查下，为什么走了一小步的st识别结果没返回？在哪被过滤掉了？
     
     
     
@@ -192,7 +194,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc protoGT:nil colorDic:colorDic ds:ds];
     [jvBuModel.gtModels addObjectsFromArray:itemGTModels];
     // NSLog(@"第2步、组特征识别条数:%ld",itemGTModels.count);
-    return itemGTModels;
+    return itemSTModels;
 }
 
 //MARK:===============================================================
@@ -1624,10 +1626,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 无复用时新建并识别。
     AIFeatureJvBuModel *stModel = [AIFeatureJvBuModel new:assT beginAssIndex:beginAssIndex beginGV_ProtoRect:lastProtoRect];
     
-    // DEBUG: 记录调用参数
-    // NSString *protoColorInfo = protoColorDic ? [NSString stringWithFormat:@"protoColorDic有值(count=%lu)", (unsigned long)protoColorDic.count] : @"protoColorDic为nil";
-    // NSLog(@"assT%ld.%p [stZiJv] 调用参数: assT.count=%ld, beginAssIndex=%ld, protoColorInfo=%@, ds=%@",assT.pId,stModel,(long)assT.count, (long)beginAssIndex, protoColorInfo, ds);
-    
     // 21. 自举：每个assT一条条自举自身的gv。
     for (NSInteger i = 0; i < assT.count; i++) {
         NSInteger curIndex = (beginAssIndex + i) % assT.count;
@@ -1635,38 +1633,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // baseST_Proto最初时，由lastProtoRect估算，收集到stModel.bestGVs后再以bestGVs来估算。
         CGRect baseST_Proto = stModel.bestGVs.count > 0 ? [stModel run4AssST_ProtoRect] : defaultBaseST_Proto;
         
-        
-        // TODOTOMORROW20260418：查：为什么识别对和错的结果，没明显区别。
-        //01. 单特征识别结果:T0235 匹配度:0.50 (17/19) = 总分:0.50（稳定性:1.00） {Mnist1 = 1.00;}
-        //02. 单特征识别结果:T0066 匹配度:0.49 (44/45) = 总分:0.49（稳定性:68.32） {Mnist1 = 0.48;Mnist0 = 3.00;}
-        //03. 单特征识别结果:T0066 匹配度:0.48 (45/45) = 总分:0.48（稳定性:68.07） {Mnist1 = 0.48;Mnist0 = 3.00;}
-        
-        // 如上：日志第1和第11条是用1识别1，别的全是用1识别0，但从匹配度来看，第1和第11条也没明显优势。
-        // 所以：把它们的每个gv的匹配度和rect打出来看看，看为什么对的和错的，区别不大。
-        
-        
-        
-        
-        
-        
-        
-        
         // GV自举（按上条lastProtoRect来计算缩放锚点）。
         AIFeatureJvBuItem *best = [self gvZiJv:curIndex colorDic:protoColorDic ds:ds baseST:stModel.assT oldBestGVs:stModel.bestGVs baseST_Proto:baseST_Proto];
         
         //41. 有中断匹配不上的gv，直接计为自举审核失败。
         if (!best) continue;
-
+        
         //43. 记录curIndex，以使bestGVs知道与assT哪帧映射且用于排序等。
         //2025.05.12: 自适应粒度单特征识别的位置符合度本来就是自举位置来判断匹配度的，位置不符合时匹配度就无法达标，所以：要么用scale与1的距离来表示，要么直接不判断它。
         [stModel updateBestGVs:best assIndex:curIndex];
-        
-        // DEBUG: 记录每次循环的关键信息
-        //NSLog(@"assT%ld.%p itemIndex:%ld, curIndex:%ld, bestGVs数:%ld, baseST_Proto:%@ 匹配度:%.2f",assT.pId,stModel,(long)i, (long)curIndex, (unsigned long)stModel.bestGVs.count, Rect2Str(baseST_Proto),best.outerShapeMatchValue);
-        //CGRect bestGV_AssST = [stModel.assT rectByIndex:curIndex];
-        //NSLog(@"   对比Rect：Ass%@ => Proto%@ xDelta:%.2f yDelta:%.2f",Rect2Str(bestGV_AssST),Rect2Str(best.bestGVAtProtoTRect),
-        //      bestGV_AssST.origin.x + baseST_Proto.origin.x - best.bestGVAtProtoTRect.origin.x,
-        //      bestGV_AssST.origin.y + baseST_Proto.origin.y - best.bestGVAtProtoTRect.origin.y);
     }
     return stModel;
 }
