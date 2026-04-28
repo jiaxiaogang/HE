@@ -356,8 +356,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         CGRect protoRect = protoRectValue.CGRectValue;
         
         // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
-        CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
-        if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
+        // 2026.04.28: 关掉，因为过滤太多，会导致半天找不到类似sizeRatio的切入，高清图时循环太多次会导致dotSize.while循环好久才能有识别结果，很耗内存。
+        // CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
+        // if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
+        
+        // TODOTOMORROW20260429: 这里会把大的过滤掉很多。
+        // 第1次测试：到0,20,31,31时，能返回三条st结果了（此时虽然还好，但只是救了这一个粗粒度层，细粒度层依然有半天识别不到的问题）。
+        // 第2次测试：到78,26,4,4时，还没返回过一条st结果（此时已经非常慢了，内存卡到快1G了）。
+        // 可见，并不是大rect识别不到，只是更容易被过滤掉。。。
+        
+        
         
         AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
         if (!assT) continue;
