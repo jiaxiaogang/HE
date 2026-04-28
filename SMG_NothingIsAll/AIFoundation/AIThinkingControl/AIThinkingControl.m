@@ -271,12 +271,10 @@ static AIThinkingControl *_instance;
                 // 第二种：根据st识别结果防重。
                 for (AIFeatureJvBuModel *stItem in dotSizeResults) {
                     for (AIFeatureJvBuItem *gvItem in stItem.bestGVs.allValues) {
-                        if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) {
-                            repeatNum ++;
-                        }
-                        if (repeatNum >= 1) break;
+                        if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) repeatNum ++;
+                        if (repeatNum >= 2) break;
                     }
-                    if (repeatNum >= 1) break;
+                    if (repeatNum >= 2) break;
                 }
                 if (repeatNum >= 2) continue;
                 

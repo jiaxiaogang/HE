@@ -175,17 +175,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
     // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
     
-    // todotomorrow20260426: 查为什么gvs有很多结果，但在dotSize的while前期，却识别到的st结果全是0条呢？
-    // 1. 有时有st结果，却没有gt结果，并且，如果st和gt都没结果呢？难道要把while全跑完？所以，必须以gv识别结果来防重才行，不能依赖st甚至gt结果。
-    // 2. 这里的gv识别结果，倒是一直有，不过只有curRect也没法防重。
-    // 3. 看来还是得继续向st和gt找：哪怕只是前走一小步，把识别哪怕最终失败的st，识别过程中的protoRect收集起来，用于防重。
-    // 4. 问题是走了哪怕一小步了，说明st已经返回了。
-    // 5. 先查下，为什么走了一小步的st识别结果没返回？在哪被过滤掉了？
-    
-    
-    
     // ST识别。
-    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemGVsAndRefPorts protoST:protoST];
+    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemGVsAndRefPorts protoST:protoST protoRect:curRect];
     if (!ARRISOK(itemSTModels)) return nil; // 单特征识别无结果则跳过。
     [jvBuModel.stModels addObjectsFromArray:itemSTModels];
     // NSLog(@"第1步、特征识别结果st条数:%ld",itemSTModels.count);
@@ -230,24 +221,29 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     NSMutableArray *alls = [NSMutableArray new];
     for (AIMatchModel *gModel in gMatchModels) {
-        // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
-        NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
-        if (!gvIdProtoRects) {
-            gvIdProtoRects = [NSMutableArray new];
-            [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
-        }
-        [gvIdProtoRects addObject:@(protoRect)];
+        // 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
+        if (gModel.matchValue < 0.8) continue;
         
-        //12. 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
-        if (gModel.matchValue < 0.6) continue;
-        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
+        //NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
+        //if (!gvIdProtoRects) {
+        //    gvIdProtoRects = [NSMutableArray new];
+        //    [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
+        //}
+        //[gvIdProtoRects addObject:@(protoRect)];
         
         // 所有refPorts全收集起来。
-        for (AIPort *refPort in refPorts) {
-            [alls addObject:[MapModel newWithV1:gModel v2:refPort v3:@(protoRect) v4:gvIndex]];
-        }
+        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        [alls addObjectsFromArray:refPorts];
     }
-    return alls;
+    
+    // 强度越好的越优先（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
+    NSArray *sorts = [SMGUtils sortBig2Small:alls compareBlock:^double(AIPort *refPort) {
+        return refPort.strong.value;
+    }];
+    
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(5, MIN(50, sorts.count * 0.2f)));
+    return valids;
 }
 
 +(NSArray*) recognitionSVAndGV_Invoke:(NSArray*)vModels at:(NSString*)at isOut:(BOOL)isOut rate:(CGFloat)rate minLimit:(NSInteger)minLimit forProtoGV:(AIKVPointer*)forProtoGV {
@@ -329,22 +325,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoST:(AIFeatureNode*)protoST {
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoST:(AIFeatureNode*)protoST protoRect:(CGRect)protoRect {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
-    // 强度越好的越优先（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
-    NSArray *sorts = [SMGUtils sortBig2Small:allRefPorts compareBlock:^double(MapModel *obj) {
-        AIPort *refPort = obj.v2;
-        return refPort.strong.value;
-    }];
-    
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
-    for (MapModel *valid in sorts) {
+    for (AIPort *refPort in allRefPorts) {
         // 自身防重。
-        AIPort *refPort = valid.v2;
         if ([refPort.target_p isEqual:protoST.p]) continue;
         
         // 同一个assST只有10次准入机会（参考36037-TODO1）。
@@ -352,21 +341,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (oldCount > 9) continue;
         
         // 数据准备
-        NSValue *protoRectValue = valid.v3;
-        CGRect protoRect = protoRectValue.CGRectValue;
-        
-        // 先把细节处（比如图像中有个小小的3）识别关掉，以方便调试自适应粒度版本的BUG（后面没什么BUG了，再放开）。
-        // 2026.04.28: 关掉，因为过滤太多，会导致半天找不到类似sizeRatio的切入，高清图时循环太多次会导致dotSize.while循环好久才能有识别结果，很耗内存。
-        // CGFloat sizeRatio = refPort.rect.size.width / protoRect.size.width;
-        // if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
-        
-        // TODOTOMORROW20260429: 这里会把大的过滤掉很多。
-        // 第1次测试：到0,20,31,31时，能返回三条st结果了（此时虽然还好，但只是救了这一个粗粒度层，细粒度层依然有半天识别不到的问题）。
-        // 第2次测试：到78,26,4,4时，还没返回过一条st结果（此时已经非常慢了，内存卡到快1G了）。
-        // 可见，并不是大rect识别不到，只是更容易被过滤掉。。。
-        
-        
-        
         AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
         if (!assT) continue;
         NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
@@ -396,9 +370,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // 更新准入机会。
         [assSTCounted setObject:@(oldCount + 1) forKey:@(model.assT.pId)];
-        
-        // 最多100条（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
-        if (result.count > 300) break;
     }
     return result;
 }
