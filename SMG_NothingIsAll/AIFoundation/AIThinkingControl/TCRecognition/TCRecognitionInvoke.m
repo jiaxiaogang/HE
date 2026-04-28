@@ -221,9 +221,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
     NSMutableArray *alls = [NSMutableArray new];
     for (AIMatchModel *gModel in gMatchModels) {
-        // 切入点相近度太低（比如横线对竖线完全没有必要切入识别），直接pass掉。
-        if (gModel.matchValue < 0.8) continue;
-        
         // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
         //NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
         //if (!gvIdProtoRects) {
@@ -234,15 +231,23 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         // 所有refPorts全收集起来。
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
-        [alls addObjectsFromArray:refPorts];
+        for (AIPort *refPort in refPorts) {
+            [alls addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort]];
+        }
     }
     
-    // 强度越好的越优先（参考35053-方案2 & 35105-方案2 & 36036-方案V2）。
-    NSArray *sorts = [SMGUtils sortBig2Small:alls compareBlock:^double(AIPort *refPort) {
-        return refPort.strong.value;
+    // 强度越好 x 越准确的 = 越优先。
+    NSArray *sorts = [SMGUtils sortBig2Small:alls compareBlock:^double(MapModel *model) {
+        AIPort *refPort = model.v2;
+        NSNumber *matchValue = model.v2;
+        return matchValue.floatValue * refPort.strong.value;
     }];
-    
     NSArray *valids = ARR_SUB(sorts, 0, MAX(5, MIN(50, sorts.count * 0.2f)));
+    
+    // 转回List<AIPort>类型。
+    valids = [SMGUtils convertArr:valids convertBlock:^id(MapModel *obj) {
+        return obj.v2;
+    }];
     return valids;
 }
 
