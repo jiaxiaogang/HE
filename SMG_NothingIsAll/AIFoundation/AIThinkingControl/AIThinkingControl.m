@@ -237,6 +237,9 @@ static AIThinkingControl *_instance;
     // 提前中止循环机制：用于判断前两个粒度层全失败时，跳出while循环，避免第一次视觉时不能因为每个粒度全是0，就全while过去一遍。
     int lastTwiceFail = 0;
     
+    // 进行覆盖防重：因为粗粒度全扫过，细粒度肯定得重来，不能粗的扫过，细的就没资格切入了。
+    NSMutableArray *noRepeatResults = [NSMutableArray new];
+    
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
     CGFloat dotSize = whSize / 6.0f;
     while (dotSize > 1) {
@@ -245,9 +248,6 @@ static AIThinkingControl *_instance;
         
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
-        
-        // 每个粒度层，单独进行覆盖防重：因为粗粒度全扫过，细粒度肯定得重来，不能粗的扫过，细的就没资格切入了。
-        NSMutableArray *dotSizeResults = [NSMutableArray new];
         
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
@@ -276,7 +276,7 @@ static AIThinkingControl *_instance;
                 //}
                 
                 // 第二种：根据st识别结果防重。
-                for (AIFeatureJvBuModel *stItem in dotSizeResults) {
+                for (AIFeatureJvBuModel *stItem in noRepeatResults) {
                     for (AIFeatureJvBuItem *gvItem in stItem.bestGVs.allValues) {
                         if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) repeatNum ++;
                         if (repeatNum >= 1) break;
@@ -293,7 +293,7 @@ static AIThinkingControl *_instance;
                 NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
                 
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
-                if (itemResults) [dotSizeResults addObjectsFromArray:itemResults];
+                if (itemResults) [noRepeatResults addObjectsFromArray:itemResults];
                 
                 
                 // TODOTOMORROW20260429:
@@ -319,6 +319,13 @@ static AIThinkingControl *_instance;
                 //  方案1、可针对类似的预计平铺rect，做防重。
                 //  方案2、或者同一个refST和同一个refRect做防重。
                 //  方案3、或者相近切入点的同一个gv识别结果做防重（以前有过）。
+                // 3. 必须极端考虑了，每一次识别仅取有数的几条结果，不能这么发散下去，一旦发散，性能必不可控。
+                //  方案4、那就先模糊识别个大概，再对大概中优胜的注意力展开二次识别（目前只做二次，后续再考虑三次识别甚至更多次）。
+                //      步骤1、每次仅循环三个dotSize粒度，再细的不管了（比如我们仅识别到某块可能是个数字）。
+                //      步骤2、剩下的更细粒度的识别，用专注来解决（比如在可能是数字的一块会获取关注）。
+                //      步骤3、专注这一块时，这一帧专门针对这一小块切出来去识别（比如对可能是数字的这一块切出来，对它做步骤1三个dotSize粒度识别）。
+                //      最终：识别到数字的，并不是那一眼，而是连续视觉，专注来做到，每一眼仅做一点点，通过转移专注块，来实现最终识别结果。
+                //  方案5、在方案4的基础上，我们可以直接每粒度层都计为一个专注层？
                 
                 
                 
@@ -332,9 +339,9 @@ static AIThinkingControl *_instance;
         }
         
         // 前两个粒度层全失败计数。
-        if (dotSizeResults.count == 0) lastTwiceFail++;
+        if (noRepeatResults.count == 0) lastTwiceFail++;
         else lastTwiceFail = 0;
-        NSLog(@"当前粒度层：%.2f 识别st数：%ld 防重命中率：%.2f%% (%d/%d)",dotSize,dotSizeResults.count,(float)hit/total*100,hit,total);
+        NSLog(@"当前粒度层：%.2f 识别st数：%ld 防重命中率：%.2f%% (%d/%d)",dotSize,noRepeatResults.count,(float)hit/total*100,hit,total);
         
         //22. 下一层粒度/1.3（参考35026-1）。
         dotSize /= 1.3f;
