@@ -234,9 +234,15 @@ static AIThinkingControl *_instance;
     jvBuModel.debug = [GroupDebug new];
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     
+    // 提前中止循环机制：用于判断前两个粒度层全失败时，跳出while循环，避免第一次视觉时不能因为每个粒度全是0，就全while过去一遍。
+    int lastTwiceFail = 0;
+    
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
     CGFloat dotSize = whSize / 6.0f;
     while (dotSize > 1) {
+        // 前两个粒度层全失败，则不继续识别了（粗的什么都没，细的就不浪费性能了）。
+        if (lastTwiceFail >= 2) break;
+        
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         
@@ -288,10 +294,47 @@ static AIThinkingControl *_instance;
                 
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
                 if (itemResults) [dotSizeResults addObjectsFromArray:itemResults];
+                
+                
+                // TODOTOMORROW20260429:
+                // 当前粒度层：4.50 识别st数：458 防重命中率：0.00 (0/16)
+                // 当前粒度层：3.46 识别st数：418 防重命中率：0.20 (5/25)
+                // 当前粒度层：2.66 识别st数：642 防重命中率：0.59 (38/64)
+                // 当前粒度层：2.05 识别st数：234 防重命中率：0.89 (108/121)
+                // 当前粒度层：1.58 识别st数：262 防重命中率：0.90 (203/225)
+                // 当前粒度层：1.21 识别st数：275 防重命中率：0.96 (386/400)
+                // 1. 不过识别到2289条st结果，需要这么多么？显然不需要。调试一下这些数据，看怎么做补全设计防重。
+                for (AIFeatureJvBuModel *stModel in itemResults) {
+                    [stModel run4BestGvsAtProtoTRect];
+                    NSLog(@"stModel:ST%ld 匹配数:%03ld AtProto:%@",stModel.assT.pId,stModel.bestGVs.count,Rect2Str(stModel.bestGVsAtProtoTRect));
+                }
+                // stModel:ST502 匹配数:019 AtProto:<x0 y0 w27 h28>
+                // stModel:ST502 匹配数:048 AtProto:<x-4 y-2 w31 h31>
+                // stModel:ST502 匹配数:006 AtProto:<x0 y0 w24 h24>
+                // stModel:ST502 匹配数:008 AtProto:<x0 y0 w26 h24>
+                // stModel:ST502 匹配数:010 AtProto:<x-4 y0 w31 h26>
+                // stModel:ST502 匹配数:003 AtProto:<x0 y0 w19 h23>
+                // 1. 有些匹配数太低的，可以提前竞争淘汰掉。
+                // 2. 现在是第二眼视觉，识别的全是第一眼时的ST502，各种平铺可以有非常多种铺法，这显然是不合适的。
+                //  方案1、可针对类似的预计平铺rect，做防重。
+                //  方案2、或者同一个refST和同一个refRect做防重。
+                //  方案3、或者相近切入点的同一个gv识别结果做防重（以前有过）。
+                
+                
+                
+                
+                
+                
+                
+                
                 [beginRectExcept addObject:@(curRect)];
             }
         }
-        NSLog(@"当前粒度层：%.2f 识别st数：%ld 防重命中率：%d/%d",dotSize,dotSizeResults.count,hit,total);
+        
+        // 前两个粒度层全失败计数。
+        if (dotSizeResults.count == 0) lastTwiceFail++;
+        else lastTwiceFail = 0;
+        NSLog(@"当前粒度层：%.2f 识别st数：%ld 防重命中率：%.2f%% (%d/%d)",dotSize,dotSizeResults.count,(float)hit/total*100,hit,total);
         
         //22. 下一层粒度/1.3（参考35026-1）。
         dotSize /= 1.3f;
