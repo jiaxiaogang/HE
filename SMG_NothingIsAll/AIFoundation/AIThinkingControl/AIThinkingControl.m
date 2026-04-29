@@ -245,6 +245,7 @@ static AIThinkingControl *_instance;
         
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
         int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
+        int hit = 0,total = 0;
         for (NSInteger startX = 0; startX < length; startX++) {
             for (NSInteger startY = 0; startY < length; startY++) {
                 //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
@@ -272,11 +273,15 @@ static AIThinkingControl *_instance;
                 for (AIFeatureJvBuModel *stItem in dotSizeResults) {
                     for (AIFeatureJvBuItem *gvItem in stItem.bestGVs.allValues) {
                         if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) repeatNum ++;
-                        if (repeatNum >= 2) break;
+                        if (repeatNum >= 1) break;
                     }
-                    if (repeatNum >= 2) break;
+                    if (repeatNum >= 1) break;
                 }
-                if (repeatNum >= 2) continue;
+                total++;
+                if (repeatNum >= 1) {
+                    hit++;
+                    continue;
+                }
                 
                 // 调用识别。
                 NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
@@ -286,6 +291,7 @@ static AIThinkingControl *_instance;
                 [beginRectExcept addObject:@(curRect)];
             }
         }
+        NSLog(@"当前粒度层：%.2f 识别st数：%ld 防重命中率：%d/%d",dotSize,dotSizeResults.count,hit,total);
         
         //22. 下一层粒度/1.3（参考35026-1）。
         dotSize /= 1.3f;

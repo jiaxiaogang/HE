@@ -172,7 +172,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 logDesc:(NSString*)logDesc {
     
     // 稀疏码识别。
-    NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
+    NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept protoST:protoST];
     // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
     
     // ST识别。
@@ -192,7 +192,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //MARK:                     < 稀疏码识别 >
 //MARK:===============================================================
 
-+(NSArray*) recognitionSVAndGV_Caller:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
++(NSArray*) recognitionSVAndGV_Caller:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept protoST:(AIFeatureNode*)protoST {
     //14. 切出当前gv：九宫。
     //2025.12.11: 切图复用（参考35105-TODO3.1）。
     MapModel *rectKey = [self getIndexsOfProtoRect:protoRect];
@@ -232,6 +232,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 所有refPorts全收集起来。
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         for (AIPort *refPort in refPorts) {
+            if ([refPort.target_p isEqual:protoST.p]) continue;
             [alls addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort]];
         }
     }
@@ -239,7 +240,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 强度越好 x 越准确的 = 越优先。
     NSArray *sorts = [SMGUtils sortBig2Small:alls compareBlock:^double(MapModel *model) {
         AIPort *refPort = model.v2;
-        NSNumber *matchValue = model.v2;
+        NSNumber *matchValue = model.v1;
         return matchValue.floatValue * refPort.strong.value;
     }];
     NSArray *valids = ARR_SUB(sorts, 0, MAX(5, MIN(50, sorts.count * 0.2f)));
@@ -338,8 +339,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
     for (AIPort *refPort in allRefPorts) {
-        // 自身防重。
-        if ([refPort.target_p isEqual:protoST.p]) continue;
         
         // 同一个assST只有10次准入机会（参考36037-TODO1）。
         NSInteger oldCount = NUMTOOK([assSTCounted objectForKey:@(refPort.target_p.pointerId)]).integerValue;
