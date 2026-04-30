@@ -296,42 +296,7 @@ static AIThinkingControl *_instance;
                 if (itemResults) [noRepeatResults addObjectsFromArray:itemResults];
                 
                 
-                // TODOTOMORROW20260429:
-                // 当前粒度层：4.50 识别st数：458 防重命中率：0.00 (0/16)
-                // 当前粒度层：3.46 识别st数：418 防重命中率：0.20 (5/25)
-                // 当前粒度层：2.66 识别st数：642 防重命中率：0.59 (38/64)
-                // 当前粒度层：2.05 识别st数：234 防重命中率：0.89 (108/121)
-                // 当前粒度层：1.58 识别st数：262 防重命中率：0.90 (203/225)
-                // 当前粒度层：1.21 识别st数：275 防重命中率：0.96 (386/400)
-                // 1. 不过识别到2289条st结果，需要这么多么？显然不需要。调试一下这些数据，看怎么做补全设计防重。
-                for (AIFeatureJvBuModel *stModel in itemResults) {
-                    [stModel run4BestGvsAtProtoTRect];
-                    NSLog(@"stModel:ST%ld 匹配数:%03ld AtProto:%@",stModel.assT.pId,stModel.bestGVs.count,Rect2Str(stModel.bestGVsAtProtoTRect));
-                }
-                // stModel:ST502 匹配数:019 AtProto:<x0 y0 w27 h28>
-                // stModel:ST502 匹配数:048 AtProto:<x-4 y-2 w31 h31>
-                // stModel:ST502 匹配数:006 AtProto:<x0 y0 w24 h24>
-                // stModel:ST502 匹配数:008 AtProto:<x0 y0 w26 h24>
-                // stModel:ST502 匹配数:010 AtProto:<x-4 y0 w31 h26>
-                // stModel:ST502 匹配数:003 AtProto:<x0 y0 w19 h23>
-                // 1. 有些匹配数太低的，可以提前竞争淘汰掉。
-                // 2. 现在是第二眼视觉，识别的全是第一眼时的ST502，各种平铺可以有非常多种铺法，这显然是不合适的。
-                //  方案1、可针对类似的预计平铺rect，做防重。
-                //  方案2、或者同一个refST和同一个refRect做防重。
-                //  方案3、或者相近切入点的同一个gv识别结果做防重（以前有过）。
-                // 3. 必须极端考虑了，每一次识别仅取有数的几条结果，不能这么发散下去，一旦发散，性能必不可控。
-                //  方案4、那就先模糊识别个大概，再对大概中优胜的注意力展开二次识别（目前只做二次，后续再考虑三次识别甚至更多次）。
-                //      步骤1、每次仅循环三个dotSize粒度，再细的不管了（比如我们仅识别到某块可能是个数字）。
-                //      步骤2、剩下的更细粒度的识别，用专注来解决（比如在可能是数字的一块会获取关注）。
-                //      步骤3、专注这一块时，这一帧专门针对这一小块切出来去识别（比如对可能是数字的这一块切出来，对它做步骤1三个dotSize粒度识别）。
-                //      最终：识别到数字的，并不是那一眼，而是连续视觉，专注来做到，每一眼仅做一点点，通过转移专注块，来实现最终识别结果。
-                //  方案5、在方案4的基础上，我们可以直接每粒度层都计为一个专注层？
-                
-                
-                
-                
-                
-                
+                // TODOTOMORROW20260430: 实现专注循环。
                 
                 
                 [beginRectExcept addObject:@(curRect)];
