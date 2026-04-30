@@ -30,7 +30,7 @@
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >
 //MARK:===============================================================
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST;
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST justRank:(BOOL)justRank;
 +(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc ds:(NSString*)ds;
 
 //MARK:===============================================================

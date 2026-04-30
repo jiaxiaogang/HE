@@ -383,7 +383,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST justRank:(BOOL)justRank {
     // bestGVs末尾淘汰（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model filter4ZonHe];
@@ -424,6 +424,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         return obj.stScore;
     }];
+    
+    // 仅竞争模式。
+    if (justRank) return;
     
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
     NSInteger count = validModels.count;
@@ -743,7 +746,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
                 //a. 通过组码做单特征识别。
                 AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel ds:nil logDesc:nil protoST:nil];
+                [self recognitionFeatureV2_Step2:jvBuModel ds:nil logDesc:nil protoST:nil justRank:false];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = nil;//[self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.stModels dotSize:1];

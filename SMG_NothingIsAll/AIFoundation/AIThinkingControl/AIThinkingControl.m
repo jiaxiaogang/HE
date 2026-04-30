@@ -226,17 +226,16 @@ static AIThinkingControl *_instance;
     // step4. 视觉注意力专注范围递归：调用递归（参考37101-方案4）。
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
-    [self commitInputWithSplitV2_DepthRect:algsModel.bColors whSize:algsModel.whSize at:at ds:ds logDesc:logDesc protoST:protoST depth:1 jvBuModel:jvBuModel];
+    [self commitInputWithSplitV2_DepthRect:algsModel.bColors canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc protoST:protoST depth:1 jvBuModel:jvBuModel];
     
     // step5. 竞争 & 类比。
     [self commitInputWithSplitV2_RankAndAnalogy:at ds:ds logDesc:logDesc protoST:protoST jvBuModel:jvBuModel];
 }
 
 // 视觉注意力专注范围递归：执行递归（参考37101-方案4）。
--(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
+-(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     // 视觉注意力专注范围递归：退出递归（最多递归2层）（参考37101-方案4）。
     if (depth >= 2) return;
-    depth++;
     
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
@@ -244,26 +243,28 @@ static AIThinkingControl *_instance;
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     
     // 进行覆盖防重：因为粗粒度全扫过，细粒度肯定得重来，不能粗的扫过，细的就没资格切入了。
-    NSMutableArray *noRepeatResults = [NSMutableArray new];
+    AIFeatureJvBuModels *depthModel = [AIFeatureJvBuModels new:colorDic.hash];
     
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
-    CGFloat dotSize = whSize / 6.0f;
+    CGFloat dotSizeW = canvasRect.size.width / 6.0f;
+    CGFloat dotSizeH = canvasRect.size.height / 6.0f;
     
     // 每次DepthRect只展开三个粒度层（参考37102-TODO1）。
     int whileNum = 0;
-    while (dotSize > 1 && whileNum < 3) {
+    while (dotSizeW > 1 && dotSizeH > 1 && whileNum < 3) {
         whileNum ++;
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
         
         //12. 从0-2开始，下一个是1-3...分别偏移切gv（嵌套两个for循环，row和column都这么切）。
-        int length = (int)(whSize / dotSize) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
+        int lengthX = (int)(canvasRect.size.width / dotSizeW) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
+        int lengthY = (int)(canvasRect.size.height / dotSizeH) - 2;//最后两格时，向右不足取3格了，所以去掉-2。
         int hit = 0,total = 0;
-        for (NSInteger startX = 0; startX < length; startX++) {
-            for (NSInteger startY = 0; startY < length; startY++) {
+        for (NSInteger startX = 0; startX < lengthX; startX++) {
+            for (NSInteger startY = 0; startY < lengthY; startY++) {
                 //13. 把前面循环已识别过的：结果中已识别到的gv.rect收集起来，如果已包含，则在双for循环中直接continue防重掉（参考35026-防重)。
                 //2025.05.07: 此处先仅根据assT防重，以后再考虑根据已收集的rect来防重（目前是通过jvBuModel在单特征识别算法中实现防重的）。
-                CGRect curRect = CGRectMake(startX * dotSize, startY * dotSize, dotSize * 3, dotSize * 3);
+                CGRect curRect = CGRectMake(canvasRect.origin.x + startX * dotSizeW, canvasRect.origin.y + startY * dotSizeH, dotSizeW * 3, dotSizeH * 3);
                 
                 // 切入点防重：识别过区域覆盖防重（通过连续视觉注视可重启）。
                 NSInteger repeatNum = 0;
@@ -283,7 +284,7 @@ static AIThinkingControl *_instance;
                 //}
                 
                 // 第二种：根据st识别结果防重。
-                for (AIFeatureJvBuModel *stItem in noRepeatResults) {
+                for (AIFeatureJvBuModel *stItem in depthModel.stModels) {
                     for (AIFeatureJvBuItem *gvItem in stItem.bestGVs.allValues) {
                         if (CGRectContainsRect(gvItem.bestGVAtProtoTRect, curRect)) repeatNum ++;
                         if (repeatNum >= 1) break;
@@ -300,33 +301,31 @@ static AIThinkingControl *_instance;
                 NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
                 
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
-                if (itemResults) [noRepeatResults addObjectsFromArray:itemResults];
+                if (itemResults) [depthModel.stModels addObjectsFromArray:itemResults];
                 [beginRectExcept addObject:@(curRect)];
             }
         }
-        NSLog(@"当前粒度层：%.2f 识别st数：%ld 防重命中率：%.2f%% (%d/%d)",dotSize,noRepeatResults.count,(float)hit/total*100,hit,total);
+        NSLog(@"当前粒度层：%.2f/%.2f 识别st数：%ld 防重命中率：%.2f%% (%d/%d)",dotSizeW,dotSizeH,depthModel.stModels.count,(float)hit/total*100,hit,total);
         
         //22. 下一层粒度/1.3（参考35026-1）。
-        dotSize /= 1.3f;
+        dotSizeW /= 1.3f;
+        dotSizeH /= 1.3f;
     }
     
-    
-    
-    // TODOTOMORROW20260430: 实现专注递归。
-    // 1. whSize改成rect。
-    // 2. 继续完成下方竞争和递归的处理。
-    
-    
-    
     // 对识别结果进行竞争。
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:depthModel ds:ds logDesc:logDesc protoST:protoST justRank:true];
+    NSArray *valids = ARR_SUB(depthModel.stModels, 0, 5);
     
     // 递归。
+    for (AIFeatureJvBuModel *valid in valids) {
+        [self commitInputWithSplitV2_DepthRect:colorDic canvasRect:valid.bestGVsAtProtoTRect at:at ds:ds logDesc:logDesc protoST:protoST depth:depth+1 jvBuModel:jvBuModel];
+    }
 }
 
 -(void) commitInputWithSplitV2_RankAndAnalogy:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel ds:ds logDesc:logDesc protoST:protoST];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel ds:ds logDesc:logDesc protoST:protoST justRank:false];
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
