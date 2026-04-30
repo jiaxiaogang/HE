@@ -202,8 +202,8 @@ static AIThinkingControl *_instance;
     if (self.thinkMode == 2) return;
     
     //2. 对未切粒度的color字典进行自适应粒度并识别。
-    [self commitInputWithSplitV2_SingleTonDao:algsModel.hColors whSize:algsModel.whSize at:algsType ds:@"hColors" logDesc:logDesc algsModel:algsModel];
-    [self commitInputWithSplitV2_SingleTonDao:algsModel.sColors whSize:algsModel.whSize at:algsType ds:@"sColors" logDesc:logDesc algsModel:algsModel];
+    //[self commitInputWithSplitV2_SingleTonDao:algsModel.hColors whSize:algsModel.whSize at:algsType ds:@"hColors" logDesc:logDesc algsModel:algsModel];
+    //[self commitInputWithSplitV2_SingleTonDao:algsModel.sColors whSize:algsModel.whSize at:algsType ds:@"sColors" logDesc:logDesc algsModel:algsModel];
     [self commitInputWithSplitV2_SingleTonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc algsModel:algsModel];
 }
 
@@ -235,7 +235,8 @@ static AIThinkingControl *_instance;
 // 视觉注意力专注范围递归：执行递归（参考37101-方案4）。
 -(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     // 视觉注意力专注范围递归：退出递归（最多递归2层）（参考37101-方案4）。
-    if (depth >= 2) return;
+    if (depth > 2) return;
+    NSLog(@"depthRect:%d 画布:%@ begin =============>",depth,Rect2Str(canvasRect));
     
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
@@ -251,7 +252,7 @@ static AIThinkingControl *_instance;
     
     // 每次DepthRect只展开三个粒度层（参考37102-TODO1）。
     int whileNum = 0;
-    while (dotSizeW > 1 && dotSizeH > 1 && whileNum < 3) {
+    while (dotSizeW > 1 && dotSizeH > 1 && whileNum < 2) {
         whileNum ++;
         //2025.05.20: 为了防止宏观识别太多，导致更细粒度没机会，改为dotSize层级单独进行防重。
         NSMutableArray *beginRectExcept = [NSMutableArray new];// 被成功匹配过切入点GV区域防重。
@@ -300,12 +301,35 @@ static AIThinkingControl *_instance;
                 // 调用识别。
                 NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
                 
+                // TODOTOMORROW20260430: 明天继续优化下这里：itemResults一次就有两三百条，耗时2-4s。
+                //depthRect:1 画布:<x0 y0 w243 h243> begin =============>
+                //    当前粒度层识别结果：W40.50 H40.50 识别st数：263 防重命中率：0.00% (0/16)
+                //    当前粒度层识别结果：W31.15 H31.15 识别st数：322 防重命中率：56.00% (14/25)
+                //depthRect:2 画布:<x0 y0 w122 h122> begin =============>
+                //    当前粒度层识别结果：W20.33 H20.33 识别st数：62 防重命中率：62.50% (10/16)
+                //    当前粒度层识别结果：W15.64 H15.64 识别st数：78 防重命中率：92.00% (23/25)
+                //depthRect:2 画布:<x0 y0 w122 h122> begin =============>
+                //    当前粒度层识别结果：W20.33 H20.33 识别st数：58 防重命中率：56.25% (9/16)
+                //    当前粒度层识别结果：W15.64 H15.64 识别st数：72 防重命中率：92.00% (23/25)
+                // 说明：从上日志可见两个问题。
+                //  1、depthRect1时，识别了300条左右结果，太慢了。
+                //  2、depthRect2时，有重复<x0 y0 w122 h122>的情况，这种情况应该不需要多次调用了（把重叠率高的，直接并一下一次调用得了）。
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
                 if (itemResults) [depthModel.stModels addObjectsFromArray:itemResults];
                 [beginRectExcept addObject:@(curRect)];
             }
         }
-        NSLog(@"当前粒度层：%.2f/%.2f 识别st数：%ld 防重命中率：%.2f%% (%d/%d)",dotSizeW,dotSizeH,depthModel.stModels.count,(float)hit/total*100,hit,total);
+        NSLog(@"\t当前粒度层识别结果：W%.2f H%.2f 识别st数：%ld 防重命中率：%.2f%% (%d/%d)",dotSizeW,dotSizeH,depthModel.stModels.count,(float)hit/total*100,hit,total);
         
         //22. 下一层粒度/1.3（参考35026-1）。
         dotSizeW /= 1.3f;
