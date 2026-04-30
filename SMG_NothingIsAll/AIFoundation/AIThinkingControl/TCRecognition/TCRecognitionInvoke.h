@@ -14,7 +14,7 @@
 //MARK:===============================================================
 //MARK:                     < 识别入口 >
 //MARK:===============================================================
-+(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST;
++(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc;
 
 +(NSArray*) recognition:(NSString*)at
                      ds:(NSString*)ds
@@ -30,8 +30,8 @@
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >
 //MARK:===============================================================
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST;
-+(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc colorDic:(NSDictionary*)colorDic ds:(NSString*)ds;
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST;
++(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc ds:(NSString*)ds;
 
 //MARK:===============================================================
 //MARK:                     < 概念识别 >

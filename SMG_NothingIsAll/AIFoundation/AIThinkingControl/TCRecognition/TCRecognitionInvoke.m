@@ -125,7 +125,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //MARK:===============================================================
 
 // 识别前初始化
-+(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
++(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     // 初始化缓存池数据。
     [self resetPool];
     _curMaxSize = whSize;
@@ -383,7 +383,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST {
     // bestGVs末尾淘汰（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model filter4ZonHe];
@@ -572,7 +572,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return allGTGroups;
 }
 
-+(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
++(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc ds:(NSString*)ds {
     
     // 强度归一化得分。
     NSArray *sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(GTZiJvModelV2 *obj) {
@@ -743,7 +743,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
                 //a. 通过组码做单特征识别。
                 AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel protoColorDic:nil ds:nil logDesc:nil protoST:nil];
+                [self recognitionFeatureV2_Step2:jvBuModel protoColorDic:nil ds:nil protoST:nil];
                 
                 //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
                 NSArray *zenTiResult = nil;//[self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.stModels dotSize:1];
