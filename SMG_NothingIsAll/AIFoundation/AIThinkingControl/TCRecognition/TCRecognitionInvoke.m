@@ -175,6 +175,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept protoST:protoST];
     // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
     
+    // TODOTOMORROW20260430: 先修下gv.refPorts太多问题，没必要这么多。
+    
     // ST识别。
     NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemGVsAndRefPorts protoST:protoST protoRect:curRect];
     if (!ARRISOK(itemSTModels)) return nil; // 单特征识别无结果则跳过。
