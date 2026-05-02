@@ -220,6 +220,12 @@ static AIThinkingControl *_instance;
     // TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）（必须是留一段时间，发现在稳定性上竞争太靠后的时候，才应该遗忘，新的不允许就遗忘掉）。
     AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:at ds:ds logDesc:logDesc];
     
+    // TODOTOMORROW20260502: 测到有6000多条gv的ST，扔个坤就能复现（参考37114）。
+    if ([logDesc isEqualToString:@"鸡_0"]) {
+        NSLog(@"%ld",protoST.count);
+        NSLog(@"");
+    }
+    
     // step3. 识别初始化。
     [TCRecognitionInvoke recognitionInit:algsModel.bColors whSize:algsModel.whSize at:at ds:ds logDesc:logDesc];
     
