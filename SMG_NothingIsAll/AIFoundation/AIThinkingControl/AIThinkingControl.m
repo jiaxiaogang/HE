@@ -247,8 +247,9 @@ static AIThinkingControl *_instance;
     AIFeatureJvBuModels *depthModel = [AIFeatureJvBuModels new:colorDic.hash];
     
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
-    CGFloat dotSizeW = canvasRect.size.width / 6.0f;
-    CGFloat dotSizeH = canvasRect.size.height / 6.0f;
+    CGFloat dotSize = MIN(canvasRect.size.width / 6.0f, canvasRect.size.height / 6.0f);
+    CGFloat dotSizeW = dotSize;
+    CGFloat dotSizeH = dotSize;
     
     // 每次DepthRect只展开三个粒度层（参考37102-TODO1）。
     int whileNum = 0;

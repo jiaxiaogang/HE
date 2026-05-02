@@ -245,7 +245,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSNumber *matchValue = model.v1;
         return matchValue.floatValue * refPort.strong.value;
     }];
-    NSArray *valids = ARR_SUB(sorts, 0, MAX(5, MIN(50, sorts.count * 0.2f)));
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(3, MIN(6, sorts.count * 0.2f)));
     
     // 转回List<AIPort>类型。
     valids = [SMGUtils convertArr:valids convertBlock:^id(MapModel *obj) {
