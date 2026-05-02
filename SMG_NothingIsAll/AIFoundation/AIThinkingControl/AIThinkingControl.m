@@ -226,16 +226,22 @@ static AIThinkingControl *_instance;
     // step4. 视觉注意力专注范围递归：调用递归（参考37101-方案4）。
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
-    [self commitInputWithSplitV2_DepthRect:algsModel.bColors canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc protoST:protoST depth:1 jvBuModel:jvBuModel];
+    [self commitInputWithSplitV2_DepthRect:algsModel.bColors canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc protoST:protoST depth:1 jvBuModel:jvBuModel canvasExcepts:[NSMutableArray new]];
     
     // step5. 竞争 & 类比。
     [self commitInputWithSplitV2_RankAndAnalogy:at ds:ds logDesc:logDesc protoST:protoST jvBuModel:jvBuModel];
 }
 
-// 视觉注意力专注范围递归：执行递归（参考37101-方案4）。
--(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
+// 视觉注意力专注范围递归：执行递归（参考37101-方案4）return 执行完成。
+-(BOOL) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel canvasExcepts:(NSMutableArray*)canvasExcepts {
+    // excepts防重：已经调用过的与当前canvasRect有80%交集时，不重复执行。
+    for (NSValue *canvasExcept in canvasExcepts) {
+        if ([SMGUtils rate4IntersectionRectV2:canvasExcept.CGRectValue bRect:canvasRect] > 0.8f) return false;
+    }
+    [canvasExcepts addObject:@(canvasRect)];
+    
     // 视觉注意力专注范围递归：退出递归（最多递归2层）（参考37101-方案4）。
-    if (depth > 5) return;
+    if (depth > 5) return true;
     NSLog(@"depthRect:%d 画布:%@ begin =============>",depth,Rect2Str(canvasRect));
     
     //1. 对未切粒度的color字典进行自适应粒度并识别。
@@ -247,6 +253,7 @@ static AIThinkingControl *_instance;
     AIFeatureJvBuModels *depthModel = [AIFeatureJvBuModels new:colorDic.hash];
     
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
+    // GV全是正方形的九宫，所以也按正方形切图来切入（宽高取一致）。
     CGFloat dotSize = MIN(canvasRect.size.width / 6.0f, canvasRect.size.height / 6.0f);
     CGFloat dotSizeW = dotSize;
     CGFloat dotSizeH = dotSize;
@@ -314,14 +321,16 @@ static AIThinkingControl *_instance;
         dotSizeH /= 1.3f;
     }
     
-    // 对识别结果进行竞争。
+    // 对识别结果进行竞争排序。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:depthModel ds:ds logDesc:logDesc protoST:protoST justRank:true];
-    NSArray *valids = ARR_SUB(depthModel.stModels, 0, 5);
     
     // 递归。
-    for (AIFeatureJvBuModel *valid in valids) {
-        [self commitInputWithSplitV2_DepthRect:colorDic canvasRect:valid.bestGVsAtProtoTRect at:at ds:ds logDesc:logDesc protoST:protoST depth:depth+1 jvBuModel:jvBuModel];
+    int runed = 0;
+    for (AIFeatureJvBuModel *stModel in depthModel.stModels) {
+        runed += [self commitInputWithSplitV2_DepthRect:colorDic canvasRect:stModel.bestGVsAtProtoTRect at:at ds:ds logDesc:logDesc protoST:protoST depth:depth+1 jvBuModel:jvBuModel canvasExcepts:canvasExcepts];
+        if (runed >= 3) break;
     }
+    return true;
 }
 
 -(void) commitInputWithSplitV2_RankAndAnalogy:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
