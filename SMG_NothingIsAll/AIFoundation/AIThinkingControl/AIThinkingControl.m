@@ -211,8 +211,34 @@ static AIThinkingControl *_instance;
 //TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
 //连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
 -(void) commitInputWithSplitV2_SingleTonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc algsModel:(AIVisionAlgsModelV2*)algsModel {
+    // step3. 识别初始化。
+    [TCRecognitionInvoke recognitionInit:algsModel.bColors whSize:algsModel.whSize at:at ds:ds logDesc:logDesc];
+    
+    // step4. 视觉注意力专注范围递归：调用递归（参考37101-方案4）。
+    AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
+    jvBuModel.debug = [GroupDebug new];
+    [self commitInputWithSplitV2_DepthRect:algsModel.bColors canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc depth:1 jvBuModel:jvBuModel canvasExcepts:[NSMutableArray new]];
+    
+    // step5. 竞争 & 类比。
+    [self commitInputWithSplitV2_RankAndAnalogy:at ds:ds logDesc:logDesc jvBuModel:jvBuModel];
+}
+
+// 视觉注意力专注范围递归：执行递归（参考37101-方案4）return 执行完成。
+-(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel canvasExcepts:(NSMutableArray*)canvasExcepts {
+    
+    // 视觉注意力专注范围递归：退出递归（最多递归2层）（参考37101-方案4）。
+    if (depth > 5) return;
+    NSLog(@"depthRect:%d 画布:%@ begin =============>",depth,Rect2Str(canvasRect));
+    
+    
+    // TODOTOMORROW20260502: 测到有6000多条gv的ST，扔个坤就能复现（参考37114）。
+    // 改为根据canvasRect来切图生成protoST，并且只深入三四层（先只做三层）。
+    
     // step1. 装箱（稀疏码的：单码层 和 组码层）。
-    NSArray *hsbGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc];
+    // NSArray *hsbGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc];
+    
+    // TODOTOMORROW20260503: 继续改这里代码。。。
+    NSArray *hsbGroupModels = [theNet algModelConvert2PointersV2:colorDic at:at ds:ds levelNum:3];
     if (hsbGroupModels.count < 5) return; // 2025.10.18: 自动改成有内容的(hsbGroupModels.count > 5)再跑识别类比等。
     
     // step2. 构建具象特征。
@@ -220,35 +246,13 @@ static AIThinkingControl *_instance;
     // TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）（必须是留一段时间，发现在稳定性上竞争太靠后的时候，才应该遗忘，新的不允许就遗忘掉）。
     AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:at ds:ds logDesc:logDesc];
     
-    // TODOTOMORROW20260502: 测到有6000多条gv的ST，扔个坤就能复现（参考37114）。
     if ([logDesc isEqualToString:@"鸡_0"]) {
         NSLog(@"%ld",protoST.count);
         NSLog(@"");
     }
-    
-    // step3. 识别初始化。
-    [TCRecognitionInvoke recognitionInit:algsModel.bColors whSize:algsModel.whSize at:at ds:ds logDesc:logDesc];
-    
-    // step4. 视觉注意力专注范围递归：调用递归（参考37101-方案4）。
-    AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
-    jvBuModel.debug = [GroupDebug new];
-    [self commitInputWithSplitV2_DepthRect:algsModel.bColors canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc protoST:protoST depth:1 jvBuModel:jvBuModel canvasExcepts:[NSMutableArray new]];
-    
-    // step5. 竞争 & 类比。
-    [self commitInputWithSplitV2_RankAndAnalogy:at ds:ds logDesc:logDesc protoST:protoST jvBuModel:jvBuModel];
-}
-
-// 视觉注意力专注范围递归：执行递归（参考37101-方案4）return 执行完成。
--(BOOL) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel canvasExcepts:(NSMutableArray*)canvasExcepts {
-    // excepts防重：已经调用过的与当前canvasRect有80%交集时，不重复执行。
-    for (NSValue *canvasExcept in canvasExcepts) {
-        if ([SMGUtils rate4IntersectionRectV2:canvasExcept.CGRectValue bRect:canvasRect] > 0.8f) return false;
-    }
-    [canvasExcepts addObject:@(canvasRect)];
-    
-    // 视觉注意力专注范围递归：退出递归（最多递归2层）（参考37101-方案4）。
-    if (depth > 5) return true;
-    NSLog(@"depthRect:%d 画布:%@ begin =============>",depth,Rect2Str(canvasRect));
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
+    }];
     
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
@@ -328,21 +332,29 @@ static AIThinkingControl *_instance;
     }
     
     // 对识别结果进行竞争排序。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:depthModel ds:ds logDesc:logDesc protoST:protoST justRank:true];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:depthModel ds:ds logDesc:logDesc justRank:true];
     
     // 递归。
     int runed = 0;
     for (AIFeatureJvBuModel *stModel in depthModel.stModels) {
-        runed += [self commitInputWithSplitV2_DepthRect:colorDic canvasRect:stModel.bestGVsAtProtoTRect at:at ds:ds logDesc:logDesc protoST:protoST depth:depth+1 jvBuModel:jvBuModel canvasExcepts:canvasExcepts];
-        if (runed >= 3) break;
+        // excepts防重：已经调用过的与当前canvasRect有80%交集时，不重复执行。
+        for (NSValue *canvasExcept in canvasExcepts) {
+            if ([SMGUtils rate4IntersectionRectV2:canvasExcept.CGRectValue bRect:stModel.bestGVsAtProtoTRect] > 0.8f) continue;
+        }
+        [canvasExcepts addObject:@(canvasRect)];
+        
+        // 执行递归下一层。
+        [self commitInputWithSplitV2_DepthRect:colorDic canvasRect:stModel.bestGVsAtProtoTRect at:at ds:ds logDesc:logDesc depth:depth+1 jvBuModel:jvBuModel canvasExcepts:canvasExcepts];
+        
+        // 每层只执行三条。
+        if (++runed >= 3) break;
     }
-    return true;
 }
 
--(void) commitInputWithSplitV2_RankAndAnalogy:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc protoST:(AIFeatureNode*)protoST jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
+-(void) commitInputWithSplitV2_RankAndAnalogy:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     
     // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel ds:ds logDesc:logDesc protoST:protoST justRank:false];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel ds:ds logDesc:logDesc justRank:false];
     
     // 单特征类比：借助bestGVs来类比。
     for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
@@ -382,7 +394,6 @@ static AIThinkingControl *_instance;
     [protoGT updateLogDescItem:logDesc];
     CGRect jvs_ProtoGTRect = [SMGUtils convertArr2Rect:gtOrders itemRectBlock:^CGRect(InputGroupFeatureModel *item) { return item.rect; }]; // ProtoGT不一定是全局，如果只是一部分，处理下显示时的marginTop和marginLeft。
     [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoGT.pId) left:0 top:0 tvId:5];
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:jvs_ProtoGTRect.origin.x top:jvs_ProtoGTRect.origin.y tvId:5];
     }];
     NSLog(@"第2步、构建protoGT条数:%ld",protoGT.count);
