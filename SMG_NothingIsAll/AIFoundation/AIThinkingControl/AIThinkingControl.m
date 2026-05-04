@@ -230,30 +230,6 @@ static AIThinkingControl *_instance;
     if (depth > 5) return;
     NSLog(@"depthRect:%d 画布:%@ begin =============>",depth,Rect2Str(canvasRect));
     
-    
-    // TODOTOMORROW20260502: 测到有6000多条gv的ST，扔个坤就能复现（参考37114）。
-    // 改为根据canvasRect来切图生成protoST，并且只深入三四层（先只做三层）。
-    
-    // step1. 装箱（稀疏码的：单码层 和 组码层）。
-    // NSArray *hsbGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc];
-    
-    // TODOTOMORROW20260503: 继续改这里代码。。。
-    NSArray *hsbGroupModels = [theNet algModelConvert2PointersV2:colorDic at:at ds:ds levelNum:3];
-    if (hsbGroupModels.count < 5) return; // 2025.10.18: 自动改成有内容的(hsbGroupModels.count > 5)再跑识别类比等。
-    
-    // step2. 构建具象特征。
-    // 异步构建一下默认三分粒度的protoT，不过不用于识别，只用于以后被识别。
-    // TODO: 可以加上遗忘机制，冷却一段时间后，还没被识别到，就遗忘清理掉（如无性能问题，只保持现做法：在竞争中不激活也行）（必须是留一段时间，发现在稳定性上竞争太靠后的时候，才应该遗忘，新的不允许就遗忘掉）。
-    AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:at ds:ds logDesc:logDesc];
-    
-    if ([logDesc isEqualToString:@"鸡_0"]) {
-        NSLog(@"%ld",protoST.count);
-        NSLog(@"");
-    }
-    [SMGUtils runByMainQueue:^{
-        [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
-    }];
-    
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     DDic *excepts = [DDic new];
@@ -317,7 +293,7 @@ static AIThinkingControl *_instance;
                 }
                 
                 // 调用识别。
-                NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel protoST:protoST logDesc:logDesc];
+                NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel logDesc:logDesc];
                 
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
                 if (itemResults) [depthModel.stModels addObjectsFromArray:itemResults];
@@ -333,6 +309,16 @@ static AIThinkingControl *_instance;
     
     // 对识别结果进行竞争排序。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:depthModel ds:ds logDesc:logDesc justRank:true];
+    
+    // 构建protoST：从当前canvasRect向细粒度层找三四层（参考37125-方案1）。
+    // 2026.05.04: 改到commitInputWithSplitV2_DepthRect()递归每次执行都构建（起因：37114-测到有6000多条gv的ST，扔个鸡就能复现）。
+    NSArray *hsbGroupModels = [theNet algModelConvert2PointersV3:colorDic at:at ds:ds canvasRect:canvasRect];
+    if (hsbGroupModels.count > 5) {
+        AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:at ds:ds logDesc:logDesc];
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
+        }];
+    }
     
     // 递归。
     int runed = 0;

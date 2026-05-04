@@ -24,7 +24,6 @@
           beginGVExcept:(NSMutableDictionary*)beginGVExcept
            gvRectExcept:(NSMutableDictionary*)gvRectExcept
               jvBuModel:(AIFeatureJvBuModels*)jvBuModel
-                protoST:(AIFeatureNode*)protoST
                 logDesc:(NSString*)logDesc;
 
 //MARK:===============================================================

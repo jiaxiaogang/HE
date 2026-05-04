@@ -95,7 +95,6 @@ static AINet *_instance;
  *  _param splitDic <K=level_x_y V=HSB值>
  *  @result <InputGroupValueModels>
  */
-
 -(NSArray*) algModelConvert2PointersV2:(NSDictionary*)splitDic at:(NSString*)at ds:(NSString*)ds levelNum:(NSInteger)levelNum {
     //0. 数据准备：（把当前at&ds稀疏码的data值字典取出）（用于取值性能优化）。
     NSMutableArray *groupModels = [NSMutableArray new];
@@ -151,6 +150,71 @@ static AINet *_instance;
     
     //11. 为增加特征content_ps的有序性：对groupModels进行排序。
     NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:groupModels];
+    return sortGroupModels;
+}
+
+-(NSArray*) algModelConvert2PointersV3:(NSDictionary*)splitDic at:(NSString*)at ds:(NSString*)ds canvasRect:(CGRect)canvasRect {
+    //0. 数据准备：（把当前at&ds稀疏码的data值字典取出）（用于取值性能优化）。
+    NSMutableArray *groupModels = [NSMutableArray new];
+    
+    //1. level为1-4层时，组应该用0-3，因为下层9格都是以上层为组（比如：0层就是1层的9格为组）。
+    for (NSInteger groupLevel = 0; groupLevel < 3; groupLevel++) {
+        
+        //2. 每层的组边长（0层1组边长1，1层9组边长3，2层81组边长9，3层27x27组边长27）。
+        int groupSize = powf(3, groupLevel);
+        for (NSInteger groupRow = 0; groupRow < groupSize; groupRow++) {
+            for (NSInteger groupColumn = 0; groupColumn < groupSize; groupColumn++) {
+                
+                //3. 根据组，向子一层取子9格。
+                //每九宫装成一组，生成组码，组码可全局防重（参考34041-问题2-思路）。
+                NSArray *subDots = [CortexAlgorithmsUtil getSub9DotFromSplitDic:groupLevel curRow:groupRow curColumn:groupColumn splitDic:splitDic];//取出子层9格色值。
+                
+                //4. 判断九格的相似度：两两对比，找出最不相似的。
+                //2025.03.18：BUG-循环值时对比最大最小是不对的，应该找最不相似的。
+                CGFloat minMatchValue = 1;
+                for (NSInteger i = 0; i < subDots.count; i++) {
+                    MapModel *iDot = ARR_INDEX(subDots, i);
+                    NSNumber *iNumber = iDot.v1;
+                    for (NSInteger j = i + 1; j < subDots.count; j++) {
+                        MapModel *jDot = ARR_INDEX(subDots, j);
+                        NSNumber *jNumber = jDot.v1;
+                        BOOL loop = [CortexAlgorithmsUtil dsIsLoop:ds];
+                        CGFloat itemMatchValue = [CortexAlgorithmsUtil matchValueOfCustomV1:iNumber.floatValue v2:jNumber.floatValue max:1 min:0 loop:loop];
+                        if (itemMatchValue < minMatchValue) {
+                            minMatchValue = itemMatchValue;
+                        }
+                    }
+                }
+                //NSLog(@"%ld_%ld_%ld %.2f",groupLevel,groupRow,groupColumn,minMatchValue);
+                
+                //5. 如果不是第一层，且9格很相似，防重掉(压缩)。
+                if (groupLevel > 0 && (minMatchValue > 0.9 || !ARRISOK(subDots))) continue;
+                
+                //6. 先转成三个索引值。
+                NSDictionary *protoGVIndexs = [AINetGroupValueIndex convertGVIndexData:subDots ds:ds];
+                
+                //11. 单码装箱
+                NSArray *item_ps = [self algModelConvert2Pointers:protoGVIndexs algsType:at];
+                
+                //12. 打包成组码。
+                //2025.04.28: 加上有序，避免以后各种映射交叉之类的问题，虽然现在GV没映射，用不着，但先有序存，备不时之需。
+                item_ps = [SMGUtils sortPointers:item_ps];
+                AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
+                CGRect groupRect = [AINetUtils convertGVLevelXY2Rect:groupLevel x:groupRow y:groupColumn];//求出各个GV在T中的rect。
+                [groupModels addObject:[InputGroupValueModel new:groupValue.p rect:groupRect]];
+            }
+        }
+    }
+    
+    //11. 为增加特征content_ps的有序性：对groupModels进行排序。
+    NSArray *sortGroupModels = [ThinkingUtils sortInputGroupValueModels:groupModels];
+    
+    
+    if (sortGroupModels.count > 300) {
+        NSLog(@"%ld",sortGroupModels.count);
+        NSLog(@"");
+    }
+    
     return sortGroupModels;
 }
 
