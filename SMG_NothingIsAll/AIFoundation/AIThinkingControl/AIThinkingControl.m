@@ -217,14 +217,23 @@ static AIThinkingControl *_instance;
     // step4. 视觉注意力专注范围递归：调用递归（参考37101-方案4）。
     AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     jvBuModel.debug = [GroupDebug new];
-    [self commitInputWithSplitV2_DepthRect:algsModel.bColors canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc depth:1 jvBuModel:jvBuModel canvasExcepts:[NSMutableArray new]];
+    [self commitInputWithSplitV2_DepthRect:algsModel.bColors canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc depth:1 decoratorJvBuModel:jvBuModel];
     
     // step5. 竞争 & 类比。
     [self commitInputWithSplitV2_RankAndAnalogy:at ds:ds logDesc:logDesc jvBuModel:jvBuModel];
+    
+    // 构建protoST：从当前canvasRect向细粒度层找三四层（参考37125-方案1）。
+    NSArray *hsbGroupModels = [theTC createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc];
+    if (hsbGroupModels.count > 5) {
+        AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:at ds:ds logDesc:logDesc];
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
+        }];
+    }
 }
 
 // 视觉注意力专注范围递归：执行递归（参考37101-方案4）return 执行完成。
--(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc depth:(int)depth jvBuModel:(AIFeatureJvBuModels*)jvBuModel canvasExcepts:(NSMutableArray*)canvasExcepts {
+-(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc depth:(int)depth decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel {
     
     // 视觉注意力专注范围递归：退出递归（最多递归2层）（参考37101-方案4）。
     if (depth > 5) return;
@@ -293,7 +302,7 @@ static AIThinkingControl *_instance;
                 }
                 
                 // 调用识别。
-                NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:jvBuModel logDesc:logDesc];
+                NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:decoratorJvBuModel logDesc:logDesc];
                 
                 // 切入点防重：相近的地方切入识别的gv避免重复进行识别循环（参考35042-TODO4）（未启用）。
                 if (itemResults) [depthModel.stModels addObjectsFromArray:itemResults];
@@ -305,35 +314,6 @@ static AIThinkingControl *_instance;
         //22. 下一层粒度/1.3（参考35026-1）。
         dotSizeW /= 1.3f;
         dotSizeH /= 1.3f;
-    }
-    
-    // 对识别结果进行竞争排序。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:depthModel ds:ds logDesc:logDesc justRank:true];
-    
-    // 构建protoST：从当前canvasRect向细粒度层找三四层（参考37125-方案1）。
-    // 2026.05.04: 改到commitInputWithSplitV2_DepthRect()递归每次执行都构建（起因：37114-测到有6000多条gv的ST，扔个鸡就能复现）。
-    NSArray *hsbGroupModels = [theNet algModelConvert2PointersV3:colorDic at:at ds:ds canvasRect:canvasRect];
-    if (hsbGroupModels.count > 5) {
-        AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:at ds:ds logDesc:logDesc];
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
-        }];
-    }
-    
-    // 递归。
-    int runed = 0;
-    for (AIFeatureJvBuModel *stModel in depthModel.stModels) {
-        // excepts防重：已经调用过的与当前canvasRect有80%交集时，不重复执行。
-        for (NSValue *canvasExcept in canvasExcepts) {
-            if ([SMGUtils rate4IntersectionRectV2:canvasExcept.CGRectValue bRect:stModel.bestGVsAtProtoTRect] > 0.8f) continue;
-        }
-        [canvasExcepts addObject:@(canvasRect)];
-        
-        // 执行递归下一层。
-        [self commitInputWithSplitV2_DepthRect:colorDic canvasRect:stModel.bestGVsAtProtoTRect at:at ds:ds logDesc:logDesc depth:depth+1 jvBuModel:jvBuModel canvasExcepts:canvasExcepts];
-        
-        // 每层只执行三条。
-        if (++runed >= 3) break;
     }
 }
 

@@ -30,7 +30,6 @@
  */
 -(NSMutableArray*) algModelConvert2Pointers:(NSDictionary*)modelDic algsType:(NSString*)algsType;
 -(NSArray*) algModelConvert2PointersV2:(NSDictionary*)splitDic at:(NSString*)at ds:(NSString*)ds levelNum:(NSInteger)levelNum;
--(NSArray*) algModelConvert2PointersV3:(NSDictionary*)splitDic at:(NSString*)at ds:(NSString*)ds canvasRect:(CGRect)canvasRect;
 
 -(AIKVPointer*) getNetDataPointerWithData:(NSNumber*)data algsType:(NSString*)algsType dataSource:(NSString*)dataSource isOut:(BOOL)isOut;//单data装箱
 
