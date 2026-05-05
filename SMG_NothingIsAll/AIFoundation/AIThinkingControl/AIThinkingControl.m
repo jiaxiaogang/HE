@@ -172,10 +172,9 @@ static AIThinkingControl *_instance;
     if (self.thinkMode == 2) return;
     
     //2. 装箱（稀疏码的：单码层 和 组码层 和 构建具象特征）。
-    MapModel *createResult = [self createSplitFor9Block:algsModel algsType:algsType logDesc:logDesc];
-    AIFeatureNode *hFeature = createResult.v1;
-    AIFeatureNode *sFeature = createResult.v2;
-    AIFeatureNode *bFeature = createResult.v3;
+    AIFeatureNode *hFeature = [self createSplitFor9Block:algsModel at:algsType ds:@"hColors" logDesc:logDesc];
+    AIFeatureNode *sFeature = [self createSplitFor9Block:algsModel at:algsType ds:@"sColors" logDesc:logDesc];
+    AIFeatureNode *bFeature = [self createSplitFor9Block:algsModel at:algsType ds:@"bColors" logDesc:logDesc];
     
     //4、构建具象概念。
     AIAlgNodeBase *algNode = [theNet createAbsAlg_NoRepeat:@[hFeature.pointer,sFeature.pointer,bFeature.pointer] conAlgs:nil isOut:false at:nil ds:nil type:ATDefault];
@@ -222,14 +221,11 @@ static AIThinkingControl *_instance;
     // step5. 竞争 & 类比。
     [self commitInputWithSplitV2_RankAndAnalogy:at ds:ds logDesc:logDesc jvBuModel:jvBuModel];
     
-    // 构建protoST：从当前canvasRect向细粒度层找三四层（参考37125-方案1）。
-    NSArray *hsbGroupModels = [theTC createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc];
-    if (hsbGroupModels.count > 5) {
-        AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:hsbGroupModels at:at ds:ds logDesc:logDesc];
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
-        }];
-    }
+    //2. 装箱（稀疏码的：单码层 和 组码层 和 构建具象特征）。
+    AIFeatureNode *protoST = [self createSplitFor9Block:algsModel at:at ds:ds logDesc:logDesc];
+    [SMGUtils runByMainQueue:^{
+        [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
+    }];
 }
 
 // 视觉注意力专注范围递归：执行递归（参考37101-方案4）return 执行完成。
@@ -657,17 +653,14 @@ static AIThinkingControl *_instance;
 }
 
 //构建默认九宫特征。
--(MapModel*) createSplitFor9Block:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
+-(AIFeatureNode*) createSplitFor9Block:(AIVisionAlgsModelV2*)algsModel at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     //2. 装箱（稀疏码的：单码层 和 组码层）。
-    NSArray *hGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:@"hColors" logDesc:logDesc];
-    NSArray *sGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:@"sColors" logDesc:logDesc];
-    NSArray *bGroupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:algsType ds:@"bColors" logDesc:logDesc];
+    NSArray *groupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc];
+    if (groupModels.count < 5) return nil;
     
     //3、构建具象特征。
-    AIFeatureNode *hFeature = [self createSplitFor9BlockV2_Step2:hGroupModels at:algsType ds:@"hColors" logDesc:logDesc];
-    AIFeatureNode *sFeature = [self createSplitFor9BlockV2_Step2:sGroupModels at:algsType ds:@"sColors" logDesc:logDesc];
-    AIFeatureNode *bFeature = [self createSplitFor9BlockV2_Step2:bGroupModels at:algsType ds:@"bColors" logDesc:logDesc];
-    return [MapModel newWithV1:hFeature v2:sFeature v3:bFeature];
+    AIFeatureNode *feature = [self createSplitFor9BlockV2_Step2:groupModels at:at ds:ds logDesc:logDesc];
+    return feature;
 }
 
 -(NSArray*) createSplitFor9BlockV2_Step1:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType ds:(NSString*)ds logDesc:(NSString*)logDesc {

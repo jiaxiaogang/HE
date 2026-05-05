@@ -88,7 +88,7 @@
  */
 +(NSInteger) convert2DotNum:(CGFloat)imageWHNum {
     NSInteger dotNum = 1;
-    while (imageWHNum / dotNum > 3.0f) {
+    while (imageWHNum / dotNum >= 3.0f) {
         dotNum *= 3;
     }
     return MIN(dotNum, powf(3, VisionMaxLevel));//限制最大图片层级宽度
