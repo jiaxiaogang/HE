@@ -10,14 +10,18 @@
 
 @implementation AIVisionAlgsV2
 
-+ (NSDictionary*)getRGBValuesFromImage:(UIImage *)image {
+/**
+ *  MARK:--------------------获取图片指定区域的RGB值--------------------
+ *  @cropRect 注意力范围（为归一化坐标 0-1）
+ */
++ (NSDictionary*) getRGBValuesFromImage:(UIImage *)image cropRect:(CGRect)cropRect {
     // 1. 创建返回字典
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     
     // 2. 获取图片的CGImage
     CGImageRef imageRef = image.CGImage;
-    NSUInteger width = CGImageGetWidth(imageRef);
-    NSUInteger height = CGImageGetHeight(imageRef);
+    NSUInteger width = 27; // CGImageGetWidth(imageRef);
+    NSUInteger height = 27; // CGImageGetHeight(imageRef);
     
     //3. 求出共分多少点，以及每点的尺寸。
     NSInteger dotNum = [self convert2DotNum:MAX(width, height)];
@@ -36,6 +40,19 @@
     CGContextRef context = CGBitmapContextCreate(rawData, dotWidth, dotHeight,
                                                bitsPerComponent, bytesPerRow, colorSpace,
                                                kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    
+    // 将归一化坐标转换为实际像素坐标
+    CGFloat cropX = MAX(0, MIN(1, cropRect.origin.x)) * width;
+    CGFloat cropY = MAX(0, MIN(1, cropRect.origin.y)) * height;
+    CGFloat cropW = MIN(width - cropX, MAX(0, cropRect.size.width) * width);
+    CGFloat cropH = MIN(height - cropY, MAX(0, cropRect.size.height) * height);
+    CGRect pixelCropRect = CGRectMake(cropX, cropY, cropW, cropH);
+    
+    // 先裁剪出图片的特定区域
+    imageRef = CGImageCreateWithImageInRect(imageRef, pixelCropRect);
+    if (!imageRef) {
+        return result;
+    }
     
     // 6. 绘制图片
     CGContextDrawImage(context, CGRectMake(0, 0, dotWidth, dotHeight), imageRef);
@@ -61,6 +78,7 @@
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);
     free(rawData);
+    CGImageRelease(imageRef);
     
     return result;
 }
@@ -134,7 +152,7 @@
     if (!image) return;
     
     //2. 取rgb矩阵<K=x_y,V=RGB>
-    NSDictionary *protoColorDic = [self getRGBValuesFromImage:image];
+    NSDictionary *protoColorDic = [self getRGBValuesFromImage:image cropRect:CGRectMake(0, 0, 1, 1)];
     
     //3. 将rgb矩阵按粒度分层<K=level_x_y,V=RGB>
     NSDictionary *splitDic = [self convertProtoColorDic2SplitDic:protoColorDic];
@@ -169,7 +187,7 @@
     if (!image) return;
     
     //2. 取rgb矩阵<K=x_y,V=RGB>
-    NSDictionary *rgbDic = [self getRGBValuesFromImage:image];
+    NSDictionary *rgbDic = [self getRGBValuesFromImage:image cropRect:CGRectMake(0, 0, 1, 1)];
 
     //3. 将rgb矩阵按粒度分层<K=level_x_y,V=RGB>（只有rgb求平均值比较方便，不必考虑loop值，直接求平均即可，所以在转hsb之前，就得把9宫粒度分层字典处理好）。
     NSDictionary *splitRGBDic = [self convertProtoColorDic2SplitDic:rgbDic];

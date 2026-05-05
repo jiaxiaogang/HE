@@ -225,14 +225,17 @@ static AICameraCapture *_instance;
     if (image) {
         image = [self fixImageOrientation:image];
     }
-
-    // 缩放到200x200
-    if (image) {
-        UIImage *resized = [self resizeImage:image toSize:CGSizeMake(100, 100)]; // 向下切3的n次方宽高，比如100时视觉只处理81x81像素，因为当前九宫切图是按3倍数来粒度展开的。
-        [self callCompletionWithImage:resized];
-    } else {
-        [self callCompletionWithImage:nil];
-    }
+    
+    //// 缩放到200x200
+    //if (image) {
+    //    UIImage *resized = [self resizeImage:image toSize:CGSizeMake(100, 100)]; // 向下切3的n次方宽高，比如100时视觉只处理81x81像素，因为当前九宫切图是按3倍数来粒度展开的。
+    //    [self callCompletionWithImage:resized];
+    //} else {
+    //    [self callCompletionWithImage:nil];
+    //}
+    
+    // 取消缩放，因为到AIVisionAlgsV2.commitInputV2()时，会根据cropRect切图，此处不需要了。
+    [self callCompletionWithImage:image];
 }
 
 - (UIImage *)resizeImage:(UIImage *)image toSize:(CGSize)size {
