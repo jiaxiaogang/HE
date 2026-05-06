@@ -20,8 +20,10 @@
     
     // 2. 获取图片的CGImage
     CGImageRef imageRef = image.CGImage;
-    NSUInteger width = 27; // CGImageGetWidth(imageRef);
-    NSUInteger height = 27; // CGImageGetHeight(imageRef);
+    
+    // 取3的VisionMaxLevel次方，替代原来的原图尺寸，因为现在每次只识别这个精度，剩下的细节用注意力再识别，这样省得视觉摄像头处切图，只要这里切一遍图即可。
+    NSUInteger width = pow(3, VisionMaxLevel); // CGImageGetWidth(imageRef);
+    NSUInteger height = pow(3, VisionMaxLevel); // CGImageGetHeight(imageRef);
     
     //3. 求出共分多少点，以及每点的尺寸。
     NSInteger dotNum = [self convert2DotNum:MAX(width, height)];
