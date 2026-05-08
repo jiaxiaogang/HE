@@ -425,6 +425,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 仅竞争模式。
     if (justRank) return;
     
+    // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
+    validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return @(obj.assT.pId);
+    }];
+    
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
     NSInteger count = validModels.count;
     float needRate = count < 5 ? 1 : count < 15 ? 0.8 : count < 30 ? 0.6 : count < 60 ? 0.4 : 0.2;
@@ -444,7 +449,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%04ld %@ %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc,CLEANSTR([model.assT getLogDesc:true]));
+        NSLog(@"%02ld. 单特征识别结果:T%04ld %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
@@ -593,9 +598,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     AddDebugCodeBlock_KeyV3();
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
-    //resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvModelV2 *obj) {
-    //    return @(obj.baseGT.pId);
-    //}];z
+    resultModels = [SMGUtils removeRepeat:resultModels convertBlock:^id(GTZiJvModelV2 *obj) {
+        return @(obj.baseGT.pId);
+    }];
     
     // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
     NSInteger count = resultModels.count;
@@ -606,7 +611,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;
     for (GTZiJvModelV2 *model in resultModels) {
         // debug
-        NSLog(@"%02ld. 组特征识别结果:T%04ld %@ %@",[resultModels indexOfObject:model]+1,model.baseGT.pId,model.zonHeDesc,CLEANSTR([model.baseGT getLogDesc:true]));
+        NSLog(@"%02ld. 组特征识别结果:T%04ld %@",[resultModels indexOfObject:model]+1,model.baseGT.pId,model.zonHeDesc);
         AddDebugCodeBlock_KeyV3(); // 计数:7 均耗:68.35 = 总耗:478 读:0 写:0
         
         // 更新内容强度（用于计算稳定性）。
