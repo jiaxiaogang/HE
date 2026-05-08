@@ -259,7 +259,7 @@ static AIThinkingControl *_instance;
                 CGRect curRect = CGRectMake(canvasRect.origin.x + startX * dotSizeW, canvasRect.origin.y + startY * dotSizeH, dotSizeW * 3, dotSizeH * 3);
                 
                 // 调用识别。
-                NSArray *itemResults = [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:decoratorJvBuModel logDesc:logDesc];
+                [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:decoratorJvBuModel logDesc:logDesc];
             }
         }
         

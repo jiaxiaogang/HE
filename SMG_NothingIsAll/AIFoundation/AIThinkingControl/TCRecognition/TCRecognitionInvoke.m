@@ -394,7 +394,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];   // 符合度等
         // [model run4AdjacentScore];                                   // 计算相邻度
         // [model run4CenterScore];                                     // 中心度
-        [model run4ValidAbsSTPorts];                                    // 计算有效抽象
         [model run4BestGvsAtProtoTRect];                                // 计算bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
         [model run4AssST_ProtoRect];                                    // 计算assST_ProtoRect（计算完整性要用到）
         [model run4IntactRate];                                         // 完整性

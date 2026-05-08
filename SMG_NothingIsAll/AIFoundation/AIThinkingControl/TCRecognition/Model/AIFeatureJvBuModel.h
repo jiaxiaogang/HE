@@ -86,7 +86,6 @@
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
 @property (strong, nonatomic) NSArray *validAbsSTPorts;
--(void) run4ValidAbsSTPorts;
 -(NSArray *) allValidAbsST_ps;
 
 // 相邻度（参考36032-方案）。
