@@ -7,6 +7,7 @@
 //
 
 #import "RTModel.h"
+#import "DeviceUtil.h"
 
 #define TimerInterval 0.6f
 
@@ -21,6 +22,7 @@
 @property (assign, nonatomic) long long lastStartTime;      //最后一次开始时间
 @property (strong, nonatomic) NSString *invokingName;       //当前执行中name;
 @property (strong, nonatomic) NSMutableArray *pauseNames;   //需要停下等待的命令;
+@property (assign, nonatomic) int cpuContinuousIdleNum;     //CPU还需要再闲次数。
 
 @end
 
@@ -213,6 +215,14 @@
         BOOL busyStatus = operDelta > 0;
         if (busyStatus) {
             NSLog(@"----> 强化训练_思维负载(%ld) -> 等待",operDelta);
+            return;
+        }
+        
+        // 连续3秒占用都在10%以下时，可执行下帧
+        double curCpuUsage = [DeviceUtil getCpuUsage];
+        self.cpuContinuousIdleNum = curCpuUsage < 10 ? self.cpuContinuousIdleNum + 1 : 0;
+        if (self.cpuContinuousIdleNum < 3) {
+            NSLog(@"----> 强化训练_CPU负载(%.2f%%) -> 等待",curCpuUsage);
             return;
         }
     }

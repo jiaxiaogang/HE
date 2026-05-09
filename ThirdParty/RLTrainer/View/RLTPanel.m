@@ -201,6 +201,10 @@
         }else if (NUMTOOK(queue.arg0).intValue == 2) {
             return @"植物模式";
         }
+    } else if ([kImgTrainerSelect isEqualToString:queue.name]) {
+        return STRFORMAT(@"选图(%d)",NUMTOOK(queue.arg0).intValue);
+    } else if ([kImgTrainerPlay isEqualToString:queue.name]) {
+        return @"看一张图";
     }
     return @"";
 }
