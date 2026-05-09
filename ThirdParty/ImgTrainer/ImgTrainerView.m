@@ -127,6 +127,10 @@
     for (NSInteger i = 0; i < self.previewTVs.count; i++) {
         [self.previewDatas addObject:[NSMutableArray new]];
     }
+    
+    // 注意强训执行事件
+    [theRT regist:kImgTrainerSelect target:self selector:@selector(imgTrainerSelect:)];
+    [theRT regist:kImgTrainerPlay target:self selector:@selector(imgTrainerPlay)];
 }
 
 #pragma mark - 摄像头相关
@@ -549,8 +553,8 @@
     ImgTrainerItemModel *model = ARR_INDEX(self.tvDatas, self.curSelectRow);
     if (model) {
         // 指定哪一张。
-        NSInteger picNum = self.picNumLab.text.integerValue;
-        if (picNum != 0) model.imgIndex = picNum - 1;
+        NSInteger picNum = STRISOK(self.picNumLab.text) ? self.picNumLab.text.integerValue : -1;
+        if (picNum >= 0) model.imgIndex = picNum;
         
         // 自动跳到下一张。
         if (self.autoNextSwitch.isOn) {
@@ -659,6 +663,20 @@
 - (void)cameraPreviewViewDoubleTapped:(UITapGestureRecognizer *)gesture {
     // 双击拍照，调用captureBtnOnClick的逻辑
     [self captureBtnOnClick:nil];
+}
+
+// 强训工具事件
+-(void) imgTrainerSelect:(NSNumber*)row {
+    self.curSelectRow = row.integerValue;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self.tv selectRowAtIndexPath:[NSIndexPath indexPathForRow:self.curSelectRow inSection:0] animated:false scrollPosition:UITableViewScrollPositionNone];
+        [theRT invoked:kImgTrainerSelect];
+    });
+}
+
+-(void) imgTrainerPlay {
+    [self playBtnOnClick:nil];
+    [theRT invoked:kImgTrainerPlay];
 }
 
 

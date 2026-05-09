@@ -29,6 +29,9 @@
 
 #define kThinkModeSEL @"ThinkMode"              //认知模式 (可传int参数: 思维模式值)
 
+#define kImgTrainerSelect @"ImgTrainerSelect"   // 图片训练工具: 选中第x张图片（传参数index下标）。
+#define kImgTrainerPlay @"ImgTrainerPlay"       // 图片训练工具: 扔一张图。
+
 /**
  *  MARK:--------------------强化训练器--------------------
  *  @use 使用说明: 每个训练项,必须调用以下三个方法:

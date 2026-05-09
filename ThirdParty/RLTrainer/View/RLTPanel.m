@@ -33,6 +33,7 @@
 @property (weak, nonatomic) IBOutlet UIButton *stopBtn;
 @property (strong, nonatomic) NSArray *tvDatas;
 @property (assign, nonatomic) NSInteger tvIndex;
+@property (weak, nonatomic) IBOutlet UIButton *custom1Btn;
 
 @end
 
@@ -78,6 +79,10 @@
     //debugTV
     [self.debugTV.layer setBorderWidth:1.0f];
     [self.debugTV.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
+    
+    // 自定义1
+    [self.custom1Btn setTitle:@"视觉训练" forState:UIControlStateNormal];
+    [self.custom1Btn addTarget:self action:@selector(trainerMinst0_9:) forControlEvents:UIControlEventTouchUpInside];
 }
 
 -(void) initData{
@@ -147,6 +152,7 @@
 }
 -(void) open{
     [self setHidden:false];
+    [self.superview bringSubviewToFront:self];
 }
 -(void) close{
     [self setHidden:true];
@@ -423,6 +429,10 @@
     [self loadHitBtnOnClick:nil];
 }
 
+- (IBAction)custom1Click:(id)sender {
+    
+}
+
 //MARK:===============================================================
 //MARK:                     < 训练项 >
 //MARK:===============================================================
@@ -640,6 +650,17 @@
                     Queue(kMainPageSEL),Queue(kClearTCSEL)] count:70];
 }
 
+//MARK:===============================================================
+//MARK:                     < 视觉训练 >
+//MARK:===============================================================
+
+/**
+ *  MARK:--------------------训练Mnist图0到9一轮--------------------
+ */
+-(void) trainerMinst0_9:(id)sender {
+    [theRT queueN:@[Queue0(kImgTrainerSelect,@(13))] count:1];      // 选中Mnist0
+    [theRT queueN:@[Queue(kImgTrainerPlay)] count:10];              // 依次扔10张（0-9）
+}
 
 //MARK:===============================================================
 //MARK:       < UITableViewDataSource &  UITableViewDelegate>
