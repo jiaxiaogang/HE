@@ -219,7 +219,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     
     // 其实GV竞争在recognitionSVAndGV_Invoke中已经做了，这里是二次竞争（避免ST激活太多的）。
-    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(50, sorts.count * 0.2f)));
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(1000, sorts.count * 0.2f)));
     return valids;
 }
 
@@ -268,7 +268,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     
     //24. 过滤不准确的结果。
-    gMatchModels = ARR_SUB(gMatchModels, 0, MIN(30, MAX(5, gMatchModels.count * 0.2)));
+    gMatchModels = ARR_SUB(gMatchModels, 0, MIN(20, MAX(5, gMatchModels.count * 0.2)));
     
     //25. 更新: ref强度 & 相似度 & 抽具象;
     for (AIMatchModel *matchModel in gMatchModels) {
@@ -471,6 +471,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // ========= 模式1、ass->abs通路 =========
             NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
+            
+            // TODOTOMORROW20260510: 最终能广入多少条，必须能控制，不能像GV或ST时，随意能ref广入多少就收多少，这样肯定性能不稳定。
             
             // 性能优化、减少refPorts的切入点。
             refPorts = ARR_SUB(refPorts, 0, MAX(3, MIN(6, refPorts.count * 0.3f)));

@@ -222,7 +222,6 @@ static AIThinkingControl *_instance;
     
     // GV竞争。
     allGVs = [TCRecognitionInvoke recognitionSVAndGV_Step2:allGVs];
-    NSLog(@"GV识别数:%ld",allGVs.count);
     
     // ST识别。
     DDic *excepts = [DDic new];
@@ -232,7 +231,6 @@ static AIThinkingControl *_instance;
     
     // ST竞争。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc justRank:false];
-    NSLog(@"ST识别数:%ld",decoratorJvBuModel.stModels.count);
     
     // GT识别。
     NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];
@@ -240,30 +238,29 @@ static AIThinkingControl *_instance;
     
     // GT竞争。
     [TCRecognitionInvoke recognitionGroupFeatureV9_Step2:decoratorJvBuModel logDesc:logDesc ds:ds];
-    NSLog(@"GT识别数:%ld",decoratorJvBuModel.gtModels.count);
     
     // ST类比（借助bestGVs来类比）。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [AIAnalogy analogyFeatureV2:model protoTLogDesc:logDesc prefixIndex:[decoratorJvBuModel.stModels indexOfObject:model] + 1];
     }
-    NSLog(@"ST类比:%ld",decoratorJvBuModel.stModels.count);
     
     // GT类比（用子元素assSTs来类比）。
     for (GTZiJvModelV2 *assGT in decoratorJvBuModel.gtModels) {
         [AIAnalogy analogyGroupFeatureV10:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[decoratorJvBuModel.gtModels indexOfObject:assGT] + 1];
     }
-    NSLog(@"GT类比:%ld",decoratorJvBuModel.gtModels.count);
     
     // 构建ProtoST（装箱SV层 & GV层 & 构建具象特征）。
     AIFeatureNode *protoST = [self createSplitFor9Block:algsModel at:at ds:ds logDesc:logDesc];
     [SMGUtils runByMainQueue:^{
         [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
     }];
-    NSLog(@"ProtoST构建:%ld",protoST.count);
     
     // 构建ProtoGT & 类比。
     AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
-    NSLog(@"ProtoGT构建:%ld",protoGT.count);
+    
+    // debug
+    NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
+    NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
 }
 
 // GV识别
