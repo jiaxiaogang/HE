@@ -206,9 +206,11 @@ static AIThinkingControl *_instance;
     [self commitInputWithSplitV2_SingleTonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc algsModel:algsModel];
 }
 
-//单通道
-//TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
-//连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
+/**
+ *  MARK:--------------------单通道: 模块化调用各块识别、竞争、类比、构建（参考37191A-方案2）--------------------
+ *  TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
+ *  TODO: 连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
+ */
 -(void) commitInputWithSplitV2_SingleTonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc algsModel:(AIVisionAlgsModelV2*)algsModel {
     // 数据准备 & 初始化。
     AIFeatureJvBuModels *decoratorJvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
@@ -261,7 +263,7 @@ static AIThinkingControl *_instance;
     NSLog(@"ProtoST构建:%ld",protoST.count);
     
     // 构建ProtoGT & 类比。
-    AIGroupFeatureNode *protoGT = [self commitInput_CreateProtoGT:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
+    AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
     NSLog(@"ProtoGT构建:%ld",protoGT.count);
 }
 
@@ -307,7 +309,7 @@ static AIThinkingControl *_instance;
     return allGVs;
 }
 
--(AIGroupFeatureNode*) commitInput_CreateProtoGT:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
+-(AIGroupFeatureNode*) commitInput4ProtoGT:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
     

@@ -211,19 +211,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 }
 
 +(NSArray*) recognitionSVAndGV_Step2:(NSArray*)allGVResults {
-    
     // 强度越好 x 越准确的 = 越优先。
     NSArray *sorts = [SMGUtils sortBig2Small:allGVResults compareBlock:^double(MapModel *model) {
         AIPort *refPort = model.v2;
         NSNumber *matchValue = model.v1;
         return matchValue.floatValue * refPort.strong.value;
     }];
-    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(30, sorts.count * 0.2f)));
     
-    // 转回List<AIPort>类型。
-    valids = [SMGUtils convertArr:valids convertBlock:^id(MapModel *obj) {
-        return obj.v2;
-    }];
+    // 其实GV竞争在recognitionSVAndGV_Invoke中已经做了，这里是二次竞争（避免ST激活太多的）。
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(50, sorts.count * 0.2f)));
     return valids;
 }
 
