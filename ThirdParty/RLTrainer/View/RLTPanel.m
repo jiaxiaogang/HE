@@ -16,6 +16,8 @@
 #import "XGDebugTV.h"
 #import "XGLabCell.h"
 #import "FoodView.h"
+#import "DeviceUtil.h"
+#import "CPUChartView.h"
 
 @interface RLTPanel () <UITableViewDelegate,UITableViewDataSource>
 
@@ -34,7 +36,7 @@
 @property (strong, nonatomic) NSArray *tvDatas;
 @property (assign, nonatomic) NSInteger tvIndex;
 @property (weak, nonatomic) IBOutlet UIButton *custom1Btn;
-
+@property (strong, nonatomic) CPUChartView *cpuChartView;
 @end
 
 @implementation RLTPanel
@@ -83,6 +85,17 @@
     // 自定义1
     [self.custom1Btn setTitle:@"视觉训练" forState:UIControlStateNormal];
     [self.custom1Btn addTarget:self action:@selector(trainerMinst0_9:) forControlEvents:UIControlEventTouchUpInside];
+    
+    // CPU曲线图 (右上角)
+    self.cpuChartView = [[CPUChartView alloc] init];
+    [self.cpuChartView setClipsToBounds:YES];
+    [self.containerView addSubview:self.cpuChartView];
+    [self.cpuChartView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.trailing.equalTo(self.containerView).offset(-5);
+        make.top.equalTo(self.containerView).offset(20);
+        make.width.mas_equalTo(105);
+        make.height.mas_equalTo(40);
+    }];
 }
 
 -(void) initData{

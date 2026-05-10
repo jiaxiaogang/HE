@@ -162,6 +162,7 @@
 		088DD7232201216500E0A786 /* TOFoModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 088DD7222201216500E0A786 /* TOFoModel.m */; };
 		089041742D8AF2E100545CD7 /* AIMatchModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 089041732D8AF2E100545CD7 /* AIMatchModel.m */; };
 		089292F22FAF8E94002A57D7 /* DeviceUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 089292F12FAF8E94002A57D7 /* DeviceUtil.m */; };
+		089292F52FB0A346002A57D7 /* CPUChartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 089292F42FB0A346002A57D7 /* CPUChartView.m */; };
 		0892BAED277808F80024B43C /* TCActYes.m in Sources */ = {isa = PBXBuildFile; fileRef = 0892BAEC277808F80024B43C /* TCActYes.m */; };
 		0895FFE4264A13C500DAD3EA /* TOModelVision.m in Sources */ = {isa = PBXBuildFile; fileRef = 0895FFE3264A13C500DAD3EA /* TOModelVision.m */; };
 		089614A9219A4D5200343FAC /* BirdGrowPage.m in Sources */ = {isa = PBXBuildFile; fileRef = 089614A7219A4D5200343FAC /* BirdGrowPage.m */; };
@@ -574,6 +575,8 @@
 		089041732D8AF2E100545CD7 /* AIMatchModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIMatchModel.m; sourceTree = "<group>"; };
 		089292F02FAF8E94002A57D7 /* DeviceUtil.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceUtil.h; sourceTree = "<group>"; };
 		089292F12FAF8E94002A57D7 /* DeviceUtil.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DeviceUtil.m; sourceTree = "<group>"; };
+		089292F32FB0A346002A57D7 /* CPUChartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CPUChartView.h; sourceTree = "<group>"; };
+		089292F42FB0A346002A57D7 /* CPUChartView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CPUChartView.m; sourceTree = "<group>"; };
 		0892BAEB277808F80024B43C /* TCActYes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCActYes.h; sourceTree = "<group>"; };
 		0892BAEC277808F80024B43C /* TCActYes.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TCActYes.m; sourceTree = "<group>"; };
 		0893B80D278BC38A00B5C860 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -1654,6 +1657,8 @@
 				08C159BE2808F47100983717 /* RLTPanel.h */,
 				08C159BF2808F47100983717 /* RLTPanel.m */,
 				08C159C12808F4CB00983717 /* RLTPanel.xib */,
+				089292F32FB0A346002A57D7 /* CPUChartView.h */,
+				089292F42FB0A346002A57D7 /* CPUChartView.m */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -2250,6 +2255,7 @@
 				082075F727EDFFE70005D7A8 /* TVideoWindow.m in Sources */,
 				08A232E5243557110090D4B5 /* TOUtils.m in Sources */,
 				084F132226FF6E1200E9D455 /* AITest.m in Sources */,
+				089292F52FB0A346002A57D7 /* CPUChartView.m in Sources */,
 				08366B9327E00232004EBBB9 /* TOMVisionFoView.m in Sources */,
 				0895FFE4264A13C500DAD3EA /* TOModelVision.m in Sources */,
 				084219ED1FD8CF81009DA6BC /* AIThinkingControl.m in Sources */,
