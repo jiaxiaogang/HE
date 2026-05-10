@@ -169,10 +169,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
            gvRectExcept:(NSMutableDictionary*)gvRectExcept
               jvBuModel:(AIFeatureJvBuModels*)jvBuModel
                 logDesc:(NSString*)logDesc {
-    
-    // TODOTOMORROW: 特征识别候选结果太多，卡一下保留10%就行。
-    // 特征识别ST数:216 GT数:649
-    
     // 稀疏码识别。
     NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
     // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
@@ -184,7 +180,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // NSLog(@"第1步、特征识别结果st条数:%ld",itemSTModels.count);
     
     // GT识别。
-    NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc protoGT:nil colorDic:colorDic ds:ds];
+    NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc colorDic:colorDic ds:ds];
     [jvBuModel.gtModels addObjectsFromArray:itemGTModels];
     // NSLog(@"第2步、组特征识别条数:%ld",itemGTModels.count);
     return itemSTModels;
@@ -487,7 +483,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2026.01.29: v7-提升对撞率，识别通路调整：“assST -> absST -> broST -> assGT”（参考36011）。
  *      2026.03.13: v9-迭代为ZiJvGroup模型，减维至GV层来实现GT自举，从而解决ST错位的问题（参考36074-方案）。
  */
-+(NSArray*) recognitionGroupFeatureV9_Step1:(NSArray*)stModels logDesc:(NSString*)logDesc protoGT:(AIGroupFeatureNode*)protoGT colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
++(NSArray*) recognitionGroupFeatureV9_Step1:(NSArray*)stModels logDesc:(NSString*)logDesc colorDic:(NSDictionary*)colorDic ds:(NSString*)ds {
     // 数据准备
     NSMutableArray *allGTGroups = [NSMutableArray new];
     
@@ -501,11 +497,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
             
             // 性能优化、减少refPorts的切入点。
-            refPorts = ARR_SUB(refPorts, 0, MAX(3, refPorts.count * 0.3f));
+            refPorts = ARR_SUB(refPorts, 0, MAX(3, MIN(6, refPorts.count * 0.3f)));
             
             // 逐个求refGT。
             for (AIPort *refPort in refPorts) {
-                if (protoGT && [refPort.target_p isEqual:protoGT.p]) continue;
                 
                 // assGT。
                 AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
@@ -532,7 +527,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             //
             //    // 逐个求refGT。
             //    for (AIPort *refPort in refPorts) {
-            //        if ([refPort.target_p isEqual:protoGT.p]) continue;
             //
             //        if (refPort.target_p.isJiao) continue;
             //
