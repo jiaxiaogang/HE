@@ -12,24 +12,26 @@
 @interface TCRecognitionInvoke : NSObject
 
 //MARK:===============================================================
-//MARK:                     < 识别入口 >
+//MARK:                     < 初始化 >
 //MARK:===============================================================
 +(void) recognitionInit:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc;
 
-+(NSArray*) recognition:(NSString*)at
-                     ds:(NSString*)ds
-               colorDic:(NSDictionary*)colorDic
-                excepts:(DDic*)excepts
-                curRect:(CGRect)curRect
-          beginGVExcept:(NSMutableDictionary*)beginGVExcept
-           gvRectExcept:(NSMutableDictionary*)gvRectExcept
-              jvBuModel:(AIFeatureJvBuModels*)jvBuModel
-                logDesc:(NSString*)logDesc;
+//MARK:===============================================================
+//MARK:                     < 稀疏码识别 >
+//MARK:===============================================================
++(NSArray*) recognitionSVAndGV_Step1:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept;
++(NSArray*) recognitionSVAndGV_Step2:(NSArray*)allGVResults;
+
+//MARK:===============================================================
+//MARK:                     < 单特征识别 >
+//MARK:===============================================================
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(NSArray*)allGVs;
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc justRank:(BOOL)justRank;
 
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >
 //MARK:===============================================================
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc justRank:(BOOL)justRank;
++(NSArray*) recognitionGroupFeatureV9_Step1:(NSArray*)stModels logDesc:(NSString*)logDesc colorDic:(NSDictionary*)colorDic ds:(NSString*)ds;
 +(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc ds:(NSString*)ds;
 
 //MARK:===============================================================

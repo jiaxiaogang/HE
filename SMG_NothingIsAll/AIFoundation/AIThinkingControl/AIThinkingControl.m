@@ -210,31 +210,67 @@ static AIThinkingControl *_instance;
 //TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
 //连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
 -(void) commitInputWithSplitV2_SingleTonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc algsModel:(AIVisionAlgsModelV2*)algsModel {
-    // step3. 识别初始化。
+    // 数据准备 & 初始化。
+    AIFeatureJvBuModels *decoratorJvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
+    decoratorJvBuModel.debug = [GroupDebug new];
     [TCRecognitionInvoke recognitionInit:colorDic whSize:algsModel.whSize at:at ds:ds logDesc:logDesc];
     
-    // step4. 视觉注意力专注范围递归：调用递归（参考37101-方案4）。
-    AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
-    jvBuModel.debug = [GroupDebug new];
-    [self commitInputWithSplitV2_DepthRect:colorDic canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc decoratorJvBuModel:jvBuModel];
+    // GV识别。
+    NSArray *allGVs = [self commitInput4GV:colorDic canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc];
     
-    // step5. 竞争 & 类比。
-    [self commitInputWithSplitV2_RankAndAnalogy:at ds:ds logDesc:logDesc jvBuModel:jvBuModel];
+    // GV竞争。
+    allGVs = [TCRecognitionInvoke recognitionSVAndGV_Step2:allGVs];
+    NSLog(@"GV识别数:%ld",allGVs.count);
     
-    //2. 装箱（稀疏码的：单码层 和 组码层 和 构建具象特征）。
+    // ST识别。
+    DDic *excepts = [DDic new];
+    NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
+    NSArray *stModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:decoratorJvBuModel.stModels allGVs:allGVs];
+    [decoratorJvBuModel.stModels addObjectsFromArray:stModels];
+    
+    // ST竞争。
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc justRank:false];
+    NSLog(@"ST识别数:%ld",decoratorJvBuModel.stModels.count);
+    if (!ARRISOK(stModels)) return; // 单特征识别无结果则跳过。
+    
+    // GT识别。
+    NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];
+    [decoratorJvBuModel.gtModels addObjectsFromArray:gtModels];
+    
+    // GT竞争。
+    [TCRecognitionInvoke recognitionGroupFeatureV9_Step2:decoratorJvBuModel logDesc:logDesc ds:ds];
+    NSLog(@"GT识别数:%ld",decoratorJvBuModel.gtModels.count);
+    
+    // ST类比（借助bestGVs来类比）。
+    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+        [AIAnalogy analogyFeatureV2:model protoTLogDesc:logDesc prefixIndex:[decoratorJvBuModel.stModels indexOfObject:model] + 1];
+    }
+    NSLog(@"ST类比:%ld",decoratorJvBuModel.stModels.count);
+    
+    // GT类比（用子元素assSTs来类比）。
+    for (GTZiJvModelV2 *assGT in decoratorJvBuModel.gtModels) {
+        [AIAnalogy analogyGroupFeatureV10:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[decoratorJvBuModel.gtModels indexOfObject:assGT] + 1];
+    }
+    NSLog(@"GT类比:%ld",decoratorJvBuModel.gtModels.count);
+    
+    // 构建ProtoST（装箱SV层 & GV层 & 构建具象特征）。
     AIFeatureNode *protoST = [self createSplitFor9Block:algsModel at:at ds:ds logDesc:logDesc];
     [SMGUtils runByMainQueue:^{
         [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
     }];
+    NSLog(@"ProtoST构建:%ld",protoST.count);
+    
+    // 构建ProtoGT & 类比。
+    AIGroupFeatureNode *protoGT = [self commitInput_CreateProtoGT:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
+    NSLog(@"ProtoGT构建:%ld",protoGT.count);
 }
 
-// 视觉注意力专注范围递归：执行递归（参考37101-方案4）return 执行完成。
--(void) commitInputWithSplitV2_DepthRect:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc decoratorJvBuModel:(AIFeatureJvBuModels*)decoratorJvBuModel {
+// GV识别
+-(NSArray*) commitInput4GV:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     NSLog(@"depthRect:画布:%@ begin =============>",Rect2Str(canvasRect));
+    NSMutableArray *allGVs = [NSMutableArray new];
     
     //1. 对未切粒度的color字典进行自适应粒度并识别。
-    NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
-    DDic *excepts = [DDic new];
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
     
     // 切GV范围为3-whSize/2，粒度太小切分组20%都不够，太大则只有轮廓而已，二者意义都不明，还浪费很多性能 (参考35126-方案2 & 36034-方案2)。
@@ -259,7 +295,8 @@ static AIThinkingControl *_instance;
                 CGRect curRect = CGRectMake(canvasRect.origin.x + startX * dotSizeW, canvasRect.origin.y + startY * dotSizeH, dotSizeW * 3, dotSizeH * 3);
                 
                 // 调用识别。
-                [TCRecognitionInvoke recognition:at ds:ds colorDic:colorDic excepts:excepts curRect:curRect beginGVExcept:beginGVExcept gvRectExcept:gvRectExcept jvBuModel:decoratorJvBuModel logDesc:logDesc];
+                NSArray *itemGVs =[TCRecognitionInvoke recognitionSVAndGV_Step1:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
+                [allGVs addObjectsFromArray:itemGVs];
             }
         }
         
@@ -267,20 +304,10 @@ static AIThinkingControl *_instance;
         dotSizeW /= 1.3f;
         dotSizeH /= 1.3f;
     }
-    NSLog(@"特征识别ST数:%ld GT数:%ld",decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
+    return allGVs;
 }
 
--(void) commitInputWithSplitV2_RankAndAnalogy:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
-    
-    // 2025.07.16：统一进行单特征竞争，类比，组特征识别，类比等（参考35056-TODO1 & TODO2）。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:jvBuModel ds:ds logDesc:logDesc justRank:false];
-    
-    // 单特征类比：借助bestGVs来类比。
-    for (AIFeatureJvBuModel *model in jvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoTLogDesc:logDesc prefixIndex:[jvBuModel.stModels indexOfObject:model] + 1];
-    }
-    NSLog(@"第1步、ST竞争:%ld & 类比 finish",jvBuModel.stModels.count);
-    
+-(AIGroupFeatureNode*) commitInput_CreateProtoGT:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
     
@@ -297,7 +324,7 @@ static AIThinkingControl *_instance;
         }];
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
-    if (gtOrders.count == 0) return;
+    if (gtOrders.count == 0) return nil;
     
     // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
     gtOrders = [ThinkingUtils sortInputGroupFeatureModels:gtOrders];
@@ -315,15 +342,7 @@ static AIThinkingControl *_instance;
     [SMGUtils runByMainQueue:^{
         [theApp.imgTrainerView setDataForFeature:protoGT lab:STRFORMAT(@"protoGT%ld",protoGT.pId) left:jvs_ProtoGTRect.origin.x top:jvs_ProtoGTRect.origin.y tvId:5];
     }];
-    NSLog(@"第2步、构建protoGT条数:%ld",protoGT.count);
-    
-    // 组特征类比V5：用子元素assSTs来类比。
-    [TCRecognitionInvoke recognitionGroupFeatureV9_Step2:jvBuModel logDesc:logDesc ds:ds];
-    for (GTZiJvModelV2 *assGT in jvBuModel.gtModels) {
-        [AIAnalogy analogyGroupFeatureV10:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[jvBuModel.gtModels indexOfObject:assGT] + 1];
-    }
-    NSLog(@"第3步、GT竞争%ld & 类比 finish",jvBuModel.gtModels.count);
-    AddDebugCodeBlock_KeyV3();
+    return protoGT;
 }
 
 /**

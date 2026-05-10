@@ -160,37 +160,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }
 }
 
-+(NSArray*) recognition:(NSString*)at
-                     ds:(NSString*)ds
-               colorDic:(NSDictionary*)colorDic
-                excepts:(DDic*)excepts
-                curRect:(CGRect)curRect
-          beginGVExcept:(NSMutableDictionary*)beginGVExcept
-           gvRectExcept:(NSMutableDictionary*)gvRectExcept
-              jvBuModel:(AIFeatureJvBuModels*)jvBuModel
-                logDesc:(NSString*)logDesc {
-    // 稀疏码识别。
-    NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
-    // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
-    
-    // ST识别。
-    NSArray *itemSTModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:jvBuModel.stModels beginGVExcept:beginGVExcept allRefPorts:itemGVsAndRefPorts protoRect:curRect];
-    if (!ARRISOK(itemSTModels)) return nil; // 单特征识别无结果则跳过。
-    [jvBuModel.stModels addObjectsFromArray:itemSTModels];
-    // NSLog(@"第1步、特征识别结果st条数:%ld",itemSTModels.count);
-    
-    // GT识别。
-    NSArray *itemGTModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:itemSTModels logDesc:logDesc colorDic:colorDic ds:ds];
-    [jvBuModel.gtModels addObjectsFromArray:itemGTModels];
-    // NSLog(@"第2步、组特征识别条数:%ld",itemGTModels.count);
-    return itemSTModels;
-}
-
 //MARK:===============================================================
 //MARK:                     < 稀疏码识别 >
 //MARK:===============================================================
 
-+(NSArray*) recognitionSVAndGV_Caller:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
++(NSArray*) recognitionSVAndGV_Step1:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     //14. 切出当前gv：九宫。
     //2025.12.11: 切图复用（参考35105-TODO3.1）。
     MapModel *rectKey = [self getIndexsOfProtoRect:protoRect];
@@ -230,17 +204,21 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 所有refPorts全收集起来。
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         for (AIPort *refPort in refPorts) {
-            [alls addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort]];
+            [alls addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort v3:@(protoRect)]];
         }
     }
+    return alls;
+}
+
++(NSArray*) recognitionSVAndGV_Step2:(NSArray*)allGVResults {
     
     // 强度越好 x 越准确的 = 越优先。
-    NSArray *sorts = [SMGUtils sortBig2Small:alls compareBlock:^double(MapModel *model) {
+    NSArray *sorts = [SMGUtils sortBig2Small:allGVResults compareBlock:^double(MapModel *model) {
         AIPort *refPort = model.v2;
         NSNumber *matchValue = model.v1;
         return matchValue.floatValue * refPort.strong.value;
     }];
-    NSArray *valids = ARR_SUB(sorts, 0, MAX(3, MIN(6, sorts.count * 0.2f)));
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(30, sorts.count * 0.2f)));
     
     // 转回List<AIPort>类型。
     valids = [SMGUtils convertArr:valids convertBlock:^id(MapModel *obj) {
@@ -328,14 +306,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels beginGVExcept:(NSMutableDictionary*)beginGVExcept allRefPorts:(NSArray*)allRefPorts protoRect:(CGRect)protoRect {
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(NSArray*)allGVs {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
-    for (AIPort *refPort in allRefPorts) {
+    for (MapModel *gvResult in allGVs) {
+        AIPort *refPort = gvResult.v2;
+        CGRect protoRect = VALTOOK(gvResult.v3).CGRectValue;
         
         // 同一个assST只有10次准入机会（参考36037-TODO1）。
         NSInteger oldCount = NUMTOOK([assSTCounted objectForKey:@(refPort.target_p.pointerId)]).integerValue;
@@ -431,7 +411,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
     NSInteger count = validModels.count;
-    float needRate = count < 5 ? 1 : count < 15 ? 0.8 : count < 30 ? 0.6 : count < 60 ? 0.4 : 0.2;
+    float needRate = count < 5 ? 1 : count < 10 ? 0.7 : count < 20 ? 0.5 : count < 40 ? 0.4 : 0.2;
     validModels = ARR_SUB(validModels, 0, MIN(20, validModels.count * needRate));
     
     //60. 更新赋值回去。
@@ -601,7 +581,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 优胜劣汰：5条以下时全要，10条以下时要60%，20条要40%，60条要30%，再多留20%，最多留20条。
     NSInteger count = resultModels.count;
-    float needRate = count < 5 ? 1 : count < 10 ? 0.6 : count < 20 ? 0.4 : count < 60 ? 0.3 : 0.2;
+    float needRate = count < 5 ? 1 : count < 10 ? 0.7 : count < 20 ? 0.5 : count < 40 ? 0.4 : 0.2;
     resultModels = ARR_SUB(resultModels, 0, MIN(20, count * needRate));
     AddDebugCodeBlock_KeyV3();
     
