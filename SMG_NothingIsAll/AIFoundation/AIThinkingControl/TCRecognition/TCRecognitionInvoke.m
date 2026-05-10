@@ -170,6 +170,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
               jvBuModel:(AIFeatureJvBuModels*)jvBuModel
                 logDesc:(NSString*)logDesc {
     
+    // TODOTOMORROW: 特征识别候选结果太多，卡一下保留10%就行。
+    // 特征识别ST数:216 GT数:649
+    
     // 稀疏码识别。
     NSArray *itemGVsAndRefPorts = [TCRecognitionInvoke recognitionSVAndGV_Caller:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
     // NSLog(@"第1步、稀疏码识别结果条数:%ld",itemGVsAndRefPorts.count);
