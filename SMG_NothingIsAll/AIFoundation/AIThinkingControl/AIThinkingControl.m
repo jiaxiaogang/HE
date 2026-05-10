@@ -233,7 +233,6 @@ static AIThinkingControl *_instance;
     // ST竞争。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc justRank:false];
     NSLog(@"ST识别数:%ld",decoratorJvBuModel.stModels.count);
-    if (!ARRISOK(stModels)) return; // 单特征识别无结果则跳过。
     
     // GT识别。
     NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];
