@@ -220,9 +220,6 @@ static AIThinkingControl *_instance;
     // GV识别。
     NSArray *allGVs = [self commitInput4GV:colorDic canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc];
     
-    // GV竞争。
-    allGVs = [TCRecognitionInvoke recognitionSVAndGV_Step2:allGVs];
-    
     // ST识别。
     DDic *excepts = [DDic new];
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
@@ -293,7 +290,7 @@ static AIThinkingControl *_instance;
                 CGRect curRect = CGRectMake(canvasRect.origin.x + startX * dotSizeW, canvasRect.origin.y + startY * dotSizeH, dotSizeW * 3, dotSizeH * 3);
                 
                 // 调用识别。
-                NSArray *itemGVs =[TCRecognitionInvoke recognitionSVAndGV_Step1:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
+                NSArray *itemGVs =[TCRecognitionInvoke recognitionSVAndGV:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
                 [allGVs addObjectsFromArray:itemGVs];
             }
         }

@@ -19,8 +19,7 @@
 //MARK:===============================================================
 //MARK:                     < 稀疏码识别 >
 //MARK:===============================================================
-+(NSArray*) recognitionSVAndGV_Step1:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept;
-+(NSArray*) recognitionSVAndGV_Step2:(NSArray*)allGVResults;
++(NSArray*) recognitionSVAndGV:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept;
 
 //MARK:===============================================================
 //MARK:                     < 单特征识别 >

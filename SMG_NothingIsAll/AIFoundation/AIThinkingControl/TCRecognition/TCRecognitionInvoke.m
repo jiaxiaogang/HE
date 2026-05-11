@@ -164,7 +164,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //MARK:                     < 稀疏码识别 >
 //MARK:===============================================================
 
-+(NSArray*) recognitionSVAndGV_Step1:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
++(NSArray*) recognitionSVAndGV:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     //14. 切出当前gv：九宫。
     //2025.12.11: 切图复用（参考35105-TODO3.1）。
     MapModel *rectKey = [self getIndexsOfProtoRect:protoRect];
@@ -190,9 +190,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return [self recognitionSVAndGV_Invoke:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
     
-    //11. 对所有gv识别结果的，所有refPorts，依次判断位置符合度。
-    NSMutableArray *alls = [NSMutableArray new];
-    for (AIMatchModel *gModel in gMatchModels) {
+    // for (AIMatchModel *gModel in allGVs) {
         // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
         //NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
         //if (!gvIdProtoRects) {
@@ -200,27 +198,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //    [beginGVExcept setObject:gvIdProtoRects forKey:@(gModel.match_p.pointerId)];
         //}
         //[gvIdProtoRects addObject:@(protoRect)];
-        
-        // 所有refPorts全收集起来。
-        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
-        for (AIPort *refPort in refPorts) {
-            [alls addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort v3:@(protoRect)]];
-        }
-    }
-    return alls;
-}
-
-+(NSArray*) recognitionSVAndGV_Step2:(NSArray*)allGVResults {
-    // 强度越好 x 越准确的 = 越优先。
-    NSArray *sorts = [SMGUtils sortBig2Small:allGVResults compareBlock:^double(MapModel *model) {
-        AIPort *refPort = model.v2;
-        NSNumber *matchValue = model.v1;
-        return matchValue.floatValue * refPort.strong.value;
+    // }
+    return [SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *gModel) {
+        return [MapModel newWithV1:gModel v2:@(protoRect)];
     }];
-    
-    // 其实GV竞争在recognitionSVAndGV_Invoke中已经做了，这里是二次竞争（避免ST激活太多的）。
-    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(1000, sorts.count * 0.2f)));
-    return valids;
 }
 
 +(NSArray*) recognitionSVAndGV_Invoke:(NSArray*)vModels at:(NSString*)at isOut:(BOOL)isOut rate:(CGFloat)rate minLimit:(NSInteger)minLimit forProtoGV:(AIKVPointer*)forProtoGV {
@@ -307,9 +288,32 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
+    // ================== 控制广入条数: refPorts竞争 ==================
+    
+    // 对所有gv识别结果的，所有refPorts。
+    NSMutableArray *refModels = [NSMutableArray new];
+    for (MapModel *gv in allGVs) {
+        AIMatchModel *gModel = gv.v1;
+        NSValue *protoRect = gv.v2;
+        NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
+        for (AIPort *refPort in refPorts) {
+            [refModels addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort v3:protoRect]];
+        }
+    }
+    
+    // 避免ST激活太多的: 强度越好 x 越准确的 = 越优先。
+    NSArray *sorts = [SMGUtils sortBig2Small:refModels compareBlock:^double(MapModel *model) {
+        AIPort *refPort = model.v2;
+        NSNumber *matchValue = model.v1;
+        return matchValue.floatValue * refPort.strong.value;
+    }];
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(600, sorts.count * 0.2f)));
+    
+    // ================== 识别 ==================
+    
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
-    for (MapModel *gvResult in allGVs) {
+    for (MapModel *gvResult in valids) {
         AIPort *refPort = gvResult.v2;
         CGRect protoRect = VALTOOK(gvResult.v3).CGRectValue;
         
@@ -463,34 +467,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 数据准备
     NSMutableArray *allGTGroups = [NSMutableArray new];
     
+    // ================== 控制广入条数: refPorts竞争 ==================
     // assST层。
+    NSMutableArray *refModels = [NSMutableArray new];
     for (AIFeatureJvBuModel *stModel in stModels) {
         
         // absST层：有效（全含）absST。
         for (AIKVPointer *abs_p in stModel.allValidAbsST_ps) {
-            
             // ========= 模式1、ass->abs通路 =========
             NSArray *refPorts = [AINetUtils refPorts_All:abs_p];
-            
-            // TODOTOMORROW20260510: 最终能广入多少条，必须能控制，不能像GV或ST时，随意能ref广入多少就收多少，这样肯定性能不稳定。
-            
-            // 性能优化、减少refPorts的切入点。
-            refPorts = ARR_SUB(refPorts, 0, MAX(3, MIN(6, refPorts.count * 0.3f)));
-            
-            // 逐个求refGT。
-            for (AIPort *refPort in refPorts) {
-                
-                // assGT。
-                AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
-                NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
-                
-                // gt自举算法。
-                GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds absST:nil];
-                if (gtZiJvModel.bestSTs.count == 0) continue;
-                
-                // 收集。
-                if (![allGTGroups containsObject:gtZiJvModel]) [allGTGroups addObject:gtZiJvModel];
-            }
             
             //// ========= 模式2、ass->abs->bro通路 =========
             //AIFeatureNode *absST = [SMGUtils searchNode:abs_p];
@@ -520,7 +505,36 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             //        [allGTGroups addObject:gtZiJvModel];
             //    }
             //}
+            
+            // 收集
+            for (AIPort *refPort in refPorts) {
+                [refModels addObject:[MapModel newWithV1:stModel v2:refPort]];
+            }
+            
         }
+    }
+    NSArray *sorts = [SMGUtils sortBig2Small:refModels compareBlock:^double(MapModel *obj) {
+        AIPort *refPort = obj.v2;
+        return refPort.strong.value;
+    }];
+    NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(150, sorts.count * 0.3f)));
+    
+    // ================== 识别 ==================
+    for (MapModel *refModel in refModels) {
+        AIFeatureJvBuModel *stModel = refModel.v1;
+        AIPort *refPort = refModel.v2;
+        
+        // 逐个求refGT。
+        // assGT。
+        AIGroupFeatureNode *assGT = [SMGUtils searchNode:refPort.target_p];
+        NSInteger beginIndex = [assGT indexOfRect:refPort.rect];
+        
+        // gt自举算法。
+        GTZiJvModelV2 *gtZiJvModel = [self gtZiJvV10:assGT beginIndex:beginIndex beginSTModel:stModel colorDic:colorDic ds:ds absST:nil];
+        if (gtZiJvModel.bestSTs.count == 0) continue;
+        
+        // 收集。
+        if (![allGTGroups containsObject:gtZiJvModel]) [allGTGroups addObject:gtZiJvModel];
     }
     
     // 内部bests根据匹配度进行末尾淘汰：匹配度差的就该被竞争淘汰剔除掉（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
