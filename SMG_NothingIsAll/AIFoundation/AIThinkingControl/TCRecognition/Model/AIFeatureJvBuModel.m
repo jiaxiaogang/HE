@@ -342,7 +342,7 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:%02ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.stScore,self.averageContentStrong);
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return STRFORMAT(@"外形:%.2f 内征:%.2f 匹配率:%.2f (%02ld/%02ld) = 总分:%.2f（稳定性:%.2f）",self.outerShapeMatchValue,self.innerEigenMatchValue,self.modelMatchRatio,self.bestGVs.count,self.assT.count,self.stScore,self.averageContentStrong);
+    return STRFORMAT(@"外形:%.2f 内征:%.2f 匹配率:%.2f (%02ld/%02ld) 稳定性:%.2f = 总分:%.2f",self.outerShapeMatchValue,self.innerEigenMatchValue,self.modelMatchRatio,self.bestGVs.count,self.assT.count,self.averageContentStrongScore,self.stScore);
 }
 
 @end

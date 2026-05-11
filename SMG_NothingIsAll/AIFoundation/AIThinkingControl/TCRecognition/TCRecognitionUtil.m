@@ -225,7 +225,10 @@
     return importanceDic;
 }
 
-// gtGroups定责淘汰（参考37071）。
+/**
+ *  MARK:--------------------GT定责末尾淘汰（参考37071）。--------------------
+ *  @status 关闭：四项分别定责过滤的太狠，四项综合定责，与GT竞争因子综合竞争功能又重复了，所以关掉。
+ */
 +(NSMutableArray*) filter4ZonHe:(NSMutableArray*)allGTGroups {
     // 取整体均值。
     CGFloat jun1 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {

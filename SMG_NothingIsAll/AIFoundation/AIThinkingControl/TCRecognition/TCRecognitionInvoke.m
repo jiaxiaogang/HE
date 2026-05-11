@@ -352,6 +352,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 更新准入机会。
         [assSTCounted setObject:@(oldCount + 1) forKey:@(model.assT.pId)];
     }
+    NSLog(@"ST广入:%ld 识别到:%ld",valids.count,result.count);
     return result;
 }
 
@@ -392,9 +393,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
-    // stModels末尾淘汰。
-    [decoratorJvBuModel filter4ZonHe];
-    
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
@@ -413,12 +411,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSInteger count = validModels.count;
     float needRate = count < 5 ? 1 : count < 10 ? 0.7 : count < 20 ? 0.5 : count < 40 ? 0.4 : 0.2;
     validModels = ARR_SUB(validModels, 0, MIN(20, validModels.count * needRate));
-    
-    //60. 更新赋值回去。
-    decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
+    NSLog(@"ST窄出:%ld 识别到:%ld",validModels.count,decoratorJvBuModel.stModels.count);
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+    for (AIFeatureJvBuModel *model in validModels) {
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
             return obj.baseGV_p;
@@ -428,14 +424,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%04ld %@",[decoratorJvBuModel.stModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc);
+        NSLog(@"%02ld. 单特征识别结果:T%04ld %@",[validModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc);
         [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[decoratorJvBuModel.stModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
     }
     
     //61. debugLog
-    [TCRecognitionInvoke printLogDescRate:decoratorJvBuModel.stModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^NSArray*(AIFeatureJvBuModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:validModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^NSArray*(AIFeatureJvBuModel *obj) {
         return [SMGUtils convertArr:obj.allValidAbsST_ps convertBlock:^id(AIKVPointer *obj) {
             return [SMGUtils searchNode:obj];
         }];
@@ -444,7 +440,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     
     // 更新logDesc到assT（参考36052）。
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
+    for (AIFeatureJvBuModel *model in validModels) {
         // [model.assT updateLogDescItem:logDesc rate:model.matchValue];
         for (AIPort *validAbsPort in model.validAbsSTPorts) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
@@ -452,6 +448,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [validAbs updateLogDescItem:logDesc rate:absMatch * model.outerShapeMatchValue * model.innerEigenMatchValue];
         }
     }
+    
+    //60. 更新赋值回去。
+    decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
 }
 
 /**
@@ -520,7 +519,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(150, sorts.count * 0.3f)));
     
     // ================== 识别 ==================
-    for (MapModel *refModel in refModels) {
+    for (MapModel *refModel in valids) {
         AIFeatureJvBuModel *stModel = refModel.v1;
         AIPort *refPort = refModel.v2;
         
@@ -563,6 +562,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [gtGroup run4AverageContentStrong];
     }
     AddDebugCodeBlock_KeyV3();
+    NSLog(@"GT广入:%ld 识别到:%ld",valids.count,allGTGroups.count);
     return allGTGroups;
 }
 
@@ -576,9 +576,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         GTZiJvModelV2 *item = ARR_INDEX(sorts, i);
         item.averageContentStrongScore = (sorts.count - i) / (CGFloat)sorts.count;
     }
-    
-    // 末尾淘汰。
-    [TCRecognitionUtil filter4ZonHe:decoratorJvBuModel.gtModels];
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(GTZiJvModelV2 *obj) {
@@ -595,6 +592,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSInteger count = resultModels.count;
     float needRate = count < 5 ? 1 : count < 10 ? 0.7 : count < 20 ? 0.5 : count < 40 ? 0.4 : 0.2;
     resultModels = ARR_SUB(resultModels, 0, MIN(20, count * needRate));
+    NSLog(@"GT窄出:%ld 识别到:%ld",resultModels.count,decoratorJvBuModel.gtModels.count);
     AddDebugCodeBlock_KeyV3();
     
     // 更新: ref强度 & 相似度 & 抽具象 & 映射;

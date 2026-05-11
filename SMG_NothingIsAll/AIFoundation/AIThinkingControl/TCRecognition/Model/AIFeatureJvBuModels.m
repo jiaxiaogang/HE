@@ -111,31 +111,48 @@
     }
 }
 
-// 每个条件都末尾淘汰20%（参考35138-TODO1）。
+/**
+ *  MARK:--------------------ST定责末尾淘汰（参考35138-TODO1）。--------------------
+ *  @status 关掉：这个五项分别淘汰的太狠，200条只剩没几条。如果综合淘汰，与st识别后的竞争因子综合竞争就一模一样重复了。
+ */
 -(void) filter4ZonHe {
-    CGFloat outerJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
-        return model.outerShapeMatchValue;
-    }] / self.stModels.count;
-    CGFloat innerJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
-        return model.innerEigenMatchValue;
-    }] / self.stModels.count;
-    CGFloat bestCountJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
-        return model.bestGVs.count;
-    }] / self.stModels.count;
-    CGFloat matchRatioJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
-        return model.modelMatchRatio;
-    }] / self.stModels.count;
-    CGFloat averageContentJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
-        return model.averageContentStrong;
+    
+    // =================== 方式2、根据五项分别定责淘汰 ===================
+    
+    //CGFloat outerJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
+    //    return model.outerShapeMatchValue;
+    //}] / self.stModels.count;
+    //CGFloat innerJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
+    //    return model.innerEigenMatchValue;
+    //}] / self.stModels.count;
+    //CGFloat bestCountJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
+    //    return model.bestGVs.count;
+    //}] / self.stModels.count;
+    //CGFloat matchRatioJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
+    //    return model.modelMatchRatio;
+    //}] / self.stModels.count;
+    //CGFloat averageContentJun = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
+    //    return model.averageContentStrong;
+    //}] / self.stModels.count;
+    //
+    //self.stModels = [SMGUtils filterArr:self.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
+    //    if (![TCLearningUtil noZeRenForPingJun:model.outerShapeMatchValue bigerMatchValue:outerJun]) return false;
+    //    if (![TCLearningUtil noZeRenForPingJun:model.innerEigenMatchValue bigerMatchValue:innerJun]) return false;
+    //    if (![TCLearningUtil noZeRenForPingJun:model.bestGVs.count bigerMatchValue:bestCountJun]) return false;
+    //    if (![TCLearningUtil noZeRenForPingJun:model.modelMatchRatio bigerMatchValue:matchRatioJun]) return false;
+    //    if (![TCLearningUtil noZeRenForPingJun:model.averageContentStrong bigerMatchValue:averageContentJun]) return false;
+    //    return true;
+    //}];
+    
+    // =================== 方式2、根据综合定责淘汰 ===================
+    
+    CGFloat modelScore = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
+        return model.outerShapeMatchValue * model.innerEigenMatchValue * model.bestGVs.count * model.modelMatchRatio * model.averageContentStrongScore;
     }] / self.stModels.count;
     
     self.stModels = [SMGUtils filterArr:self.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
-        if (![TCLearningUtil noZeRenForPingJun:model.outerShapeMatchValue bigerMatchValue:outerJun]) return false;
-        if (![TCLearningUtil noZeRenForPingJun:model.innerEigenMatchValue bigerMatchValue:innerJun]) return false;
-        if (![TCLearningUtil noZeRenForPingJun:model.bestGVs.count bigerMatchValue:bestCountJun]) return false;
-        if (![TCLearningUtil noZeRenForPingJun:model.modelMatchRatio bigerMatchValue:matchRatioJun]) return false;
-        if (![TCLearningUtil noZeRenForPingJun:model.averageContentStrong bigerMatchValue:averageContentJun]) return false;
-        return true;
+        CGFloat itemScore = model.outerShapeMatchValue * model.innerEigenMatchValue * model.bestGVs.count * model.modelMatchRatio * model.averageContentStrongScore;
+        return [TCLearningUtil noZeRenForPingJun:itemScore bigerMatchValue:modelScore];
     }];
 }
 
