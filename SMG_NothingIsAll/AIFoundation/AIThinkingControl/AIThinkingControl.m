@@ -311,28 +311,46 @@ static AIThinkingControl *_instance;
     //    return [InputGroupFeatureModel new:model.assT.p rect:model.assST_ProtoRect];
     //}];
     
-    // 方案2、========== 用absST来构建ProtoGT ==========
-    NSArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
-        if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
-        CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
-            return item.bestGVAtProtoTRect;
-        }];
-        return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
-    }];
+    // 方案2、========== 用absST来构建ProtoGT（已废弃，被方案3覆盖）==========
+    //NSArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {
+    //    if (!ARRISOK(model.bestGVs4NoZeRen)) return nil;
+    //    CGRect bestGVs_ProtoT = [SMGUtils convertArr2Rect:model.bestGVs4NoZeRen itemRectBlock:^CGRect(AIFeatureJvBuItem *item) {
+    //        return item.bestGVAtProtoTRect;
+    //    }];
+    //    return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
+    //}];
     
     // 方案3、========== 用每个assST.bestGVs对应的protoRect切出每个protoST，然后所有protoST共同构建ProtoGT（参考38013-方案） ==========
-    for (AIFeatureJvBuModel *stModel in goodSTModels) {
-        for (AIFeatureJvBuItem *gvModel in stModel.bestGVs.allValues) {
-            // 从protoImgDic切图，生成protoGV（切图范围为gvModel.bestGVAtProtoTRect）。
+    NSMutableArray *protoSTOrders = [NSMutableArray new];
+    NSArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *stModel) {
+        NSArray *stOrders = [SMGUtils convertArr:stModel.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *gvModel) {
+            CGRect protoRect = gvModel.bestGVAtProtoTRect;
+            if (CGRectIsEmpty(protoRect) || CGRectIsNull(protoRect)) return nil;
             
-        }
-        // 上面生成的所有protoGVs生成一个protoST。
+            // 切图
+            MapModel *rectKey = [TCRecognitionInvoke getIndexsOfProtoRect:protoRect];
+            NSDictionary *protoGVIndex = [TCRecognitionInvoke getGVIndexFromPoolOrCutProtoImgV2:protoRect rectKey:rectKey protoColorDic:colorDic ds:ds];
+            if (!protoGVIndex || [@"isNull" isEqual:protoGVIndex]) return nil;
+            
+            // 单码装箱
+            NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndex algsType:at];
+            
+            // 构建组码
+            item_ps = [SMGUtils sortPointers:item_ps];
+            AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
+            
+            // 收集stOrders
+            return [InputGroupFeatureModel new:groupValue.p rect:protoRect];
+        }];
+        if (!ARRISOK(stOrders)) return nil;
         
-    }
-    // 上面生成的所有protoSTs生成一个protoGT。
-    
-    
-    
+        // gvOrders构建protoST
+        stOrders = [ThinkingUtils sortInputGroupFeatureModels:stOrders];
+        AIGroupFeatureNode *protoST = [AIGeneralNodeCreater createGroupFeatureNode:stOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
+        
+        // 收集stOrders
+        return [InputGroupFeatureModel new:protoST.p rect:protoST.rect];
+    }];
     if (gtOrders.count == 0) return nil;
     
     // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。

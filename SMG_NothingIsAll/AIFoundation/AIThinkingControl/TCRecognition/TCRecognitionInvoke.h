@@ -60,4 +60,16 @@
 //+(void) recognitionCansetAlg:(AIAlgNodeBase*)protoAlg sceneFo:(AIFoNodeBase*)sceneFo inModel:(AIShortMatchModel*)inModel;
 //+(void) recognitionCansetFo:(AIKVPointer*)newCanset_p sceneFo:(AIKVPointer*)sceneFo_p es:(EffectStatus)es;
 
+
+/**
+ *  MARK:--------------------切图缓存池--------------------
+ */
++(NSDictionary*) getGVIndexFromPoolOrCutProtoImgV2:(CGRect)protoRect rectKey:(MapModel*)rectKey protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds;
+
+/**
+ *  MARK:--------------------切图分组--------------------
+ *  @desc 对protoRect计算复用字典的key索引（参考35121-TODO1.1）。
+ */
++(MapModel*) getIndexsOfProtoRect:(CGRect)protoRect;
+
 @end
