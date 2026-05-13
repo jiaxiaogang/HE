@@ -78,4 +78,11 @@
 //同区且反向
 +(BOOL) sameIdenDiffDelta:(AIKVPointer*)mv1_p mv2:(AIKVPointer*)mv2_p;
 
+/**
+ *  MARK:--------------------归一化得分 转为 末尾淘汰得分--------------------
+ *  @param from0_1Score : 归一化得分
+ *  @result 末尾淘汰得分
+ */
++(CGFloat) tailScore:(CGFloat)from0_1Score;
+
 @end
