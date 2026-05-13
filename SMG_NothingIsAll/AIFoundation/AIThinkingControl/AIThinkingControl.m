@@ -253,7 +253,7 @@ static AIThinkingControl *_instance;
     }];
     
     // 构建ProtoGT & 类比。
-    AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
+    AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:colorDic at:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
     
     // debug
     NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
@@ -302,7 +302,7 @@ static AIThinkingControl *_instance;
     return allGVs;
 }
 
--(AIGroupFeatureNode*) commitInput4ProtoGT:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
+-(AIGroupFeatureNode*) commitInput4ProtoGT:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。
     NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
     
@@ -319,6 +319,20 @@ static AIThinkingControl *_instance;
         }];
         return [InputGroupFeatureModel new:model.abs_p rect:bestGVs_ProtoT];
     }];
+    
+    // 方案3、========== 用每个assST.bestGVs对应的protoRect切出每个protoST，然后所有protoST共同构建ProtoGT（参考38013-方案） ==========
+    for (AIFeatureJvBuModel *stModel in goodSTModels) {
+        for (AIFeatureJvBuItem *gvModel in stModel.bestGVs.allValues) {
+            // 从protoImgDic切图，生成protoGV（切图范围为gvModel.bestGVAtProtoTRect）。
+            
+        }
+        // 上面生成的所有protoGVs生成一个protoST。
+        
+    }
+    // 上面生成的所有protoSTs生成一个protoGT。
+    
+    
+    
     if (gtOrders.count == 0) return nil;
     
     // 有序：为增加特征content_ps的有序性：对orders按rect进行排序（特征的content是有序的，所以要先排下序）。
