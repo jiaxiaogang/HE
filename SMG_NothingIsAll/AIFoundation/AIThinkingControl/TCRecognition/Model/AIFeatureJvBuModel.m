@@ -322,7 +322,10 @@
     // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return self.outerShapeMatchValue * self.innerEigenMatchValue * [AIScore tailScore:self.modelMatchRatio] * [AIScore tailScore:self.bestsCountScoreByRank] * [AIScore tailScore:self.averageContentStrongScore];
+    return self.outerShapeMatchValue * self.innerEigenMatchValue
+                * [AIScore scoreWeight:self.modelMatchRatio weight:0.2f]
+                * self.bestsCountScoreByRank
+                * [AIScore scoreWeight:self.averageContentStrongScore weight:0.2f];
 }
 
 -(NSString*) stScoreDesc {
@@ -343,9 +346,9 @@
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
     return STRFORMAT(@"外形:%.2f 内征:%.2f 匹配率:%.2f (%02ld/%02ld) 匹配数:%.2f 稳定性:%.2f = 总分:%.2f",self.outerShapeMatchValue,self.innerEigenMatchValue,
-                     [AIScore tailScore:self.modelMatchRatio],self.bestGVs.count,self.assT.count,
-                     [AIScore tailScore:self.bestsCountScoreByRank],
-                     [AIScore tailScore:self.averageContentStrongScore],
+                     [AIScore scoreWeight:self.modelMatchRatio weight:0.2f],self.bestGVs.count,self.assT.count,
+                     self.bestsCountScoreByRank,
+                     [AIScore scoreWeight:self.averageContentStrongScore weight:0.2f],
                      self.stScore);
 }
 

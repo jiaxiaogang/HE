@@ -290,11 +290,10 @@
         AIKVPointer *assGV_p = ARR_INDEX(baseST.content_ps, assIndex.integerValue);
         
         //16A. 方案1、采用bestGV at assT的位置，做absT的元素位置分布：将gvRect在assT的范围，转成在newAbsT中的位置。
-        CGRect assGVRect = VALTOOK(ARR_INDEX(baseST.rects, assIndex.integerValue)).CGRectValue;
+        NSValue *assGVRectValue = ARR_INDEX(baseST.rects, assIndex.integerValue);
+        CGRect assGVRect = assGVRectValue.CGRectValue;
         CGRect bestGV_assT = CGRectMake(assGVRect.origin.x - bestGVs_AssT.origin.x, assGVRect.origin.y - bestGVs_AssT.origin.y, assGVRect.size.width, assGVRect.size.height);
-        if (bestGV_assT.size.width != bestGV_assT.size.height || bestGV_assT.size.width == 0 || bestGV_assT.size.height == 0) {
-            ELog(@"assRect数据异常: 宽高不一致，或宽高为0：1、在强训跑图片时，2、这里打印十几次后：3、然后这个方法：闪退了，4、打断点重现下");
-        }
+        if (bestGV_assT.size.width != bestGV_assT.size.height || bestGV_assT.size.width == 0 || bestGV_assT.size.height == 0) ELog(@"assRect数据异常: 宽高不一致，或宽高为0");
         //16B. 方案2、采用bestGV at protoT的位置，做absT的元素位置分布：此方案优点在于构建protoGT时，尺寸及位置可以更准确，缺点是类比这里本来就应该以assT为准，不关protoT的事，所以先采用方案1。
         //CGRect bestGV_protoT = CGRectMake(obj.bestGVAtProtoTRect.origin.x - jvBuModel.bestGVsAtProtoTRect.origin.x,obj.bestGVAtProtoTRect.origin.y - jvBuModel.bestGVsAtProtoTRect.origin.y,obj.bestGVAtProtoTRect.size.width, obj.bestGVAtProtoTRect.size.height);
         //NSLog(@"bestGV的Rect：atAss=%@ atProto=%@",Rect2Str(bestGV_assT),Rect2Str(bestGV_protoT));

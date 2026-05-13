@@ -16,7 +16,7 @@
 +(id) new:(AIFeatureNode*)assT beginAssIndex:(NSInteger)beginAssIndex beginGV_ProtoRect:(CGRect)beginGV_ProtoRect;
 
 //refPort.target。
-@property (weak, nonatomic) AIFeatureNode *assT;
+@property (strong, nonatomic) AIFeatureNode *assT;
 // 切入帧（参考35126-TODO1）。
 @property (assign, nonatomic) NSInteger beginAssIndex;
 // 切入帧对应ProtoRect（参考35126-TODO1）。
