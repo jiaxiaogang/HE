@@ -49,7 +49,6 @@
         self.pointerId = [aDecoder decodeIntegerForKey:@"pointerId"];
         self.params = [aDecoder decodeObjectForKey:@"params"];
         self.isJiao = [aDecoder decodeBoolForKey:@"isJiao"];
-        self.isGT = [aDecoder decodeBoolForKey:@"isGT"];
     }
     return self;
 }
@@ -58,7 +57,6 @@
     [aCoder encodeInteger:self.pointerId forKey:@"pointerId"];
     [aCoder encodeObject:self.params forKey:@"params"];
     [aCoder encodeBool:self.isJiao forKey:@"isJiao"];
-    [aCoder encodeBool:self.isGT forKey:@"isGT"];
 }
 
 -(id) paramForKey:(NSString*)key{
@@ -73,7 +71,6 @@
     copy.pointerId = self.pointerId;
     copy.params = self.params;
     copy.isJiao = self.isJiao;
-    copy.isGT = self.isGT;
     return copy;
 }
 

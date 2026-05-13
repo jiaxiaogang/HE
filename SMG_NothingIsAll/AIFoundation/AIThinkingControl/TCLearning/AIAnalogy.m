@@ -320,7 +320,7 @@
     }
     
     //31. 外类比构建
-    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[baseST] at:baseST.at ds:baseST.ds isOut:baseST.isOut isJiao:true isGT:false];
+    AIFeatureNode *absT = [AIGeneralNodeCreater createFeatureNode:sortGroupModels conNodes:@[baseST] at:baseST.at ds:baseST.ds isOut:baseST.isOut isJiao:true];
     
     // 如果abs的抽象层数少于当前proto或ass加1，则赋新抽象层数值（未达到abs本来就有的层级，则不变）。
     absT.absLevel = MAX(baseST.absLevel + 1, absT.absLevel);

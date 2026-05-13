@@ -346,7 +346,7 @@ static AIThinkingControl *_instance;
         
         // gvOrders构建protoST
         stOrders = [ThinkingUtils sortInputGroupFeatureModels:stOrders];
-        AIGroupFeatureNode *protoST = [AIGeneralNodeCreater createGroupFeatureNode:stOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
+        AIFeatureNode *protoST = [AIGeneralNodeCreater createFeatureNode:stOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
         
         // 收集stOrders
         return [InputGroupFeatureModel new:protoST.p rect:protoST.rect];
@@ -684,7 +684,7 @@ static AIThinkingControl *_instance;
     
     //3、构建具象特征。
     //2025.08.07: 具象似层即使是固定粒度也是isGT（参考35062-TODO3.1）。
-    AIFeatureNode *hsbFeature = [AIGeneralNodeCreater createFeatureNode:hsbGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false isGT:true];
+    AIFeatureNode *hsbFeature = [AIGeneralNodeCreater createFeatureNode:hsbGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false];
     [hsbFeature updateLogDescItem:logDesc];
     
     NSLog(@"%@ %@ T%ld====================================\n%@",logDesc,ds,hsbFeature.pId,FeatureDesc(hsbFeature.p,1));
