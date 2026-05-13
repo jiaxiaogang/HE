@@ -64,6 +64,7 @@
 @property (assign, nonatomic) CGFloat bestGVsCountRatio;
 
 // item.assT.absLevel抽象度，归一化计算（用于在稳定层里优先抽象层）。
+// 废弃：因为它与直接bests.count竞争力没区别。
 @property (assign, nonatomic) CGFloat modelMatchCountScore;
 
 // item.assT.conPorts.sum(strong) 计算总强度，和归一化后的强度竞争力。
@@ -113,6 +114,8 @@
 -(void) run4AverageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrongScore;
+
+@property (assign, nonatomic) CGFloat bestsCountScoreByRank;
 
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;

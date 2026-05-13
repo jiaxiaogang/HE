@@ -46,6 +46,9 @@
 // 计算强度归一化得分。
 -(void) run4AverageContentStrongScore;
 
+// 匹配数归一化得分：依据排名。
+-(void) run4BestsCountScoreByRank;
+
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4ZonHe;
 

@@ -71,6 +71,8 @@
 @property (assign, nonatomic) CGFloat averageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrongScore;
 
+@property (assign, nonatomic) CGFloat bestsCountScoreByRank;
+
 // 定责淘汰。
 -(void) filter4ZonHe;
 

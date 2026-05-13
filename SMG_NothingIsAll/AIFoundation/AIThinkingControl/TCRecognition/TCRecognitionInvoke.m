@@ -383,6 +383,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [decoratorJvBuModel run4AbsPortStrongScore];        // 抽象强度得分
     [decoratorJvBuModel run4ModelMatchCountScore];      // 匹配数归一化：防过抽。
     [decoratorJvBuModel run4AverageContentStrongScore]; // 强度归一化得分
+    [decoratorJvBuModel run4BestsCountScoreByRank];     // 匹配数归一化：依据排名。
     
     // 竞争因子计算：防止过度抽象匹配数。
     // [decoratorJvBuModel run4BestGVsCountRatio];
@@ -570,6 +571,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 强度归一化得分。
     [GTZiJvModelsV2 computeAverageContentStrongScoreWithGTModels:decoratorJvBuModel.gtModels];
+    
+    // 匹配数归一化得分：依据排名。
+    [GTZiJvModelsV2 computeBestsCountScoreWithGTModelsByRank:decoratorJvBuModel.gtModels];
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(GTZiJvModelV2 *obj) {

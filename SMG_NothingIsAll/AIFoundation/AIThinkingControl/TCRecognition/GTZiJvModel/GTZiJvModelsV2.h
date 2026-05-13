@@ -13,4 +13,7 @@
 // 强度归一化得分。
 +(void) computeAverageContentStrongScoreWithGTModels:(NSArray*)gtModels;
 
+// 匹配数归一化得分：依据排名。
++(void) computeBestsCountScoreWithGTModelsByRank:(NSArray*)gtModels;
+
 @end
