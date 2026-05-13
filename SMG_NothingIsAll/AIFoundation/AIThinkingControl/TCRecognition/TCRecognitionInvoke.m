@@ -569,13 +569,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(void) recognitionGroupFeatureV9_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel logDesc:(NSString*)logDesc ds:(NSString*)ds {
     
     // 强度归一化得分。
-    NSArray *sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(GTZiJvModelV2 *obj) {
-        return obj.averageContentStrong;
-    }];
-    for (NSInteger i = 0; i < sorts.count; i++) {
-        GTZiJvModelV2 *item = ARR_INDEX(sorts, i);
-        item.averageContentStrongScore = (sorts.count - i) / (CGFloat)sorts.count;
-    }
+    [GTZiJvModelsV2 computeAverageContentStrongScoreWithGTModels:decoratorJvBuModel.gtModels];
     
     // 最后进行综合竞争，把最符合的找出来。
     NSArray *resultModels = [SMGUtils sortBig2Small:decoratorJvBuModel.gtModels compareBlock:^double(GTZiJvModelV2 *obj) {

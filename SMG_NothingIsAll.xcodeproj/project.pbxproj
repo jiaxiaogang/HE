@@ -149,6 +149,7 @@
 		087705BA2753747E00BA4EFB /* TCAction.m in Sources */ = {isa = PBXBuildFile; fileRef = 087705B92753747E00BA4EFB /* TCAction.m */; };
 		087705BD2753748A00BA4EFB /* TCOut.m in Sources */ = {isa = PBXBuildFile; fileRef = 087705BC2753748A00BA4EFB /* TCOut.m */; };
 		087705C32753B9F400BA4EFB /* HDemandModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 087705C22753B9F400BA4EFB /* HDemandModel.m */; };
+		087A7BBB2FB4009300838AB8 /* GTZiJvModelsV2.m in Sources */ = {isa = PBXBuildFile; fileRef = 087A7BBA2FB4009300838AB8 /* GTZiJvModelsV2.m */; };
 		087C818A2792DD400046DF9E /* AIMatchAlgModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 087C81892792DD400046DF9E /* AIMatchAlgModel.m */; };
 		087E7FCB258053D90097E0B9 /* NSFile+Extension.m in Sources */ = {isa = PBXBuildFile; fileRef = 087E7FCA258053D90097E0B9 /* NSFile+Extension.m */; };
 		0881965F21800F2B00D5DB36 /* BirdLivePage.m in Sources */ = {isa = PBXBuildFile; fileRef = 0881965D21800F2B00D5DB36 /* BirdLivePage.m */; };
@@ -544,6 +545,8 @@
 		087705BE2753786700BA4EFB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		087705C12753B9F400BA4EFB /* HDemandModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HDemandModel.h; sourceTree = "<group>"; };
 		087705C22753B9F400BA4EFB /* HDemandModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HDemandModel.m; sourceTree = "<group>"; };
+		087A7BB92FB4009300838AB8 /* GTZiJvModelsV2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GTZiJvModelsV2.h; sourceTree = "<group>"; };
+		087A7BBA2FB4009300838AB8 /* GTZiJvModelsV2.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GTZiJvModelsV2.m; sourceTree = "<group>"; };
 		087C81882792DD400046DF9E /* AIMatchAlgModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIMatchAlgModel.h; sourceTree = "<group>"; };
 		087C81892792DD400046DF9E /* AIMatchAlgModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIMatchAlgModel.m; sourceTree = "<group>"; };
 		087E7FC9258053D90097E0B9 /* NSFile+Extension.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSFile+Extension.h"; sourceTree = "<group>"; };
@@ -1472,6 +1475,8 @@
 		088EA86B2F6069E700E0ED6F /* GTZiJvModel */ = {
 			isa = PBXGroup;
 			children = (
+				087A7BB92FB4009300838AB8 /* GTZiJvModelsV2.h */,
+				087A7BBA2FB4009300838AB8 /* GTZiJvModelsV2.m */,
 				084739D02F76E7210003B5D1 /* GTZiJvModelV2.h */,
 				084739D12F76E7210003B5D1 /* GTZiJvModelV2.m */,
 				084739D32F76E74B0003B5D1 /* STZiJvModelV2.h */,
@@ -2197,6 +2202,7 @@
 				0858C5D62194FABA00951BA5 /* RoadView.m in Sources */,
 				087705B12753745D00BA4EFB /* TCForecast.m in Sources */,
 				0860A3BB22C9851800A48682 /* CustomAddNodeWindow.m in Sources */,
+				087A7BBB2FB4009300838AB8 /* GTZiJvModelsV2.m in Sources */,
 				080DF69F2DBB0CE1000EC837 /* ImgTrainerView.m in Sources */,
 				0825AFF31F748F67003B86C7 /* NSObject+Extension.m in Sources */,
 				08616986284CF2D300A39473 /* TCSolutionUtil.m in Sources */,

@@ -80,6 +80,7 @@
 #import "GTModelV2.h"
 #import "GTItem.h"
 #import "GTItemV2.h"
+#import "GTZiJvModelsV2.h"
 #import "GTZiJvModelV2.h"
 #import "STZiJvModelV2.h"
 #import "WeightedSumCutUtil.h"
