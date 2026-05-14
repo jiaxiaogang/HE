@@ -343,6 +343,11 @@ static AIThinkingControl *_instance;
         }];
         if (!ARRISOK(stOrders)) return nil;
         
+        // TODOTOMORROW20260514: 查一下这里的protoST，本身很抽象，前期又不准，这么大批量的构建，影响到整个系统各种识别这种st结果。
+        // 分析：这些看起来都是灰黑的同色，，，
+        // 
+        
+        
         // gvOrders构建protoST
         stOrders = [ThinkingUtils sortInputGroupFeatureModels:stOrders];
         AIFeatureNode *protoST = [AIGeneralNodeCreater createFeatureNode:stOrders conNodes:nil at:at ds:ds isOut:false isJiao:false];
