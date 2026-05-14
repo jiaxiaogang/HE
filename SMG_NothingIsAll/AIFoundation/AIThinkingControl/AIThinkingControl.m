@@ -321,7 +321,6 @@ static AIThinkingControl *_instance;
     //}];
     
     // 方案3、========== 用每个assST.bestGVs对应的protoRect切出每个protoST，然后所有protoST共同构建ProtoGT（参考38013-方案） ==========
-    NSMutableArray *protoSTOrders = [NSMutableArray new];
     NSArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *stModel) {
         NSArray *stOrders = [SMGUtils convertArr:stModel.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *gvModel) {
             CGRect protoRect = gvModel.bestGVAtProtoTRect;
@@ -333,14 +332,14 @@ static AIThinkingControl *_instance;
             if (!protoGVIndex || [@"isNull" isEqual:protoGVIndex]) return nil;
             
             // 单码装箱
-            NSArray *item_ps = [theNet algModelConvert2Pointers:protoGVIndex algsType:at];
+            NSArray *gvOrders = [theNet algModelConvert2Pointers:protoGVIndex algsType:at];
             
             // 构建组码
-            item_ps = [SMGUtils sortPointers:item_ps];
-            AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:item_ps conNodes:nil at:at ds:ds isOut:false];
+            gvOrders = [SMGUtils sortPointers:gvOrders];
+            AIGroupValueNode *groupValue = [AIGeneralNodeCreater createGroupValueNode:gvOrders conNodes:nil at:at ds:ds isOut:false];
             
             // 收集stOrders
-            return [InputGroupFeatureModel new:groupValue.p rect:protoRect];
+            return [InputGroupValueModel new:groupValue.p rect:protoRect];
         }];
         if (!ARRISOK(stOrders)) return nil;
         
