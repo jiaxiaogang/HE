@@ -253,11 +253,11 @@ static AIThinkingControl *_instance;
     }];
     
     // 构建ProtoGT & 类比。
-    AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:colorDic at:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
+    // AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:colorDic at:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
     
     // debug
     NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
-    NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
+    // NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
 }
 
 // GV识别
@@ -342,11 +342,6 @@ static AIThinkingControl *_instance;
             return [InputGroupValueModel new:groupValue.p rect:protoRect];
         }];
         if (!ARRISOK(stOrders)) return nil;
-        
-        // TODOTOMORROW20260514: 查一下这里的protoST，本身很抽象，前期又不准，这么大批量的构建，影响到整个系统各种识别这种st结果。
-        // 分析：这些看起来都是灰黑的同色，，，
-        // 
-        
         
         // gvOrders构建protoST
         stOrders = [ThinkingUtils sortInputGroupFeatureModels:stOrders];
