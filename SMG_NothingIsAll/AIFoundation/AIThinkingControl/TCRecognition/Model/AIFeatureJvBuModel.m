@@ -322,10 +322,11 @@
     // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return self.outerShapeMatchValue * self.innerEigenMatchValue
-                * [AIScore scoreWeight:self.modelMatchRatio weight:0.2f]
-                * self.bestsCountScoreByRank
-                * [AIScore scoreWeight:self.averageContentStrongScore weight:0.2f];
+    return [AIScore scoreWeight:self.outerShapeMatchValue weight:1.0f]
+                * [AIScore scoreWeight:self.innerEigenMatchValue weight:1.0f]
+                * [AIScore scoreWeight:self.modelMatchRatio weight:0.3f]
+                * [AIScore scoreWeight:self.countScoreByRank weight:0.8f]
+                * [AIScore scoreWeight:self.averageContentStrongScore weight:0.3f];
 }
 
 -(NSString*) stScoreDesc {
@@ -345,10 +346,12 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:%02ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.stScore,self.averageContentStrong);
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return STRFORMAT(@"外形:%.2f 内征:%.2f 匹配率:%.2f (%02ld/%02ld) 匹配数:%.2f 稳定性:%.2f = 总分:%.2f",self.outerShapeMatchValue,self.innerEigenMatchValue,
-                     [AIScore scoreWeight:self.modelMatchRatio weight:0.2f],self.bestGVs.count,self.assT.count,
-                     self.bestsCountScoreByRank,
-                     [AIScore scoreWeight:self.averageContentStrongScore weight:0.2f],
+    return STRFORMAT(@"外形:%.2f 内征:%.2f 匹配率:%.2f (%02ld/%02ld) 匹配数:%.2f 稳定性:%.2f = 总分:%.2f",
+                     [AIScore scoreWeight:self.outerShapeMatchValue weight:1.0f],
+                     [AIScore scoreWeight:self.innerEigenMatchValue weight:1.0f],
+                     [AIScore scoreWeight:self.modelMatchRatio weight:1.0f],self.bestGVs.count,self.assT.count,
+                     [AIScore scoreWeight:self.countScoreByRank weight:1.0f],
+                     [AIScore scoreWeight:self.averageContentStrongScore weight:1.0f],
                      self.stScore);
 }
 

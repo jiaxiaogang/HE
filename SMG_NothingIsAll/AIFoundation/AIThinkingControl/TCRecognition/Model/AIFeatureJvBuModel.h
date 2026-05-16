@@ -115,7 +115,7 @@
 @property (assign, nonatomic) CGFloat averageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrongScore;
 
-@property (assign, nonatomic) CGFloat bestsCountScoreByRank;
+@property (assign, nonatomic) CGFloat countScoreByRank;
 
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
