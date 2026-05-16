@@ -324,8 +324,8 @@
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
     return [AIScore scoreWeight:self.outerShapeMatchValue weight:1.0f]
                 * [AIScore scoreWeight:self.innerEigenMatchValue weight:1.0f]
-                * [AIScore scoreWeight:self.totalCountScoreByRank weight:0.3f]
-                * [AIScore scoreWeight:self.bestsCountScoreByRank weight:0.8f]
+                * [AIScore scoreWeight:self.totalCountScoreByRank weight:0.5f]
+                * [AIScore scoreWeight:self.bestsCountScoreByRank weight:0.5f]
                 * [AIScore scoreWeight:self.averageContentStrongScore weight:0.3f];
 }
 

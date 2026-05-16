@@ -113,6 +113,7 @@
 
 // 匹配数归一化得分：依据排名。
 -(void) run4BestsCountScoreByRank {
+    // 越大越好。
     NSArray *sorts = [SMGUtils sortBig2Small:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         return obj.bestGVs.count;
     }];
@@ -123,7 +124,8 @@
 }
 
 -(void) run4TotalCountScoreByRank {
-    NSArray *sorts = [SMGUtils sortBig2Small:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+    // 越小越好。
+    NSArray *sorts = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         return obj.assT.count;
     }];
     for (NSInteger i = 0; i < sorts.count; i++) {
