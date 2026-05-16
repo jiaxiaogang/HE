@@ -1711,13 +1711,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //2025.12.20: 升级v2-继续性能优化：用分组索引来直接取复用结果（参考35121-方案1）。
 //@result 有可能返回nil，因为切图切到空结果，也会复用到池子里，避免重复取空。
 +(NSDictionary*) getGVIndexFromPoolOrCutProtoImgV2:(CGRect)protoRect rectKey:(MapModel*)rectKey protoColorDic:(NSDictionary*)protoColorDic ds:(NSString*)ds {
+    // <3时九宫每格切不到一个像素，直接返回nil（不然生成的GVIndex会是默认0,0,0,0四个值，导致很多判不准）（参考38022-BUG）。
+    if (protoRect.size.width < 3 || protoRect.size.height < 3) return nil;
+    
     NSDictionary *protoGVIndex = [protoGVIndexPoolV2 objectV4ForKey1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4];
     cutImgPoolTotalCount ++;
     
     // 有旧的则直接复用
     if (protoGVIndex) return protoGVIndex;
     cutImgPoolMissCount ++;
-        
+    
     // 无相似则切图计算
     NSArray *subDots = [ThinkingUtils getSubDots:protoColorDic gvRect:protoRect];
     protoGVIndex = ARRISOK(subDots) ? [AINetGroupValueIndex convertGVIndexData:subDots ds:ds] : nil;
