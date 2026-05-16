@@ -124,8 +124,8 @@
 }
 
 -(void) run4TotalCountScoreByRank {
-    // 越小越好。
-    NSArray *sorts = [SMGUtils sortSmall2Big:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+    // 越大越好。
+    NSArray *sorts = [SMGUtils sortBig2Small:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
         return obj.assT.count;
     }];
     for (NSInteger i = 0; i < sorts.count; i++) {

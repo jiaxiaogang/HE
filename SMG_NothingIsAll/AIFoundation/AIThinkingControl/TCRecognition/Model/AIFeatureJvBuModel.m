@@ -325,7 +325,7 @@
     return [AIScore scoreWeight:self.outerShapeMatchValue weight:1.0f]
                 * [AIScore scoreWeight:self.innerEigenMatchValue weight:1.0f]
                 * [AIScore scoreWeight:self.totalCountScoreByRank weight:0.5f]
-                * [AIScore scoreWeight:self.bestsCountScoreByRank weight:0.5f]
+                * [AIScore scoreWeight:self.bestsCountScoreByRank weight:0.7f]
                 * [AIScore scoreWeight:self.averageContentStrongScore weight:0.3f];
 }
 
@@ -349,9 +349,9 @@
     return STRFORMAT(@"外形:%.2f 内征:%.2f 元素数:%.2f (%02ld) 匹配数:%.2f（%02ld） 稳定性:%.2f = 总分:%.2f",
                      [AIScore scoreWeight:self.outerShapeMatchValue weight:1.0f],
                      [AIScore scoreWeight:self.innerEigenMatchValue weight:1.0f],
-                     [AIScore scoreWeight:self.totalCountScoreByRank weight:1.0f],self.assT.count,
-                     [AIScore scoreWeight:self.bestsCountScoreByRank weight:1.0f],self.bestGVs.count,
-                     [AIScore scoreWeight:self.averageContentStrongScore weight:1.0f],
+                     [AIScore scoreWeight:self.totalCountScoreByRank weight:0.5f],self.assT.count,
+                     [AIScore scoreWeight:self.bestsCountScoreByRank weight:0.7f],self.bestGVs.count,
+                     [AIScore scoreWeight:self.averageContentStrongScore weight:0.3f],
                      self.stScore);
 }
 
