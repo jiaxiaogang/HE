@@ -114,11 +114,21 @@
 // 匹配数归一化得分：依据排名。
 -(void) run4BestsCountScoreByRank {
     NSArray *sorts = [SMGUtils sortBig2Small:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.assT.count; // obj.bestGVs.count
+        return obj.bestGVs.count;
     }];
     for (NSInteger i = 0; i < sorts.count; i++) {
         AIFeatureJvBuModel *item = ARR_INDEX(sorts, i);
-        item.countScoreByRank = (float)(sorts.count - i) / sorts.count;
+        item.bestsCountScoreByRank = (float)(sorts.count - i) / sorts.count;
+    }
+}
+
+-(void) run4TotalCountScoreByRank {
+    NSArray *sorts = [SMGUtils sortBig2Small:self.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
+        return obj.assT.count;
+    }];
+    for (NSInteger i = 0; i < sorts.count; i++) {
+        AIFeatureJvBuModel *item = ARR_INDEX(sorts, i);
+        item.totalCountScoreByRank = (float)(sorts.count - i) / sorts.count;
     }
 }
 

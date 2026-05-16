@@ -383,7 +383,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [decoratorJvBuModel run4AbsPortStrongScore];        // 抽象强度得分
     [decoratorJvBuModel run4ModelMatchCountScore];      // 匹配数归一化：防过抽。
     [decoratorJvBuModel run4AverageContentStrongScore]; // 强度归一化得分
-    [decoratorJvBuModel run4BestsCountScoreByRank];     // 匹配数归一化：依据排名。
+    [decoratorJvBuModel run4BestsCountScoreByRank];     // 根据排名归一化：分子匹配数。
+    [decoratorJvBuModel run4TotalCountScoreByRank];     // 根据排名归一化：分母总数。
     
     // 竞争因子计算：防止过度抽象匹配数。
     // [decoratorJvBuModel run4BestGVsCountRatio];
