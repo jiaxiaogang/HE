@@ -8,6 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
+#define cOuterShapeWeight 1.0
+#define cInnerEigenWeight 1.0
+#define cTotalCountWeight 1.0
+#define cBestsCountWeight 1.0
+#define cAverStrongWeight 0.0
+
 /**
  *  MARK:--------------------单特征识别V2算法模型：二级--------------------
  */
