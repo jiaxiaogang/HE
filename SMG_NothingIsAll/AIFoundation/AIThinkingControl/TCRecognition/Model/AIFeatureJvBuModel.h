@@ -8,10 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
-#define cOuterShapeWeight 0.000322f // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
-#define cInnerEigenWeight 0.000322f // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
-#define cTotalCountWeight 1.0       // 中：自由竞争（用线性权重）。
-#define cBestsCountWeight 1.0       // 中：自由竞争（用线性权重）。
+#define cOuterShapeWeight 0.05f     // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
+#define cInnerEigenWeight 0.05f     // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
+#define cTotalCountWeight 0.2       // 中：自由竞争（用线性权重）。
+#define cBestsCountWeight 0.2       // 中：自由竞争（用线性权重）。
 #define cAverStrongWeight 0.0       // 弱：末尾淘汰（可废弃，在广入时，已淘汰强度低的）。
 
 /**
