@@ -47,8 +47,8 @@
 -(void) run4AverageContentStrongScore;
 
 // 匹配数归一化得分：依据排名。
--(void) run4BestsCountScoreByRank;
--(void) run4TotalCountScoreByRank;
+-(void) run4BestsCountScore:(NSInteger)protoCount;
+-(void) run4TotalCountScore:(NSInteger)protoCount;
 
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4ZonHe;

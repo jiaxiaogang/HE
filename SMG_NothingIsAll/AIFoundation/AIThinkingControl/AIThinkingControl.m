@@ -209,7 +209,7 @@ static AIThinkingControl *_instance;
     [decoratorJvBuModel.stModels addObjectsFromArray:stModels];
     
     // ST竞争。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc justRank:false];
+    [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc justRank:false protoCount:stOrders.count];
     
     // GT识别。
     NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];

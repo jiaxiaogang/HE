@@ -10,8 +10,8 @@
 
 #define cOuterShapeWeight 0.05f     // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
 #define cInnerEigenWeight 0.05f     // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
-#define cTotalCountWeight 0.2       // 中：自由竞争（用线性权重）。
-#define cBestsCountWeight 0.2       // 中：自由竞争（用线性权重）。
+#define cTotalCountWeight 1.0       // 中：自由竞争（用线性权重）。
+#define cBestsCountWeight 1.0       // 中：自由竞争（用线性权重）。
 #define cAverStrongWeight 0.0       // 弱：末尾淘汰（可废弃，在广入时，已淘汰强度低的）。
 
 /**
@@ -121,12 +121,11 @@
 @property (assign, nonatomic) CGFloat averageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrongScore;
 
-
-// TODOTOMORROW20260517: 不能用排名了，有可能全是1条，2条，排出来也只是屎里挑花。
-// 可以把protoST.count传进来做基准，不能自己选max。
-
-@property (assign, nonatomic) CGFloat bestsCountScoreByRank;
-@property (assign, nonatomic) CGFloat totalCountScoreByRank;
+/**
+ *  MARK:--------------------辅因子：匹配数 & 总数--------------------
+ */
+@property (assign, nonatomic) CGFloat bestsCountScore;
+@property (assign, nonatomic) CGFloat totalCountScore;
 
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;

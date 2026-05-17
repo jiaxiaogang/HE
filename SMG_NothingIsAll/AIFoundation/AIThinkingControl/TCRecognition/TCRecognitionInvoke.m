@@ -383,8 +383,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     [decoratorJvBuModel run4AbsPortStrongScore];        // 抽象强度得分
     [decoratorJvBuModel run4ModelMatchCountScore];      // 匹配数归一化：防过抽。
     [decoratorJvBuModel run4AverageContentStrongScore]; // 强度归一化得分
-    [decoratorJvBuModel run4BestsCountScoreByRank];     // 根据排名归一化：分子匹配数。
-    [decoratorJvBuModel run4TotalCountScoreByRank];     // 根据排名归一化：分母总数。
+    [decoratorJvBuModel run4BestsCountScore:protoCount];// 根据排名归一化：分子匹配数。
+    [decoratorJvBuModel run4TotalCountScore:protoCount];// 根据排名归一化：分母总数。
     
     // 竞争因子计算：防止过度抽象匹配数。
     // [decoratorJvBuModel run4BestGVsCountRatio];
@@ -730,16 +730,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 return [self recognitionValue:item_p rate:0.8 minLimit:20];//v1单码特征
             }];
         } else {
-            subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{
-                //TODO: 这里改为不再概念识别里调用特征识别，特征识别提前已经全部处理完成了。
-                //a. 通过组码做单特征识别。
-                AIFeatureJvBuModels *jvBuModel = [AIFeatureJvBuModels new:1];
-                [self recognitionFeatureV2_Step2:jvBuModel ds:nil logDesc:nil justRank:false];
-                
-                //b. 通过抽象特征做组特征识别，把JvBu的结果传给ZenTi继续向似层识别（参考34135-TODO5）。
-                NSArray *zenTiResult = nil;//[self recognitionGroupFeatureV3:item_p matchModels:jvBuModel.stModels dotSize:1];
-                return [SMGUtils collectArrA:jvBuModel.stModels arrB:zenTiResult];
-            }];
+            //TODO: 改为在特征识别完后，识别Alg，此处兼容下。
+            // subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{ }];
         }
         
         //4. 每个near_p做两件事:
