@@ -8,11 +8,11 @@
 
 #import <Foundation/Foundation.h>
 
-#define cOuterShapeWeight 1.0
-#define cInnerEigenWeight 1.0
-#define cTotalCountWeight 1.0
-#define cBestsCountWeight 1.0
-#define cAverStrongWeight 0.0
+#define cOuterShapeWeight 0.000322f // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
+#define cInnerEigenWeight 0.000322f // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
+#define cTotalCountWeight 1.0       // 中：自由竞争（用线性权重）。
+#define cBestsCountWeight 1.0       // 中：自由竞争（用线性权重）。
+#define cAverStrongWeight 0.0       // 弱：末尾淘汰（可废弃，在广入时，已淘汰强度低的）。
 
 /**
  *  MARK:--------------------单特征识别V2算法模型：二级--------------------
