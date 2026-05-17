@@ -395,6 +395,30 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
+    // TODOTOMORROW20260517: 按外形内征排序，仅保留前20%，这两个强竞争因子是必须保证的，然后再说别的竞争。
+    NSArray *valids = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.outerShapeMatchValue && item.innerEigenMatchValue;
+    }];
+    
+    //外形内征: (
+    //    0.26 0.42,
+    //    1.00 0.42,
+    //    0.31 0.80,
+    //    0.30 0.87,
+    //    0.47 0.58,
+    //    0.27 0.53,
+    //    1.00 0.42,
+    //    0.32 0.78,
+    //    0.49 0.45,
+    //    0.76 0.48
+    //)
+    // 外形和内征都>0.8的几乎没有，可以挑几个同样是0识别到0时，它跑出的外形内征都是什么值，多观察分析，看有什么问题。
+    
+    valids = ARR_SUB(valids, 0, 10);
+    NSLog(@"外形内征: %@",[SMGUtils convertArr:valids convertBlock:^id(AIFeatureJvBuModel *obj) {
+        return STRFORMAT(@"%.2f %.2f",obj.outerShapeMatchValue,obj.innerEigenMatchValue);
+    }]);
+    
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
     NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
