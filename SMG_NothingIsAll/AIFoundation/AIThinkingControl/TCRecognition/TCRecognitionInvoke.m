@@ -361,7 +361,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc justRank:(BOOL)justRank {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc justRank:(BOOL)justRank protoCount:(NSInteger)protoCount {
     // bestGVs末尾淘汰（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model filter4ZonHe];

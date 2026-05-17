@@ -121,6 +121,10 @@
 @property (assign, nonatomic) CGFloat averageContentStrong;
 @property (assign, nonatomic) CGFloat averageContentStrongScore;
 
+
+// TODOTOMORROW20260517: 不能用排名了，有可能全是1条，2条，排出来也只是屎里挑花。
+// 可以把protoST.count传进来做基准，不能自己选max。
+
 @property (assign, nonatomic) CGFloat bestsCountScoreByRank;
 @property (assign, nonatomic) CGFloat totalCountScoreByRank;
 

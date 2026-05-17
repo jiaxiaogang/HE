@@ -156,36 +156,9 @@ static AIThinkingControl *_instance;
 }
 
 /**
- *  MARK:--------------------现用于输入（多粒度）二维概念，如视觉图像，目前用于测支持多码特征--------------------
- *  @desc 为了方便开发，开发阶段不将Object转成Dictionary输入，后开发完成后下版本再转。
- */
--(void) commitInputWithSplitAsync:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
-    __block AIVisionAlgsModelV2 *weakAlgsModel = algsModel;
-    dispatch_async(self.tiQueue, ^{//30083去异步
-        self.tiRuning1 = true;
-        [self commitInputWithSplit:weakAlgsModel algsType:algsType logDesc:logDesc];
-        self.tiRuning1 = false;
-    });
-}
--(void) commitInputWithSplit:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
-    //1. 植物模式阻断感知;
-    if (self.thinkMode == 2) return;
-    
-    //2. 装箱（稀疏码的：单码层 和 组码层 和 构建具象特征）。
-    AIFeatureNode *hFeature = [self createSplitFor9Block:algsModel at:algsType ds:@"hColors" logDesc:logDesc];
-    AIFeatureNode *sFeature = [self createSplitFor9Block:algsModel at:algsType ds:@"sColors" logDesc:logDesc];
-    AIFeatureNode *bFeature = [self createSplitFor9Block:algsModel at:algsType ds:@"bColors" logDesc:logDesc];
-    
-    //4、构建具象概念。
-    AIAlgNodeBase *algNode = [theNet createAbsAlg_NoRepeat:@[hFeature.pointer,sFeature.pointer,bFeature.pointer] conAlgs:nil isOut:false at:nil ds:nil type:ATDefault];
-    [algNode updateLogDescItem:logDesc];
-    
-    //5、装箱打包完毕，输入到rInput：进瞬时序列和识别等。
-    [TCInput rInput:algNode except_ps:nil];
-}
-
-/**
  *  MARK:--------------------V2自适应粒度--------------------
+ *  @desc 现用于输入（多粒度）二维概念，如视觉图像，目前用于测支持多码特征
+ *  @desc 为了方便开发，开发阶段不将Object转成Dictionary输入，后开发完成后下版本再转。
  */
 -(void) commitInputWithSplitAsyncV2:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
     __block AIVisionAlgsModelV2 *weakAlgsModel = algsModel;
@@ -203,7 +176,15 @@ static AIThinkingControl *_instance;
     //2. 对未切粒度的color字典进行自适应粒度并识别。
     //[self commitInputWithSplitV2_SingleTonDao:algsModel.hColors whSize:algsModel.whSize at:algsType ds:@"hColors" logDesc:logDesc algsModel:algsModel];
     //[self commitInputWithSplitV2_SingleTonDao:algsModel.sColors whSize:algsModel.whSize at:algsType ds:@"sColors" logDesc:logDesc algsModel:algsModel];
-    [self commitInputWithSplitV2_SingleTonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc algsModel:algsModel];
+    AIFeatureNode *bST = [self commitInputWithSplitV2_SingleTonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc algsModel:algsModel];
+    
+    // TODO: 先关掉测特征，等特征测试ok后，再打开概念构建和识别rInput思维流程。
+    ////4、构建具象概念。
+    //AIAlgNodeBase *algNode = [theNet createAbsAlg_NoRepeat:@[/*hFeature.pointer,sFeature.pointer,*/bST.pointer] conAlgs:nil isOut:false at:nil ds:nil type:ATDefault];
+    //[algNode updateLogDescItem:logDesc];
+    //
+    ////5、装箱打包完毕，输入到rInput：进瞬时序列和识别等。
+    //[TCInput rInput:algNode except_ps:nil];
 }
 
 /**
@@ -211,11 +192,12 @@ static AIThinkingControl *_instance;
  *  TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
  *  TODO: 连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
  */
--(void) commitInputWithSplitV2_SingleTonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc algsModel:(AIVisionAlgsModelV2*)algsModel {
+-(AIFeatureNode*) commitInputWithSplitV2_SingleTonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc algsModel:(AIVisionAlgsModelV2*)algsModel {
     // 数据准备 & 初始化。
     AIFeatureJvBuModels *decoratorJvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     decoratorJvBuModel.debug = [GroupDebug new];
     [TCRecognitionInvoke recognitionInit:colorDic whSize:algsModel.whSize at:at ds:ds logDesc:logDesc];
+    NSArray *stOrders = [self createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc]; // 装箱SV层 & GV层。
     
     // GV识别。
     NSArray *allGVs = [self commitInput4GV:colorDic canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc];
@@ -246,18 +228,20 @@ static AIThinkingControl *_instance;
         [AIAnalogy analogyGroupFeatureV10:ds at:at isOut:false logDesc:logDesc gtModel:assGT prefixIndex:[decoratorJvBuModel.gtModels indexOfObject:assGT] + 1];
     }
     
-    // 构建ProtoST（装箱SV层 & GV层 & 构建具象特征）。
-    AIFeatureNode *protoST = [self createSplitFor9Block:algsModel at:at ds:ds logDesc:logDesc];
+    // 构建ProtoST。
+    if (stOrders.count < 5) return nil;
+    AIFeatureNode *protoST = [self createSplitFor9BlockV2_Step2:stOrders at:at ds:ds logDesc:logDesc];
     [SMGUtils runByMainQueue:^{
         [theApp.imgTrainerView setDataForFeature:protoST lab:STRFORMAT(@"protoST%ld",protoST.pId) left:0 top:0 tvId:5];
     }];
     
-    // 构建ProtoGT & 类比。
+    // 构建ProtoGT：已废弃（参考38021）。
     // AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:colorDic at:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
     
     // debug
     NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
     // NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
+    return protoST;
 }
 
 // GV识别
@@ -654,17 +638,9 @@ static AIThinkingControl *_instance;
     return STRFORMAT(@"%s",dispatch_queue_get_label(dispatch_get_current_queue()));
 }
 
-//构建默认九宫特征。
--(AIFeatureNode*) createSplitFor9Block:(AIVisionAlgsModelV2*)algsModel at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
-    //2. 装箱（稀疏码的：单码层 和 组码层）。
-    NSArray *groupModels = [self createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc];
-    if (groupModels.count < 5) return nil;
-    
-    //3、构建具象特征。
-    AIFeatureNode *feature = [self createSplitFor9BlockV2_Step2:groupModels at:at ds:ds logDesc:logDesc];
-    return feature;
-}
-
+/**
+ *  MARK:--------------------构建ProtoST（分成两步）--------------------
+ */
 -(NSArray*) createSplitFor9BlockV2_Step1:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType ds:(NSString*)ds logDesc:(NSString*)logDesc {
     //2. 装箱（稀疏码的：单码层 和 组码层）。
     //TODO: 这里随后转成NSDictionary后，只要判断dataSource对应的value是dic类型，也可以这么处理（到时候，改V2支持model转Dic类型输入时，自然就知道这里怎么改了）。

@@ -25,7 +25,7 @@
 //MARK:                     < 单特征识别 >
 //MARK:===============================================================
 +(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(NSArray*)allGVs;
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc justRank:(BOOL)justRank;
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc justRank:(BOOL)justRank protoCount:(NSInteger)protoCount;
 
 //MARK:===============================================================
 //MARK:                     < 组特征识别 >
