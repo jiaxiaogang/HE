@@ -401,23 +401,37 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     
     //外形内征: (
-    //    0.26 0.42,
-    //    1.00 0.42,
-    //    0.31 0.80,
-    //    0.30 0.87,
-    //    0.47 0.58,
-    //    0.27 0.53,
-    //    1.00 0.42,
-    //    0.32 0.78,
-    //    0.49 0.45,
-    //    0.76 0.48
+    //   匹配条数:1 1.00 0.67,
+    //   匹配条数:1 1.00 0.50,
+    //   匹配条数:4 0.74 0.37,
+    //   匹配条数:5 0.38 0.40,
+    //   匹配条数:5 0.23 1.00,
+    //   匹配条数:2 0.86 0.31,
+    //   匹配条数:4 0.54 0.34,
+    //   匹配条数:7 0.48 0.38,
+    //   匹配条数:2 0.70 1.00,
+    //   匹配条数:17 0.50 0.53
     //)
+    
     // 外形和内征都>0.8的几乎没有，可以挑几个同样是0识别到0时，它跑出的外形内征都是什么值，多观察分析，看有什么问题。
+    // 实验：只训练数字0，看它外形内征的值能达到多少？（训练20条0，最终外形内征，要么高的匹配数太少，要么低的匹配数才多。除了有一条是匹配条数17，外形0.5，内征0.53。
+    // 方案：要不，一切在匹配的基础上来做，即只要匹配上，肯定最终是准确的，匹配不上的自然留空即可，这样至少能显示出一个准确的框架（抽象解）。
+    //  1、自举的位置符合度天然是1。
+    //  2、匹配度先给个阈值60%，或70%测下，然后随着训练，看能不能竞争一个阈值出来，让它总是能识别的至少看起来是准确的。
     
     valids = ARR_SUB(valids, 0, 10);
     NSLog(@"外形内征: %@",[SMGUtils convertArr:valids convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return STRFORMAT(@"%.2f %.2f",obj.outerShapeMatchValue,obj.innerEigenMatchValue);
+        return STRFORMAT(@"匹配条数:%ld %.2f %.2f",obj.bestGVs.count,obj.outerShapeMatchValue,obj.innerEigenMatchValue);
     }]);
+    
+    for (AIFeatureJvBuModel *model in valids) {
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForJvBuModelV4:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[valids indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:3];
+        }];
+    }
+    
+    
+    
     
     //53. 竞争与排序。
     //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。

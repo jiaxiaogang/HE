@@ -353,6 +353,12 @@
     [[self getPreviewTV:tvId] reloadData];
 }
 
+// 仅显示bestGVs
+-(void) setDataForJvBuModelV4:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
+    [self addFeatureToPreview:jvBuModel.assT indexes:jvBuModel.bestGVs.allKeys lab:lab left:left top:top tvId:tvId];
+    [[self getPreviewTV:tvId] reloadData];
+}
+
 //仅对匹配上itemT进行可视化。
 -(void) setDataForZenTiModel:(AIFeatureZenTiModel*)zenTiModel lab:(NSString*)lab tvId:(NSInteger)tvId {
     AIGroupFeatureNode *assGT = [SMGUtils searchNode:zenTiModel.assT];
