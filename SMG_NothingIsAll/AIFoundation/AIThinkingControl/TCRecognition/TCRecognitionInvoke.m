@@ -397,27 +397,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // TODOTOMORROW20260517: 按外形内征排序，仅保留前20%，这两个强竞争因子是必须保证的，然后再说别的竞争。
     NSArray *valids = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
-        return item.outerShapeMatchValue && item.innerEigenMatchValue;
+        return MAX(item.outerShapeMatchValue, item.innerEigenMatchValue);
     }];
-    
-    //外形内征: (
-    //   匹配条数:1 1.00 0.67,
-    //   匹配条数:1 1.00 0.50,
-    //   匹配条数:4 0.74 0.37,
-    //   匹配条数:5 0.38 0.40,
-    //   匹配条数:5 0.23 1.00,
-    //   匹配条数:2 0.86 0.31,
-    //   匹配条数:4 0.54 0.34,
-    //   匹配条数:7 0.48 0.38,
-    //   匹配条数:2 0.70 1.00,
-    //   匹配条数:17 0.50 0.53
-    //)
-    
     // 外形和内征都>0.8的几乎没有，可以挑几个同样是0识别到0时，它跑出的外形内征都是什么值，多观察分析，看有什么问题。
     // 实验：只训练数字0，看它外形内征的值能达到多少？（训练20条0，最终外形内征，要么高的匹配数太少，要么低的匹配数才多。除了有一条是匹配条数17，外形0.5，内征0.53。
     // 方案：要不，一切在匹配的基础上来做，即只要匹配上，肯定最终是准确的，匹配不上的自然留空即可，这样至少能显示出一个准确的框架（抽象解）。
     //  1、自举的位置符合度天然是1。
     //  2、匹配度先给个阈值60%，或70%测下，然后随着训练，看能不能竞争一个阈值出来，让它总是能识别的至少看起来是准确的。
+    //  3、现在匹配度已经分成：外形内征两个了，二者只要有一个ok就ok。
     
     valids = ARR_SUB(valids, 0, 10);
     NSLog(@"外形内征: %@",[SMGUtils convertArr:valids convertBlock:^id(AIFeatureJvBuModel *obj) {

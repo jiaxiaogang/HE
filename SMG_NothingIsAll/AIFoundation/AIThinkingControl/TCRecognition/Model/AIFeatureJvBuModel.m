@@ -322,8 +322,7 @@
     // return self.matchValue * self.modelMatchRatio * self.bestGVs.count;
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return [MathUtils getCooledValue:1 - self.outerShapeMatchValue finishValue:cOuterShapeWeight]
-                * [MathUtils getCooledValue:1 - self.innerEigenMatchValue finishValue:cInnerEigenWeight]
+    return [MathUtils getCooledValue:1 - MAX(self.outerShapeMatchValue, self.innerEigenMatchValue) finishValue:cOuterShapeWeight]
                 * [AIScore scoreWeight:self.totalCountScore weight:cTotalCountWeight]
                 * [AIScore scoreWeight:self.bestsCountScore weight:cBestsCountWeight];
 }
@@ -345,9 +344,8 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:%02ld = 总分:%.2f（稳定性:%.2f）",self.matchValue,self.modelMatchRatio,self.bestGVs.count,self.stScore,self.averageContentStrong);
     
     // v7：匹配数和匹配率，随着加权求和切图法，几乎全是100%，改回只用匹配度来排序。
-    return STRFORMAT(@"外形:%.2f (%.2f) 内征:%.2f (%.2f) 总数:%.2f (%02ld) 匹配数:%.2f (%02ld) = 总分:%.2f",
-                     [MathUtils getCooledValue:1 - self.outerShapeMatchValue finishValue:cOuterShapeWeight],self.outerShapeMatchValue,
-                     [MathUtils getCooledValue:1 - self.innerEigenMatchValue finishValue:cOuterShapeWeight],self.innerEigenMatchValue,
+    return STRFORMAT(@"匹配度:%.2f (外形:%.2f 内征:%.2f) 元素数:%.2f (%02ld) 匹配数:%.2f (%02ld) = 总分:%.2f",
+                     [MathUtils getCooledValue:1 - MAX(self.outerShapeMatchValue, self.innerEigenMatchValue) finishValue:cOuterShapeWeight],self.outerShapeMatchValue,self.innerEigenMatchValue,
                      [AIScore scoreWeight:self.totalCountScore weight:cTotalCountWeight],self.assT.count,
                      [AIScore scoreWeight:self.bestsCountScore weight:cBestsCountWeight],self.bestGVs.count,
                      self.stScore);
