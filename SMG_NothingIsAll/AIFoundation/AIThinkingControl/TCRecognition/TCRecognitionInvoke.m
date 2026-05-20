@@ -395,12 +395,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
-    // TODOTOMORROW20260519：准确为主数量为辅 & 外形为主内征为辅（参考38032）。
-    NSArray *valids = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
-        return MAX(item.outerShapeMatchValue, item.innerEigenMatchValue);
-    }];
-    
-    // TODO: 这里的竞争，改为item.outerShapeMatchValue为主，item.innerEigenMatchValue为辅，公式为：Score = item.outerShapeMatchValue * (1 + 0.2 * item.innerEigenMatchValue / 1）
+    // 综合竞争计算：准确为主数量为辅 & 外形为主内征为辅（参考38032）。
+    for (AIFeatureJvBuModel *item in decoratorJvBuModel.stModels) {
+        
+        // 外形为主内征为辅：计算综合匹配分outinScore = outerShapeMatchValue * (1 + 0.2 * innerEigenMatchValue)
+        item.outinScore = item.outerShapeMatchValue * (1 + 0.2 * item.innerEigenMatchValue);
+        
+        
+    }
     
     
     
