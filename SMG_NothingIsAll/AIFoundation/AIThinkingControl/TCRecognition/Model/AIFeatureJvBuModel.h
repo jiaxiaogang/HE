@@ -127,12 +127,6 @@
 @property (assign, nonatomic) CGFloat bestsCountScore;
 @property (assign, nonatomic) CGFloat totalCountScore;
 
-/**
- *  MARK:--------------------主辅竞争（参考38032）--------------------
- */
-@property (assign, nonatomic) CGFloat outinScore;           // 外形内征匹配度（参考38032-TODO1）。
-@property (assign, nonatomic) CGFloat finalScore;           // 最终综合竞争分（参考38032-TODO2）。
-
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
 -(NSString*) stScoreDesc;

@@ -361,7 +361,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc justRank:(BOOL)justRank protoCount:(NSInteger)protoCount {
++(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoCount:(NSInteger)protoCount {
     // bestGVs末尾淘汰（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model filter4ZonHe];
@@ -395,15 +395,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
-    // 综合竞争计算：准确为主数量为辅 & 外形为主内征为辅（参考38032）。
-    for (AIFeatureJvBuModel *item in decoratorJvBuModel.stModels) {
-        
-        // 外形为主内征为辅：计算综合匹配分outinScore = outerShapeMatchValue * (1 + 0.2 * innerEigenMatchValue)
-        item.outinScore = item.outerShapeMatchValue * (1 + 0.2 * item.innerEigenMatchValue);
-        
-        
-    }
-    
+    // 递进式竞争：主在前辅在后层层嵌套（参考38033）。
     // 动态计算filterRate：定义最终保留条数，根据当前条数和过滤次数，用幂次求出每次过滤率。
     // 公式：最终条数 = 当前条数 * filterRate^过滤次数 => filterRate = pow(最终条数/当前条数, 1/过滤次数)
     NSInteger finalCount = 3; // 最终保留条数
@@ -430,26 +422,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     sorts = ARR_SUB(sorts, 0, sorts.count * filterRate);
     
-    
-    
-    //53. 竞争与排序。
-    //2025.06.19：加上信息量竞争，因为纯色很容易匹配到（自举不管gv的信息量只要更相近就能匹配上，通过竞争把这些淘汰掉）。
-    NSArray *validModels = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.stScore;
-    }];
-    
-    // 仅竞争模式。
-    if (justRank) return;
-    
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
-    validModels = [SMGUtils removeRepeat:validModels convertBlock:^id(AIFeatureJvBuModel *obj) {
-        return @(obj.assT.pId);
-    }];
-    
-    // 15条内时留80%防止ProtoT不成形（比如最优的全是0的下半部分），60条后只留20%防止性能差（比如后期可能识别80条但后20条可能压根不准就该被竞争淘汰掉）。
-    NSInteger count = validModels.count;
-    float needRate = count < 5 ? 1 : count < 10 ? 0.7 : count < 20 ? 0.5 : count < 40 ? 0.4 : 0.2;
-    validModels = ARR_SUB(validModels, 0, MIN(20, validModels.count * needRate));
+    //NSArray *validModels = [SMGUtils removeRepeat:sorts convertBlock:^id(AIFeatureJvBuModel *obj) {
+    //    return @(obj.assT.pId);
+    //}];
+    NSArray *validModels = sorts;
     NSLog(@"ST窄出:%ld 识别到:%ld",validModels.count,decoratorJvBuModel.stModels.count);
     
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
