@@ -404,6 +404,31 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
     }
     
+    // 动态计算filterRate：定义最终保留条数，根据当前条数和过滤次数，用幂次求出每次过滤率。
+    // 公式：最终条数 = 当前条数 * filterRate^过滤次数 => filterRate = pow(最终条数/当前条数, 1/过滤次数)
+    NSInteger finalCount = 3; // 最终保留条数
+    NSInteger filterCount = 3; // 过滤次数（外形、内征、数量共3次）
+    NSInteger currentCount = decoratorJvBuModel.stModels.count;
+    CGFloat filterRate = currentCount > finalCount ? pow((double)finalCount / currentCount, 1.0 / filterCount) : 1.0f;
+    filterRate = MAX(0.1f, MIN(1.0f, filterRate)); // 限制在合理范围内
+    
+    // 外形
+    NSArray *sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.outerShapeMatchValue;
+    }];
+    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate);
+    
+    // 内征
+    sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.innerEigenMatchValue;
+    }];
+    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate);
+    
+    // 数量
+    sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.bestGVs.count;
+    }];
+    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate);
     
     
     
