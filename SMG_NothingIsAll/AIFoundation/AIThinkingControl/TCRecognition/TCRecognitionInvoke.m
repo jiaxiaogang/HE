@@ -400,6 +400,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return MAX(item.outerShapeMatchValue, item.innerEigenMatchValue);
     }];
     
+    // TODO: 这里的竞争，改为item.outerShapeMatchValue为主，item.innerEigenMatchValue为辅，公式为：Score = item.outerShapeMatchValue * (1 + 0.2 * item.innerEigenMatchValue / 1）
+    
     
     
     
