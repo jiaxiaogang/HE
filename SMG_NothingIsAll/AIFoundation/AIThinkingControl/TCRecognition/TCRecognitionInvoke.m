@@ -404,6 +404,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     CGFloat filterRate = currentCount > finalCount ? pow((double)finalCount / currentCount, 1.0 / filterCount) : 1.0f;
     filterRate = MAX(0.0f, MIN(1.0f, filterRate)); // 限制在合理范围内
     
+    // TODO1: 能不能先把logDesc的筛选出来，然后按bestGVs排序，看下有多少准确的。
+    // TODO2: 调整下，前面的少筛选些，后面的多筛选些，或者给这三项主辅过滤，加上权重。每项权重自定义。
+    
     // 外形
     NSArray *sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.outerShapeMatchValue;
