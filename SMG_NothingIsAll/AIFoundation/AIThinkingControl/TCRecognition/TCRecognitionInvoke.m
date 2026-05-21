@@ -405,26 +405,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     filterRate = MAX(0.0f, MIN(1.0f, filterRate)); // 限制在合理范围内
     NSArray *sorts = decoratorJvBuModel.stModels;
     
-    // TODOTOMORROW20260521:
-    // 方案1、调整下，前面的少筛选些，后面的多筛选些，或者给这三项主辅过滤，加上权重。每项权重自定义。
-    //  暂停：在三层过滤同样的力度不行时，再来考虑加权重，每层力度不同的事。
-    // 方案2、用不用先末尾淘汰，再主辅层层淘汰。
-    //  优点：避免一下子太武断。
-    //  暂停：在单轮进行层层过滤不行后，再想这个从轻到重，多循环几轮各进行多层过滤的事。
-    
-    // 数量（数量少的太多了，外形后20%，几乎全是只有1-2条的，所以数量最重要）。
+    // 数量（数量少的太多了，外形后20%，几乎全是只有1-2条的，所以数量最重要）（参考38034-方案3）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.bestGVs.count;
     }];
     sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
     
-    // 外形
+    // 外形（参考38034-方案3）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.outerShapeMatchValue;
     }];
     sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
     
-    // 内征（先关掉：现在内征不那么重要，且内征应该是计算相邻的GV间，其相对内征是否连续，对内征来说这个连续性才重要）。
+    // 内征（先关掉：现在内征不那么重要，且内征应该是计算相邻的GV间，其相对内征是否连续，对内征来说这个连续性才重要）（参考38034-方案3）。
     //sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
     //    return item.innerEigenMatchValue;
     //}];
