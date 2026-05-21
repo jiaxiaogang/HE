@@ -398,39 +398,37 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 递进式竞争：主在前辅在后层层嵌套（参考38033）。
     // 动态计算filterRate：定义最终保留条数，根据当前条数和过滤次数，用幂次求出每次过滤率。
     // 公式：最终条数 = 当前条数 * filterRate^过滤次数 => filterRate = pow(最终条数/当前条数, 1/过滤次数)
-    NSInteger finalCount = 3; // 最终保留条数
-    NSInteger filterCount = 3; // 过滤次数（外形、内征、数量共3次）
+    NSInteger finalCount = 10; // 最终保留条数
+    NSInteger filterCount = 2; // 过滤次数（数量、外形，共2次）
     NSInteger currentCount = decoratorJvBuModel.stModels.count;
     CGFloat filterRate = currentCount > finalCount ? pow((double)finalCount / currentCount, 1.0 / filterCount) : 1.0f;
     filterRate = MAX(0.0f, MIN(1.0f, filterRate)); // 限制在合理范围内
+    NSArray *sorts = decoratorJvBuModel.stModels;
     
-    // TODO1: 能不能先把logDesc的筛选出来，然后按bestGVs排序，看下有多少准确的。
-    // TODO2: 调整下，前面的少筛选些，后面的多筛选些，或者给这三项主辅过滤，加上权重。每项权重自定义。
+    // TODOTOMORROW20260521:
+    // 方案1、调整下，前面的少筛选些，后面的多筛选些，或者给这三项主辅过滤，加上权重。每项权重自定义。
+    //  暂停：在三层过滤同样的力度不行时，再来考虑加权重，每层力度不同的事。
+    // 方案2、用不用先末尾淘汰，再主辅层层淘汰。
+    //  优点：避免一下子太武断。
+    //  暂停：在单轮进行层层过滤不行后，再想这个从轻到重，多循环几轮各进行多层过滤的事。
     
-    NSRange tabRange = [logDesc rangeOfString:@"_"];
-    NSString *MnistX = [logDesc substringToIndex:tabRange.location];
-    NSArray *sorts2 = [SMGUtils filterArr:decoratorJvBuModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
-        NSDictionary *logDescDic = [item.assT getLogDesc:true];
-        return [logDescDic objectForKey:MnistX];
-    }];
-    
-    // 外形
-    NSArray *sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
-        return item.outerShapeMatchValue;
-    }];
-    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate);
-    
-    // 内征
-    sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
-        return item.innerEigenMatchValue;
-    }];
-    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate);
-    
-    // 数量
+    // 数量（数量少的太多了，外形后20%，几乎全是只有1-2条的，所以数量最重要）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.bestGVs.count;
     }];
-    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate);
+    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
+    
+    // 外形
+    sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.outerShapeMatchValue;
+    }];
+    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
+    
+    // 内征（先关掉：现在内征不那么重要，且内征应该是计算相邻的GV间，其相对内征是否连续，对内征来说这个连续性才重要）。
+    //sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
+    //    return item.innerEigenMatchValue;
+    //}];
+    //sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
     
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
     //NSArray *validModels = [SMGUtils removeRepeat:sorts convertBlock:^id(AIFeatureJvBuModel *obj) {
