@@ -407,6 +407,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // TODO1: 能不能先把logDesc的筛选出来，然后按bestGVs排序，看下有多少准确的。
     // TODO2: 调整下，前面的少筛选些，后面的多筛选些，或者给这三项主辅过滤，加上权重。每项权重自定义。
     
+    NSRange tabRange = [logDesc rangeOfString:@"_"];
+    NSString *MnistX = [logDesc substringToIndex:tabRange.location];
+    NSArray *sorts2 = [SMGUtils filterArr:decoratorJvBuModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
+        NSDictionary *logDescDic = [item.assT getLogDesc:true];
+        return [logDescDic objectForKey:MnistX];
+    }];
+    
     // 外形
     NSArray *sorts = [SMGUtils sortBig2Small:decoratorJvBuModel.stModels compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.outerShapeMatchValue;
