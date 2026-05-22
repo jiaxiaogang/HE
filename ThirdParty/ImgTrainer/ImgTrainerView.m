@@ -94,6 +94,9 @@
         tv.dataSource = self;
         [tv.layer setBorderWidth:1.0f];
         [tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
+        UILongPressGestureRecognizer *lp = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(previewTVLongPress:)];
+        lp.minimumPressDuration = 0.5;
+        [tv addGestureRecognizer:lp];
     }
 
     // 摄像头预览视图 - 默认显示
@@ -390,6 +393,15 @@
     [[self getPreviewTV:tvId] reloadData];
 }
 
+// 仅显示一条AIFeatureJvBuItem，按其在ProtoRect来显示。
+-(void) setDataForJvBuItem_Single:(AIFeatureJvBuItem*)jvBuItem fromFeatureNode:(AIFeatureNode*)fromFeatureNode lab:(NSString*)lab tvId:(NSInteger)tvId {
+    InputGroupValueModel *gvModel = [InputGroupValueModel new:jvBuItem.baseGV_p rect:jvBuItem.bestGVAtProtoTRect];
+    ImgTrainerPreview *preview = [self getOrCreate:lab tvId:tvId];
+    preview.fromObj = jvBuItem;
+    [preview setData:fromFeatureNode gvModels:@[gvModel] lab:lab left:0 top:0];
+    [[self getPreviewTV:tvId] reloadData];
+}
+
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
     [self addFeatureToPreview:tNode indexes:nil lab:lab left:left top:top tvId:tvId fromObj:tNode];
     [[self getPreviewTV:tvId] reloadData];
@@ -608,6 +620,23 @@
     }
 }
 
+-(void) previewTVLongPress:(UILongPressGestureRecognizer*)gesture {
+    if (gesture.state != UIGestureRecognizerStateBegan) return;
+    UITableView *tv = (UITableView*)gesture.view;
+    NSInteger tvId = [self getTVIdByTableView:tv];
+    if (tvId == -1) return;
+    CGPoint point = [gesture locationInView:tv];
+    NSIndexPath *indexPath = [tv indexPathForRowAtPoint:point];
+    if (!indexPath) return;
+    NSArray *datas = [self getPreviewDatas:tvId];
+    ImgTrainerPreview *preview = ARR_INDEX(datas, indexPath.row);
+    if (ISOK(preview.fromObj, AIFeatureJvBuModel.class)) {
+        AIFeatureJvBuModel *jvBuModel = (AIFeatureJvBuModel*)preview.fromObj;
+        JvBuDetailWindow *window = [[JvBuDetailWindow alloc] init];
+        [window show:jvBuModel];
+    }
+}
+
 - (IBAction)closeBtnOnClick:(id)sender {
     [self close];
 }
@@ -738,9 +767,17 @@
         NSArray *datas = [self getPreviewDatas:tvId];
         ImgTrainerPreview *preview = ARR_INDEX(datas, indexPath.row);
         if (ISOK(preview.fromObj, AIFeatureJvBuModel.class)) {
+            // 长按弹出详情（见previewTVLongPress:）
+            // 点击时，把bestGVs的每个元素gv，显示到tvId=3的tableView上去。
             AIFeatureJvBuModel *jvBuModel = (AIFeatureJvBuModel*)preview.fromObj;
-            JvBuDetailWindow *window = [[JvBuDetailWindow alloc] init];
-            [window show:jvBuModel];
+            [self removePreviewDatas:3];
+            NSArray *sortedKeys = [SMGUtils sortSmall2Big:jvBuModel.bestGVs.allKeys compareBlock:^double(NSNumber *obj) {
+                return obj.integerValue;
+            }];
+            for (NSInteger i = 0; i < sortedKeys.count; i++) {
+                AIFeatureJvBuItem *item = [jvBuModel.bestGVs objectForKey:@(i)];
+                [self setDataForJvBuItem_Single:item fromFeatureNode:jvBuModel.assT lab:STRFORMAT(@"ST%ld.%ld",jvBuModel.assT.pId,i) tvId:3];
+            }
         } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
             AIFeatureNode *tNode = (AIFeatureNode*)preview.fromObj;
             NSLog(@"AIFeatureNode被点击:%@ %@",Rect2Str(tNode.rect),CGRectIsEmpty(preview.fromCanvas) ? @"未指定" : Rect2Str(preview.fromCanvas));
