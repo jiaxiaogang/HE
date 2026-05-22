@@ -331,17 +331,17 @@
  *  MARK:--------------------单特征识别结果可视化（参考34176）--------------------
  */
 -(void) setDataForJvBuModelsV1:(NSArray*)jvBuModels protoT:(AIFeatureNode*)protoT tvId:(NSInteger)tvId {
-    [self addFeatureToPreview:protoT indexes:nil lab:STRFORMAT(@"protoT%ld:%@",protoT.pId,protoT.ds) left:0 top:0 tvId:tvId];
+    [self addFeatureToPreview:protoT indexes:nil lab:STRFORMAT(@"protoT%ld:%@",protoT.pId,protoT.ds) left:0 top:0 tvId:tvId fromObj:nil];
     for (AIMatchModel *model in jvBuModels) {
         //NSArray *collectProtoIndexs = model.indexDic.allValues;
-        [self addFeatureToPreview:(AIFeatureNode*)model.matchNode indexes:model.indexDic.allKeys lab:STRFORMAT(@"assT%ld:%@",model.matchNode.pId,model.matchNode.ds) left:0 top:0 tvId:tvId];
+        [self addFeatureToPreview:(AIFeatureNode*)model.matchNode indexes:model.indexDic.allKeys lab:STRFORMAT(@"assT%ld:%@",model.matchNode.pId,model.matchNode.ds) left:0 top:0 tvId:tvId fromObj:model];
     }
     [[self getPreviewTV:tvId] reloadData];
 }
 
 //仅对匹配上itemGV进行可视化。
 -(void) setDataForJvBuModelV2:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
-    [self addFeatureToPreview:jvBuModel.assT indexes:nil/*jvBuModel.bestGVs.allKeys*/ lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:jvBuModel.assT indexes:nil/*jvBuModel.bestGVs.allKeys*/ lab:lab left:left top:top tvId:tvId fromObj:jvBuModel];
     [[self getPreviewTV:tvId] reloadData];
 }
 
@@ -349,30 +349,30 @@
 //调用示例（把某个st的某元素gv可视化出来）：[SMGUtils runByMainQueue:^{ for (NSInteger i = 0; i < model.bestGVs.count; i++) [theApp.imgTrainerView setDataForJvBuModelV3:model lab:STRFORMAT(@"ST%ld.%ld",model.assT.pId,i) left:model.bestGVsAtProtoTRect.origin.x top:model.bestGVsAtProtoTRect.origin.y tvId:2 gvIndex:i]; }];
 -(void) setDataForJvBuModelV3:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId gvIndex:(NSInteger)gvIndex {
     NSNumber *assIndex = ARR_INDEX(jvBuModel.bestGVs.allKeys, gvIndex);
-    [self addFeatureToPreview:jvBuModel.assT indexes:@[assIndex] lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:jvBuModel.assT indexes:@[assIndex] lab:lab left:left top:top tvId:tvId fromObj:jvBuModel];
     [[self getPreviewTV:tvId] reloadData];
 }
 
 // 仅显示bestGVs
 -(void) setDataForJvBuModelV4:(AIFeatureJvBuModel*)jvBuModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
-    [self addFeatureToPreview:jvBuModel.assT indexes:jvBuModel.bestGVs.allKeys lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:jvBuModel.assT indexes:jvBuModel.bestGVs.allKeys lab:lab left:left top:top tvId:tvId fromObj:jvBuModel];
     [[self getPreviewTV:tvId] reloadData];
 }
 
 //仅对匹配上itemT进行可视化。
--(void) setDataForZenTiModel:(AIFeatureZenTiModel*)zenTiModel lab:(NSString*)lab tvId:(NSInteger)tvId {
-    AIGroupFeatureNode *assGT = [SMGUtils searchNode:zenTiModel.assT];
-    NSArray *indexes = [SMGUtils convertArr:zenTiModel.rectItems convertBlock:^id(AIFeatureZenTiItem_Rect *obj) {
-        return @([assGT indexOfRect:obj.itemAtAssRect]);
-    }];
-    [self addFeatureToPreview:assGT indexes:indexes lab:lab left:0 top:0 tvId:tvId];
-    [[self getPreviewTV:tvId] reloadData];
-}
+//-(void) setDataForZenTiModel:(AIFeatureZenTiModel*)zenTiModel lab:(NSString*)lab tvId:(NSInteger)tvId {
+//    AIGroupFeatureNode *assGT = [SMGUtils searchNode:zenTiModel.assT];
+//    NSArray *indexes = [SMGUtils convertArr:zenTiModel.rectItems convertBlock:^id(AIFeatureZenTiItem_Rect *obj) {
+//        return @([assGT indexOfRect:obj.itemAtAssRect]);
+//    }];
+//    [self addFeatureToPreview:assGT indexes:indexes lab:lab left:0 top:0 tvId:tvId fromObj:zenTiModel];
+//    [[self getPreviewTV:tvId] reloadData];
+//}
 
 //单特征识别结果数组，应该一个个元素显示，而不是一下把所有的显示到一个画布上。
 -(void) setDataForJvBuModelsV2:(NSArray*)jvBuModels lab:(NSString*)lab tvId:(NSInteger)tvId {
     for (AIFeatureJvBuModel *jvBuModel in jvBuModels) {
-        [self addFeatureToPreview:jvBuModel.assT indexes:jvBuModel.bestGVs.allKeys lab:lab left:0 top:0 tvId:tvId];
+        [self addFeatureToPreview:jvBuModel.assT indexes:jvBuModel.bestGVs.allKeys lab:lab left:0 top:0 tvId:tvId fromObj:jvBuModel];
     }
     [[self getPreviewTV:tvId] reloadData];
 }
@@ -384,13 +384,13 @@
             AIFeatureJvBuItem *obj = [jvBuModel.bestGVs objectForKey:assIndex];
             return [InputGroupValueModel new:ARR_INDEX(jvBuModel.assT.content_ps, assIndex.integerValue) rect:obj.bestGVAtProtoTRect];
         }];
-        [self addFeatureToPreview:jvBuModel.assT gvModels:gvModels lab:lab tvId:tvId];
+        [self addFeatureToPreview:jvBuModel.assT gvModels:gvModels lab:lab tvId:tvId fromObj:jvBuModel];
     }
     [[self getPreviewTV:tvId] reloadData];
 }
 
 -(void) setDataForFeature:(AIFeatureNode*)tNode lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
-    [self addFeatureToPreview:tNode indexes:nil lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:tNode indexes:nil lab:lab left:left top:top tvId:tvId fromObj:tNode];
     [[self getPreviewTV:tvId] reloadData];
 }
 
@@ -406,28 +406,30 @@
     
     // 可视化显示。
     ImgTrainerPreview *preview = [self getOrCreate:lab tvId:tvId];
+    preview.fromObj = tNode;
+    preview.fromCanvas = canvasRect;
     [preview setData:tNode gvModels:gvModels lab:lab left:0 top:0];
     [[self getPreviewTV:tvId] reloadData];
 }
 
--(void) setDataForGTModel:(GTModel*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
-    // 为GT全显示。
-    NSArray *indexes = nil; //[SMGUtils convertArr:gtModel.items convertBlock:^id(GTItem *gtItem) { return @(gtItem.assIndex); }];
-    [self addFeatureToPreview:gtModel.assGT indexes:indexes lab:lab left:left top:top tvId:tvId];
-    [[self getPreviewTV:tvId] reloadData];
-}
-
+//-(void) setDataForGTModel:(GTModel*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
+//    // 为GT全显示。
+//    NSArray *indexes = nil; //[SMGUtils convertArr:gtModel.items convertBlock:^id(GTItem *gtItem) { return @(gtItem.assIndex); }];
+//    [self addFeatureToPreview:gtModel.assGT indexes:indexes lab:lab left:left top:top tvId:tvId];
+//    [[self getPreviewTV:tvId] reloadData];
+//}
+//
 -(void) setDataForGTModelV2:(GTModelV2*)gtModel lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
     // 为GT全显示。
     NSArray *indexes = nil; //[SMGUtils convertArr:gtModel.items convertBlock:^id(GTItem *gtItem) { return @(gtItem.assIndex); }];
-    [self addFeatureToPreview:gtModel.assGT indexes:indexes lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:gtModel.assGT indexes:indexes lab:lab left:left top:top tvId:tvId fromObj:gtModel];
     [[self getPreviewTV:tvId] reloadData];
 }
 
 -(void) setDataForGTModelV3:(GTZiJvModelV2*)gtGroup lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
     // 为GT全显示。
     NSArray *indexes = nil; //[SMGUtils convertArr:gtModel.items convertBlock:^id(GTItem *gtItem) { return @(gtItem.assIndex); }];
-    [self addFeatureToPreview:gtGroup.baseGT indexes:indexes lab:lab left:left top:top tvId:tvId];
+    [self addFeatureToPreview:gtGroup.baseGT indexes:indexes lab:lab left:left top:top tvId:tvId fromObj:gtGroup];
     [[self getPreviewTV:tvId] reloadData];
 }
 
@@ -449,13 +451,15 @@
 //MARK:                     < privateMethod >
 //MARK:===============================================================
 
--(void) addFeatureToPreview:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab tvId:(NSInteger)tvId {
+-(void) addFeatureToPreview:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab tvId:(NSInteger)tvId fromObj:(id)fromObj {
     ImgTrainerPreview *preview = [self getOrCreate:lab tvId:tvId];
+    preview.fromObj = fromObj;
     [preview setData:tNode gvModels:gvModels lab:lab left:0 top:0];
 }
 
--(void) addFeatureToPreview:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId {
+-(void) addFeatureToPreview:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top tvId:(NSInteger)tvId fromObj:(id)fromObj {
     ImgTrainerPreview *preview = [self getOrCreate:lab tvId:tvId];
+    preview.fromObj = fromObj;
     [preview setData:tNode indexes:indexes lab:lab left:left top:top];
 }
 
@@ -470,13 +474,12 @@
 
 -(ImgTrainerPreview*) getOrCreate:(NSString*)lab tvId:(NSInteger)tvId {
     //1. 每条itemAbsT分别可视化。
-    MapModel *old = [SMGUtils filterSingleFromArr:[self getPreviewDatas:tvId] checkValid:^BOOL(MapModel *item) {
-        return [lab isEqualToString:item.v1];
+    ImgTrainerPreview *preview = [SMGUtils filterSingleFromArr:[self getPreviewDatas:tvId] checkValid:^BOOL(ImgTrainerPreview *preview) {
+        return [lab isEqualToString:preview.lab.text];
     }];
-    ImgTrainerPreview *preview = old ? old.v2 : nil;
     if (!preview) {
         preview = [[ImgTrainerPreview alloc] init];
-        [[self getPreviewDatas:tvId] addObject:[MapModel newWithV1:lab v2:preview]];
+        [[self getPreviewDatas:tvId] addObject:preview];
     }
     return preview;
 }
@@ -531,8 +534,7 @@
 -(void) removePreviewDatas:(NSInteger)tvId {
     //1. 去掉可视化lightDic。
     NSMutableArray *items = [self getPreviewDatas:tvId];
-    for (MapModel *item in items) {
-        ImgTrainerPreview *preview = item.v2;
+    for (ImgTrainerPreview *preview in items) {
         [preview removeFromSuperview];
     }
     [items removeAllObjects];
@@ -549,6 +551,15 @@
 -(NSMutableArray*) getPreviewDatas:(NSInteger)tvId {
     NSInteger index = tvId - 1;
     return ARR_INDEX(self.previewDatas, index);
+}
+
+-(NSInteger) getTVIdByTableView:(UITableView*)tableView {
+    if ([self.previewTVs containsObject:tableView]) {
+        NSInteger index = [self.previewTVs indexOfObject:tableView];
+        NSInteger tvId = index + 1;
+        return tvId;
+    }
+    return -1;
 }
 
 //MARK:===============================================================
@@ -704,8 +715,7 @@
         NSInteger index = [self.previewTVs indexOfObject:tableView];
         NSInteger tvId = index + 1;
         NSArray *datas = [self getPreviewDatas:tvId];
-        MapModel *model = ARR_INDEX(datas, indexPath.row);
-        ImgTrainerPreview *subPreview = model.v2;
+        ImgTrainerPreview *subPreview = ARR_INDEX(datas, indexPath.row);
         [cell addSubview:subPreview];
         return cell;
     }
@@ -722,6 +732,19 @@
     return 20;
 }
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSInteger tvId = [self getTVIdByTableView:tableView];
+    if (tvId != -1) {
+        NSArray *datas = [self getPreviewDatas:tvId];
+        ImgTrainerPreview *preview = ARR_INDEX(datas, indexPath.row);
+        if (ISOK(preview.fromObj, AIFeatureJvBuModel.class)) {
+            // TODO: 此处把jvbuModel.bestGVs的
+            NSLog(@"AIFeatureJvBuModel被点击");
+        } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
+            AIFeatureNode *tNode = (AIFeatureNode*)preview.fromObj;
+            NSLog(@"AIFeatureNode被点击:%@ %@",Rect2Str(tNode.rect),CGRectIsEmpty(preview.fromCanvas) ? @"未指定" : Rect2Str(preview.fromCanvas));
+        }
+    }
+    
     if ([self.previewTVs containsObject:tableView]) return;
     self.curSelectRow = indexPath.row;
 }

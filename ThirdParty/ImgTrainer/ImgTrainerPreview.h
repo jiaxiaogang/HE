@@ -13,6 +13,12 @@
 
 @interface ImgTrainerPreview : UIView
 
+// 这一个cell显示部分，来自哪个模型，比如AIFeatureJvBuModel / AIFeatureNode / GTZiJvModelV2 / GTModelV2 / AIMatchModel
+@property (strong, nonatomic) id fromObj;
+
+// cell指定显示的画布大小
+@property (assign, nonatomic) CGRect fromCanvas;
+
 @property (strong, nonatomic) UILabel *lab;
 @property (strong, nonatomic) NSMutableDictionary *lightDic;
 @property (strong, nonatomic) NSMutableDictionary *hsbDic;
