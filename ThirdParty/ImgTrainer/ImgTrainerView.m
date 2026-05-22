@@ -15,6 +15,7 @@
 #import "ImgTrainerItemModel.h"
 #import "ImgTrainerPreview.h"
 #import "AICameraCapture.h"
+#import "JvBuDetailWindow.h"
 
 @interface ImgTrainerView () <UITableViewDelegate,UITableViewDataSource>
 
@@ -737,8 +738,9 @@
         NSArray *datas = [self getPreviewDatas:tvId];
         ImgTrainerPreview *preview = ARR_INDEX(datas, indexPath.row);
         if (ISOK(preview.fromObj, AIFeatureJvBuModel.class)) {
-            // TODO: 此处把jvbuModel.bestGVs的
-            NSLog(@"AIFeatureJvBuModel被点击");
+            AIFeatureJvBuModel *jvBuModel = (AIFeatureJvBuModel*)preview.fromObj;
+            JvBuDetailWindow *window = [[JvBuDetailWindow alloc] init];
+            [window show:jvBuModel];
         } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
             AIFeatureNode *tNode = (AIFeatureNode*)preview.fromObj;
             NSLog(@"AIFeatureNode被点击:%@ %@",Rect2Str(tNode.rect),CGRectIsEmpty(preview.fromCanvas) ? @"未指定" : Rect2Str(preview.fromCanvas));

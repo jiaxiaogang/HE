@@ -45,6 +45,7 @@
 		082075F627EDFFE70005D7A8 /* TVideoWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 082075F427EDFFE70005D7A8 /* TVideoWindow.xib */; };
 		082075F727EDFFE70005D7A8 /* TVideoWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 082075F527EDFFE70005D7A8 /* TVideoWindow.m */; };
 		082104122DBDAD8900FE0794 /* ImgTrainerPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 082104112DBDAD8800FE0794 /* ImgTrainerPreview.m */; };
+		38AAA13666E023781198220C /* JvBuDetailWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 54A7E42EE551103EE6D2159B /* JvBuDetailWindow.m */; };
 		08236CEC21A23439008D8761 /* AIVisionAlgsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08236CEB21A23439008D8761 /* AIVisionAlgsModel.m */; };
 		08250AE0228112C000FC497C /* XGWedis.m in Sources */ = {isa = PBXBuildFile; fileRef = 08250ADF228112C000FC497C /* XGWedis.m */; };
 		0825AFF31F748F67003B86C7 /* NSObject+Extension.m in Sources */ = {isa = PBXBuildFile; fileRef = 0825AFF21F748F67003B86C7 /* NSObject+Extension.m */; };
@@ -337,6 +338,8 @@
 		082075F527EDFFE70005D7A8 /* TVideoWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TVideoWindow.m; sourceTree = "<group>"; };
 		082104102DBDAD8800FE0794 /* ImgTrainerPreview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgTrainerPreview.h; sourceTree = "<group>"; };
 		082104112DBDAD8800FE0794 /* ImgTrainerPreview.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ImgTrainerPreview.m; sourceTree = "<group>"; };
+		F60F040D80AC33322808D488 /* JvBuDetailWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JvBuDetailWindow.h; sourceTree = "<group>"; };
+		54A7E42EE551103EE6D2159B /* JvBuDetailWindow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JvBuDetailWindow.m; sourceTree = "<group>"; };
 		08236CEA21A23439008D8761 /* AIVisionAlgsModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIVisionAlgsModel.h; sourceTree = "<group>"; };
 		08236CEB21A23439008D8761 /* AIVisionAlgsModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIVisionAlgsModel.m; sourceTree = "<group>"; };
 		08250ADE228112C000FC497C /* XGWedis.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XGWedis.h; sourceTree = "<group>"; };
@@ -830,6 +833,8 @@
 				080DF6A12DBB1273000EC837 /* ImgTrainerItemModel.m */,
 				082104102DBDAD8800FE0794 /* ImgTrainerPreview.h */,
 				082104112DBDAD8800FE0794 /* ImgTrainerPreview.m */,
+				F60F040D80AC33322808D488 /* JvBuDetailWindow.h */,
+				54A7E42EE551103EE6D2159B /* JvBuDetailWindow.m */,
 				08DC4C212DBF94F700563D3E /* HSBColor.h */,
 				08DC4C222DBF94F700563D3E /* HSBColor.m */,
 			);
@@ -2309,6 +2314,7 @@
 				0842ADBD1FE207500048ADDC /* DemoHunger.m in Sources */,
 				0805EB3426C54A0D005F6341 /* LongTipWindow.m in Sources */,
 				082104122DBDAD8900FE0794 /* ImgTrainerPreview.m in Sources */,
+				38AAA13666E023781198220C /* JvBuDetailWindow.m in Sources */,
 				08AF454D1E97D0B500377887 /* AppDelegate.m in Sources */,
 				087C818A2792DD400046DF9E /* AIMatchAlgModel.m in Sources */,
 				08F3E9312241B6E800545795 /* AIAnalogy.m in Sources */,
