@@ -793,6 +793,10 @@
                 // 1、可视化，只显示了三个码，没显示第四个。
                 // 2、有多个bestGV和实际切图可视化差异很大，其外形内征匹配多少？得核实着对比查下。
                 
+                // 再对比下，这些bestGV和切图GV显示的是否有很不同的，然后打出来详情对比分析下原因。
+                // 长按时，把四个索引值的匹配度都算一下。
+                // CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
+                
             }
         } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
             AIFeatureNode *tNode = (AIFeatureNode*)preview.fromObj;
