@@ -25,5 +25,7 @@
 @property (assign, nonatomic) CGFloat innerEigenMatchValue;
 // baseGV
 @property (strong, nonatomic) AIKVPointer *baseGV_p;
+// 切图结果：gvIndex索引字典。
+@property (strong, nonatomic) NSDictionary *protoGVIndex;
 
 @end

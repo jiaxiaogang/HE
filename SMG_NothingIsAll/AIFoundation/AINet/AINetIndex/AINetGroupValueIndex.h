@@ -17,6 +17,9 @@
 @interface AINetGroupValueIndex : NSObject
 
 +(NSArray*) gvIndexKeys:(NSString*)ds;
++(NSString*) directionKey:(NSString*)ds;
++(NSString*) diffKey:(NSString*)ds;
++(NSString*) junKey:(NSString*)ds;
 +(NSString*) sepKey:(NSString*)ds;
 
 // 是否外形 (dataSource是否用于外形判断)

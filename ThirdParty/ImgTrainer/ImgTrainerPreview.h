@@ -26,5 +26,6 @@
 
 -(void) setData:(AIFeatureNode*)tNode indexes:(NSArray*)indexes lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;
 -(void) setData:(AIFeatureNode*)tNode gvModels:(NSArray*)gvModels lab:(NSString*)lab left:(CGFloat)left top:(CGFloat)top;
+-(void) setData_GVIndex:(NSDictionary*)gvIndex canvasRect:(CGRect)canvasRect ds:(NSString*)ds lab:(NSString*)lab;
 
 @end

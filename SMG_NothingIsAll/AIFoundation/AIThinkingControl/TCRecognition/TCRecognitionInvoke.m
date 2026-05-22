@@ -1691,6 +1691,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 }
             }
             curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect outerShapeMatchValue:outerShapeMatchValue matchDegree:1 innerEigenMatchValue:innerEigenMatchValue baseGV_p:newGV];
+            curBestGVItem.protoGVIndex = protoGVIndex;
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(newGV.pointerId)];

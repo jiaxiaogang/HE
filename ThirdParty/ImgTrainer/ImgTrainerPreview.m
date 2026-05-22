@@ -142,6 +142,19 @@
     [self.lab setText:lab];
 }
 
+-(void) setData_GVIndex:(NSDictionary*)gvIndex canvasRect:(CGRect)canvasRect ds:(NSString*)ds lab:(NSString*)lab {
+    // 三个索引的值：均值、差值、方向。。
+    double directionData = [NUMTOOK([gvIndex objectForKey:[AINetGroupValueIndex directionKey:ds]]) doubleValue];
+    double diffData = [NUMTOOK([gvIndex objectForKey:[AINetGroupValueIndex diffKey:ds]]) doubleValue];
+    double junData = [NUMTOOK([gvIndex objectForKey:[AINetGroupValueIndex junKey:ds]]) doubleValue];
+    
+    // 用这三个索引值，生成当前特征通道的九宫每像素色值。
+    [self createItemLight:canvasRect directionData:directionData diffData:diffData junData:junData ds:ds];
+    
+    // lab
+    [self.lab setText:lab];
+}
+
 -(void) createItemLight:(CGRect)rect directionData:(double)directionData diffData:(double)diffData junData:(double)junData ds:(NSString*)ds {
     //0. 数据检查（无差别时，直接全显示均值）。
     if (diffData == 0) {

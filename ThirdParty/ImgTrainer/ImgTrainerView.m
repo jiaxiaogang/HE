@@ -94,6 +94,8 @@
         tv.dataSource = self;
         [tv.layer setBorderWidth:1.0f];
         [tv.layer setBorderColor:UIColorWithRGBHex(0x0000FF).CGColor];
+        
+        // 长按弹出详情窗。
         UILongPressGestureRecognizer *lp = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(previewTVLongPress:)];
         lp.minimumPressDuration = 0.5;
         [tv addGestureRecognizer:lp];
@@ -394,11 +396,19 @@
 }
 
 // 仅显示一条AIFeatureJvBuItem，按其在ProtoRect来显示。
--(void) setDataForJvBuItem_Single:(AIFeatureJvBuItem*)jvBuItem fromFeatureNode:(AIFeatureNode*)fromFeatureNode lab:(NSString*)lab tvId:(NSInteger)tvId {
+-(void) setDataForJvBuItem:(AIFeatureJvBuItem*)jvBuItem fromFeatureNode:(AIFeatureNode*)fromFeatureNode lab:(NSString*)lab tvId:(NSInteger)tvId {
     InputGroupValueModel *gvModel = [InputGroupValueModel new:jvBuItem.baseGV_p rect:jvBuItem.bestGVAtProtoTRect];
     ImgTrainerPreview *preview = [self getOrCreate:lab tvId:tvId];
     preview.fromObj = jvBuItem;
     [preview setData:fromFeatureNode gvModels:@[gvModel] lab:lab left:0 top:0];
+    [[self getPreviewTV:tvId] reloadData];
+}
+
+// 仅显示一条GVIndex，按其在canvasRect来显示。
+-(void) setDataForGVIndex:(NSDictionary*)gvIndex canvasRect:(CGRect)canvasRect ds:(NSString*)ds lab:(NSString*)lab tvId:(NSInteger)tvId {
+    ImgTrainerPreview *preview = [self getOrCreate:lab tvId:tvId];
+    preview.fromObj = gvIndex;
+    [preview setData_GVIndex:gvIndex canvasRect:canvasRect ds:ds lab:lab];
     [[self getPreviewTV:tvId] reloadData];
 }
 
@@ -767,16 +777,22 @@
         NSArray *datas = [self getPreviewDatas:tvId];
         ImgTrainerPreview *preview = ARR_INDEX(datas, indexPath.row);
         if (ISOK(preview.fromObj, AIFeatureJvBuModel.class)) {
-            // 长按弹出详情（见previewTVLongPress:）
             // 点击时，把bestGVs的每个元素gv，显示到tvId=3的tableView上去。
             AIFeatureJvBuModel *jvBuModel = (AIFeatureJvBuModel*)preview.fromObj;
             [self removePreviewDatas:3];
-            NSArray *sortedKeys = [SMGUtils sortSmall2Big:jvBuModel.bestGVs.allKeys compareBlock:^double(NSNumber *obj) {
-                return obj.integerValue;
-            }];
-            for (NSInteger i = 0; i < sortedKeys.count; i++) {
-                AIFeatureJvBuItem *item = [jvBuModel.bestGVs objectForKey:@(i)];
-                [self setDataForJvBuItem_Single:item fromFeatureNode:jvBuModel.assT lab:STRFORMAT(@"ST%ld.%ld",jvBuModel.assT.pId,i) tvId:3];
+            [self removePreviewDatas:4];
+            for (NSInteger i = 0; i < jvBuModel.bestGVs.allValues.count; i++) {
+                // 显示bestGV
+                AIFeatureJvBuItem *item = ARR_INDEX(jvBuModel.bestGVs.allValues, i);
+                [self setDataForJvBuItem:item fromFeatureNode:jvBuModel.assT lab:STRFORMAT(@"ST%ld.%ld",jvBuModel.assT.pId,i) tvId:3];
+                
+                // 显示item.bestGVAtProtoTRect在protoImgDic上的真实切图
+                [self setDataForGVIndex:item.protoGVIndex canvasRect:item.bestGVAtProtoTRect ds:jvBuModel.assT.ds lab:STRFORMAT(@"真实切图%ld.%ld",jvBuModel.assT.pId,i) tvId:4];
+                
+                // TODOTOMORROW20260522:
+                // 1、可视化，只显示了三个码，没显示第四个。
+                // 2、有多个bestGV和实际切图可视化差异很大，其外形内征匹配多少？得核实着对比查下。
+                
             }
         } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
             AIFeatureNode *tNode = (AIFeatureNode*)preview.fromObj;
