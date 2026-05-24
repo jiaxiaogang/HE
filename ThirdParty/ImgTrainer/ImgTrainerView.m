@@ -643,7 +643,7 @@
     if (ISOK(preview.fromObj, AIFeatureJvBuModel.class)) {
         AIFeatureJvBuModel *jvBuModel = (AIFeatureJvBuModel*)preview.fromObj;
         JvBuDetailWindow *window = [[JvBuDetailWindow alloc] init];
-        [window show:jvBuModel];
+        [window setData4JvBuModel:jvBuModel];
     }
 }
 
@@ -801,6 +801,10 @@
         } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
             AIFeatureNode *tNode = (AIFeatureNode*)preview.fromObj;
             NSLog(@"AIFeatureNode被点击:%@ %@",Rect2Str(tNode.rect),CGRectIsEmpty(preview.fromCanvas) ? @"未指定" : Rect2Str(preview.fromCanvas));
+        } else if (ISOK(preview.fromObj, AIFeatureJvBuItem.class)) {
+            AIFeatureJvBuItem *jvBuItem = (AIFeatureJvBuItem*)preview.fromObj;
+            JvBuDetailWindow *window = [[JvBuDetailWindow alloc] init];
+            [window setData4JvBuItem:jvBuItem];
         }
     }
     

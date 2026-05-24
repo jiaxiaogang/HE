@@ -12,7 +12,8 @@
 
 @interface JvBuDetailWindow : UIView
 
--(void) show:(AIFeatureJvBuModel*)jvBuModel;
+-(void) setData4JvBuModel:(AIFeatureJvBuModel*)jvBuModel;
+-(void) setData4JvBuItem:(AIFeatureJvBuItem*)jvBuItem;
 -(void) close;
 
 @end
