@@ -229,11 +229,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 //9. 找model (无则新建) (性能: 此处在循环中,所以防重耗60ms正常,收集耗100ms正常);
                 AIMatchModel *model = itemIndex == 0 ? [AIMatchModel new] : [resultDic objectForKey:@(refPort.target_p.pointerId)];
                 if (!model || model.matchCount < itemIndex) continue;
+                if (!model.matchDic) model.matchDic = [NSMutableDictionary new];
                 [resultDic setObject:model forKey:@(refPort.target_p.pointerId)];
                 model.match_p = refPort.target_p;
                 model.matchCount++;
                 model.matchValue *= vMatchModel.matchValue;
                 model.sumRefStrong += (int)refPort.strong.value;
+                
+                // 存储当前维度的匹配值
+                [model.matchDic setObject:@(vMatchModel.matchValue) forKey:vMatchModel.match_p.dataSource];
             }
         }
     }
@@ -243,15 +247,40 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return item.matchValue > 0 && item.matchCount == vModels.count && (!forProtoGV || ![item.match_p isEqual:forProtoGV]);
     }];
     
-    // TODOTOMORROW20260524: 整个GV的竞争得替代下，无论是自举时，还是GV识别时，都得替代下（参考38036）。
-    
-    //21. 按匹配度排序。
-    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *obj) {
-        return obj.matchValue;
+    // 递进式竞争：方向、分隔点、均色值、色差值层层过滤（参考38036）。
+    NSInteger finalCount = MAX(20, gMatchModels.count * 0.2f);
+    NSInteger filterCount = 4;
+    NSInteger currentCount = gMatchModels.count;
+    CGFloat filterRate = currentCount > finalCount ? pow((double)finalCount / currentCount, 1.0 / filterCount) : 1.0f;
+    filterRate = MAX(0.0f, MIN(1.0f, filterRate));
+
+    // 方向
+    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
+        NSString *key = [AINetGroupValueIndex directionKey:item.match_p.dataSource];
+        return [item.matchDic[key] floatValue];
     }];
-    
-    //24. 过滤不准确的结果。
-    gMatchModels = ARR_SUB(gMatchModels, 0, MIN(20, MAX(5, gMatchModels.count * 0.2)));
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
+
+    // 分隔点
+    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
+        NSString *key = [AINetGroupValueIndex sepKey:item.match_p.dataSource];
+        return [item.matchDic[key] floatValue];
+    }];
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
+
+    // 均色值
+    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
+        NSString *key = [AINetGroupValueIndex junKey:item.match_p.dataSource];
+        return [item.matchDic[key] floatValue];
+    }];
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
+
+    // 色差值
+    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
+        NSString *key = [AINetGroupValueIndex diffKey:item.match_p.dataSource];
+        return [item.matchDic[key] floatValue];
+    }];
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
     
     //25. 更新: ref强度 & 相似度 & 抽具象;
     for (AIMatchModel *matchModel in gMatchModels) {
