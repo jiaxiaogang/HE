@@ -28,6 +28,7 @@ static DDic *bestSTsPool; // 构建bestSTs的元素的复用池 <K=protoRect的�
 
 static NSMutableDictionary *gtZiJvGTPool; // GT自举之GT处理结果的缓存池
 static NSMutableDictionary *gtZiJvSTPool; // GT自举之ST处理结果的缓存池
+static NSMutableDictionary *gvThresholdDic; // GV识别结果各维度最小匹配值（用于gvZiJv阈值参考）<K=ValueDataSource,V=NSNumber>
 
 static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
@@ -46,6 +47,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     bestSTsPool = [DDic new];
     gtZiJvGTPool = [NSMutableDictionary new];
     gtZiJvSTPool = [NSMutableDictionary new];
+    gvThresholdDic = nil;
 }
 
 //MARK:===============================================================
@@ -281,7 +283,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return [item.matchDic[key] floatValue];
     }];
     gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
-    
+
+    // 从识别结果中提取各维度最小匹配值（用于gvZiJv阈值参考）。
+    if (ARRISOK(gMatchModels)) {
+        NSMutableDictionary *minDic = [NSMutableDictionary new];
+        for (AIMatchModel *model in gMatchModels) {
+            for (NSString *key in model.matchDic) {
+                CGFloat val = [model.matchDic[key] floatValue];
+                NSNumber *curMin = minDic[key];
+                if (!curMin || val < curMin.floatValue) {
+                    minDic[key] = @(val);
+                }
+            }
+        }
+        gvThresholdDic = minDic;
+    }
+
     //25. 更新: ref强度 & 相似度 & 抽具象;
     for (AIMatchModel *matchModel in gMatchModels) {
         //2025.03.30: 这儿性能不太好，经查现在组码识别不需要单码索引强度做竞争，先关掉。
@@ -1713,6 +1730,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     // 判断当前protoData与上一帧protoData的匹配度（性能好）|| 或改为判断当前protoData与周边protoData的匹配度（性能差）。
                     CGFloat lastProtoData = NUMTOOK([lastProtoGVIndex objectForKey:assV.dataSource]).floatValue;
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
+
+                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选。
+                    NSNumber *threshold = gvThresholdDic[assV.dataSource];
+                    if (threshold && vMatchValue < threshold.floatValue) { innerEigenMatchValue = 0; break; }
+
                     innerEigenMatchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
                 }
@@ -1720,6 +1742,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 else {
                     double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
+
+                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选。
+                    NSNumber *threshold = gvThresholdDic[assV.dataSource];
+                    if (threshold && vMatchValue < threshold.floatValue) { outerShapeMatchValue = 0; break; }
+
                     outerShapeMatchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
                 }
@@ -1734,6 +1761,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             // 记录protoGVIndex，以供内征分析用。
             lastProtoGVIndex = protoGVIndex;
         }
+        
+        // 无效，直接continue。
+        if (curBestGVItem.innerEigenMatchValue == 0 || curBestGVItem.outerShapeMatchValue == 0) continue;
         
         //35. 保留最匹配的一条。
         if (!best || best.outerShapeMatchValue * best.innerEigenMatchValue < curBestGVItem.outerShapeMatchValue * curBestGVItem.innerEigenMatchValue) {
