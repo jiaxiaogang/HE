@@ -36,12 +36,26 @@
 }
 
 -(void) setData4JvBuItem:(AIFeatureJvBuItem*)jvBuItem {
-    NSLog(@"click");
-    
-    NSArray *lines; // 如下:
-    // TODO: 显示每个jvBuItem的baseGV_p的四个稀疏码值。
-    // TODO: 显示protoGVIndex的四个对应的值。
-    // TODO: 将baseGV_p与protoGVIndex对应的值，进行比较相近度，显示出来。
+    NSString *title = STRFORMAT(@"baseGV_p:%ld Rect:%@", jvBuItem.baseGV_p.pointerId, Rect2Str(jvBuItem.bestGVAtProtoTRect));
+    NSMutableArray *lines = [NSMutableArray new];
+
+    // 1. 显示baseGV_p的四个稀疏码值
+    CGFloat outerShape = 1, innerEigen = 1;
+    if (jvBuItem.baseGV_p) {
+        AIGroupValueNode *gvNode = [SMGUtils searchNode:jvBuItem.baseGV_p];
+        for (NSInteger i = 0; i < gvNode.content_ps.count; i++) {
+            AIKVPointer *value_p = ARR_INDEX(gvNode.content_ps, i);
+            double value = [NUMTOOK([AINetIndex getData:value_p]) doubleValue];
+            double protoValue = [NUMTOOK(jvBuItem.protoGVIndex[value_p.dataSource]) doubleValue];
+            CGFloat matchValue = [AIAnalyst compareCansetValue:value protoV:protoValue at:value_p.algsType ds:value_p.dataSource isOut:value_p.isOut vInfo:nil];
+            [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f", i + 1, value_p.dataSource, value, protoValue, matchValue)];
+            
+            if ([AINetGroupValueIndex isOuterShape:value_p.dataSource]) outerShape *= matchValue;
+            else if ([AINetGroupValueIndex isInnerEigen:value_p.dataSource]) innerEigen *= matchValue;
+        }
+    }
+    [lines addObject:STRFORMAT(@"总结：外形:%.2f 内征:%.2f", outerShape, innerEigen)];
+    [self show:title lines:lines];
 }
 
 -(void) show:(NSString*)title lines:(NSArray*)lines {

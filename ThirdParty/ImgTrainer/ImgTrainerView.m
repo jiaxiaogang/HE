@@ -791,17 +791,18 @@
                 
                 // TODOTOMORROW20260522:
                 // 1、可视化，只显示了三个码，没显示第四个。
+                //  > 目前不太重要，因为显示三个码，当前可视化已经显示的很准确了。
                 // 2、有多个bestGV和实际切图可视化差异很大，其外形内征匹配多少？得核实着对比查下。
+                //  > 经调试：主要是外形，尤其是方向，有一点不一样，就会有很大不同，但它在乘积里只占其中一个，不够重。
                 
-                // 再对比下，这些bestGV和切图GV显示的是否有很不同的，然后打出来详情对比分析下原因。
-                // 长按时，把四个索引值的匹配度都算一下。
-                // CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
                 
             }
         } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
+            // 显示自身大小和画布大小。
             AIFeatureNode *tNode = (AIFeatureNode*)preview.fromObj;
             NSLog(@"AIFeatureNode被点击:%@ %@",Rect2Str(tNode.rect),CGRectIsEmpty(preview.fromCanvas) ? @"未指定" : Rect2Str(preview.fromCanvas));
         } else if (ISOK(preview.fromObj, AIFeatureJvBuItem.class)) {
+            // 显示四个索引值的匹配度。
             AIFeatureJvBuItem *jvBuItem = (AIFeatureJvBuItem*)preview.fromObj;
             JvBuDetailWindow *window = [[JvBuDetailWindow alloc] init];
             [window setData4JvBuItem:jvBuItem];
