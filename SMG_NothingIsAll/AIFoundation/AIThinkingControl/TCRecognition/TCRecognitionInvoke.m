@@ -243,6 +243,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return item.matchValue > 0 && item.matchCount == vModels.count && (!forProtoGV || ![item.match_p isEqual:forProtoGV]);
     }];
     
+    // TODOTOMORROW20260524: 整个GV的竞争得替代下，无论是自举时，还是GV识别时，都得替代下（参考38036）。
+    
     //21. 按匹配度排序。
     gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *obj) {
         return obj.matchValue;

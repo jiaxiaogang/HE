@@ -788,14 +788,6 @@
                 
                 // 显示item.bestGVAtProtoTRect在protoImgDic上的真实切图
                 [self setDataForGVIndex:item.protoGVIndex canvasRect:item.bestGVAtProtoTRect ds:jvBuModel.assT.ds lab:STRFORMAT(@"真实切图%ld.%ld",jvBuModel.assT.pId,i) tvId:4];
-                
-                // TODOTOMORROW20260522:
-                // 1、可视化，只显示了三个码，没显示第四个。
-                //  > 目前不太重要，因为显示三个码，当前可视化已经显示的很准确了。
-                // 2、有多个bestGV和实际切图可视化差异很大，其外形内征匹配多少？得核实着对比查下。
-                //  > 经调试：主要是外形，尤其是方向，有一点不一样，就会有很大不同，但它在乘积里只占其中一个，不够重。
-                
-                
             }
         } else if (ISOK(preview.fromObj, AIFeatureNode.class)) {
             // 显示自身大小和画布大小。
