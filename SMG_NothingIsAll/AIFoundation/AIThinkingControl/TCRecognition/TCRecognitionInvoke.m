@@ -1669,28 +1669,32 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
             CGFloat outerShapeMatchValue = 1, innerEigenMatchValue = 1;
+            NSMutableDictionary *baseGVIndex = [NSMutableDictionary new];
             AIGroupValueNode *curAssGV = [SMGUtils searchNode:newGV];
             for (AIKVPointer *assV in curAssGV.content_ps) {
                 // 数据准备
                 CGFloat protoData = NUMTOOK([protoGVIndex objectForKey:assV.dataSource]).floatValue;
                 NSDictionary *dataDic = [dataDicCache objectForKey:assV.dataSource];
                 AIValueInfo *vInfo = [vInfoCache objectForKey:assV.dataSource];
-                
+
                 // 内征（色差和色均值）需要在assT的各元素间保持过滤平缓（参考37033-TODO3）。
                 if ([AINetGroupValueIndex isInnerEigen:assV.dataSource]) {
                     // 判断当前protoData与上一帧protoData的匹配度（性能好）|| 或改为判断当前protoData与周边protoData的匹配度（性能差）。
                     CGFloat lastProtoData = NUMTOOK([lastProtoGVIndex objectForKey:assV.dataSource]).floatValue;
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
                     innerEigenMatchValue *= vMatchValue;
+                    baseGVIndex[assV.dataSource] = @(vMatchValue);
                 }
                 // 外形（方向和分隔点）需要protoT与assT一致（参考37033-TODO2）。
                 else {
                     double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
                     outerShapeMatchValue *= vMatchValue;
+                    baseGVIndex[assV.dataSource] = @(vMatchValue);
                 }
             }
             curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect outerShapeMatchValue:outerShapeMatchValue matchDegree:1 innerEigenMatchValue:innerEigenMatchValue baseGV_p:newGV];
+            curBestGVItem.baseGVIndex = baseGVIndex;
             curBestGVItem.protoGVIndex = protoGVIndex;
             
             // 记录缓存池
