@@ -249,40 +249,38 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return item.matchValue > 0 && item.matchCount == vModels.count && (!forProtoGV || ![item.match_p isEqual:forProtoGV]);
     }];
     
-    // 递进式竞争：方向、分隔点、均色值、色差值层层过滤（参考38036）。
+    // 递进式竞争：方向50%、均色值30%、色差15%、分隔点5%层层过滤（参考38036）。
     NSInteger finalCount = MAX(20, gMatchModels.count * 0.2f);
-    NSInteger filterCount = 4;
     NSInteger currentCount = gMatchModels.count;
-    CGFloat filterRate = currentCount > finalCount ? pow((double)finalCount / currentCount, 1.0 / filterCount) : 1.0f;
-    filterRate = MAX(0.0f, MIN(1.0f, filterRate));
+    double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
 
-    // 方向
+    // 方向 (50%)
     gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
         NSString *key = [AINetGroupValueIndex directionKey:item.match_p.dataSource];
         return [item.matchDic[key] floatValue];
     }];
-    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.5) + 0.5f);
 
-    // 分隔点
-    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
-        NSString *key = [AINetGroupValueIndex sepKey:item.match_p.dataSource];
-        return [item.matchDic[key] floatValue];
-    }];
-    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
-
-    // 均色值
-    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
-        NSString *key = [AINetGroupValueIndex junKey:item.match_p.dataSource];
-        return [item.matchDic[key] floatValue];
-    }];
-    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
-
-    // 色差值
+    // 色差值 (15%)
     gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
         NSString *key = [AINetGroupValueIndex diffKey:item.match_p.dataSource];
         return [item.matchDic[key] floatValue];
     }];
-    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * filterRate + 0.5f);
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.15) + 0.5f);
+    
+    // 均色值 (30%)
+    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
+        NSString *key = [AINetGroupValueIndex junKey:item.match_p.dataSource];
+        return [item.matchDic[key] floatValue];
+    }];
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.3) + 0.5f);
+
+    // 分隔点 (5%)
+    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
+        NSString *key = [AINetGroupValueIndex sepKey:item.match_p.dataSource];
+        return [item.matchDic[key] floatValue];
+    }];
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.05) + 0.5f);
 
     // 从识别结果中提取各维度最小匹配值（用于gvZiJv阈值参考）。
     if (ARRISOK(gMatchModels)) {
@@ -1733,7 +1731,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
                     // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选。
                     NSNumber *threshold = gvThresholdDic[assV.dataSource];
-                    if (threshold && vMatchValue < threshold.floatValue) { innerEigenMatchValue = 0; break; }
+                    if (threshold && vMatchValue < threshold.floatValue * 0.5f) { innerEigenMatchValue = 0; break; }
 
                     innerEigenMatchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
@@ -1745,7 +1743,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
                     // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选。
                     NSNumber *threshold = gvThresholdDic[assV.dataSource];
-                    if (threshold && vMatchValue < threshold.floatValue) { outerShapeMatchValue = 0; break; }
+                    if (threshold && vMatchValue < threshold.floatValue * 0.5f) { outerShapeMatchValue = 0; break; }
 
                     outerShapeMatchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
