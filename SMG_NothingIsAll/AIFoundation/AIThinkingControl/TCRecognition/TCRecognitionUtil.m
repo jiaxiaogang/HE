@@ -232,7 +232,7 @@
 +(NSMutableArray*) filter4ZonHe:(NSMutableArray*)allGTGroups {
     // 取整体均值。
     CGFloat jun1 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
-        return gtModel.gtOuterShapeMatchValue;
+        return gtModel.gtMatchValue;
     }] / allGTGroups.count;
     CGFloat jun2 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
         return gtModel.allBestCount;
@@ -240,22 +240,16 @@
     CGFloat jun3 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
         return gtModel.matchCountRatioV2;
     }] / allGTGroups.count;
-    CGFloat jun4 = allGTGroups.count == 0 ? 0 : [SMGUtils sumOfArr:allGTGroups convertBlock:^double(GTZiJvModelV2 *gtModel) {
-        return gtModel.gtInnerEigenMatchValue;
-    }] / allGTGroups.count;
-    
+
     // 按责任淘汰。
     allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
-        return [TCLearningUtil noZeRenForPingJun:gtModel.gtOuterShapeMatchValue bigerMatchValue:jun1];
+        return [TCLearningUtil noZeRenForPingJun:gtModel.gtMatchValue bigerMatchValue:jun1];
     }];
     allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
         return [TCLearningUtil noZeRenForPingJun:gtModel.allBestCount bigerMatchValue:jun2];
     }];
     allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
         return [TCLearningUtil noZeRenForPingJun:gtModel.matchCountRatioV2 bigerMatchValue:jun3];
-    }];
-    allGTGroups = [SMGUtils filterArr:allGTGroups checkValid:^BOOL(GTZiJvModelV2 *gtModel) {
-        return [TCLearningUtil noZeRenForPingJun:gtModel.gtInnerEigenMatchValue bigerMatchValue:jun4];
     }];
     return allGTGroups;
 }

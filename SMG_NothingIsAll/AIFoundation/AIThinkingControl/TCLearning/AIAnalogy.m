@@ -257,7 +257,7 @@
  *      2025.03.31: 改为调用组码类比v2。
  */
 +(AIFeatureNode*) analogyFeatureV2:(AIFeatureJvBuModel*)jvBuModel protoTLogDesc:(NSString*)protoTLogDesc prefixIndex:(NSInteger)prefixIndex {
-    AIFeatureNode *absST = [self analogyFeatureV3:jvBuModel.bestGVs baseST:jvBuModel.assT stMatchValue:jvBuModel.outerShapeMatchValue * jvBuModel.innerEigenMatchValue protoTLogDesc:protoTLogDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
+    AIFeatureNode *absST = [self analogyFeatureV3:jvBuModel.bestGVs baseST:jvBuModel.assT stMatchValue:jvBuModel.matchValue protoTLogDesc:protoTLogDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
         // 1. 把后面会用到的一些数据存下来。
         jvBuModel.bestGVs4NoZeRen = validBestGVs;
     } debug:true];
@@ -372,7 +372,7 @@
         STZiJvModelV2 *stGroup = [gtModel.bestSTs objectForKey:key];
         CGRect baseST_BaseGT = [gtModel.baseGT rectByIndex:key.integerValue];
         
-        stGroup.absST = [AIAnalogy analogyFeatureV3:stGroup.bestGVs baseST:stGroup.baseST stMatchValue:stGroup.stOuterShapeMatchValue * stGroup.stInnerEigenMatchValue protoTLogDesc:logDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
+        stGroup.absST = [AIAnalogy analogyFeatureV3:stGroup.bestGVs baseST:stGroup.baseST stMatchValue:stGroup.stMatchValue protoTLogDesc:logDesc prefixIndex:prefixIndex finishBlock:^(NSArray *validBestGVs, NSValue *bestGVs_AssT) {
             stGroup.absST_BaseST = bestGVs_AssT.CGRectValue;
             
             // 再根据absST_BaseST + baseST_BaseGT = 得出absST_BaseGT。
@@ -410,7 +410,7 @@
     AIGroupFeatureNode *absGT = [AIGeneralNodeCreater createGroupFeatureNode:orders conNodes:@[gtModel.baseGT] at:at ds:ds isOut:isOut isJiao:true];
     
     //41. 更新logDesc。
-    [absGT updateLogDescItem:logDesc rate:gtModel.gtOuterShapeMatchValue * gtModel.gtInnerEigenMatchValue];
+    [absGT updateLogDescItem:logDesc rate:gtModel.gtMatchValue];
     [absGT updateLogDescDic:gtModel.baseGT.logDesc];
     
     //2025.04.23: 改为由protoT来收集absGVModels了，所以与protoT的匹配度符合度全是1，与assT的匹配度符合度直接重用zenTiModel的。

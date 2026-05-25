@@ -22,7 +22,7 @@
 }
 
 -(void) setData4JvBuModel:(AIFeatureJvBuModel*)jvBuModel {
-    NSString *title = STRFORMAT(@"ST%ld bestGVs:%ld 外%.2f 内%.2f", jvBuModel.assT.pId, jvBuModel.bestGVs.count, jvBuModel.outerShapeMatchValue, jvBuModel.innerEigenMatchValue);
+    NSString *title = STRFORMAT(@"ST%ld bestGVs:%ld 匹配度:%.2f", jvBuModel.assT.pId, jvBuModel.bestGVs.count, jvBuModel.matchValue);
     
     // 每行一个bestGV
     NSArray *sortedKeys = [SMGUtils sortSmall2Big:jvBuModel.bestGVs.allKeys compareBlock:^double(NSNumber *obj) {
@@ -30,7 +30,7 @@
     }];
     NSArray *lines = [SMGUtils convertArr:sortedKeys iConvertBlock:^id(NSInteger i, NSNumber *assIndex) {
         AIFeatureJvBuItem *item = [jvBuModel.bestGVs objectForKey:assIndex];
-        return STRFORMAT(@"%ld. idx:%@ ProtoRect:%@ 外:%.2f 内:%.2f 符:%.2f", i + 1, assIndex, Rect2Str(item.bestGVAtProtoTRect), item.outerShapeMatchValue, item.innerEigenMatchValue, item.matchDegree);
+        return STRFORMAT(@"%ld. idx:%@ ProtoRect:%@ 匹配度:%.2f 符:%.2f", i + 1, assIndex, Rect2Str(item.bestGVAtProtoTRect), item.matchValue, item.matchDegree);
     }];
     [self show:title lines:lines];
 }
@@ -40,7 +40,7 @@
     NSMutableArray *lines = [NSMutableArray new];
 
     // 1. 显示baseGV_p的四个稀疏码值
-    CGFloat outerShape = 1, innerEigen = 1;
+    CGFloat totalMatchValue = 1;
     if (jvBuItem.baseGV_p) {
         AIGroupValueNode *gvNode = [SMGUtils searchNode:jvBuItem.baseGV_p];
         for (NSInteger i = 0; i < gvNode.content_ps.count; i++) {
@@ -49,12 +49,11 @@
             double protoValue = [NUMTOOK(jvBuItem.protoGVIndex[value_p.dataSource]) doubleValue];
             CGFloat matchValue = [AIAnalyst compareCansetValue:value protoV:protoValue at:value_p.algsType ds:value_p.dataSource isOut:value_p.isOut vInfo:nil];
             [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f", i + 1, value_p.dataSource, value, protoValue, matchValue)];
-            
-            if ([AINetGroupValueIndex isOuterShape:value_p.dataSource]) outerShape *= matchValue;
-            else if ([AINetGroupValueIndex isInnerEigen:value_p.dataSource]) innerEigen *= matchValue;
+
+            totalMatchValue *= matchValue;
         }
     }
-    [lines addObject:STRFORMAT(@"总结：外形:%.2f 内征:%.2f", outerShape, innerEigen)];
+    [lines addObject:STRFORMAT(@"总结：匹配度:%.2f", totalMatchValue)];
     [self show:title lines:lines];
 }
 

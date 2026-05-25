@@ -21,8 +21,7 @@
 -(CGRect) bestGVs_ST;
 -(CGRect) bestGVs_Proto;
 
--(CGFloat) stOuterShapeMatchValue;
--(CGFloat) stInnerEigenMatchValue;
+-(CGFloat) stMatchValue;
 -(CGFloat) stMatchDegree;
 -(CGFloat) stMatchCountRatio;
 

@@ -162,11 +162,11 @@
     // =================== 方式2、根据综合定责淘汰 ===================
     
     CGFloat modelScore = self.stModels.count == 0 ? 0 : [SMGUtils sumOfArr:self.stModels convertBlock:^double(AIFeatureJvBuModel *model) {
-        return model.outerShapeMatchValue * model.innerEigenMatchValue * model.bestGVs.count * model.modelMatchRatio * model.averageContentStrongScore;
+        return model.matchValue * model.bestGVs.count * model.modelMatchRatio * model.averageContentStrongScore;
     }] / self.stModels.count;
-    
+
     self.stModels = [SMGUtils filterArr:self.stModels checkValid:^BOOL(AIFeatureJvBuModel *model) {
-        CGFloat itemScore = model.outerShapeMatchValue * model.innerEigenMatchValue * model.bestGVs.count * model.modelMatchRatio * model.averageContentStrongScore;
+        CGFloat itemScore = model.matchValue * model.bestGVs.count * model.modelMatchRatio * model.averageContentStrongScore;
         return [TCLearningUtil noZeRenForPingJun:itemScore bigerMatchValue:modelScore];
     }];
 }

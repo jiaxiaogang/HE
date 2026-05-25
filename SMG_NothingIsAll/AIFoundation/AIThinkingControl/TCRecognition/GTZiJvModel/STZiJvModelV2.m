@@ -69,15 +69,9 @@
     }];
 }
 
--(CGFloat) stOuterShapeMatchValue {
-    return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
-        return gv.outerShapeMatchValue;
-    }] / self.bestGVs.count;
-}
-
--(CGFloat) stInnerEigenMatchValue {
-    return self.bestGVs == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
-        return gv.innerEigenMatchValue;
+-(CGFloat) stMatchValue {
+    return self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *gv) {
+        return gv.matchValue;
     }] / self.bestGVs.count;
 }
 
@@ -104,12 +98,9 @@
 
 // 定责淘汰（参考37071）。
 -(void) filter4ZonHe {
+    CGFloat matchValueJun = self.stMatchValue;
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:value.outerShapeMatchValue bigerMatchValue:self.stOuterShapeMatchValue];
-    }];
-    
-    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:value.innerEigenMatchValue bigerMatchValue:self.stInnerEigenMatchValue];
+        return [TCLearningUtil noZeRenForPingJun:value.matchValue bigerMatchValue:matchValueJun];
     }];
 }
 

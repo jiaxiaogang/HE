@@ -13,10 +13,8 @@
 /**
  *  MARK:--------------------主因子：匹配度--------------------
  */
--(void) run4GTOuterShapeMatchValue;
-@property (assign, nonatomic) CGFloat gtOuterShapeMatchValue;
--(void) run4GTInnerEigenMatchValue;
-@property (assign, nonatomic) CGFloat gtInnerEigenMatchValue;
+-(void) run4GTMatchValue;
+@property (assign, nonatomic) CGFloat gtMatchValue;
 
 /**
  *  MARK:--------------------辅因子：位置符合度（参考36045）--------------------

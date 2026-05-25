@@ -10,12 +10,11 @@
 
 @implementation AIFeatureJvBuItem
 
-+(id) new:(CGRect)bestGVAtProtoTRect outerShapeMatchValue:(CGFloat)outerShapeMatchValue matchDegree:(CGFloat)matchDegree innerEigenMatchValue:(CGFloat)innerEigenMatchValue baseGV_p:(AIKVPointer*)baseGV_p {
++(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree baseGV_p:(AIKVPointer*)baseGV_p {
     AIFeatureJvBuItem *result = [AIFeatureJvBuItem new];
     result.bestGVAtProtoTRect = bestGVAtProtoTRect;
-    result.outerShapeMatchValue = outerShapeMatchValue;
+    result.matchValue = matchValue;
     result.matchDegree = matchDegree;
-    result.innerEigenMatchValue = innerEigenMatchValue;
     result.baseGV_p = baseGV_p;
     return result;
 }

@@ -8,8 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-#define cOuterShapeWeight 0.05f     // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
-#define cInnerEigenWeight 0.05f     // 强：头部保留（用冷却曲线增强28原则：匹配度0.7时就只剩10%的作用力）。
+// 废弃：cOuterShapeWeight 和 cInnerEigenWeight 已随外形内征废弃。
 #define cTotalCountWeight 1.0       // 中：自由竞争（用线性权重）。
 #define cBestsCountWeight 1.0       // 中：自由竞争（用线性权重）。
 #define cAverStrongWeight 0.0       // 弱：末尾淘汰（可废弃，在广入时，已淘汰强度低的）。
@@ -40,11 +39,8 @@
 //在ST类比后，把构建absST的指针存下来，后面构建protoGT时要用。
 @property (strong, nonatomic) AIKVPointer *abs_p;
 
-// TODOTOMORROW20260525: 把外形内征彻底废弃掉。
-
 //用bestGVs每一条gv求平均得出匹配度。
-@property (assign, nonatomic) CGFloat outerShapeMatchValue; // ST外形匹配度（37033-TODO2）。
-@property (assign, nonatomic) CGFloat innerEigenMatchValue; // ST内征匹配度（37033-TODO3）。
+@property (assign, nonatomic) CGFloat matchValue;            // ST统一匹配度。
 @property (assign, nonatomic) CGFloat directionMatchValue;  // 方向匹配度。
 @property (assign, nonatomic) CGFloat junMatchValue;        // 均色值匹配度。
 @property (assign, nonatomic) CGFloat diffMatchValue;       // 色差匹配度。
@@ -58,8 +54,7 @@
 //protoRect和assRect视角匹配度（用于调试日志用）。
 @property (assign, nonatomic) CGFloat matchRectValue;
 
--(void) run4OuterShapeMatchValue;
--(void) run4InnerEigenMatchValue;
+-(void) run4MatchValue;
 -(void) run4DirectionMatchValue;
 -(void) run4JunMatchValue;
 -(void) run4DiffMatchValue;

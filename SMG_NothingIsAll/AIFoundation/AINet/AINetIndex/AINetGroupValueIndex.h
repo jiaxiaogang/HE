@@ -22,10 +22,7 @@
 +(NSString*) junKey:(NSString*)ds;
 +(NSString*) sepKey:(NSString*)ds;
 
-// 是否外形 (dataSource是否用于外形判断)
-+(BOOL) isOuterShape:(NSString*)ds;
-
-// 是否内征 (dataSource是否用于内征判断)
+// 是否内征 (dataSource是否用于内征判断，用于GV帧间平缓逻辑)
 +(BOOL) isInnerEigen:(NSString*)ds;
 
 /**

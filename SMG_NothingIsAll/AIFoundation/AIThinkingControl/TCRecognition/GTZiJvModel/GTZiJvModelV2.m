@@ -60,17 +60,9 @@
 /**
  *  MARK:--------------------主因子：匹配度--------------------
  */
--(void) run4GTOuterShapeMatchValue {
-    // 需此时self为单GTGroup
-    self.gtOuterShapeMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
-        return stGroup.stOuterShapeMatchValue;
-    }] / self.bestSTs.count;
-}
-
--(void) run4GTInnerEigenMatchValue {
-    // 需此时self为单GTGroup
-    self.gtInnerEigenMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
-        return stGroup.stInnerEigenMatchValue;
+-(void) run4GTMatchValue {
+    self.gtMatchValue = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
+        return stGroup.stMatchValue;
     }] / self.bestSTs.count;
 }
 
@@ -187,17 +179,11 @@
         [stGroup filter4ZonHe];
     }
     
-    // 执行前，必须保证self.gtOuterShapeMatchValue 和 self.gtInnerEigenMatchValue已跑出值。
-    [self run4GTOuterShapeMatchValue];
-    [self run4GTInnerEigenMatchValue];
-    
-    // 定责淘汰
+    [self run4GTMatchValue];
+
+    CGFloat gtMatchVal = self.gtMatchValue;
     self.bestSTs = [SMGUtils filterDic:self.bestSTs checkValid:^BOOL(id key, STZiJvModelV2 *value) {
-        return [TCLearningUtil noZeRenForPingJun:value.stOuterShapeMatchValue bigerMatchValue:self.gtOuterShapeMatchValue];
-    }];
-    
-    self.bestSTs = [SMGUtils filterDic:self.bestSTs checkValid:^BOOL(id key, STZiJvModelV2 *value) {
-        return [TCLearningUtil noZeRenForPingJun:value.stInnerEigenMatchValue bigerMatchValue:self.gtInnerEigenMatchValue];
+        return [TCLearningUtil noZeRenForPingJun:value.stMatchValue bigerMatchValue:gtMatchVal];
     }];
 }
 
@@ -216,7 +202,7 @@
     // return self.gtMatchValue * self.matchCountRatioV2 * self.allBestCount;
     
     // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
-    return self.gtOuterShapeMatchValue * self.gtInnerEigenMatchValue
+    return self.gtMatchValue
                 * [AIScore scoreWeight:self.matchCountRatioV2 weight:0.2f]
                 * self.bestsCountScoreByRank
                 * [AIScore scoreWeight:self.averageContentStrongScore weight:0.2f];
@@ -237,7 +223,7 @@
     // return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f 匹配数:(%03ld/%03ld) = 综合得分:%.3f（稳定性:%.2f）",self.gtMatchValue,self.matchCountRatioV2,self.allBestCount,self.allGVCount,self.zonHeScore,self.averageContentStrong);
     
     // v5: 随着加权求和切图法上线，匹配数和匹配率全是100%，所以改回只用匹配度。
-    return STRFORMAT(@"外形:%.2f 内征:%.2f 匹配率:%.2f (%02ld/%02ld) 匹配数:%.2f 稳定性:%.2f = 总分:%.3f",self.gtOuterShapeMatchValue,self.gtInnerEigenMatchValue,
+    return STRFORMAT(@"匹配度:%.2f 匹配率:%.2f (%02ld/%02ld) 匹配数:%.2f 稳定性:%.2f = 总分:%.3f",self.gtMatchValue,
                      [AIScore scoreWeight:self.matchCountRatioV2 weight:0.2f],self.bestSTs.count,self.baseGT.count,
                      self.bestsCountScoreByRank,
                      [AIScore scoreWeight:self.averageContentStrongScore weight:0.2f],

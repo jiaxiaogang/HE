@@ -23,15 +23,9 @@
     return _bestGVs;
 }
 
--(void) run4OuterShapeMatchValue {
-    self.outerShapeMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.outerShapeMatchValue;
-    }] / self.bestGVs.count;
-}
-
--(void) run4InnerEigenMatchValue {
-    self.innerEigenMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.innerEigenMatchValue;
+-(void) run4MatchValue {
+    self.matchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        return obj.matchValue;
     }] / self.bestGVs.count;
 }
 
@@ -101,7 +95,7 @@
     // 方案1、区域综合竞争后，打分时，对防抽防具最后30%名进行降权（参考36096-TODO3.3）。
     // 2026.01.21: 去掉防过具，改为准确中取具象（因为很难对撞上，所有有效全含的抽象全算识别结果）（参考35152-TODO1 & 35153）。
     zoneSTModels = [SMGUtils sortSmall2Big:zoneSTModels compareBlock:^double(AIFeatureJvBuModel *obj) {
-        return obj.outerShapeMatchValue * obj.innerEigenMatchValue * self.modelMatchCountScore/* * self.modelMatchRatioScore*/;
+        return obj.matchValue * self.modelMatchCountScore/* * self.modelMatchRatioScore*/;
     }];
     for (NSInteger i = 0; i < zoneSTModels.count; i++) {
         AIFeatureJvBuModel *obj = ARR_INDEX(zoneSTModels, i);
@@ -139,7 +133,7 @@
     AIFeatureJvBuItem *old = [self getBestGVByAssIndex:assIndex];
     
     // 没旧的 或 有旧的但更好 => 则收集（参考35105-TODO6.4）。
-    if (!old || newBestGV.outerShapeMatchValue > old.outerShapeMatchValue) {
+    if (!old || newBestGV.matchValue > old.matchValue) {
         [self.bestGVs setObject:newBestGV forKey:@(assIndex)];
     }
 }
@@ -169,19 +163,14 @@
 
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
 -(void) filter4ZonHe {
-    [self run4OuterShapeMatchValue];
-    [self run4InnerEigenMatchValue];
+    [self run4MatchValue];
     [self run4DirectionMatchValue];
     [self run4JunMatchValue];
     [self run4DiffMatchValue];
     [self run4SepMatchValue];
-    
+
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:value.outerShapeMatchValue bigerMatchValue:self.outerShapeMatchValue];
-    }];
-    
-    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:value.innerEigenMatchValue bigerMatchValue:self.innerEigenMatchValue];
+        return [TCLearningUtil noZeRenForPingJun:value.matchValue bigerMatchValue:self.matchValue];
     }];
 }
 
@@ -323,7 +312,7 @@
     //            * [AIScore scoreWeight:self.bestsCountScore weight:cBestsCountWeight];
     
     // v8：改为乘积单纯参与了主辅递进式竞争的因子。
-    return self.bestsCountScore * self.outerShapeMatchValue;
+    return self.bestsCountScore * self.matchValue;
 }
 
 -(NSString*) stScoreDesc {
@@ -350,7 +339,7 @@
     //                 self.stScore);
     
     // v8：改为打印纯参与了主辅递进式竞争的因子。
-    return STRFORMAT(@"匹配数:%.2f (%02ld) 外形:%.2f = 总分:%.2f",self.bestsCountScore,self.bestGVs.count,self.outerShapeMatchValue,self.stScore);
+    return STRFORMAT(@"匹配数:%.2f (%02ld) 匹配度:%.2f = 总分:%.2f",self.bestsCountScore,self.bestGVs.count,self.matchValue,self.stScore);
 }
 
 @end

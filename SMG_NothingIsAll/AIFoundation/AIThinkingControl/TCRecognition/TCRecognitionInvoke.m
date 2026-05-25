@@ -418,8 +418,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model run4OuterShapeMatchValue];                               // 外形
-        [model run4InnerEigenMatchValue];                               // 内征
+        [model run4MatchValue];                                          // 匹配度
+        // [model run4OuterShapeMatchValue];                             // 外形（已废弃）
+        // [model run4InnerEigenMatchValue];                             // 内征（已废弃）
         [model run4DirectionMatchValue];                                // 方向
         [model run4JunMatchValue];                                      // 色均值
         [model run4DiffMatchValue];                                     // 色差值
@@ -528,7 +529,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         for (AIPort *validAbsPort in model.validAbsSTPorts) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbsPort.target_p];
             CGFloat absMatch = [validAbs getConMatchValue:model.assT.p];
-            [validAbs updateLogDescItem:logDesc rate:absMatch * model.outerShapeMatchValue * model.innerEigenMatchValue];
+            [validAbs updateLogDescItem:logDesc rate:absMatch * model.matchValue];
         }
     }
     
@@ -631,8 +632,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }];
     CGFloat protoGTArea = [SMGUtils computeArea4STModels_Proto:stModels];
     for (GTZiJvModelV2 *gtGroup in allGTGroups) {
-        [gtGroup run4GTOuterShapeMatchValue];
-        [gtGroup run4GTInnerEigenMatchValue];
+        [gtGroup run4GTMatchValue];
+        // [gtGroup run4GTOuterShapeMatchValue];  // 已废弃
+        // [gtGroup run4GTInnerEigenMatchValue];  // 已废弃
         [gtGroup run4GTMatchDegree];
         [gtGroup run4GTMatchCountRatio];
         [gtGroup run4STMatchDegree];
@@ -711,7 +713,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         for (AIKVPointer *validAbs_p in model.validAbs_ps) {
             AIGroupFeatureNode *validAbs = [SMGUtils searchNode:validAbs_p];
             CGFloat absMatch = [validAbs getConMatchValue:model.baseGT.p];
-            [validAbs updateLogDescItem:logDesc rate:absMatch * model.gtOuterShapeMatchValue * model.gtInnerEigenMatchValue];
+            [validAbs updateLogDescItem:logDesc rate:absMatch * model.gtMatchValue];
         }
     }
     AddDebugCodeBlock_KeyV3();
@@ -1734,7 +1736,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
             
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
-            CGFloat outerShapeMatchValue = 1, innerEigenMatchValue = 1;
+            CGFloat matchValue = 1;
             NSMutableDictionary *baseGVIndex = [NSMutableDictionary new];
             AIGroupValueNode *curAssGV = [SMGUtils searchNode:newGV];
             for (AIKVPointer *assV in curAssGV.content_ps) {
@@ -1745,31 +1747,20 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
                 // 内征（色差和色均值）需要在assT的各元素间保持过滤平缓（参考37033-TODO3）。
                 if ([AINetGroupValueIndex isInnerEigen:assV.dataSource]) {
-                    // 判断当前protoData与上一帧protoData的匹配度（性能好）|| 或改为判断当前protoData与周边protoData的匹配度（性能差）。
                     CGFloat lastProtoData = NUMTOOK([lastProtoGVIndex objectForKey:assV.dataSource]).floatValue;
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
-
-                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是不加阈值，等ST竞争即可，如果有不准的GV，从别处找原因为什么准确的GV的没竞争优胜）。
-                    // NSNumber *threshold = gvThresholdDic[assV.dataSource];
-                    // if (threshold && vMatchValue < threshold.floatValue) { innerEigenMatchValue = 0; break; }
-
-                    innerEigenMatchValue *= vMatchValue;
+                    matchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
                 }
                 // 外形（方向和分隔点）需要protoT与assT一致（参考37033-TODO2）。
                 else {
                     double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
-
-                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是不加阈值，等ST竞争即可，如果有不准的GV，从别处找原因为什么准确的GV的没竞争优胜）。
-                    // NSNumber *threshold = gvThresholdDic[assV.dataSource];
-                    // if (threshold && vMatchValue < threshold.floatValue) { outerShapeMatchValue = 0; break; }
-
-                    outerShapeMatchValue *= vMatchValue;
+                    matchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
                 }
             }
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect outerShapeMatchValue:outerShapeMatchValue matchDegree:1 innerEigenMatchValue:innerEigenMatchValue baseGV_p:newGV];
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:matchValue matchDegree:1 baseGV_p:newGV];
             curBestGVItem.baseGVIndex = baseGVIndex;
             curBestGVItem.protoGVIndex = protoGVIndex;
             
@@ -1781,10 +1772,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
         
         // 无效，直接continue。
-        if (curBestGVItem.innerEigenMatchValue == 0 || curBestGVItem.outerShapeMatchValue == 0) continue;
-        
+        if (curBestGVItem.matchValue == 0) continue;
+
         //35. 保留最匹配的一条。
-        if (!best || best.outerShapeMatchValue * best.innerEigenMatchValue < curBestGVItem.outerShapeMatchValue * curBestGVItem.innerEigenMatchValue) {
+        if (!best || best.matchValue < curBestGVItem.matchValue) {
             best = curBestGVItem;
         }
     }
