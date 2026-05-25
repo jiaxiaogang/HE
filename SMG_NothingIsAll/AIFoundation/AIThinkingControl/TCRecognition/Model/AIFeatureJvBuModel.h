@@ -40,9 +40,15 @@
 //在ST类比后，把构建absST的指针存下来，后面构建protoGT时要用。
 @property (strong, nonatomic) AIKVPointer *abs_p;
 
+// TODOTOMORROW20260525: 把外形内征彻底废弃掉。
+
 //用bestGVs每一条gv求平均得出匹配度。
 @property (assign, nonatomic) CGFloat outerShapeMatchValue; // ST外形匹配度（37033-TODO2）。
 @property (assign, nonatomic) CGFloat innerEigenMatchValue; // ST内征匹配度（37033-TODO3）。
+@property (assign, nonatomic) CGFloat directionMatchValue;  // 方向匹配度。
+@property (assign, nonatomic) CGFloat junMatchValue;        // 均色值匹配度。
+@property (assign, nonatomic) CGFloat diffMatchValue;       // 色差匹配度。
+@property (assign, nonatomic) CGFloat sepMatchValue;        // 分隔点匹配度。
 //用bestGVs每一条gv求平均得出符合度。
 @property (assign, nonatomic) CGFloat matchDegree;
 //用bestGVs条数得出健全度。
@@ -54,7 +60,10 @@
 
 -(void) run4OuterShapeMatchValue;
 -(void) run4InnerEigenMatchValue;
--(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio;
+-(void) run4DirectionMatchValue;
+-(void) run4JunMatchValue;
+-(void) run4DiffMatchValue;
+-(void) run4SepMatchValue;
 -(void) run4BestGvsAtProtoTRect;
 -(void) run4BestGvsAtAssTRect;
 

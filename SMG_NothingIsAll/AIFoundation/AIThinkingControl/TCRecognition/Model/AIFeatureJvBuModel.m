@@ -23,38 +23,6 @@
     return _bestGVs;
 }
 
--(void) run4MatchValueAndMatchDegreeAndMatchAssProtoRatio {
-    //2. 符合度。
-    self.matchDegree = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return obj.matchDegree;
-    }] / self.bestGVs.count;
-    //2025.05.21: 符合度乘积版：改成求乘积，因为看日志，感觉竞争结果中，符合度太弱了，都差不多都很高（后发现类比时定责总是不准，先回滚回用平均值）。
-    //self.matchDegree = 1;
-    //for (AIFeatureJvBuItem *item in self.bestGVs) {
-    //    self.matchDegree *= item.matchDegree;
-    //}
-    
-    //3. 此处没有protoT.count，所以健全度直接用assCount也是不影响竞争的。
-    //2025.05.11: 修复健全度低问题，由总assT.count改成bestGVs.count，因为并不判断全含，所以由总数改成匹配到的数。
-    self.matchAssProtoRatio = self.bestGVs.count;
-    
-    //4. 匹配率
-    self.matchAssRatio = self.bestGVs.count / (float)self.assT.count;
-    
-    //ST内征匹配度（37033-TODO3）。
-    [self run4InnerEigenMatchValue];
-    
-    //6. 视角匹配度。
-    self.matchRectValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allKeys convertBlock:^double(NSNumber *assIndex) {
-        AIFeatureJvBuItem *obj = [self.bestGVs objectForKey:assIndex];
-        NSValue *assRect = ARR_INDEX(self.assT.rects, assIndex.integerValue);
-        return obj.bestGVAtProtoTRect.size.width / assRect.CGRectValue.size.width;
-    }] / self.bestGVs.count;
-    
-    //7. 类比淘汰bestGVs不会更新到jvBuModel.bestGVs了，这直接把assT在protoT的位置算出来。
-    [self run4BestGvsAtProtoTRect];
-}
-
 -(void) run4OuterShapeMatchValue {
     self.outerShapeMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.outerShapeMatchValue;
@@ -64,6 +32,36 @@
 -(void) run4InnerEigenMatchValue {
     self.innerEigenMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
         return obj.innerEigenMatchValue;
+    }] / self.bestGVs.count;
+}
+
+-(void) run4DirectionMatchValue {
+    // TODOTOMORROW20260525: 把这里的ds由生成来objectforkey取，而不是直接判断hasSuffix。
+    
+    self.directionMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_direction"]) return [obj.baseGVIndex[key] floatValue]; }
+        return 0;
+    }] / self.bestGVs.count;
+}
+
+-(void) run4JunMatchValue {
+    self.junMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_jun"]) return [obj.baseGVIndex[key] floatValue]; }
+        return 0;
+    }] / self.bestGVs.count;
+}
+
+-(void) run4DiffMatchValue {
+    self.diffMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_diff"]) return [obj.baseGVIndex[key] floatValue]; }
+        return 0;
+    }] / self.bestGVs.count;
+}
+
+-(void) run4SepMatchValue {
+    self.sepMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
+        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_sep"]) return [obj.baseGVIndex[key] floatValue]; }
+        return 0;
     }] / self.bestGVs.count;
 }
 
@@ -179,6 +177,10 @@
 -(void) filter4ZonHe {
     [self run4OuterShapeMatchValue];
     [self run4InnerEigenMatchValue];
+    [self run4DirectionMatchValue];
+    [self run4JunMatchValue];
+    [self run4DiffMatchValue];
+    [self run4SepMatchValue];
     
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
         return [TCLearningUtil noZeRenForPingJun:value.outerShapeMatchValue bigerMatchValue:self.outerShapeMatchValue];

@@ -420,7 +420,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model run4OuterShapeMatchValue];                               // 外形
         [model run4InnerEigenMatchValue];                               // 内征
-        // [model run4MatchValueAndMatchDegreeAndMatchAssProtoRatio];   // 符合度等
+        [model run4DirectionMatchValue];                                // 方向
+        [model run4JunMatchValue];                                      // 色均值
+        [model run4DiffMatchValue];                                     // 色差值
+        [model run4SepMatchValue];                                      // 分隔点
         // [model run4AdjacentScore];                                   // 计算相邻度
         // [model run4CenterScore];                                     // 中心度
         [model run4BestGvsAtProtoTRect];                                // 计算bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
@@ -445,28 +448,40 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
     // 递进式竞争：主在前辅在后层层嵌套（参考38033）。
-    // 动态计算filterRate：定义最终保留条数，根据当前条数和过滤次数，用幂次求出每次过滤率。
-    // 公式：最终条数 = 当前条数 * filterRate^过滤次数 => filterRate = pow(最终条数/当前条数, 1/过滤次数)
     NSInteger finalCount = 10; // 最终保留条数
-    NSInteger filterCount = 2; // 过滤次数（数量、外形，共2次）
     NSInteger currentCount = decoratorJvBuModel.stModels.count;
-    CGFloat filterRate = currentCount > finalCount ? pow((double)finalCount / currentCount, 1.0 / filterCount) : 1.0f;
-    filterRate = MAX(0.0f, MIN(1.0f, filterRate)); // 限制在合理范围内
+    double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
     NSArray *sorts = decoratorJvBuModel.stModels;
-    
-    // 数量（数量少的太多了，外形后20%，几乎全是只有1-2条的，所以数量最重要）（参考38034-方案3）。
+
+    // 数量（数量少的太多了，所以数量最重要）（参考38034-方案3）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.bestGVs.count;
     }];
-    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
-    
-    // TODO: 这里把外形，改成方向值 -> 均色值 -> 色差 -> 分隔点，四步来完成。
-    
-    // 外形（参考38034-方案3）。
+    sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.3) + 0.5f);
+
+    // 方向值（参考38034-方案3）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
-        return item.outerShapeMatchValue;
+        return item.directionMatchValue;
     }];
-    sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
+    sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.25) + 0.5f);
+
+    // 均色值（参考38034-方案3）。
+    sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.junMatchValue;
+    }];
+    sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.2) + 0.5f);
+
+    // 色差（参考38034-方案3）。
+    sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.diffMatchValue;
+    }];
+    sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.15) + 0.5f);
+
+    // 分隔点（参考38034-方案3）。
+    sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
+        return item.sepMatchValue;
+    }];
+    sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.1) + 0.5f);
     
     // 内征（先关掉：现在内征不那么重要，且内征应该是计算相邻的GV间，其相对内征是否连续，对内征来说这个连续性才重要）（参考38034-方案3）。
     //sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
