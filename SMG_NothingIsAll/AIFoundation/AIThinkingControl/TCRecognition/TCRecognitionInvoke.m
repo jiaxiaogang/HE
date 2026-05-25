@@ -108,7 +108,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIKVPointer *near_p = indexMapModel.obj;
         double nearData = [NUMTOOK([AINetIndex getData:near_p fromDataDic:cacheDataDic]) doubleValue];
         CGFloat matchValue = [AIAnalyst compareCansetValue:nearData protoV:protoData at:near_p.algsType ds:near_p.dataSource isOut:near_p.isOut vInfo:vInfo];
-        if (matchValue <= 0) return nil;//把相近度为0的过滤掉。
+        
+        // 方向维度相似度低于0.9直接过滤。
+        if (matchValue <= 0) return nil;
+        if ([valueDS hasSuffix:@"_direction"] && matchValue < 0.7f) return nil;
         
         //6. 构建model
         AIMatchModel *model = [[AIMatchModel alloc] init];
@@ -259,18 +262,18 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSString *key = [AINetGroupValueIndex directionKey:item.match_p.dataSource];
         return [item.matchDic[key] floatValue];
     }];
-    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.5) + 0.5f);
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.3) + 0.5f);
 
-    // 色差值 (15%)
-    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
-        NSString *key = [AINetGroupValueIndex diffKey:item.match_p.dataSource];
-        return [item.matchDic[key] floatValue];
-    }];
-    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.15) + 0.5f);
-    
     // 均色值 (30%)
     gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
         NSString *key = [AINetGroupValueIndex junKey:item.match_p.dataSource];
+        return [item.matchDic[key] floatValue];
+    }];
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.3) + 0.5f);
+    
+    // 色差值 (15%)
+    gMatchModels = [SMGUtils sortBig2Small:gMatchModels compareBlock:^double(AIMatchModel *item) {
+        NSString *key = [AINetGroupValueIndex diffKey:item.match_p.dataSource];
         return [item.matchDic[key] floatValue];
     }];
     gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.3) + 0.5f);
@@ -280,7 +283,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSString *key = [AINetGroupValueIndex sepKey:item.match_p.dataSource];
         return [item.matchDic[key] floatValue];
     }];
-    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.05) + 0.5f);
+    gMatchModels = ARR_SUB(gMatchModels, 0, gMatchModels.count * pow(baseRate, 0.1) + 0.5f);
 
     // 从识别结果中提取各维度最小匹配值（用于gvZiJv阈值参考）。
     if (ARRISOK(gMatchModels)) {
@@ -456,6 +459,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return item.bestGVs.count;
     }];
     sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
+    
+    // TODO: 这里把外形，改成方向值 -> 均色值 -> 色差 -> 分隔点，四步来完成。
     
     // 外形（参考38034-方案3）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
@@ -1729,9 +1734,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     CGFloat lastProtoData = NUMTOOK([lastProtoGVIndex objectForKey:assV.dataSource]).floatValue;
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
 
-                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选。
-                    NSNumber *threshold = gvThresholdDic[assV.dataSource];
-                    if (threshold && vMatchValue < threshold.floatValue * 0.5f) { innerEigenMatchValue = 0; break; }
+                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是到ST竞争时，竞争方向值）。
+                    // NSNumber *threshold = gvThresholdDic[assV.dataSource];
+                    // if (threshold && vMatchValue < threshold.floatValue) { innerEigenMatchValue = 0; break; }
 
                     innerEigenMatchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
@@ -1741,9 +1746,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
 
-                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选。
-                    NSNumber *threshold = gvThresholdDic[assV.dataSource];
-                    if (threshold && vMatchValue < threshold.floatValue * 0.5f) { outerShapeMatchValue = 0; break; }
+                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是到ST竞争时，竞争方向值）。
+                    // NSNumber *threshold = gvThresholdDic[assV.dataSource];
+                    // if (threshold && vMatchValue < threshold.floatValue) { outerShapeMatchValue = 0; break; }
 
                     outerShapeMatchValue *= vMatchValue;
                     baseGVIndex[assV.dataSource] = @(vMatchValue);
