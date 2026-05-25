@@ -36,32 +36,26 @@
 }
 
 -(void) run4DirectionMatchValue {
-    // TODOTOMORROW20260525: 把这里的ds由生成来objectforkey取，而不是直接判断hasSuffix。
-    
     self.directionMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_direction"]) return [obj.baseGVIndex[key] floatValue]; }
-        return 0;
+        return [obj.baseGVIndex[[AINetGroupValueIndex directionKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 
 -(void) run4JunMatchValue {
     self.junMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_jun"]) return [obj.baseGVIndex[key] floatValue]; }
-        return 0;
+        return [obj.baseGVIndex[[AINetGroupValueIndex junKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 
 -(void) run4DiffMatchValue {
     self.diffMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_diff"]) return [obj.baseGVIndex[key] floatValue]; }
-        return 0;
+        return [obj.baseGVIndex[[AINetGroupValueIndex diffKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 
 -(void) run4SepMatchValue {
     self.sepMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        for (NSString *key in obj.baseGVIndex) { if ([key hasSuffix:@"_sep"]) return [obj.baseGVIndex[key] floatValue]; }
-        return 0;
+        return [obj.baseGVIndex[[AINetGroupValueIndex sepKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 

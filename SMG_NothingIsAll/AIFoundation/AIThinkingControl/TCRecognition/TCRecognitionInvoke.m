@@ -108,10 +108,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIKVPointer *near_p = indexMapModel.obj;
         double nearData = [NUMTOOK([AINetIndex getData:near_p fromDataDic:cacheDataDic]) doubleValue];
         CGFloat matchValue = [AIAnalyst compareCansetValue:nearData protoV:protoData at:near_p.algsType ds:near_p.dataSource isOut:near_p.isOut vInfo:vInfo];
-        
-        // 方向维度相似度低于0.9直接过滤。
         if (matchValue <= 0) return nil;
-        if ([valueDS hasSuffix:@"_direction"] && matchValue < 0.7f) return nil;
+        
+        // 方向维度相似度低于0.9直接过滤（关掉，因为在初生之时，即使不准确也应V识别到）。
+        // if ([valueDS hasSuffix:@"_direction"] && matchValue < 0.7f) return nil;
         
         //6. 构建model
         AIMatchModel *model = [[AIMatchModel alloc] init];
@@ -1749,7 +1749,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     CGFloat lastProtoData = NUMTOOK([lastProtoGVIndex objectForKey:assV.dataSource]).floatValue;
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
 
-                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是到ST竞争时，竞争方向值）。
+                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是不加阈值，等ST竞争即可，如果有不准的GV，从别处找原因为什么准确的GV的没竞争优胜）。
                     // NSNumber *threshold = gvThresholdDic[assV.dataSource];
                     // if (threshold && vMatchValue < threshold.floatValue) { innerEigenMatchValue = 0; break; }
 
@@ -1761,7 +1761,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
 
-                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是到ST竞争时，竞争方向值）。
+                    // 阈值提前过滤：该维度低于GV识别阈值时，直接否掉此切图候选（先关掉，还是不加阈值，等ST竞争即可，如果有不准的GV，从别处找原因为什么准确的GV的没竞争优胜）。
                     // NSNumber *threshold = gvThresholdDic[assV.dataSource];
                     // if (threshold && vMatchValue < threshold.floatValue) { outerShapeMatchValue = 0; break; }
 
