@@ -31,25 +31,25 @@
 
 -(void) run4DirectionMatchValue {
     self.directionMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVIndex[[AINetGroupValueIndex directionKey:self.assT.ds]] floatValue];
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex directionKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 
 -(void) run4JunMatchValue {
     self.junMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVIndex[[AINetGroupValueIndex junKey:self.assT.ds]] floatValue];
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex junKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 
 -(void) run4DiffMatchValue {
     self.diffMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVIndex[[AINetGroupValueIndex diffKey:self.assT.ds]] floatValue];
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex diffKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 
 -(void) run4SepMatchValue {
     self.sepMatchValue = self.bestGVs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVIndex[[AINetGroupValueIndex sepKey:self.assT.ds]] floatValue];
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex sepKey:self.assT.ds]] floatValue];
     }] / self.bestGVs.count;
 }
 

@@ -10,12 +10,15 @@
 
 @implementation AIFeatureJvBuItem
 
-+(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree baseGV_p:(AIKVPointer*)baseGV_p {
++(id) new:(CGRect)bestGVAtProtoTRect baseGV_p:(AIKVPointer*)baseGV_p baseGVMatchValue:(NSDictionary*)baseGVMatchValue protoGVIndex:(NSDictionary*)protoGVIndex {
     AIFeatureJvBuItem *result = [AIFeatureJvBuItem new];
     result.bestGVAtProtoTRect = bestGVAtProtoTRect;
-    result.matchValue = matchValue;
-    result.matchDegree = matchDegree;
+    result.matchValue = [SMGUtils productOfArr:baseGVMatchValue.allValues convertBlock:^double(NSNumber *obj) {
+        return obj.doubleValue;
+    }];
     result.baseGV_p = baseGV_p;
+    result.baseGVMatchValue = baseGVMatchValue;
+    result.protoGVIndex = protoGVIndex;
     return result;
 }
 

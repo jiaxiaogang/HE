@@ -1507,6 +1507,7 @@
     }
 }
 
+// 求和
 +(double) sumOfArr:(NSArray *)arr convertBlock:(double(^)(id obj))convertBlock{
     //1. 数据准备;
     arr = ARRTOOK(arr);
@@ -1517,6 +1518,7 @@
     return sumResult;
 }
 
+// 乘积
 +(double) productOfArr:(NSArray *)arr convertBlock:(double(^)(id obj))convertBlock {
     //1. 数据准备;
     arr = ARRTOOK(arr);

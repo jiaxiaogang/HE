@@ -30,7 +30,7 @@
     }];
     NSArray *lines = [SMGUtils convertArr:sortedKeys iConvertBlock:^id(NSInteger i, NSNumber *assIndex) {
         AIFeatureJvBuItem *item = [jvBuModel.bestGVs objectForKey:assIndex];
-        return STRFORMAT(@"%ld. idx:%@ ProtoRect:%@ 匹配度:%.2f 符:%.2f", i + 1, assIndex, Rect2Str(item.bestGVAtProtoTRect), item.matchValue, item.matchDegree);
+        return STRFORMAT(@"%ld. idx:%@ ProtoRect:%@ 四个相近值:%@", i + 1, assIndex, Rect2Str(item.bestGVAtProtoTRect), CLEANSTR(item.baseGVMatchValue));
     }];
     [self show:title lines:lines];
 }

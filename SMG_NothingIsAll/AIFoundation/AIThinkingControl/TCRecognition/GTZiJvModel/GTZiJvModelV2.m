@@ -86,16 +86,6 @@
 }
 
 /**
- *  MARK:--------------------ST时的位置符合度：作用于GT识别竞争因子--------------------
- */
--(void) run4STMatchDegree {
-    // 需此时self为单GTGroup
-    self.stMatchDegree = self.bestSTs.count == 0 ? 0 : [SMGUtils sumOfArr:self.bestSTs.allValues convertBlock:^double(STZiJvModelV2 *stGroup) {
-        return stGroup.stMatchDegree;
-    }] / self.bestSTs.count;
-}
-
-/**
  *  MARK:--------------------ST时的匹配率：作用于GT识别竞争因子--------------------
  */
 -(void) run4STMatchCountRatio {

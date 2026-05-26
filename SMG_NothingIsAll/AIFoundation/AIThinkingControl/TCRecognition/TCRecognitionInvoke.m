@@ -637,7 +637,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // [gtGroup run4GTInnerEigenMatchValue];  // 已废弃
         [gtGroup run4GTMatchDegree];
         [gtGroup run4GTMatchCountRatio];
-        [gtGroup run4STMatchDegree];
         [gtGroup run4STMatchCountRatio];
         [gtGroup run4MatchCountRatioV2];
         [gtGroup run4GTValidAbs_ps];
@@ -1736,8 +1735,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
             
             //34. 求切出的curProtoGV九宫与curAssGV的匹配度。
-            CGFloat matchValue = 1;
-            NSMutableDictionary *baseGVIndex = [NSMutableDictionary new];
+            NSMutableDictionary *baseGVMatchValue = [NSMutableDictionary new];
             AIGroupValueNode *curAssGV = [SMGUtils searchNode:newGV];
             for (AIKVPointer *assV in curAssGV.content_ps) {
                 // 数据准备
@@ -1749,20 +1747,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if ([AINetGroupValueIndex isInnerEigen:assV.dataSource]) {
                     CGFloat lastProtoData = NUMTOOK([lastProtoGVIndex objectForKey:assV.dataSource]).floatValue;
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:lastProtoData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
-                    matchValue *= vMatchValue;
-                    baseGVIndex[assV.dataSource] = @(vMatchValue);
+                    baseGVMatchValue[assV.dataSource] = @(vMatchValue);
                 }
                 // 外形（方向和分隔点）需要protoT与assT一致（参考37033-TODO2）。
                 else {
                     double assData = [NUMTOOK([AINetIndex getData:assV fromDataDic:dataDic]) doubleValue];
                     CGFloat vMatchValue = [AIAnalyst compareCansetValue:assData protoV:protoData at:assV.algsType ds:assV.dataSource isOut:assV.isOut vInfo:vInfo];
-                    matchValue *= vMatchValue;
-                    baseGVIndex[assV.dataSource] = @(vMatchValue);
+                    baseGVMatchValue[assV.dataSource] = @(vMatchValue);
                 }
             }
-            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect matchValue:matchValue matchDegree:1 baseGV_p:newGV];
-            curBestGVItem.baseGVIndex = baseGVIndex;
-            curBestGVItem.protoGVIndex = protoGVIndex;
+            curBestGVItem = [AIFeatureJvBuItem new:checkCurProtoRect baseGV_p:newGV baseGVMatchValue:baseGVMatchValue protoGVIndex:protoGVIndex];
             
             // 记录缓存池
             [bestGVsPoolV2 setObjectV5:curBestGVItem k1:rectKey.v1 k2:rectKey.v2 k3:rectKey.v3 k4:rectKey.v4 k5:@(newGV.pointerId)];

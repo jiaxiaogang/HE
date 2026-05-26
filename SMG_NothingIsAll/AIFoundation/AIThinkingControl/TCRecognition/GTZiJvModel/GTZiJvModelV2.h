@@ -29,12 +29,6 @@
 @property (assign, nonatomic) CGFloat gtMatchCountRatio;
 
 /**
- *  MARK:--------------------ST时的位置符合度：作用于GT识别竞争因子--------------------
- */
--(void) run4STMatchDegree;
-@property (assign, nonatomic) CGFloat stMatchDegree;
-
-/**
  *  MARK:--------------------ST时的匹配率：作用于GT识别竞争因子--------------------
  */
 -(void) run4STMatchCountRatio;

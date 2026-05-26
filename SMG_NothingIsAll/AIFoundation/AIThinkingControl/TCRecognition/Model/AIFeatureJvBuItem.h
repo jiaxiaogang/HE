@@ -13,18 +13,16 @@
  */
 @interface AIFeatureJvBuItem : NSObject
 
-+(id) new:(CGRect)bestGVAtProtoTRect matchValue:(CGFloat)matchValue matchDegree:(CGFloat)matchDegree baseGV_p:(AIKVPointer*)baseGV_p;
++(id) new:(CGRect)bestGVAtProtoTRect baseGV_p:(AIKVPointer*)baseGV_p baseGVMatchValue:(NSDictionary*)baseGVMatchValue protoGVIndex:(NSDictionary*)protoGVIndex;
 
 //每一条bestGV都可以把rect存下来（可用于计算bestGVsAtProtoTRect）。
 @property (assign, nonatomic) CGRect bestGVAtProtoTRect;
-//GV统一匹配度。
+//GV统一匹配度（=baseGVMatchValue的乘积）。
 @property (assign, nonatomic) CGFloat matchValue;
-//每个bestGV的符合度。
-@property (assign, nonatomic) CGFloat matchDegree;
 // baseGV
 @property (strong, nonatomic) AIKVPointer *baseGV_p;
 // 四个稀疏码各自的相似度 <K: dataSource, V: NSNumber(0-1)>
-@property (strong, nonatomic) NSDictionary *baseGVIndex;
+@property (strong, nonatomic) NSDictionary *baseGVMatchValue;
 // 切图结果：gvIndex索引字典。
 @property (strong, nonatomic) NSDictionary *protoGVIndex;
 
