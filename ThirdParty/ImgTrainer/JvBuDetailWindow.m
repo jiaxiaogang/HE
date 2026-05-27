@@ -47,14 +47,16 @@
     CGFloat totalMatchValue = 1;
     if (jvBuItem.baseGV_p) {
         AIGroupValueNode *gvNode = [SMGUtils searchNode:jvBuItem.baseGV_p];
-        for (NSInteger i = 0; i < gvNode.content_ps.count; i++) {
-            AIKVPointer *value_p = ARR_INDEX(gvNode.content_ps, i);
+        NSArray *sortedContent_ps = [gvNode.content_ps sortedArrayUsingComparator:^NSComparisonResult(AIKVPointer *a, AIKVPointer *b) {
+            return [a.dataSource compare:b.dataSource];
+        }];
+        for (NSInteger i = 0; i < sortedContent_ps.count; i++) {
+            AIKVPointer *value_p = ARR_INDEX(sortedContent_ps, i);
             double value = [NUMTOOK([AINetIndex getData:value_p]) doubleValue];
             double protoValue = [NUMTOOK(jvBuItem.protoGVIndex[value_p.dataSource]) doubleValue];
             CGFloat matchValue = [AIAnalyst compareCansetValue:value protoV:protoValue at:value_p.algsType ds:value_p.dataSource isOut:value_p.isOut vInfo:nil];
             
-            NSString *dirMark = [value_p.dataSource hasSuffix:@"_direction"] ? @" ======>" : @"";
-            [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f%@", i + 1, value_p.dataSource, value, protoValue, matchValue, dirMark)];
+            [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f", i + 1, value_p.dataSource, value, protoValue, matchValue)];
 
             totalMatchValue *= matchValue;
         }
