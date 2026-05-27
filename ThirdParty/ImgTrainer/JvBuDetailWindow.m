@@ -30,7 +30,11 @@
     }];
     NSArray *lines = [SMGUtils convertArr:sortedKeys iConvertBlock:^id(NSInteger i, NSNumber *assIndex) {
         AIFeatureJvBuItem *item = [jvBuModel.bestGVs objectForKey:assIndex];
-        return STRFORMAT(@"%ld. idx:%@ ProtoRect:%@ 四个相近值:%@", i + 1, assIndex, Rect2Str(item.bestGVAtProtoTRect), CLEANSTR(item.baseGVMatchValue));
+        NSMutableDictionary *fmtValues = [NSMutableDictionary dictionary];
+        [item.baseGVMatchValue enumerateKeysAndObjectsUsingBlock:^(id key, NSNumber *val, BOOL *stop) {
+            fmtValues[key] = [NSString stringWithFormat:@"%.2f", val.doubleValue];
+        }];
+        return STRFORMAT(@"%ld. idx:%@ ProtoRect:%@ 四个相近值:%@", i + 1, assIndex, Rect2Str(item.bestGVAtProtoTRect), CLEANSTR(fmtValues));
     }];
     [self show:title lines:lines];
 }
@@ -48,7 +52,9 @@
             double value = [NUMTOOK([AINetIndex getData:value_p]) doubleValue];
             double protoValue = [NUMTOOK(jvBuItem.protoGVIndex[value_p.dataSource]) doubleValue];
             CGFloat matchValue = [AIAnalyst compareCansetValue:value protoV:protoValue at:value_p.algsType ds:value_p.dataSource isOut:value_p.isOut vInfo:nil];
-            [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f", i + 1, value_p.dataSource, value, protoValue, matchValue)];
+            
+            NSString *dirMark = [value_p.dataSource hasSuffix:@"_direction"] ? @" ======>" : @"";
+            [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f%@", i + 1, value_p.dataSource, value, protoValue, matchValue, dirMark)];
 
             totalMatchValue *= matchValue;
         }
@@ -62,10 +68,10 @@
     for (UIView *sub in self.subviews) [sub removeFromSuperview];
 
     // 容器：居中白色面板
-    CGFloat panelW = 320;
+    CGFloat panelW = ScreenWidth - 100;
     CGFloat panelH = 40 + lines.count * 20 + 30;
-    panelH = MIN(panelH, ScreenHeight - 160);
-    UIView *panel = [[UIView alloc] initWithFrame:CGRectMake((ScreenWidth - panelW) / 2, 80, panelW, panelH)];
+    panelH = MIN(panelH, ScreenHeight - 60);
+    UIView *panel = [[UIView alloc] initWithFrame:CGRectMake((ScreenWidth - panelW) / 2, 64, panelW, panelH)];
     panel.backgroundColor = [UIColor whiteColor];
     panel.layer.cornerRadius = 8;
     panel.layer.borderWidth = 1;
