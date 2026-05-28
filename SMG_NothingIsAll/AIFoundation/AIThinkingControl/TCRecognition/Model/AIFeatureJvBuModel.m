@@ -169,6 +169,11 @@
     [self run4DiffMatchValue];
     [self run4SepMatchValue];
 
+    // TODO20260528: 这里也改为：递进淘汰法（而不是单纯定责淘汰），分别权重如下：
+    
+    // bestGVs递进淘汰法：方向50%、均色值30%、色差15%、分隔点5%层层过滤。
+    
+    
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
         return [TCLearningUtil noZeRenForPingJun:value.matchValue bigerMatchValue:self.matchValue];
     }];

@@ -252,7 +252,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return item.matchValue > 0 && item.matchCount == vModels.count && (!forProtoGV || ![item.match_p isEqual:forProtoGV]);
     }];
     
-    // 递进式竞争：方向50%、均色值30%、色差15%、分隔点5%层层过滤（参考38036）。
+    // GV递进淘汰法：方向50%、均色值30%、色差15%、分隔点5%层层过滤（参考38036）。
     NSInteger finalCount = MAX(20, gMatchModels.count * 0.2f);
     NSInteger currentCount = gMatchModels.count;
     double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
@@ -392,6 +392,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         CGRect defaultBaseST_Proto = [SMGUtils convertNewAAtCWithAAtB:beginGV_AssT aAtC:beginGV_Proto newAAtB:assT.rect];
         AIFeatureJvBuModel *model = [self stZiJv:assT beginAssIndex:beginAssIndex lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds defaultBaseST_Proto:defaultBaseST_Proto];
         
+        // bestGVs之间进行内部竞争（末尾淘汰）（参考37033B-9切合理论-原则 & 38039-方案）。
+        [model filter4ZonHe];
+        
         //53. 成功识别过的区域防重：如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了（参考35042-TODO4）。
         [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
             return @(obj.bestGVAtProtoTRect);
@@ -411,11 +414,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoCount:(NSInteger)protoCount {
-    // bestGVs末尾淘汰（尽可能的广入窄出充分竞争，参考37033B-9切合理论-原则）。
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model filter4ZonHe];
-    }
-    
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model run4MatchValue];                                          // 匹配度
@@ -448,7 +446,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
-    // 递进式竞争：主在前辅在后层层嵌套（参考38033）。
+    // ST递进淘汰法：主在前辅在后层层嵌套（参考38033）。
     NSInteger finalCount = 10; // 最终保留条数
     NSInteger currentCount = decoratorJvBuModel.stModels.count;
     double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
