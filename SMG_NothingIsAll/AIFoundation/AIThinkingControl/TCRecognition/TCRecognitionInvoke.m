@@ -393,7 +393,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIFeatureJvBuModel *model = [self stZiJv:assT beginAssIndex:beginAssIndex lastProtoRect:lastProtoRect lastAtAssRect:lastAtAssRect protoColorDic:protoColorDic ds:ds defaultBaseST_Proto:defaultBaseST_Proto];
         
         // bestGVs之间进行内部竞争（末尾淘汰）（参考37033B-9切合理论-原则 & 38039-方案）。
-        [model filter4ZonHe];
+        [model filter4BestGVs];
         
         //53. 成功识别过的区域防重：如果此处已经被别的assT扫描并成功识别过了，则记录下，它不再做切入点进行别的识别了（参考35042-TODO4）。
         [assRectExcept addObjectsFromArray:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {

@@ -92,7 +92,7 @@
 -(CGRect) run4AssST_ProtoRect;
 
 // 末尾淘汰
--(void) filter4ZonHe;
+-(void) filter4BestGVs;
 
 // assST的抽象中，被bestGVs全含的部分（即必能与当前ProtoGT的匹配的absST）。
 @property (strong, nonatomic) NSArray *validAbsSTPorts;

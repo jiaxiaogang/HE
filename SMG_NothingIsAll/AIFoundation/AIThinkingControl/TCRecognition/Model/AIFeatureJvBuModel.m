@@ -162,21 +162,44 @@
 }
 
 // 每个条件都末尾淘汰20%（参考35138-TODO1）。
--(void) filter4ZonHe {
-    [self run4MatchValue];
-    [self run4DirectionMatchValue];
-    [self run4JunMatchValue];
-    [self run4DiffMatchValue];
-    [self run4SepMatchValue];
+-(void) filter4BestGVs {
+    // bestGVs递进淘汰法：方向50%、均色值30%、色差15%、分隔点5%层层过滤（参考38036）。
+    NSInteger finalCount = MAX(5, self.bestGVs.count * 0.2f);
+    NSInteger currentCount = self.bestGVs.count;
+    double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
+    NSArray *gItems = self.bestGVs.allValues;
 
-    // TODO20260528: 这里也改为：递进淘汰法（而不是单纯定责淘汰），分别权重如下：
-    
-    // bestGVs递进淘汰法：方向50%、均色值30%、色差15%、分隔点5%层层过滤。
-    
-    
-    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:value.matchValue bigerMatchValue:self.matchValue];
+    // 方向 (50%)
+    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex directionKey:self.assT.ds]] floatValue];
     }];
+    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.5) + 0.5f);
+
+    // 均色值 (30%)
+    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex junKey:self.assT.ds]] floatValue];
+    }];
+    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.3) + 0.5f);
+
+    // 色差值 (15%)
+    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex diffKey:self.assT.ds]] floatValue];
+    }];
+    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.15) + 0.5f);
+
+    // 分隔点 (5%)
+    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
+        return [obj.baseGVMatchValue[[AINetGroupValueIndex sepKey:self.assT.ds]] floatValue];
+    }];
+    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.05) + 0.5f);
+
+    // 将数组结果转回字典
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    for (AIFeatureJvBuItem *item in gItems) {
+        NSNumber *key = [[self.bestGVs allKeysForObject:item] firstObject];
+        if (key) result[key] = item;
+    }
+    self.bestGVs = result;
 }
 
 -(NSArray*) validAbsSTPorts {
