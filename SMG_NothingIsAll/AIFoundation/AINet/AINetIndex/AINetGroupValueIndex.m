@@ -32,7 +32,7 @@
 
 // 是否内征 (dataSource是否用于内征判断，用于GV帧间平缓逻辑)
 +(BOOL) isInnerEigen:(NSString*)ds {
-    return [ds hasSuffix:@"_diff"] || [ds hasSuffix:@"_jun"];
+    return [ds hasSuffix:@"_jun"];
 }
 
 /**

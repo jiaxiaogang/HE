@@ -177,6 +177,10 @@
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
         return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[junKey] floatValue] bigerMatchValue:self.junMatchValue fanForce:1.3f];
     }];
+    NSLog(@"ST%ld 均色值定责淘汰后 bestGVs %p",self.assT.pId,self);
+    [self.bestGVs enumerateKeysAndObjectsUsingBlock:^(id key, AIFeatureJvBuItem *value, BOOL *stop) {
+        NSLog(@"  key=%@ 均色值=%@", key, value.baseGVMatchValue[junKey]);
+    }];
 
     // 色差值定责淘汰
     [self run4DiffMatchValue];

@@ -56,7 +56,21 @@
             double protoValue = [NUMTOOK(jvBuItem.protoGVIndex[value_p.dataSource]) doubleValue];
             CGFloat matchValue = [AIAnalyst compareCansetValue:value protoV:protoValue at:value_p.algsType ds:value_p.dataSource isOut:value_p.isOut vInfo:nil];
             
-            [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f", i + 1, value_p.dataSource, value, protoValue, matchValue)];
+            
+            // TODO: 为什么baseMatchStr和matchValue差异很大？
+            //455 [22:00:32:306 MA  JvBuDetailWindow.m  62] bColors_diff baseGV:0.667 protoGV:0.000 近:0.33 baseMatchVal:1
+            //456 [22:00:32:307 MA  JvBuDetailWindow.m  62] bColors_direction baseGV:0.075 protoGV:0.000 近:0.92 baseMatchVal:0.9210526283799446
+            //457 [22:00:32:308 MA  JvBuDetailWindow.m  62] bColors_jun baseGV:0.667 protoGV:0.000 近:0.33 baseMatchVal:1
+            //458 [22:00:32:308 MA  JvBuDetailWindow.m  62] bColors_sep baseGV:0.222 protoGV:0.000 近:0.71 baseMatchVal:0.7143224321316557
+            // 思路：因为baseMatchStr在计算时，是以相邻来计算的，相邻色均值类似，就会相近度很高。
+            
+            
+            
+            
+            NSNumber *baseMatchVal = jvBuItem.baseGVMatchValue[value_p.dataSource];
+            NSString *baseMatchStr = baseMatchVal ? STRFORMAT(@"%.2f", baseMatchVal.doubleValue) : @"无";
+            [lines addObject:STRFORMAT(@"%ld. %@ baseGV:%.3f protoGV:%.3f 近:%.2f baseMatch:%@", i + 1, value_p.dataSource, value, protoValue, matchValue, baseMatchStr)];
+            NSLog(@"%@ baseGV:%.3f protoGV:%.3f 近:%.2f baseMatchVal:%@", value_p.dataSource, value, protoValue, matchValue, baseMatchVal);
 
             totalMatchValue *= matchValue;
         }
