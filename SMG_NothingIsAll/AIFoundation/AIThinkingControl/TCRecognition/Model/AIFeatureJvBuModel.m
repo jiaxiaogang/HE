@@ -161,45 +161,40 @@
     return self.assST_ProtoRect;
 }
 
-// 每个条件都末尾淘汰20%（参考35138-TODO1）。
+// 定责淘汰（参考35138-TODO1）。
 -(void) filter4BestGVs {
-    // bestGVs递进淘汰法：方向50%、均色值30%、色差15%、分隔点5%层层过滤（参考38036）。
-    NSInteger finalCount = MAX(5, self.bestGVs.count * 0.2f);
-    NSInteger currentCount = self.bestGVs.count;
-    double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
-    NSArray *gItems = self.bestGVs.allValues;
-
-    // 方向 (50%)
-    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVMatchValue[[AINetGroupValueIndex directionKey:self.assT.ds]] floatValue];
+    // bestGVs递进淘汰法：不同在于，此处每一层采用了定责淘汰，因为此处不是竞争淘汰，而是找到稳定的抽象后，就不要再一直变少了，不然会有大量过抽象节点的问题。
+    // 方向定责淘汰
+    [self run4DirectionMatchValue];
+    NSString *directionKey = [AINetGroupValueIndex directionKey:self.assT.ds];
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[directionKey] floatValue] bigerMatchValue:self.directionMatchValue fanForce:1.0f];
     }];
-    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.5) + 0.5f);
 
-    // 均色值 (30%)
-    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVMatchValue[[AINetGroupValueIndex junKey:self.assT.ds]] floatValue];
+    // 均色值定责淘汰
+    [self run4JunMatchValue];
+    NSString *junKey = [AINetGroupValueIndex junKey:self.assT.ds];
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[junKey] floatValue] bigerMatchValue:self.junMatchValue fanForce:1.3f];
     }];
-    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.3) + 0.5f);
 
-    // 色差值 (15%)
-    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVMatchValue[[AINetGroupValueIndex diffKey:self.assT.ds]] floatValue];
+    // 色差值定责淘汰
+    [self run4DiffMatchValue];
+    NSString *diffKey = [AINetGroupValueIndex diffKey:self.assT.ds];
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[diffKey] floatValue] bigerMatchValue:self.diffMatchValue fanForce:1.6f];
     }];
-    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.15) + 0.5f);
 
-    // 分隔点 (5%)
-    gItems = [SMGUtils sortBig2Small:gItems compareBlock:^double(AIFeatureJvBuItem *obj) {
-        return [obj.baseGVMatchValue[[AINetGroupValueIndex sepKey:self.assT.ds]] floatValue];
+    // 分隔点定责淘汰
+    [self run4SepMatchValue];
+    NSString *sepKey = [AINetGroupValueIndex sepKey:self.assT.ds];
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[sepKey] floatValue] bigerMatchValue:self.sepMatchValue fanForce:2.0f];
     }];
-    gItems = ARR_SUB(gItems, 0, gItems.count * pow(baseRate, 0.05) + 0.5f);
 
-    // 将数组结果转回字典
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    for (AIFeatureJvBuItem *item in gItems) {
-        NSNumber *key = [[self.bestGVs allKeysForObject:item] firstObject];
-        if (key) result[key] = item;
-    }
-    self.bestGVs = result;
+    self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
+        return [TCLearningUtil noZeRenForPingJun:value.matchValue bigerMatchValue:self.matchValue];
+    }];
 }
 
 -(NSArray*) validAbsSTPorts {
