@@ -168,25 +168,21 @@
     [self run4DirectionMatchValue];
     NSString *directionKey = [AINetGroupValueIndex directionKey:self.assT.ds];
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[directionKey] floatValue] bigerMatchValue:self.directionMatchValue fanForce:1.0f];
+        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[directionKey] floatValue] bigerMatchValue:self.directionMatchValue fanForce:2.0f];
     }];
 
     // 均色值定责淘汰
     [self run4JunMatchValue];
     NSString *junKey = [AINetGroupValueIndex junKey:self.assT.ds];
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[junKey] floatValue] bigerMatchValue:self.junMatchValue fanForce:1.3f];
-    }];
-    NSLog(@"ST%ld 均色值定责淘汰后 bestGVs %p",self.assT.pId,self);
-    [self.bestGVs enumerateKeysAndObjectsUsingBlock:^(id key, AIFeatureJvBuItem *value, BOOL *stop) {
-        NSLog(@"  key=%@ 均色值=%@", key, value.baseGVMatchValue[junKey]);
+        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[junKey] floatValue] bigerMatchValue:self.junMatchValue fanForce:2.0f];
     }];
 
     // 色差值定责淘汰
     [self run4DiffMatchValue];
     NSString *diffKey = [AINetGroupValueIndex diffKey:self.assT.ds];
     self.bestGVs = [SMGUtils filterDic:self.bestGVs checkValid:^BOOL(id key, AIFeatureJvBuItem *value) {
-        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[diffKey] floatValue] bigerMatchValue:self.diffMatchValue fanForce:1.6f];
+        return [TCLearningUtil noZeRenForPingJun:[value.baseGVMatchValue[diffKey] floatValue] bigerMatchValue:self.diffMatchValue fanForce:2.0f];
     }];
 
     // 分隔点定责淘汰
