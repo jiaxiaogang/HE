@@ -32,7 +32,8 @@
 
 // 是否内征 (dataSource是否用于内征判断，用于GV帧间平缓逻辑)
 +(BOOL) isInnerEigen:(NSString*)ds {
-    return [ds hasSuffix:@"_jun"];
+    // 全不用相邻计算相近度了，改为全用assGV vs protoGV来计算。
+    return false; // [ds hasSuffix:@"_jun"];
 }
 
 /**
