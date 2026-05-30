@@ -135,6 +135,10 @@
 -(void) run4BestGVsSumDiff;
 @property (assign, nonatomic) CGFloat bestGVsSumDiff;
 
+// assT所有gvs的色差总值（diff * 面积 累加）。
+-(void) run4AllGVsSumDiff;
+@property (assign, nonatomic) CGFloat allGVsSumDiff;
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
 -(NSString*) stScoreDesc;

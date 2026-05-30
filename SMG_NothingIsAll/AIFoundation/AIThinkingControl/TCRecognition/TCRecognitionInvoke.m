@@ -424,6 +424,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model run4DiffMatchValue];                                     // 色差值
         [model run4SepMatchValue];                                      // 分隔点
         [model run4BestGVsSumDiff];                                     // bestGVs色差总值
+        [model run4AllGVsSumDiff];                                      // assST色差总值
         // [model run4AdjacentScore];                                   // 计算相邻度
         // [model run4CenterScore];                                     // 中心度
         [model run4BestGvsAtProtoTRect];                                // 计算bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
