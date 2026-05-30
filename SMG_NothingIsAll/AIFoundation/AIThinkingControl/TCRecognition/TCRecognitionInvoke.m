@@ -423,6 +423,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model run4JunMatchValue];                                      // 色均值
         [model run4DiffMatchValue];                                     // 色差值
         [model run4SepMatchValue];                                      // 分隔点
+        [model run4BestGVsSumDiff];                                     // bestGVs色差总值
         // [model run4AdjacentScore];                                   // 计算相邻度
         // [model run4CenterScore];                                     // 中心度
         [model run4BestGvsAtProtoTRect];                                // 计算bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
@@ -452,9 +453,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
     NSArray *sorts = decoratorJvBuModel.stModels;
 
-    // 数量（数量少的太多了，所以数量最重要）（参考38034-方案3）。
+    // 色差总值（替代数量，数量少的太多了，所以数量最重要）（参考38034-方案3 & 3803b）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
-        return item.bestGVs.count;
+        return item.bestGVsSumDiff;
     }];
     sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.3) + 0.5f);
 

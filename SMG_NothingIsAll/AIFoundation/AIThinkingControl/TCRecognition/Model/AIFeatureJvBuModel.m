@@ -309,6 +309,18 @@
     self.averageContentStrong = [self.assT getAverageContentStrong:self.bestGVs.allKeys];
 }
 
+// bestGVs的色差总值（替代bestGVs.count，用于递进淘汰法第一层）（参考3803b）。
+-(void) run4BestGVsSumDiff {
+    self.bestGVsSumDiff = [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *jvBuItem) {
+        AIGroupValueNode *gv = [SMGUtils searchNode:jvBuItem.baseGV_p];
+        AIKVPointer *diff_p = [SMGUtils filterSingleFromArr:gv.content_ps checkValid:^BOOL(AIKVPointer *item) {
+            return [item.dataSource isEqualToString:[AINetGroupValueIndex diffKey:self.assT.ds]];
+        }];
+        NSNumber *diffValue = [AINetIndex getData:diff_p];
+        return diffValue.floatValue;
+    }];
+}
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore {
     // v1

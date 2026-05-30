@@ -131,6 +131,10 @@
 @property (assign, nonatomic) CGFloat bestsCountScore;
 @property (assign, nonatomic) CGFloat totalCountScore;
 
+// bestGVs的色差总值（替代bestGVs.count，用于递进淘汰法第一层）。
+-(void) run4BestGVsSumDiff;
+@property (assign, nonatomic) CGFloat bestGVsSumDiff;
+
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
 -(NSString*) stScoreDesc;
