@@ -311,14 +311,18 @@
 
 // bestGVs的色差总值（替代bestGVs.count，用于递进淘汰法第一层）（参考3803b）。
 -(void) run4BestGVsSumDiff {
-    self.bestGVsSumDiff = [SMGUtils sumOfArr:self.bestGVs.allValues convertBlock:^double(AIFeatureJvBuItem *jvBuItem) {
+    __block CGFloat sum = 0;
+    [self.bestGVs enumerateKeysAndObjectsUsingBlock:^(NSNumber *assIndex, AIFeatureJvBuItem *jvBuItem, BOOL *stop) {
         AIGroupValueNode *gv = [SMGUtils searchNode:jvBuItem.baseGV_p];
         AIKVPointer *diff_p = [SMGUtils filterSingleFromArr:gv.content_ps checkValid:^BOOL(AIKVPointer *item) {
             return [item.dataSource isEqualToString:[AINetGroupValueIndex diffKey:self.assT.ds]];
         }];
         NSNumber *diffValue = [AINetIndex getData:diff_p];
-        return diffValue.floatValue;
+        CGRect rect = [self.assT rectByIndex:assIndex.integerValue];
+        CGFloat area = rect.size.width * rect.size.height;
+        sum += diffValue.floatValue * area;
     }];
+    self.bestGVsSumDiff = sum;
 }
 
 // ST综合竞争分（用于ST识别竞争）。
