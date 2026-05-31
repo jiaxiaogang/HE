@@ -312,28 +312,43 @@
 // bestGVs的色差总值（替代bestGVs.count，用于递进淘汰法第一层）（参考3803b）。
 -(void) run4BestGVsSumDiff {
     self.bestGVsSumDiff = [SMGUtils sumOfArr:self.bestGVs.allKeys convertBlock:^double(NSNumber *gvIndex) {
-        return [self getSingleGVSumDiff:gvIndex.integerValue];
+        return [self getSingleGVDiff:gvIndex.integerValue];
+    }];
+}
+-(void) run4BestGVsSumArea {
+    self.bestGVsSumArea = [SMGUtils sumOfArr:self.bestGVs.allKeys convertBlock:^double(NSNumber *gvIndex) {
+        return [self getSingleGVArea:gvIndex.integerValue];
     }];
 }
 
 // 把整体assT的所有gvs的sumDiff也求出来。
 -(void) run4AllGVsSumDiff {
     for (NSInteger i = 0; i < self.assT.count; i++) {
-        self.allGVsSumDiff += [self getSingleGVSumDiff:i];
+        self.allGVsSumDiff += [self getSingleGVArea:i];
+    }
+}
+-(void) run4AllGVsSumArea {
+    for (NSInteger i = 0; i < self.assT.count; i++) {
+        self.allGVsSumArea += [self getSingleGVArea:i];
     }
 }
 
 // 单条index下的diffValue求出来。
--(CGFloat) getSingleGVSumDiff:(NSInteger)gvIndex {
+-(CGFloat) getSingleGVDiff:(NSInteger)gvIndex {
     NSString *diffKey = [AINetGroupValueIndex diffKey:self.assT.ds];
     AIGroupValueNode *gv = [SMGUtils searchNode:ARR_INDEX(self.assT.content_ps, gvIndex)];
     AIKVPointer *diff_p = [SMGUtils filterSingleFromArr:gv.content_ps checkValid:^BOOL(AIKVPointer *item) {
         return [item.dataSource isEqualToString:diffKey];
     }];
     NSNumber *diffValue = [AINetIndex getData:diff_p];
+    return diffValue.floatValue ;
+}
+
+// 单条index下的area求出来。
+-(CGFloat) getSingleGVArea:(NSInteger)gvIndex {
     CGRect rect = [self.assT rectByIndex:gvIndex];
     CGFloat area = rect.size.width * rect.size.height;
-    return diffValue.floatValue * area;
+    return area;
 }
 
 // ST综合竞争分（用于ST识别竞争）。

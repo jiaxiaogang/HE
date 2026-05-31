@@ -134,10 +134,14 @@
 // bestGVs的色差总值（替代bestGVs.count，用于递进淘汰法第一层）。
 -(void) run4BestGVsSumDiff;
 @property (assign, nonatomic) CGFloat bestGVsSumDiff;
+-(void) run4BestGVsSumArea;
+@property (assign, nonatomic) CGFloat bestGVsSumArea;
 
 // assT所有gvs的色差总值（diff * 面积 累加）。
 -(void) run4AllGVsSumDiff;
 @property (assign, nonatomic) CGFloat allGVsSumDiff;
+-(void) run4AllGVsSumArea;
+@property (assign, nonatomic) CGFloat allGVsSumArea;
 
 // ST综合竞争分（用于ST识别竞争）。
 -(CGFloat) stScore;
