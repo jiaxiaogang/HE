@@ -346,6 +346,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSValue *protoRect = gv.v2;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         for (AIPort *refPort in refPorts) {
+            
+            // 把粒度差太多的去掉：大识别小用聚焦行为，小识别大用云台行为（参考38041-方案2）。
+            CGFloat sizeRatio = refPort.rect.size.width / protoRect.CGRectValue.size.width;
+            if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
+            
             [refModels addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort v3:protoRect]];
         }
     }
