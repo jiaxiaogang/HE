@@ -660,6 +660,7 @@ static AIThinkingControl *_instance;
     //3、构建具象特征。
     //2025.08.07: 具象似层即使是固定粒度也是isGT（参考35062-TODO3.1）。
     AIFeatureNode *hsbFeature = [AIGeneralNodeCreater createFeatureNode:hsbGroupModels conNodes:nil at:at ds:ds isOut:false isJiao:false];
+    hsbFeature.logDescInit = logDesc;
     [hsbFeature updateLogDescItem:logDesc];
     
     NSLog(@"%@ %@ T%ld====================================\n%@",logDesc,ds,hsbFeature.pId,FeatureDesc(hsbFeature.p,1));

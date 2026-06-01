@@ -455,6 +455,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
+    // logDescInit筛选：只保留与输入logDesc一致的识别结果。
+    sorts = [SMGUtils filterArr:sorts checkValid:^BOOL(AIFeatureJvBuModel *item) {
+        return [item.assT.logDescInit isEqualToString:logDesc];
+    }];
+
     // ST递进淘汰法：主在前辅在后层层嵌套（参考38033）。
     NSInteger finalCount = 10; // 最终保留条数
     NSInteger currentCount = decoratorJvBuModel.stModels.count;

@@ -97,6 +97,9 @@
 
 //logDesc仅存用于打日志。
 @property (strong, nonatomic) NSMutableDictionary *logDesc;
+
+//logDescInit记录节点创建时的初始logDesc。
+@property (strong, nonatomic) NSString *logDescInit;
 -(void) updateLogDescItem:(NSString*)newItem;
 -(void) updateLogDescItem:(NSString*)newItem rate:(CGFloat)rate;
 -(void) updateLogDescDic:(NSDictionary*)newDic;
