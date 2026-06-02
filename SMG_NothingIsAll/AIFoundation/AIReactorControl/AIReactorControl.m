@@ -45,6 +45,9 @@
     [self commitReactor:identify datas:@[@(1)]];
 }
 +(void) commitReactor:(NSString*)identify datas:(NSArray*)datas{
+    //TODO: 反射反应的UseTime、Front、Back三阶段逻辑应统一由中脑(AIReactorControl)来处理，
+    //目前这三阶段的分发通过kOutputObserver通知由BirdView等外围层各自实现，
+    //后续应将此机制收归此处，使中脑真正负责反射的协调与执行。
     [Output output_FromReactor:identify datas:datas];
 }
 

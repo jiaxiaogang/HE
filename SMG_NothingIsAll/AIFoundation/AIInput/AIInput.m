@@ -9,6 +9,7 @@
 #import "AIInput.h"
 #import "AIReactorControl.h"
 #import "AICameraCapture.h"
+#import "AIHttpInput.h"
 
 @implementation AIInput
 
@@ -57,6 +58,20 @@
 
 + (void)stopCameraSession {
     [AICameraCapture stopSession];
+}
+
+#pragma mark - HTTP文本输入
+
++ (void)inputTextFromHttpRequest:(NSString *)text {
+    [self commitText:text];
+}
+
++ (void)startHttpInputServer:(NSInteger)port {
+    [AIHttpInput startServer:port];
+}
+
++ (void)stopHttpInputServer {
+    [AIHttpInput stopServer];
 }
 
 @end

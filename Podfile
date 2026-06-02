@@ -13,6 +13,9 @@ pod 'PINCache'
 
 #=============== 友盟统计 ===============
 pod 'UMCCommon'
+
+#=============== HTTP Server ===============
+pod 'GCDWebServer', '~> 3.0'
 #pod 'UMCAnalytics'
 
 end

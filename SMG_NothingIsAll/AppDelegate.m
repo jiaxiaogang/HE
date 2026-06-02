@@ -18,6 +18,9 @@
 #import "MASConstraint.h"
 #import "View+MASAdditions.h"
 #import "GVIndexTest.h"
+#import "AIInput.h"
+#import <ifaddrs.h>
+#import <arpa/inet.h>
 
 @interface AppDelegate ()
 
@@ -148,7 +151,11 @@
     //10. 视觉训练工具
     self.imgTrainerView = [[ImgTrainerView alloc] init];
     [self.window addSubview:self.imgTrainerView];
-    
+
+    //11. HTTP文本输入服务
+    [AIInput startHttpInputServer:8080];
+    [self printIPAddresses];
+
     return YES;
 }
 
@@ -165,6 +172,33 @@
 //MARK:===============================================================
 //MARK:                     < method >
 //MARK:===============================================================
+
+- (void)printIPAddresses {
+    struct ifaddrs *interfaces = NULL;
+    if (getifaddrs(&interfaces) == 0) {
+        NSString *localIP = nil;
+        NSString *externalIP = nil;
+        for (struct ifaddrs *ifa = interfaces; ifa != NULL; ifa = ifa->ifa_next) {
+            if (!ifa->ifa_addr) continue;
+            if (ifa->ifa_addr->sa_family != AF_INET) continue;
+            if (ifa->ifa_flags & IFF_LOOPBACK) continue;
+            char addr[INET_ADDRSTRLEN];
+            struct sockaddr_in *sa = (struct sockaddr_in *)ifa->ifa_addr;
+            inet_ntop(AF_INET, &sa->sin_addr, addr, sizeof(addr));
+            NSString *ip = [NSString stringWithUTF8String:addr];
+            if ([ifa->ifa_name hasPrefix:@"en"]) {
+                localIP = ip;
+            }
+        }
+        freeifaddrs(interfaces);
+
+        NSLog(@"========== AIHttpInput Server ==========");
+        NSLog(@"内网IP: %@", localIP ?: @"未获取到");
+        NSLog(@"外网IP获取需外部服务，内网访问地址: http://%@:8080/inputText", localIP ?: @"<内网IP>");
+        NSLog(@"=========================================");
+    }
+}
+
 -(UIViewController*) getTopDisplayViewController{
     UINavigationController *navC = (UINavigationController*)[self.window rootViewController];    
     NSArray *controllers = navC.viewControllers;

@@ -27,6 +27,14 @@
 +(void) commitView:(UIView*)selfView targetView:(UIView*)targetView rect:(CGRect)rect fromObserver:(BOOL)fromObserver;
 
 /**
+ *  MARK:--------------------HTTP文本输入--------------------
+ *  接受外部系统POST过来的文本，走commitText通路
+ */
++ (void)inputTextFromHttpRequest:(NSString *)text;
++ (void)startHttpInputServer:(NSInteger)port;
++ (void)stopHttpInputServer;
+
+/**
  *  拍照（返回200x200的UIImage）
  */
 + (void)capturePhotoWithCompletion:(void(^)(UIImage *image))completion;
