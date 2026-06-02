@@ -456,15 +456,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // [decoratorJvBuModel run4AreaRankRatioV2];
     
     // logDescInit筛选：只保留与输入logDesc一致的识别结果。
-    sorts = [SMGUtils filterArr:sorts checkValid:^BOOL(AIFeatureJvBuModel *item) {
+    NSArray *stModels = [SMGUtils filterArr:decoratorJvBuModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
         return [item.assT.logDescInit isEqualToString:logDesc];
     }];
+    // NSArray *stModels = decoratorJvBuModel.stModels;
 
     // ST递进淘汰法：主在前辅在后层层嵌套（参考38033）。
     NSInteger finalCount = 10; // 最终保留条数
-    NSInteger currentCount = decoratorJvBuModel.stModels.count;
+    NSInteger currentCount = stModels.count;
     double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
-    NSArray *sorts = decoratorJvBuModel.stModels;
+    NSArray *sorts = stModels;
 
     // 色差总值（替代数量，数量少的太多了，所以数量最重要）（参考38034-方案3 & 3803b）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
@@ -527,9 +528,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%02ld. 单特征识别结果:T%04ld %@",[validModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc);
-        [SMGUtils runByMainQueue:^{
-            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
-        }];
+        if ([model.assT.logDescInit isEqualToString:logDesc]) {
+            [SMGUtils runByMainQueue:^{
+                [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
+            }];
+        }
     }
     
     //61. debugLog
