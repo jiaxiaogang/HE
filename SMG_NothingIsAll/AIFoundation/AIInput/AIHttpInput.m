@@ -20,16 +20,22 @@ static GCDWebServer *_server;
 
     _server = [[GCDWebServer alloc] init];
 
-    [_server addDefaultHandlerForMethod:@"POST"
-                                   path:@"/inputText"
-                           requestClass:[GCDWebServerDataRequest class]
-                           processBlock:^GCDWebServerResponse *(GCDWebServerRequest *request) {
+    [_server addHandlerForMethod:@"POST"
+                            path:@"/inputText"
+                    requestClass:[GCDWebServerDataRequest class]
+                    processBlock:^GCDWebServerResponse *(GCDWebServerRequest *request) {
         GCDWebServerDataRequest *dataRequest = (GCDWebServerDataRequest *)request;
         NSString *text = nil;
 
         // 尝试解析JSON body: {"text":"..."}
-        if (dataRequest.jsonObject && [dataRequest.jsonObject isKindOfClass:[NSDictionary class]]) {
-            text = dataRequest.jsonObject[@"text"];
+        if (dataRequest.data.length > 0) {
+            NSString *mimeType = dataRequest.contentType;
+            if ([mimeType hasPrefix:@"application/json"] || [mimeType hasPrefix:@"text/json"]) {
+                NSDictionary *json = [NSJSONSerialization JSONObjectWithData:dataRequest.data options:0 error:NULL];
+                if ([json isKindOfClass:[NSDictionary class]]) {
+                    text = json[@"text"];
+                }
+            }
         }
 
         // 兜底：纯文本body

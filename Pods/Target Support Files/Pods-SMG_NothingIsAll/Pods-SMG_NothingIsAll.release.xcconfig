@@ -1,10 +1,13 @@
+CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO
 FRAMEWORK_SEARCH_PATHS = $(inherited) "${PODS_ROOT}/UMCCommon"
 GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
-HEADER_SEARCH_PATHS = $(inherited) "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/PINCache"
-LIBRARY_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/PINCache"
-OTHER_LDFLAGS = $(inherited) -ObjC -l"PINCache" -l"sqlite3" -l"z" -framework "CoreTelephony" -framework "Foundation" -framework "SystemConfiguration" -framework "UMCommon" -weak_framework "UIKit"
+HEADER_SEARCH_PATHS = $(inherited) "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/GCDWebServer" "${PODS_ROOT}/Headers/Public/PINCache"
+LIBRARY_SEARCH_PATHS = $(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/GCDWebServer" "${PODS_CONFIGURATION_BUILD_DIR}/PINCache"
+OTHER_LDFLAGS = $(inherited) -ObjC -l"GCDWebServer" -l"PINCache" -l"sqlite3" -l"z" -framework "CFNetwork" -framework "CoreTelephony" -framework "Foundation" -framework "MobileCoreServices" -framework "SystemConfiguration" -framework "UMCommon" -weak_framework "UIKit"
+OTHER_MODULE_VERIFIER_FLAGS = $(inherited) "-F${PODS_CONFIGURATION_BUILD_DIR}/GCDWebServer" "-F${PODS_CONFIGURATION_BUILD_DIR}/PINCache" "-F${PODS_CONFIGURATION_BUILD_DIR}/UMCCommon"
 PODS_BUILD_DIR = ${BUILD_DIR}
 PODS_CONFIGURATION_BUILD_DIR = ${PODS_BUILD_DIR}/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
 PODS_PODFILE_DIR_PATH = ${SRCROOT}/.
 PODS_ROOT = ${SRCROOT}/Pods
+PODS_XCFRAMEWORKS_BUILD_DIR = $(PODS_CONFIGURATION_BUILD_DIR)/XCFrameworkIntermediates
 USE_RECURSIVE_SCRIPT_INPUTS_IN_SCRIPT_PHASES = YES

@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import <net/if.h>
 #import "MainPage.h"
 #import "AINet.h"
 #import "NSObject+Extension.h"
@@ -186,7 +187,7 @@
             struct sockaddr_in *sa = (struct sockaddr_in *)ifa->ifa_addr;
             inet_ntop(AF_INET, &sa->sin_addr, addr, sizeof(addr));
             NSString *ip = [NSString stringWithUTF8String:addr];
-            if ([ifa->ifa_name hasPrefix:@"en"]) {
+            if ([[NSString stringWithUTF8String:ifa->ifa_name] hasPrefix:@"en"]) {
                 localIP = ip;
             }
         }

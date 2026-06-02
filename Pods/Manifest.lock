@@ -1,20 +1,26 @@
 PODS:
+  - GCDWebServer (3.3.3):
+    - GCDWebServer/Core (= 3.3.3)
+  - GCDWebServer/Core (3.3.3)
   - PINCache (2.3)
   - UMCCommon (7.1.0)
 
 DEPENDENCIES:
+  - GCDWebServer (~> 3.0)
   - PINCache
   - UMCCommon
 
 SPEC REPOS:
   trunk:
+    - GCDWebServer
     - PINCache
     - UMCCommon
 
 SPEC CHECKSUMS:
+  GCDWebServer: 1c39a1f0763e4eb492bee021e4270fce097d3555
   PINCache: ce36ed282031b92fc7733ffe831f474ff80fddc2
   UMCCommon: 4e80f93492d300245683236668763dc5d0b04dbd
 
-PODFILE CHECKSUM: a56175c60b70c953be1c33e1197493271b114160
+PODFILE CHECKSUM: 016775ed0dd55efa863f5902f0df519cf3a6be70
 
-COCOAPODS: 1.9.3
+COCOAPODS: 1.16.2

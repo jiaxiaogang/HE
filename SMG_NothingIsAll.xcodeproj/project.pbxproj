@@ -42,10 +42,10 @@
 		081BD08B25B94F24003C3038 /* PerceptDemandModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 081BD08A25B94F24003C3038 /* PerceptDemandModel.m */; };
 		081E3A2F2DD21DC000897ED0 /* AIGroupFeatureNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 081E3A2E2DD21DC000897ED0 /* AIGroupFeatureNode.m */; };
 		081E3A352DD2338700897ED0 /* InputGroupFeatureModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 081E3A342DD2338700897ED0 /* InputGroupFeatureModel.m */; };
+		081EF9662FCECA5900C7FFB8 /* AIHttpInput.m in Sources */ = {isa = PBXBuildFile; fileRef = 081EF9652FCECA5900C7FFB8 /* AIHttpInput.m */; };
 		082075F627EDFFE70005D7A8 /* TVideoWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 082075F427EDFFE70005D7A8 /* TVideoWindow.xib */; };
 		082075F727EDFFE70005D7A8 /* TVideoWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 082075F527EDFFE70005D7A8 /* TVideoWindow.m */; };
 		082104122DBDAD8900FE0794 /* ImgTrainerPreview.m in Sources */ = {isa = PBXBuildFile; fileRef = 082104112DBDAD8800FE0794 /* ImgTrainerPreview.m */; };
-		38AAA13666E023781198220C /* JvBuDetailWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 54A7E42EE551103EE6D2159B /* JvBuDetailWindow.m */; };
 		08236CEC21A23439008D8761 /* AIVisionAlgsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08236CEB21A23439008D8761 /* AIVisionAlgsModel.m */; };
 		08250AE0228112C000FC497C /* XGWedis.m in Sources */ = {isa = PBXBuildFile; fileRef = 08250ADF228112C000FC497C /* XGWedis.m */; };
 		0825AFF31F748F67003B86C7 /* NSObject+Extension.m in Sources */ = {isa = PBXBuildFile; fileRef = 0825AFF21F748F67003B86C7 /* NSObject+Extension.m */; };
@@ -243,6 +243,7 @@
 		08FBE10E22D56F360088EF1A /* NVModuleUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 08FBE10D22D56F360088EF1A /* NVModuleUtil.m */; };
 		08FBE73B2D94DA5900296487 /* AINetGroupValueIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 08FBE73A2D94DA5900296487 /* AINetGroupValueIndex.m */; };
 		2753D7CF7BAEDFEACAF9264A /* libPods-SMG_NothingIsAll.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DFBD58BA1D49147BC1DBA697 /* libPods-SMG_NothingIsAll.a */; };
+		38AAA13666E023781198220C /* JvBuDetailWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 54A7E42EE551103EE6D2159B /* JvBuDetailWindow.m */; };
 		4591E02A247F11B600484B51 /* TOAlgModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4591E029247F11B600484B51 /* TOAlgModel.m */; };
 		8822852020F58BDA009884DC /* AINetDirectionReference.m in Sources */ = {isa = PBXBuildFile; fileRef = 8822851F20F58BDA009884DC /* AINetDirectionReference.m */; };
 		8868F6EB210A946A000EAC9B /* AIAbsCMVManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 8868F6EA210A946A000EAC9B /* AIAbsCMVManager.m */; };
@@ -333,13 +334,13 @@
 		081E3A2E2DD21DC000897ED0 /* AIGroupFeatureNode.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIGroupFeatureNode.m; sourceTree = "<group>"; };
 		081E3A332DD2338700897ED0 /* InputGroupFeatureModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InputGroupFeatureModel.h; sourceTree = "<group>"; };
 		081E3A342DD2338700897ED0 /* InputGroupFeatureModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = InputGroupFeatureModel.m; sourceTree = "<group>"; };
+		081EF9642FCECA5900C7FFB8 /* AIHttpInput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AIHttpInput.h; sourceTree = "<group>"; };
+		081EF9652FCECA5900C7FFB8 /* AIHttpInput.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AIHttpInput.m; sourceTree = "<group>"; };
 		082075F327EDFFE60005D7A8 /* TVideoWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TVideoWindow.h; sourceTree = "<group>"; };
 		082075F427EDFFE70005D7A8 /* TVideoWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TVideoWindow.xib; sourceTree = "<group>"; };
 		082075F527EDFFE70005D7A8 /* TVideoWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TVideoWindow.m; sourceTree = "<group>"; };
 		082104102DBDAD8800FE0794 /* ImgTrainerPreview.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImgTrainerPreview.h; sourceTree = "<group>"; };
 		082104112DBDAD8800FE0794 /* ImgTrainerPreview.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ImgTrainerPreview.m; sourceTree = "<group>"; };
-		F60F040D80AC33322808D488 /* JvBuDetailWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JvBuDetailWindow.h; sourceTree = "<group>"; };
-		54A7E42EE551103EE6D2159B /* JvBuDetailWindow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JvBuDetailWindow.m; sourceTree = "<group>"; };
 		08236CEA21A23439008D8761 /* AIVisionAlgsModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIVisionAlgsModel.h; sourceTree = "<group>"; };
 		08236CEB21A23439008D8761 /* AIVisionAlgsModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AIVisionAlgsModel.m; sourceTree = "<group>"; };
 		08250ADE228112C000FC497C /* XGWedis.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = XGWedis.h; sourceTree = "<group>"; };
@@ -738,6 +739,7 @@
 		4591E029247F11B600484B51 /* TOAlgModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TOAlgModel.m; sourceTree = "<group>"; };
 		4591E02E247F1E1A00484B51 /* ISubModelsDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ISubModelsDelegate.h; sourceTree = "<group>"; };
 		4591E030247F1F4000484B51 /* ITryActionFoDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ITryActionFoDelegate.h; sourceTree = "<group>"; };
+		54A7E42EE551103EE6D2159B /* JvBuDetailWindow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = JvBuDetailWindow.m; sourceTree = "<group>"; };
 		8822851E20F58BDA009884DC /* AINetDirectionReference.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AINetDirectionReference.h; sourceTree = "<group>"; };
 		8822851F20F58BDA009884DC /* AINetDirectionReference.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AINetDirectionReference.m; sourceTree = "<group>"; };
 		8868F6E9210A946A000EAC9B /* AIAbsCMVManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIAbsCMVManager.h; sourceTree = "<group>"; };
@@ -776,6 +778,7 @@
 		DE79539824FEDBA53557ECCA /* Pods-SMG_NothingIsAll.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SMG_NothingIsAll.release.xcconfig"; path = "Pods/Target Support Files/Pods-SMG_NothingIsAll/Pods-SMG_NothingIsAll.release.xcconfig"; sourceTree = "<group>"; };
 		DFBD58BA1D49147BC1DBA697 /* libPods-SMG_NothingIsAll.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SMG_NothingIsAll.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E74E5256A45FDF9C80A280FD /* Pods-SMG_NothingIsAll.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SMG_NothingIsAll.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SMG_NothingIsAll/Pods-SMG_NothingIsAll.debug.xcconfig"; sourceTree = "<group>"; };
+		F60F040D80AC33322808D488 /* JvBuDetailWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JvBuDetailWindow.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1691,6 +1694,8 @@
 			children = (
 				08515B272F9B1F6500214FCA /* AICameraCapture.h */,
 				08515B282F9B1F6700214FCA /* AICameraCapture.m */,
+				081EF9642FCECA5900C7FFB8 /* AIHttpInput.h */,
+				081EF9652FCECA5900C7FFB8 /* AIHttpInput.m */,
 				08C84A8C1E9A866200897D8B /* AIInput.h */,
 				08C84A8D1E9A866200897D8B /* AIInput.m */,
 			);
@@ -2269,6 +2274,7 @@
 				089292F52FB0A346002A57D7 /* CPUChartView.m in Sources */,
 				08366B9327E00232004EBBB9 /* TOMVisionFoView.m in Sources */,
 				0895FFE4264A13C500DAD3EA /* TOModelVision.m in Sources */,
+				081EF9662FCECA5900C7FFB8 /* AIHttpInput.m in Sources */,
 				084219ED1FD8CF81009DA6BC /* AIThinkingControl.m in Sources */,
 				083ADA722A67AB4F00319561 /* AsyncMutableDictionary.m in Sources */,
 				089614A9219A4D5200343FAC /* BirdGrowPage.m in Sources */,
