@@ -409,7 +409,7 @@
 
 // 识别明确度 = stScore（参考38065-TODO1）。
 -(CGFloat) clarity {
-    return self.stScore;
+    return 1 - self.stScore;
 }
 
 @end

@@ -7,8 +7,6 @@
 //
 
 #import "DemandManager.h"
-#import "ImvAlgsUnknownModel.h"
-#import "AIFeatureJvBuModel.h"
 
 @interface DemandManager()
 
@@ -341,60 +339,6 @@
             }
         }
     }];
-}
-
-/**
- *  MARK:--------------------创建未知恐惧任务（参考38065-TODO1）--------------------
- *  @desc 1. 按bestGVsAtProtoTRect分组（同一rect只取clarity最低的）；
- *        2. 未知度 = 1 - stScore；
- *        3. 按rect防重（loopCache中已有同focusRect的Unknown任务则跳过）；
- *        4. urgentTo极弱（最大3，对比饥饿最高100）；
- */
--(void) createUnknownFearTasks:(NSArray*)stModels {
-    if (!Switch4UnknownFear || !ARRISOK(stModels)) return;
-
-    //1. 按bestGVsAtProtoTRect分组，每组取clarity最低的（即最不明确的）；
-    NSMutableDictionary *rectGroup = [NSMutableDictionary new];// <NSString(rectKey), AIFeatureJvBuModel>
-    for (AIFeatureJvBuModel *stModel in stModels) {
-        NSString *rectKey = NSStringFromCGRect(stModel.bestGVsAtProtoTRect);
-        AIFeatureJvBuModel *existing = rectGroup[rectKey];
-        if (!existing || stModel.clarity < existing.clarity) {
-            rectGroup[rectKey] = stModel;
-        }
-    }
-
-    //2. 对每组创建任务；
-    NSString *algsType = NSStringFromClass(ImvAlgsUnknownModel.class);
-    for (NSString *rectKey in rectGroup.allKeys) {
-        AIFeatureJvBuModel *stModel = rectGroup[rectKey];
-
-        //3. 计算未知度；
-        CGFloat unknownDegree = 1.0 - stModel.clarity;
-        if (unknownDegree <= 0) continue;
-
-        //4. 防重：已有同focusRect的Unknown任务则跳过；
-        BOOL duplicated = false;
-        for (DemandModel *item in self.loopCache.array) {
-            if (ISOK(item, PerceptDemandModel.class)
-                && [algsType isEqualToString:item.algsType]
-                && CGRectEqualToRect(item.focusRect, stModel.bestGVsAtProtoTRect)) {
-                duplicated = true;
-                break;
-            }
-        }
-        if (duplicated) continue;
-
-        //5. 创建P任务（urgentTo极弱，最大3）；
-        NSInteger urgentTo = (NSInteger)ceil(unknownDegree * 3);
-        PerceptDemandModel *newItem = [[PerceptDemandModel alloc] init];
-        newItem.algsType = algsType;
-        newItem.delta = 1;
-        newItem.urgentTo = urgentTo;
-        newItem.focusRect = stModel.bestGVsAtProtoTRect;
-        [self.loopCache addObject:newItem];
-        [theTC updateEnergyDelta:urgentTo];
-        NSLog(@"未知恐惧任务 >> 未知度:%.2f urgentTo:%ld rect:%@",unknownDegree,(long)urgentTo,rectKey);
-    }
 }
 
 @end
