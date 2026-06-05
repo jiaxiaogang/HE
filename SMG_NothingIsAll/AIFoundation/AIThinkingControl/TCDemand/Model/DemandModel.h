@@ -47,4 +47,7 @@
 
 @property (assign, nonatomic) BOOL alreadyInitCansetModels;
 
+// 未知恐惧任务对应的视觉rect区域（参考38065-TODO3聚焦行为要用）。
+@property (assign, nonatomic) CGRect focusRect;
+
 @end

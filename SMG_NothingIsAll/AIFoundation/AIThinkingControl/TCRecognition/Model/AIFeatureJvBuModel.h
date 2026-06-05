@@ -147,4 +147,7 @@
 -(CGFloat) stScore;
 -(NSString*) stScoreDesc;
 
+// 识别明确度 = stScore，未知度 = 1 - clarity（参考38065-TODO1）。
+-(CGFloat) clarity;
+
 @end

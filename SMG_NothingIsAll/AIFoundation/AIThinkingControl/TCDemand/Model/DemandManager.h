@@ -53,4 +53,11 @@
  */
 -(void) inputForContinueAndGoodMv:(AICMVNodeBase*)mv;
 
+/**
+ *  MARK:--------------------创建未知恐惧任务（参考38065-TODO1）--------------------
+ *  @desc 识别不明确时，根据未知度构建任务，价值感很弱；
+ *        未知度 = 1 - stScore，按rect防重；
+ */
+-(void) createUnknownFearTasks:(NSArray*)stModels;
+
 @end

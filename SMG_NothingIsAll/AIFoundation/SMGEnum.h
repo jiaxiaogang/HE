@@ -29,6 +29,7 @@ typedef NS_ENUM(NSInteger, MVType) {
     MVType_Hunger   = 1,
     MVType_Anxious  = 2,
     MVType_Hurt  = 3,//痛觉
+    MVType_Unknown = 4,//未知恐惧
 };
 
 /**

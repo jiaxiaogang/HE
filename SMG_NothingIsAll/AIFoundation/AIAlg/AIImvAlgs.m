@@ -9,6 +9,7 @@
 #import "AIImvAlgs.h"
 #import "ImvAlgsHungerModel.h"
 #import "ImvAlgsHurtModel.h"
+#import "ImvAlgsUnknownModel.h"
 
 @implementation AIImvAlgs
 
@@ -26,6 +27,10 @@
         //3. 生成imvModel_痛感;
         imvModel = [[ImvAlgsHurtModel alloc] init];
     }else if(type == MVType_Anxious){}
+    else if(type == MVType_Unknown){
+        //4. 生成imvModel_未知恐惧（参考38065-TODO1）；
+        imvModel = [[ImvAlgsUnknownModel alloc] init];
+    }
     
     //4. 对imvModel计算赋值;
     if (imvModel) {

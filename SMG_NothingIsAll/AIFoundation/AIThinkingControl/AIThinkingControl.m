@@ -210,7 +210,12 @@ static AIThinkingControl *_instance;
     
     // ST竞争。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];
-    
+
+    // 未知恐惧任务（参考38065-TODO1）。
+    if (Switch4UnknownFear) {
+        [self.outModelManager createUnknownFearTasks:decoratorJvBuModel.stModels];
+    }
+
     // GT识别。
     NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];
     [decoratorJvBuModel.gtModels addObjectsFromArray:gtModels];

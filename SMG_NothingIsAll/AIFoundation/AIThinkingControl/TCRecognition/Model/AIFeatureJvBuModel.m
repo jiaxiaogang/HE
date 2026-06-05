@@ -407,4 +407,9 @@
     return STRFORMAT(@"匹配数:%.2f (%02ld) 匹配度:%.2f = 总分:%.2f",self.bestsCountScore,self.bestGVs.count,self.matchValue,self.stScore);
 }
 
+// 识别明确度 = stScore（参考38065-TODO1）。
+-(CGFloat) clarity {
+    return self.stScore;
+}
+
 @end
