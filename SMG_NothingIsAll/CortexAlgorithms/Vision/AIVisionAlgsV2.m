@@ -7,6 +7,9 @@
 //
 
 #import "AIVisionAlgsV2.h"
+#import "SMGUtils+SSIM.h"
+
+static UIImage *_lastSSIMImage = nil;
 
 @implementation AIVisionAlgsV2
 
@@ -152,7 +155,16 @@
 + (void) commitInputV2:(UIImage*)image logDesc:(NSString*)logDesc cropRect:(CGRect)cropRect {
     //1. 数据检查。
     if (!image) return;
-    
+
+    //1.5 计算与上一帧的 SSIM，变化大时扩大识别范围为全图
+    if (_lastSSIMImage) {
+        CGFloat ssim = [SMGUtils ssimImage:image image:_lastSSIMImage];
+        if (ssim < 0.8f) {
+            cropRect = CGRectMake(0, 0, 1, 1);
+        }
+    }
+    _lastSSIMImage = image;
+
     //2. 取rgb矩阵<K=x_y,V=RGB>
     NSDictionary *rgbDic = [self getRGBValuesFromImage:image cropRect:cropRect];
 
