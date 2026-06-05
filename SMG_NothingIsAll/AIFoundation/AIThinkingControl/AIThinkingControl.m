@@ -213,7 +213,7 @@ static AIThinkingControl *_instance;
     [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];
 
     // 聚焦反射反应：找最不明确区域，触发聚焦反射（参考38065-TODO3）。
-    if (Switch4UnknownFear && ARRISOK(decoratorJvBuModel.stModels)) {
+    if (ARRISOK(decoratorJvBuModel.stModels)) {
         AIFeatureJvBuModel *mostUnclear = nil;
         for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
             if (!mostUnclear || stModel.clarity > mostUnclear.clarity) {

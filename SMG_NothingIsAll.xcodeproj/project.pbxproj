@@ -65,6 +65,7 @@
 		0832AD4325BC5AEF001B4DB1 /* AIMatchFoModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 0832AD4225BC5AEF001B4DB1 /* AIMatchFoModel.m */; };
 		083352F521800AB1003931E5 /* MainPage.m in Sources */ = {isa = PBXBuildFile; fileRef = 083352F321800AB1003931E5 /* MainPage.m */; };
 		083352F621800AB1003931E5 /* MainPage.xib in Resources */ = {isa = PBXBuildFile; fileRef = 083352F421800AB1003931E5 /* MainPage.xib */; };
+		0833B65F2FD31D7C00B1740E /* SMGUtils+SSIM.m in Sources */ = {isa = PBXBuildFile; fileRef = 0833B65E2FD31D7C00B1740E /* SMGUtils+SSIM.m */; };
 		08355577266C6A1000ECFC51 /* MemManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 08355576266C6A1000ECFC51 /* MemManager.m */; };
 		0835557A266C6B5700ECFC51 /* MemManagerWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 08355579266C6B5700ECFC51 /* MemManagerWindow.m */; };
 		0835557C266C6B8400ECFC51 /* MemManagerWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0835557B266C6B8400ECFC51 /* MemManagerWindow.xib */; };
@@ -262,6 +263,7 @@
 		88E1F84E211591D80036B616 /* DemandManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 88E1F84D211591D80036B616 /* DemandManager.m */; };
 		88E1F851211591E50036B616 /* DemandModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 88E1F850211591E50036B616 /* DemandModel.m */; };
 		88E87A6721016EAA0071513F /* OutputUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 88E87A6621016EAA0071513F /* OutputUtils.m */; };
+		A0EA48BF2029242B0038B983 /* ImvAlgsUnknownModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A0EA48BE2029242B0038B983 /* ImvAlgsUnknownModel.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -380,6 +382,8 @@
 		083352F221800AB1003931E5 /* MainPage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MainPage.h; sourceTree = "<group>"; };
 		083352F321800AB1003931E5 /* MainPage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MainPage.m; sourceTree = "<group>"; };
 		083352F421800AB1003931E5 /* MainPage.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainPage.xib; sourceTree = "<group>"; };
+		0833B65D2FD31D7C00B1740E /* SMGUtils+SSIM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "SMGUtils+SSIM.h"; sourceTree = "<group>"; };
+		0833B65E2FD31D7C00B1740E /* SMGUtils+SSIM.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "SMGUtils+SSIM.m"; sourceTree = "<group>"; };
 		08355574266C69D400ECFC51 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		08355575266C6A1000ECFC51 /* MemManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MemManager.h; sourceTree = "<group>"; };
 		08355576266C6A1000ECFC51 /* MemManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MemManager.m; sourceTree = "<group>"; };
@@ -775,6 +779,8 @@
 		88E1F850211591E50036B616 /* DemandModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DemandModel.m; sourceTree = "<group>"; };
 		88E87A6521016EAA0071513F /* OutputUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OutputUtils.h; sourceTree = "<group>"; };
 		88E87A6621016EAA0071513F /* OutputUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OutputUtils.m; sourceTree = "<group>"; };
+		A0EA48BD2029242B0038B983 /* ImvAlgsUnknownModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ImvAlgsUnknownModel.h; sourceTree = "<group>"; };
+		A0EA48BE2029242B0038B983 /* ImvAlgsUnknownModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ImvAlgsUnknownModel.m; sourceTree = "<group>"; };
 		DE79539824FEDBA53557ECCA /* Pods-SMG_NothingIsAll.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SMG_NothingIsAll.release.xcconfig"; path = "Pods/Target Support Files/Pods-SMG_NothingIsAll/Pods-SMG_NothingIsAll.release.xcconfig"; sourceTree = "<group>"; };
 		DFBD58BA1D49147BC1DBA697 /* libPods-SMG_NothingIsAll.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SMG_NothingIsAll.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E74E5256A45FDF9C80A280FD /* Pods-SMG_NothingIsAll.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SMG_NothingIsAll.debug.xcconfig"; path = "Pods/Target Support Files/Pods-SMG_NothingIsAll/Pods-SMG_NothingIsAll.debug.xcconfig"; sourceTree = "<group>"; };
@@ -871,6 +877,8 @@
 				08F4C98D1EA7A03900F3EDA8 /* SMGUtils.m */,
 				082D03DD22D40AF000BB0B7A /* SMGUtils+General.h */,
 				082D03DE22D40AF000BB0B7A /* SMGUtils+General.m */,
+				0833B65D2FD31D7C00B1740E /* SMGUtils+SSIM.h */,
+				0833B65E2FD31D7C00B1740E /* SMGUtils+SSIM.m */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -1824,6 +1832,8 @@
 				08EA48BE2029242B0038B982 /* ImvAlgsHungerModel.m */,
 				08E8CF5625B2F07100AA18DB /* ImvAlgsHurtModel.h */,
 				08E8CF5725B2F07100AA18DB /* ImvAlgsHurtModel.m */,
+				A0EA48BD2029242B0038B983 /* ImvAlgsUnknownModel.h */,
+				A0EA48BE2029242B0038B983 /* ImvAlgsUnknownModel.m */,
 			);
 			path = Imv;
 			sourceTree = "<group>";
@@ -2260,6 +2270,7 @@
 				0819F4F727583B27007396D0 /* TCLearning.m in Sources */,
 				0873E11328B45D0600FBC09E /* TCRefrection.m in Sources */,
 				08EA48BF2029242B0038B982 /* ImvAlgsHungerModel.m in Sources */,
+				A0EA48BF2029242B0038B983 /* ImvAlgsUnknownModel.m in Sources */,
 				082F9D561EB234750009F6A9 /* Output.m in Sources */,
 				08E74B372D9393100052D8C2 /* AIRecognitionCache.m in Sources */,
 				0858C5CD2194F8B000951BA5 /* MASConstraintMaker.m in Sources */,
@@ -2402,6 +2413,7 @@
 				08690E292E82DC8200D52FFD /* GTModel.m in Sources */,
 				0827DAD724199C9E00A025D4 /* HeLogView.m in Sources */,
 				08E8CF5525B2880600AA18DB /* WoodView.m in Sources */,
+				0833B65F2FD31D7C00B1740E /* SMGUtils+SSIM.m in Sources */,
 				080EA73B2B94D0BF00764BBF /* TCTransferXvModel.m in Sources */,
 				080A126D29D4813B0042870B /* AIMatchCansetModel.m in Sources */,
 				0864936127E216B5003EF661 /* TOMVisionNodeBase.m in Sources */,

@@ -303,11 +303,11 @@
                 model.useTime = 0.1f;
             } else if (OutputObserverType_Front == model.type) {
                 //a. 飞前 => 行为动画;
-                NSLog(@"飞前视觉%p:%@",model,[NVHeUtil fly2Str:model.data.floatValue]);
+                NSLog(@"飞前视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
                 [self flyAction:[model.data floatValue]];
             }else if(OutputObserverType_Back == model.type){
                 //b. 飞后 => 视觉;
-                NSLog(@"飞后视觉%p:%@",model,[NVHeUtil fly2Str:model.data.floatValue]);
+                NSLog(@"飞后视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
                 [self flyResult:[model.data floatValue]];
             }
         }
@@ -331,11 +331,11 @@
                 model.useTime = 0.1f;
             } else if (OutputObserverType_Front == model.type) {
                 //a. 踢前 => 行为动画;
-                NSLog(@"踢前视觉%p:%@",model,[NVHeUtil fly2Str:model.data.floatValue]);
+                NSLog(@"踢前视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
                 [self kickAction:model];
             }else if(OutputObserverType_Back == model.type){
                 //b. 飞后 => 视觉;
-                NSLog(@"踢后视觉%p:%@",model,[NVHeUtil fly2Str:model.data.floatValue]);
+                NSLog(@"踢后视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
                 [self see:[self.delegate birdView_GetPageView] fromObserver:false];
             }
         }

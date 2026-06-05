@@ -7,7 +7,6 @@
 //
 
 #import "AIVisionAlgsV2.h"
-#import "SMGUtils+SSIM.h"
 
 static UIImage *_lastSSIMImage = nil;
 

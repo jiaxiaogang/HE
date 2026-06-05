@@ -30,7 +30,7 @@
  *  MARK:--------------------根据data直接查找value_p--------------------
  *  1. 如果未找到,则创建一个,并返回;
  */
-+(AIKVPointer*) getDataPointerWithData:(NSNumber*)data algsType:(NSString*)algsType dataSource:(NSString*)dataSource isOut:(BOOL)isOut;
++(AIKVPointer*) getDataPointerWithData:(id)data algsType:(NSString*)algsType dataSource:(NSString*)dataSource isOut:(BOOL)isOut;
 
 
 /**

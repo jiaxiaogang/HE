@@ -53,6 +53,7 @@
 #import "HeLogUtil.h"
 #import "TOModelVisionUtil.h"
 #import "TCLearningUtil.h"
+#import "SMGUtils+SSIM.h"
 
 //任务池
 #import "ReasonDemandModel.h"
