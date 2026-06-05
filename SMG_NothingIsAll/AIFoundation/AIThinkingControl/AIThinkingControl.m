@@ -8,6 +8,7 @@
 
 #import "AIThinkingControl.h"
 #import "NSObject+Extension.h"
+#import "AIReactorControl.h"
 
 /**
  *  MARK:--------------------思维控制器--------------------
@@ -210,6 +211,19 @@ static AIThinkingControl *_instance;
     
     // ST竞争。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];
+
+    // 聚焦反射反应：找最不明确区域，触发聚焦反射（参考38065-TODO3）。
+    if (Switch4UnknownFear && ARRISOK(decoratorJvBuModel.stModels)) {
+        AIFeatureJvBuModel *mostUnclear = nil;
+        for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
+            if (!mostUnclear || stModel.clarity > mostUnclear.clarity) {
+                mostUnclear = stModel;
+            }
+        }
+        if (mostUnclear && mostUnclear.clarity > 0.3) {
+            [AIReactorControl commitReactor:FOCUS_RDS datas:@[[NSValue valueWithCGRect:mostUnclear.bestGVsAtProtoTRect]]];
+        }
+    }
 
     // GT识别。
     NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];

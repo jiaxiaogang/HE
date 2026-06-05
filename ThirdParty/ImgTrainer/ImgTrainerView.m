@@ -232,6 +232,26 @@
 
 -(void) initDisplay {
     [self close];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(outputObserver:) name:kOutputObserver object:nil];
+}
+
+/**
+ *  MARK:--------------------聚焦反射反应输出（参考38065-TODO3）--------------------
+ */
+-(void) outputObserver:(NSNotification*)notification {
+    OutputModel *model = (OutputModel*)notification.object;
+    if (![FOCUS_RDS isEqualToString:model.identify]) return;
+    if (OutputObserverType_UseTime == model.type) {
+        model.useTime = 0;
+    } else if (OutputObserverType_Front == model.type) {
+        NSLog(@"聚焦反射 >> rect:%@",NSStringFromCGRect([model.data CGRectValue]));
+    } else if (OutputObserverType_Back == model.type) {
+        CGRect rect = [model.data CGRectValue];
+        CGFloat whSize = pow(3, VisionMaxLevel);
+        CGRect normRect = CGRectMake(rect.origin.x / whSize, rect.origin.y / whSize, rect.size.width / whSize, rect.size.height / whSize);
+        NSLog(@"聚焦反射 >> 裁剪重识别 normRect:%@ fromRect:%@",NSStringFromCGRect(normRect),NSStringFromCGRect(rect));
+        [AIVisionAlgsV2 commitInputV2:self.curImgView.image logDesc:STRFORMAT(@"聚焦_%@",NSStringFromCGRect(rect)) cropRect:normRect];
+    }
 }
 
 /**
@@ -616,7 +636,7 @@
         if (!img) return;
         
         //2. 提交视觉
-        [AIVisionAlgsV2 commitInputV2:img logDesc:STRFORMAT(@"%@_%ld",model.imgName,model.imgIndex)];
+        [AIVisionAlgsV2 commitInputV2:img logDesc:STRFORMAT(@"%@_%ld",model.imgName,model.imgIndex) cropRect:CGRectMake(0, 0, 1, 1)];
         
         //3. 预览图
         [self.curImgView setImage:img];
@@ -688,7 +708,7 @@
                 [self removePreviewDatas];
 
                 // 提交视觉
-                [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_0"];
+                [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_0" cropRect:CGRectMake(0, 0, 1, 1)];
             }
 
             // 恢复预览session（如果之前是开启的）

@@ -149,12 +149,12 @@
 /**
  *  MARK:--------------------commitInput--------------------
  */
-+ (void) commitInputV2:(UIImage*)image logDesc:(NSString*)logDesc {
++ (void) commitInputV2:(UIImage*)image logDesc:(NSString*)logDesc cropRect:(CGRect)cropRect {
     //1. 数据检查。
     if (!image) return;
     
     //2. 取rgb矩阵<K=x_y,V=RGB>
-    NSDictionary *rgbDic = [self getRGBValuesFromImage:image cropRect:CGRectMake(0, 0, 1, 1)];
+    NSDictionary *rgbDic = [self getRGBValuesFromImage:image cropRect:cropRect];
 
     //3. 将rgb矩阵按粒度分层<K=level_x_y,V=RGB>（只有rgb求平均值比较方便，不必考虑loop值，直接求平均即可，所以在转hsb之前，就得把9宫粒度分层字典处理好）。
     NSDictionary *splitRGBDic = [self convertProtoColorDic2SplitDic:rgbDic];
