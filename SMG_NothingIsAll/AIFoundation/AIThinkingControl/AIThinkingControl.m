@@ -9,6 +9,8 @@
 #import "AIThinkingControl.h"
 #import "NSObject+Extension.h"
 #import "AIReactorControl.h"
+#import "AIImvAlgs.h"
+#import "ImvAlgsUnknownModel.h"
 
 /**
  *  MARK:--------------------思维控制器--------------------
@@ -212,19 +214,6 @@ static AIThinkingControl *_instance;
     // ST竞争。
     [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];
 
-    // 聚焦反射反应：找最不明确区域，触发聚焦反射（参考38065-TODO3）。
-    if (ARRISOK(decoratorJvBuModel.stModels)) {
-        AIFeatureJvBuModel *mostUnclear = nil;
-        for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
-            if (!mostUnclear || stModel.clarity > mostUnclear.clarity) {
-                mostUnclear = stModel;
-            }
-        }
-        if (mostUnclear && mostUnclear.clarity > 0.3) {
-            [AIReactorControl commitReactor:FOCUS_RDS datas:@[[NSValue valueWithCGRect:mostUnclear.bestGVsAtProtoTRect]]];
-        }
-    }
-
     // GT识别。
     NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];
     [decoratorJvBuModel.gtModels addObjectsFromArray:gtModels];
@@ -255,6 +244,36 @@ static AIThinkingControl *_instance;
     // debug
     NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
     // NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
+
+    // 聚焦反射反应：找最不明确区域，触发聚焦反射（参考38065-TODO3）。
+    AIFeatureJvBuModel *mostUnclear = nil;
+    for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
+        if (!mostUnclear || stModel.clarity > mostUnclear.clarity) {
+            mostUnclear = stModel;
+        }
+    }
+    if (mostUnclear && mostUnclear.clarity > 0.3) {
+        // 反射反应。
+        [AIReactorControl commitReactor:FOCUS_RDS datas:@[[NSValue valueWithCGRect:mostUnclear.bestGVsAtProtoTRect]]];
+    }
+
+    // 把每一个stModel都构建成一个mv任务。
+    for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
+        // 把mostUnclear.clarity转成未知恐惧mv，输入给TCInput（参考38065-TODO1）。
+        CGFloat unknownDegree = 1.0 - stModel.clarity;
+        CGFloat to = unknownDegree * 10;
+        ImvAlgsUnknownModel *unknownModel = [[ImvAlgsUnknownModel alloc] init];
+        unknownModel.urgentTo = [AIImvAlgs getBadImvUrgentValue:to];
+        unknownModel.delta = unknownModel.urgentTo;
+
+        NSDictionary *modelDic = [NSObject getDic:unknownModel containParent:true];
+        NSArray *algsArr = [theNet algModelConvert2Pointers:modelDic algsType: NSStringFromClass(unknownModel.class)];
+        AICMVNodeBase *mvNode = [theNet createConMv:algsArr];
+
+        //2. 加入瞬时记忆 & 生成时序指向mv等;
+        [TCInput pInput:mvNode];
+    }
+
     return protoST;
 }
 
