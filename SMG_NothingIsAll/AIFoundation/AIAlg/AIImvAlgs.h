@@ -17,4 +17,10 @@
  */
 +(ImvAlgsModelBase*) commitIMV:(MVType)type from:(CGFloat)from to:(CGFloat)to;
 
+/**
+ *  MARK:--------------------BadImv迫切度--------------------
+ *  @desc 指迫切度与value在"同向"上,比如更饿,越饿迫切度越高;
+ */
++(CGFloat) getBadImvUrgentValue:(CGFloat)to;
+
 @end

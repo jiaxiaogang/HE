@@ -254,11 +254,24 @@ static AIThinkingControl *_instance;
     }
     if (mostUnclear && mostUnclear.clarity > 0.3) {
         // 反射反应。
-        [AIReactorControl commitReactor:FOCUS_RDS datas:@[[NSValue valueWithCGRect:mostUnclear.bestGVsAtProtoTRect]]];
+        [AIReactorControl commitReactor:FOCUS_RDS datas:@[[NSValue valueWithCGRect:mostUnclear.assST_ProtoRect]]];
     }
 
     // 把每一个stModel都构建成一个mv任务。
     for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
+        // 把hsbST构建的alg输入到瞬时序列。
+        // TODOTOMORROW20260606: 继续写这里。。。
+        
+        
+        
+        // 把stModel.assST_ProtoRect 和 stModel.clarity 封装成稀疏码。
+        AIKVPointer *fromRect_p = [theNet getNetDataPointerWithData:@(stModel.assST_ProtoRect) algsType:at dataSource:ds isOut:false];
+        AIKVPointer *clarity_p = [theNet getNetDataPointerWithData:@(stModel.clarity) algsType:at dataSource:ds isOut:false];
+        AIAlgNodeBase *descAlg = [theNet createAbsAlg_NoRepeat:@[fromRect_p,clarity_p] conAlgs:nil];
+        
+        // 输入当前fromRect。
+        [TCInput rInput:descAlg except_ps:nil];
+        
         // 把mostUnclear.clarity转成未知恐惧mv，输入给TCInput（参考38065-TODO1）。
         CGFloat unknownDegree = 1.0 - stModel.clarity;
         CGFloat to = unknownDegree * 10;
