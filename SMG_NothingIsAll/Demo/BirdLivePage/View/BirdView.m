@@ -232,8 +232,9 @@
 //MARK:                     < 踢 >
 //MARK:===============================================================
 -(void) kickAction:(OutputModel*)model{
+    NSNumber *data = ARR_INDEX(model.datas, 0);
     //1. 数据检查
-    CGFloat value = [model.data floatValue];
+    CGFloat value = [data floatValue];
     value = MAX(MIN(1, value), 0);
     
     //2. 将从左顺时针: "0至1",转换为: "-1至1";
@@ -284,6 +285,7 @@
     if (notification && ISOK(notification.object, OutputModel.class)) {
         //1. 取数据
         OutputModel *model = (OutputModel*)notification.object;
+        NSNumber *data = ARR_INDEX(model.datas, 0);
         
         //2. 吸吮反射 / 主动吃
         if ([EAT_RDS isEqualToString:model.identify]) {
@@ -291,10 +293,10 @@
                 model.useTime = 0.2f;
             } else if (OutputObserverType_Front == model.type) {
                 //b. 吃前 => 行为动画;
-                [self eatAction:[model.data floatValue]];
+                [self eatAction:[data floatValue]];
                 
                 //c. 吃后 => 世界变化 & 视觉 & 产生mv;
-                [self eatResult:[model.data floatValue]];
+                [self eatResult:[data floatValue]];
             }else if(OutputObserverType_Back == model.type){}
         }
         //3. 扇翅膀反射
@@ -303,12 +305,12 @@
                 model.useTime = 0.1f;
             } else if (OutputObserverType_Front == model.type) {
                 //a. 飞前 => 行为动画;
-                NSLog(@"飞前视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
-                [self flyAction:[model.data floatValue]];
+                NSLog(@"飞前视觉%p:%@",model,[NVHeUtil fly2Str:data.floatValue]);
+                [self flyAction:[data floatValue]];
             }else if(OutputObserverType_Back == model.type){
                 //b. 飞后 => 视觉;
-                NSLog(@"飞后视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
-                [self flyResult:[model.data floatValue]];
+                NSLog(@"飞后视觉%p:%@",model,[NVHeUtil fly2Str:data.floatValue]);
+                [self flyResult:[data floatValue]];
             }
         }
         //4. 焦急反射
@@ -331,11 +333,11 @@
                 model.useTime = 0.1f;
             } else if (OutputObserverType_Front == model.type) {
                 //a. 踢前 => 行为动画;
-                NSLog(@"踢前视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
+                NSLog(@"踢前视觉%p:%@",model,[NVHeUtil fly2Str:data.floatValue]);
                 [self kickAction:model];
             }else if(OutputObserverType_Back == model.type){
                 //b. 飞后 => 视觉;
-                NSLog(@"踢后视觉%p:%@",model,[NVHeUtil fly2Str:NUMTOOK(model.data).floatValue]);
+                NSLog(@"踢后视觉%p:%@",model,[NVHeUtil fly2Str:data.floatValue]);
                 [self see:[self.delegate birdView_GetPageView] fromObserver:false];
             }
         }

@@ -154,11 +154,13 @@
         
         //2. 字符串反射
         if ([TEXT_RDS isEqualToString:model.identify]) {
-            char c = [model.data charValue];
-            [self.outputMStr appendFormat:@"%c",c];
-            if (self.outputMStr.length > 100) {
-                NSString *subStr = [self.outputMStr substringFromIndex:self.outputMStr.length - 100];
-                self.outputMStr = [[NSMutableString alloc] initWithString:subStr];
+            for (NSNumber *data in model.datas) {
+                char c = [data charValue];
+                [self.outputMStr appendFormat:@"%c",c];
+                if (self.outputMStr.length > 100) {
+                    NSString *subStr = [self.outputMStr substringFromIndex:self.outputMStr.length - 100];
+                    self.outputMStr = [[NSMutableString alloc] initWithString:subStr];
+                }
             }
         }else if([ANXIOUS_RDS isEqualToString:model.identify]){
             const char *chars = [@"T_T" UTF8String];

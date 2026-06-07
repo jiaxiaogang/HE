@@ -15,7 +15,7 @@
 //MARK:===============================================================
 //MARK:                     < method >
 //MARK:===============================================================
-+(AIKVPointer*) getDataPointerWithData:(id)data algsType:(NSString*)algsType dataSource:(NSString*)dataSource isOut:(BOOL)isOut{
++(AIKVPointer*) getDataPointerWithData:(NSNumber*)data algsType:(NSString*)algsType dataSource:(NSString*)dataSource isOut:(BOOL)isOut{
     //1. 数据准备
     if (ISOK(data, NSNumber.class)) {
         //2. 2025.03.18: 性能优化：最大精度为小数点后3位（如果不限精度，一个稀疏码索引可能有上万条，稀疏码太碎会导致性能问题，尤其是支持面向现实世界的视觉后）。
@@ -23,10 +23,6 @@
         //原则：感官层做精度处理：要保证整个稀疏码可能的值，其总量在不影响感知的前提下越少越好，比如：人类的声音频率范围和感知最小差。
         //TODO: 随后把每个ds的稀疏码值的span值域传进来，然后自动计算精度（一般保留1/1000的精度就够用了）。
         data = @(roundf([(NSNumber*)data floatValue] * 10000) / 10000);
-    } else if (ISOK(data, NSValue.class) && strcmp([(NSValue*)data objCType], @encode(CGRect)) == 0) {
-        // NSValue(CGRect): 精度对齐（保留小数点后1位）
-        CGRect rect = [(NSValue*)data CGRectValue];
-        data = [NSValue valueWithCGRect:CGRectMake(roundf(rect.origin.x * 10) / 10, roundf(rect.origin.y * 10) / 10, roundf(rect.size.width * 10) / 10, roundf(rect.size.height * 10) / 10)];
     } else {
         return nil;
     }

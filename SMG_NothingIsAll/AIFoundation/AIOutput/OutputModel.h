@@ -19,8 +19,8 @@
  */
 @property (strong,nonatomic) NSString *identify;
 
-//参数值 (目前仅支持1个) (应通过网络来实现组,而不是多参数)
-@property (strong,nonatomic) id data;
+//参数值 (NSNumber数组) 。
+@property (strong,nonatomic) NSArray *datas;
 
 //输出类型 (阶段)
 @property (assign, nonatomic) OutputObserverType type;

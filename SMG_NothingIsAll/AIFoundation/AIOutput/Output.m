@@ -23,53 +23,45 @@
         return [[[TCResult new:false] mkMsg:@"output 输出非alg类型错误"] mkStep:51];
     }
     
-    //2. 循环微信息组
-    NSMutableArray *valids = [[NSMutableArray alloc] init];
-    for (AIKVPointer *value_p in algNode.content_ps) {
-        
-        //3. 取dataSource & algsType
-        NSString *identify = value_p.algsType;
-        if (!value_p.isOut) {
-            identify = [OutputUtils convertOutType2dataSource:value_p.algsType];
-            WLog(@"调试下,何时会输出isOut=false的内容");
-        }
-        
-        //4. 检查可输出"某数据类型"并收集
-        if ([AINetUtils checkCanOutput:identify]) {
-            OutputModel *model = [[OutputModel alloc] init];
-            model.identify = identify;
-            model.data = NUMTOOK([AINetIndex getData:value_p]);
-            [valids addObject:model];
-        }
+    // 取identify：根据dataSource & algsType
+    AIKVPointer *firstValue_p = ARR_INDEX(algNode.content_ps, 0);
+    NSString *identify = firstValue_p.algsType;
+    if (!firstValue_p.isOut) {
+        identify = [OutputUtils convertOutType2dataSource:firstValue_p.algsType];
+        WLog(@"调试下,何时会输出isOut=false的内容");
     }
     
+    // 检查可输出"某数据类型"并收集
+    if ([AINetUtils checkCanOutput:identify]) return [[[TCResult new:false] mkMsg:@"output输出无效而失败"] mkStep:52];
+    
+    // 构建outputModel
+    OutputModel *model = [[OutputModel alloc] init];
+    model.identify = identify;
+    
+    // 取datas（循环微信息组）
+    model.datas = [SMGUtils convertArr:algNode.content_ps convertBlock:^id(AIKVPointer *value_p) {
+        return NUMTOOK([AINetIndex getData:value_p]);
+    }];
+    
     //5. 执行输出
-    if (ARRISOK(valids)) {
-        return [self output_General:valids logBlock:^{
-            //6. 将输出入网
-            [theTC commitOutputLogAsync:valids];
-        }];
-    }
-    return [[[TCResult new:false] mkMsg:@"output输出无效而失败"] mkStep:52];
+    return [self output_General:model logBlock:^{
+        //6. 将输出入网
+        [theTC commitOutputLogAsync:model];
+    }];
 }
 
-+(void) output_FromReactor:(NSString*)identify datas:(NSArray*)datas{
++(void) output_FromReactor:(NSString*)identify datas:(NSArray*)datas {
+    if (!ARRISOK(datas)) return;
     //1. 转为outModel
-    NSMutableArray *models = [[NSMutableArray alloc] init];
-    for (id data in ARRTOOK(datas)) {
-        OutputModel *model = [[OutputModel alloc] init];
-        model.identify = STRTOOK(identify);
-        model.data = data;
-        [models addObject:model];
-    }
-
+    OutputModel *model = [[OutputModel alloc] init];
+    model.identify = STRTOOK(identify);
+    model.datas = datas;
+    
     //2. 传递到output执行
-    if (ARRISOK(models)) {
-        [Output output_General:models logBlock:^{
-            //3. 将输出入网
-            [theTC commitOutputLogAsync:models];
-        }];
-    }
+    [Output output_General:model logBlock:^{
+        //3. 将输出入网
+        [theTC commitOutputLogAsync:model];
+    }];
 }
 
 /**
@@ -82,10 +74,10 @@
         //1. 生成outputModel
         OutputModel *model = [[OutputModel alloc] init];
         model.identify = ANXIOUS_RDS;
-        model.data = @(1);
+        model.datas = @[@(1)];
         
         //2. 输出
-        [self output_General:@[model] logBlock:^{
+        [self output_General:model logBlock:^{
             //3. 将输出mood提交给tc
             [AIInput commitIMV:MVType_Anxious from:10 to:3];
         }];
@@ -103,7 +95,7 @@
 /**
  *  MARK:--------------------actions输出--------------------
  *  @desc 含: 反射被动输出 和 TC主动输出
- *  @param outputModels : OutputModel数组;
+ *  @param model : OutputModel;
  *  如: 吸吮,抓握
  *  注: 先天,被动
  *  @version
@@ -111,25 +103,20 @@
  *      2021.02.26: 将timer改为SEL方式,因为block方式在模拟器运行会闪退;
  *      2023.07.22: 行为执行所需要时间返回到TCResult (参考30084-todo1);
  */
-+(TCResult*) output_General:(NSArray*)outputModels logBlock:(void(^)())logBlock{
++(TCResult*) output_General:(OutputModel*)model logBlock:(void(^)())logBlock{
     //0. 输出行为输出到UI时,重新调用回主线程;
-    __block NSArray *weakOutputModels = outputModels;
+    __block OutputModel *weakOutputModel = model;
     __block Act0 weakLogBlock = logBlock;
-    __block double useTime = 0;//从同步主线程取回所需要时间;
     
     //1. 取useTime
-    for (OutputModel *model in ARRTOOK(weakOutputModels)) {
-        model.type = OutputObserverType_UseTime;
-        [[NSNotificationCenter defaultCenter] postNotificationName:kOutputObserver object:model];
-        useTime = MAX(model.useTime, useTime);
-    }
+    model.type = OutputObserverType_UseTime;
+    [[NSNotificationCenter defaultCenter] postNotificationName:kOutputObserver object:model];
+    __block double useTime = model.useTime;//从同步主线程取回所需要时间;
     
     dispatch_async(dispatch_get_main_queue(), ^{
         //1. 广播执行行为开始 (执行行为动画,返回执行用时);
-        for (OutputModel *model in ARRTOOK(weakOutputModels)) {
-            model.type = OutputObserverType_Front;
-            [[NSNotificationCenter defaultCenter] postNotificationName:kOutputObserver object:model];
-        }
+        weakOutputModel.type = OutputObserverType_Front;
+        [[NSNotificationCenter defaultCenter] postNotificationName:kOutputObserver object:weakOutputModel];
         
         //2. 行为输出完成后;
         [NSTimer scheduledTimerWithTimeInterval:useTime target:self selector:@selector(notificationTimer:) userInfo:^(){
@@ -137,10 +124,8 @@
             weakLogBlock();
             
             //4. 广播执行输出后 (现实世界处理 & 飞后视觉 & 价值触发等);
-            for (OutputModel *model in ARRTOOK(weakOutputModels)) {
-                model.type = OutputObserverType_Back;
-                [[NSNotificationCenter defaultCenter] postNotificationName:kOutputObserver object:model];
-            }
+            weakOutputModel.type = OutputObserverType_Back;
+            [[NSNotificationCenter defaultCenter] postNotificationName:kOutputObserver object:weakOutputModel];
         } repeats:false];
     });
     return [[[[TCResult new:true] mkMsg:@"output输出成功"] mkDelay:useTime] mkStep:61];

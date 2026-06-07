@@ -16,7 +16,7 @@
  *  1. 主要负责思维 (前额叶) 功能;
  *  2. 次要负责分发激活等 (丘脑) 功能;
  */
-@class ShortMatchManager,DemandManager,TCDebug;
+@class ShortMatchManager,DemandManager,TCDebug,OutputModel;
 @interface AIThinkingControl : NSObject
 
 +(AIThinkingControl*) shareInstance;
@@ -46,10 +46,10 @@
 -(void) commitInputWithModelsAsync:(NSArray*)dics algsType:(NSString*)algsType;
 /**
  *  MARK:--------------------输出的日志入网(输入小脑)--------------------
- *  @param outputModels : 输出内容(如:eat)
+ *  @param outputModel : 输出内容(如:eat)
  *  注: 大脑为引,小脑为行
  */
--(void) commitOutputLogAsync:(NSArray*)outputModels;
+-(void) commitOutputLogAsync:(OutputModel*)outputModel;
 
 
 //MARK:===============================================================

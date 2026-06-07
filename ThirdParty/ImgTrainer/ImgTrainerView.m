@@ -244,9 +244,16 @@
     if (OutputObserverType_UseTime == model.type) {
         model.useTime = 0;
     } else if (OutputObserverType_Front == model.type) {
-        NSLog(@"聚焦反射 >> rect:%@",NSStringFromCGRect([model.data CGRectValue]));
+        CGRect rect = CGRectMake(NUMTOOK(ARR_INDEX(model.datas, 0)).floatValue,
+                                 NUMTOOK(ARR_INDEX(model.datas, 1)).floatValue,
+                                 NUMTOOK(ARR_INDEX(model.datas, 2)).floatValue,
+                                 NUMTOOK(ARR_INDEX(model.datas, 3)).floatValue);
+        NSLog(@"聚焦反射 >> rect:%@",Rect2Str(rect));
     } else if (OutputObserverType_Back == model.type) {
-        CGRect rect = [model.data CGRectValue];
+        CGRect rect = CGRectMake(NUMTOOK(ARR_INDEX(model.datas, 0)).floatValue,
+                                 NUMTOOK(ARR_INDEX(model.datas, 1)).floatValue,
+                                 NUMTOOK(ARR_INDEX(model.datas, 2)).floatValue,
+                                 NUMTOOK(ARR_INDEX(model.datas, 3)).floatValue);
         CGFloat whSize = pow(3, VisionMaxLevel);
         CGRect normRect = CGRectMake(rect.origin.x / whSize, rect.origin.y / whSize, rect.size.width / whSize, rect.size.height / whSize);
         NSLog(@"聚焦反射 >> 裁剪重识别 normRect:%@ fromRect:%@",NSStringFromCGRect(normRect),NSStringFromCGRect(rect));

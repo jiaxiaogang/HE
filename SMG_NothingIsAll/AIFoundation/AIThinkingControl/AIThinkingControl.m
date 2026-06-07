@@ -254,7 +254,8 @@ static AIThinkingControl *_instance;
     }
     if (mostUnclear && mostUnclear.clarity > 0.3) {
         // 反射反应。
-        [AIReactorControl commitReactor:FOCUS_RDS datas:@[[NSValue valueWithCGRect:mostUnclear.assST_ProtoRect]]];
+        CGRect fromRect = mostUnclear.assST_ProtoRect;
+        [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height)]];
     }
 
     // 把每一个stModel都构建成一个mv任务。
@@ -265,9 +266,13 @@ static AIThinkingControl *_instance;
         [TCInput rInput:assAlg except_ps:nil];
         
         // 把stModel.assST_ProtoRect 和 stModel.clarity 封装成稀疏码。
-        AIKVPointer *fromRect_p = [theNet getNetDataPointerWithData:@(stModel.assST_ProtoRect) algsType:at dataSource:ds isOut:false];
+        CGRect fromRect = stModel.assST_ProtoRect;
+        AIKVPointer *x_p = [theNet getNetDataPointerWithData:@(fromRect.origin.x) algsType:at dataSource:STRFORMAT(@"%@_x",ds) isOut:false];
+        AIKVPointer *y_p = [theNet getNetDataPointerWithData:@(fromRect.origin.y) algsType:at dataSource:STRFORMAT(@"%@_y",ds) isOut:false];
+        AIKVPointer *w_p = [theNet getNetDataPointerWithData:@(fromRect.size.width) algsType:at dataSource:STRFORMAT(@"%@_w",ds) isOut:false];
+        AIKVPointer *h_p = [theNet getNetDataPointerWithData:@(fromRect.size.height) algsType:at dataSource:STRFORMAT(@"%@_h",ds) isOut:false];
         AIKVPointer *clarity_p = [theNet getNetDataPointerWithData:@(stModel.clarity) algsType:at dataSource:ds isOut:false];
-        AIAlgNodeBase *descAlg = [theNet createAbsAlg_NoRepeat:@[fromRect_p,clarity_p] conAlgs:nil];
+        AIAlgNodeBase *descAlg = [theNet createAbsAlg_NoRepeat:@[x_p,y_p,w_p,h_p,clarity_p] conAlgs:nil];
         
         // 输入当前fromRect。
         [TCInput rInput:descAlg except_ps:nil];
@@ -472,22 +477,23 @@ static AIThinkingControl *_instance;
  *  @version
  *      20200414 - 将输出参数集value_ps转到ThinkIn,去进行识别,保留ShortMatchModel,内类比等流程;
  */
--(void) commitOutputLogAsync:(NSArray*)outputModels {
-    __block NSArray *weakOutputModels = outputModels;
+-(void) commitOutputLogAsync:(OutputModel*)outputModel {
+    __block OutputModel *weakOutputModel = outputModel;
     dispatch_async(self.tiQueue, ^{//30083去异步
         self.tiRuning3 = true;
-        [self commitOutputLog:weakOutputModels];
+        [self commitOutputLog:weakOutputModel];
         self.tiRuning3 = false;
     });
 }
--(void) commitOutputLog:(NSArray*)outputModels{
+-(void) commitOutputLog:(OutputModel*)model {
     //1. 植物模式阻断感知;
     if (self.thinkMode == 2) return;
+    
     //1. 数据
     NSMutableArray *value_ps = [[NSMutableArray alloc] init];
-    for (OutputModel *model in ARRTOOK(outputModels)) {
+    for (NSNumber *data in model.datas) {
         //2. 装箱
-        AIKVPointer *output_p = [theNet getOutputIndex:model.identify outputObj:model.data];
+        AIKVPointer *output_p = [theNet getOutputIndex:model.identify outputObj:data];
         if (output_p) {
             [value_ps addObject:output_p];
         }
