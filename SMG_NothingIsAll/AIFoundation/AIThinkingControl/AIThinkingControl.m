@@ -154,7 +154,7 @@ static AIThinkingControl *_instance;
         AIAlgNodeBase *algNode = [theNet createAbsAlg_NoRepeat:algsArr conAlgs:nil isOut:false at:nil ds:nil type:ATDefault];
         
         //2. 加入瞬时记忆 & 识别等;
-        [TCInput rInput:algNode except_ps:nil];
+        [TCInput rInput:algNode except_ps:nil fuJia:nil];
     }
 }
 
@@ -263,7 +263,7 @@ static AIThinkingControl *_instance;
         AIFeatureJvBuModel *stModel = mostUnclear;
         // 把hsbST构建的alg输入到瞬时序列。
         AIAlgNodeBase *assAlg = [theNet createAbsAlg_NoRepeat:@[stModel.assT.p] conAlgs:nil];
-        [TCInput rInput:assAlg except_ps:nil];
+        [TCInput rInput:assAlg except_ps:nil fuJia:mostUnclear];
         
         // 把stModel.assST_ProtoRect 和 stModel.clarity 封装成稀疏码。
         CGRect fromRect = stModel.assST_ProtoRect;
@@ -275,7 +275,7 @@ static AIThinkingControl *_instance;
         AIAlgNodeBase *descAlg = [theNet createAbsAlg_NoRepeat:@[x_p,y_p,w_p,h_p,clarity_p] conAlgs:nil];
         
         // 输入当前fromRect。
-        [TCInput rInput:descAlg except_ps:nil];
+        [TCInput rInput:descAlg except_ps:nil fuJia:nil];
         
         // 把mostUnclear.clarity转成未知恐惧mv，输入给TCInput（参考38065-TODO1）。
         CGFloat unknownDegree = 1.0 - stModel.clarity;
@@ -467,7 +467,7 @@ static AIThinkingControl *_instance;
     
     //6. NoMv处理;
     for (AIKVPointer *alg_p in fromGroup_ps) {
-        [TCInput rInput:[SMGUtils searchNode:alg_p] except_ps:fromGroup_ps];
+        [TCInput rInput:[SMGUtils searchNode:alg_p] except_ps:fromGroup_ps fuJia:nil];
     }
 }
 
@@ -506,7 +506,7 @@ static AIThinkingControl *_instance;
     AIAbsAlgNode *outAlg = [theNet createAbsAlg_NoRepeat:value_ps conAlgs:nil isOut:true at:nil type:ATDefault];
     
     //3. 提交到ThinkIn进行识别_加瞬时记忆 & 进行识别
-    [TCInput rInput:outAlg except_ps:nil];
+    [TCInput rInput:outAlg except_ps:nil fuJia:nil];
 }
 
 //MARK:===============================================================

@@ -812,7 +812,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2023.06.03 - 性能优化_复用cacheDataDic到循环外 & cacheProtoData到循环外 & proto收集防重用dic (参考29109-测得3);
  *      2025.03.20 - 兼容多码特征（参考n34p04）。
  */
-+(void) recognitionAlgStep1:(NSArray*)except_ps inModel:(AIShortMatchModel*)inModel {
++(void) recognitionAlgStep1:(NSArray*)except_ps inModel:(AIShortMatchModel*)inModel fuJia:(id)fuJia {
     //0. 数据准备;
     AIAlgNodeBase *protoAlg = inModel.protoAlg;
     if (!ISOK(protoAlg, AIAlgNodeBase.class)) return;
@@ -835,6 +835,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         } else {
             //TODO: 改为在特征识别完后，识别Alg，此处兼容下。
             // subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{ }];
+            
+            // assST时，直接取有效抽象的refAlg都算。
+            AIFeatureJvBuModel *jvBuModel = fuJia;
+            AIFeatureNode *assST = inModel.protoAlg;
+            NSArray *allValids = jvBuModel.allValidAbsST_ps;
+            
+            // TODOTOMORROW20260607: 继续
+            
+            
         }
         
         //4. 每个near_p做两件事:

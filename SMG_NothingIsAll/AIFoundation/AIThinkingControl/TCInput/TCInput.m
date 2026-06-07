@@ -33,7 +33,7 @@
  *      20230531 - r时序识别结束后,调用识别二次过滤器 (参考29107-todo3);
  *      20231107 - 将feedbackTIR调整到feedbackTOR之前 (参考30154-todo4.2);
  */
-+(void) rInput:(AIAlgNodeBase*)algNode except_ps:(NSArray*)except_ps{
++(void) rInput:(AIAlgNodeBase*)algNode except_ps:(NSArray*)except_ps fuJia:(id)fuJia {
     ISGroupLog(@"input R");
     [theTC updateLoopId];
     [theTC updateOperCount:kFILENAME];
@@ -44,7 +44,7 @@
     mModel.inputTime = [[NSDate date] timeIntervalSince1970];
     
     //2. 识别概念;
-    [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel];
+    [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel fuJia:fuJia];
     
     //3. 将mModel保留 (只有先保留后,构建时序时,才会含新帧概念);
     [theTC.inModelManager add:mModel];
@@ -120,7 +120,7 @@
     DebugE();
     
     //2. 识别概念;
-    [TCRecognitionInvoke recognitionAlgStep1:nil inModel:shortModel];
+    [TCRecognitionInvoke recognitionAlgStep1:nil inModel:shortModel fuJia:nil];
     
     //2. 转regroup生成protoFo;
     [TCRegroup pRegroup:mv shortModel:shortModel];
