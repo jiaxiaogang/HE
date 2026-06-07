@@ -154,7 +154,7 @@ static AINet *_instance;
 }
 
 //单data装箱
--(AIKVPointer*) getNetDataPointerWithData:(NSNumber*)data algsType:(NSString*)algsType dataSource:(NSString*)dataSource isOut:(BOOL)isOut{
+-(AIKVPointer*) getNetDataPointerWithData:(id)data algsType:(NSString*)algsType dataSource:(NSString*)dataSource isOut:(BOOL)isOut{
     return [AINetIndex getDataPointerWithData:data algsType:algsType dataSource:dataSource isOut:isOut];
 }
 

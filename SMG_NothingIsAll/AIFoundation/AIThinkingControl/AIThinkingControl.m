@@ -260,9 +260,8 @@ static AIThinkingControl *_instance;
     // 把每一个stModel都构建成一个mv任务。
     for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
         // 把hsbST构建的alg输入到瞬时序列。
-        // TODOTOMORROW20260606: 继续写这里。。。
-        
-        
+        AIAlgNodeBase *assAlg = [theNet createAbsAlg_NoRepeat:@[stModel.assT.p] conAlgs:nil];
+        [TCInput rInput:assAlg except_ps:nil];
         
         // 把stModel.assST_ProtoRect 和 stModel.clarity 封装成稀疏码。
         AIKVPointer *fromRect_p = [theNet getNetDataPointerWithData:@(stModel.assST_ProtoRect) algsType:at dataSource:ds isOut:false];
