@@ -200,34 +200,42 @@
 //MARK:                     < 节点类型判断 >
 //MARK:===============================================================
 +(BOOL) isValue:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_VALUE isEqualToString:node_p.folderName] || [kPN_DATA isEqualToString:node_p.folderName] || [kPN_INDEX isEqualToString:node_p.folderName];
 }
 
 +(BOOL) isGroupValue:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_GROUPVALUE_NODE isEqualToString:node_p.folderName];
 }
 
 +(BOOL) isFeature:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_FEATURE_NODE isEqualToString:node_p.folderName];
 }
 
 +(BOOL) isGroupFeature:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_GROUPFEATURE_NODE isEqualToString:node_p.folderName];
 }
 
 +(BOOL) isAlg:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_ALG_NODE isEqualToString:node_p.folderName] || [kPN_ALG_ABS_NODE isEqualToString:node_p.folderName];
 }
 
 +(BOOL) isFo:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_FRONT_ORDER_NODE isEqualToString:node_p.folderName] || [kPN_FO_ABS_NODE isEqualToString:node_p.folderName];
 }
 
 +(BOOL) isMv:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_CMV_NODE isEqualToString:node_p.folderName] || [kPN_ABS_CMV_NODE isEqualToString:node_p.folderName];
 }
 
 +(BOOL) isAbs:(AIKVPointer*)node_p{
+    if (!ISOK(node_p, AIKVPointer.class)) return false;
     return [kPN_FO_ABS_NODE isEqualToString:node_p.folderName] || [kPN_ABS_CMV_NODE isEqualToString:node_p.folderName] || [kPN_ALG_ABS_NODE isEqualToString:node_p.folderName];
 }
 

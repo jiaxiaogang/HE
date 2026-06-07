@@ -258,7 +258,8 @@ static AIThinkingControl *_instance;
     }
 
     // 把每一个stModel都构建成一个mv任务。
-    for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
+    if (mostUnclear) { // for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
+        AIFeatureJvBuModel *stModel = mostUnclear;
         // 把hsbST构建的alg输入到瞬时序列。
         AIAlgNodeBase *assAlg = [theNet createAbsAlg_NoRepeat:@[stModel.assT.p] conAlgs:nil];
         [TCInput rInput:assAlg except_ps:nil];
