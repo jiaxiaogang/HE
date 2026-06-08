@@ -245,40 +245,32 @@ static AIThinkingControl *_instance;
     NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
     // NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
 
-    // 聚焦反射反应：找最不明确区域，触发聚焦反射（参考38065-TODO3）。
-    AIFeatureJvBuModel *mostUnclear = nil;
-    for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
-        if (!mostUnclear || stModel.clarity > mostUnclear.clarity) {
-            mostUnclear = stModel;
-        }
-    }
-    if (mostUnclear && mostUnclear.clarity > 0.3) {
+    // 聚焦反射反应：找最明确区域一条，触发聚焦反射（参考38065-TODO3 & 38082-方案3）。
+    AIFeatureJvBuModel *mostClear = [SMGUtils filterBestObj:decoratorJvBuModel.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *stModel) {
+        return stModel.clarity;
+    }];
+    if (mostClear && mostClear.clarity > 0.3) {
         // 反射反应。
-        CGRect fromRect = mostUnclear.assST_ProtoRect;
+        CGRect fromRect = mostClear.assST_ProtoRect;
         [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height)]];
-    }
-
-    // 把每一个stModel都构建成一个mv任务。
-    if (mostUnclear) { // for (AIFeatureJvBuModel *stModel in decoratorJvBuModel.stModels) {
-        AIFeatureJvBuModel *stModel = mostUnclear;
+        
         // 把hsbST构建的alg输入到瞬时序列。
-        AIAlgNodeBase *assAlg = [theNet createAbsAlg_NoRepeat:@[stModel.assT.p] conAlgs:nil];
-        [TCInput rInput:assAlg except_ps:nil fuJia:mostUnclear];
+        AIAlgNodeBase *assAlg = [theNet createAbsAlg_NoRepeat:@[mostClear.assT.p] conAlgs:nil];
+        [TCInput rInput:assAlg except_ps:nil fuJia:mostClear];
         
         // 把stModel.assST_ProtoRect 和 stModel.clarity 封装成稀疏码。
-        CGRect fromRect = stModel.assST_ProtoRect;
         AIKVPointer *x_p = [theNet getNetDataPointerWithData:@(fromRect.origin.x) algsType:at dataSource:STRFORMAT(@"%@_x",ds) isOut:false];
         AIKVPointer *y_p = [theNet getNetDataPointerWithData:@(fromRect.origin.y) algsType:at dataSource:STRFORMAT(@"%@_y",ds) isOut:false];
         AIKVPointer *w_p = [theNet getNetDataPointerWithData:@(fromRect.size.width) algsType:at dataSource:STRFORMAT(@"%@_w",ds) isOut:false];
         AIKVPointer *h_p = [theNet getNetDataPointerWithData:@(fromRect.size.height) algsType:at dataSource:STRFORMAT(@"%@_h",ds) isOut:false];
-        AIKVPointer *clarity_p = [theNet getNetDataPointerWithData:@(stModel.clarity) algsType:at dataSource:ds isOut:false];
+        AIKVPointer *clarity_p = [theNet getNetDataPointerWithData:@(mostClear.clarity) algsType:at dataSource:ds isOut:false];
         AIAlgNodeBase *descAlg = [theNet createAbsAlg_NoRepeat:@[x_p,y_p,w_p,h_p,clarity_p] conAlgs:nil];
         
         // 输入当前fromRect。
         [TCInput rInput:descAlg except_ps:nil fuJia:nil];
         
         // 把mostUnclear.clarity转成未知恐惧mv，输入给TCInput（参考38065-TODO1）。
-        CGFloat unknownDegree = 1.0 - stModel.clarity;
+        CGFloat unknownDegree = 1.0 - mostClear.clarity;
         CGFloat to = unknownDegree * 10;
         ImvAlgsUnknownModel *unknownModel = [[ImvAlgsUnknownModel alloc] init];
         unknownModel.urgentTo = [AIImvAlgs getBadImvUrgentValue:to];
