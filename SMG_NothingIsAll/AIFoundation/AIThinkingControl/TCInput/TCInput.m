@@ -52,7 +52,12 @@
         NSArray *allValids = jvBuModel.allValidAbsST_ps;
         
         // TODOTOMORROW20260609：看把jvBuModel转成AIShortMatchModel类型，以兼容。
-        // mModel.protoAlg = jvBuModel.protost
+        
+        // 1. 把assST做为protoAlg
+        mModel.protoAlg = jvBuModel.assT;
+        
+        // 2. 把allValidAbsST转存到matchAlgs_PS下
+        // 3.
         
     }
     
