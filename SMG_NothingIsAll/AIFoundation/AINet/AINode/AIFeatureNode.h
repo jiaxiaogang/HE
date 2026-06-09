@@ -6,12 +6,12 @@
 //  Copyright © 2025 XiaoGang. All rights reserved.
 //
 
-#import "AINodeBase.h"
+#import "AIAlgNodeBase.h"
 
 /**
  *  MARK:--------------------特征节点--------------------
  */
-@interface AIFeatureNode : AINodeBase
+@interface AIFeatureNode : AIAlgNodeBase
 
 @property (strong, nonatomic) NSArray *rects;
 

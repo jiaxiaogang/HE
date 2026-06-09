@@ -812,7 +812,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2023.06.03 - 性能优化_复用cacheDataDic到循环外 & cacheProtoData到循环外 & proto收集防重用dic (参考29109-测得3);
  *      2025.03.20 - 兼容多码特征（参考n34p04）。
  */
-+(void) recognitionAlgStep1:(NSArray*)except_ps inModel:(AIShortMatchModel*)inModel fuJia:(id)fuJia {
++(void) recognitionAlgStep1:(NSArray*)except_ps inModel:(AIShortMatchModel*)inModel {
     //0. 数据准备;
     AIAlgNodeBase *protoAlg = inModel.protoAlg;
     if (!ISOK(protoAlg, AIAlgNodeBase.class)) return;
@@ -827,24 +827,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIKVPointer *item_p = ARR_INDEX(protoAlg.content_ps, i);
         
         //3. 取相近度序列 (按相近程度排序);
-        NSArray *subMatchModels = nil;
-        if (PitIsValue(item_p)) {
-            subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{
-                return [self recognitionValue:item_p rate:0.8 minLimit:20];//v1单码特征
-            }];
-        } else {
-            //TODO: 改为在特征识别完后，识别Alg，此处兼容下。
-            // subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{ }];
-            
-            // assST时，直接取有效抽象的refAlg都算。
-            AIFeatureJvBuModel *jvBuModel = fuJia;
-            AIFeatureNode *assST = inModel.protoAlg;
-            NSArray *allValids = jvBuModel.allValidAbsST_ps;
-            
-            // TODOTOMORROW20260607: 继续
-            
-            
-        }
+        NSArray *subMatchModels = [AIRecognitionCache getCache:item_p cacheBlock:^id{
+            return [self recognitionValue:item_p rate:0.8 minLimit:20];//v1单码特征
+        }];
         
         //4. 每个near_p做两件事:
         for (AIMatchModel *subMatchModel in subMatchModels) {

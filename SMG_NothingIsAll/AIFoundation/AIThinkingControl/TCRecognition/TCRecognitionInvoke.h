@@ -36,7 +36,7 @@
 //MARK:===============================================================
 //MARK:                     < 概念识别 >
 //MARK:===============================================================
-+(void) recognitionAlgStep1:(NSArray*)except_ps inModel:(AIShortMatchModel*)inModel fuJia:(id)fuJia;
++(void) recognitionAlgStep1:(NSArray*)except_ps inModel:(AIShortMatchModel*)inModel;
 
 /**
  *  MARK:--------------------概念识别-第二步: 抽具象关联--------------------

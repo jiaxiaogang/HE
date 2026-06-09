@@ -43,8 +43,21 @@
     mModel.protoAlg = algNode;
     mModel.inputTime = [[NSDate date] timeIntervalSince1970];
     
+    // 特征不做概念识别（参考38083-解答）。
+    if (ISOK(algNode, AIFeatureNode.class)) {
+        
+        // assST时，直接取有效抽象的refAlg都算。
+        AIFeatureJvBuModel *jvBuModel = fuJia;
+        AIFeatureNode *assST = jvBuModel.assT;
+        NSArray *allValids = jvBuModel.allValidAbsST_ps;
+        
+        // TODOTOMORROW20260609：看把jvBuModel转成AIShortMatchModel类型，以兼容。
+        // mModel.protoAlg = jvBuModel.protost
+        
+    }
+    
     //2. 识别概念;
-    [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel fuJia:fuJia];
+    [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel];
     
     //3. 将mModel保留 (只有先保留后,构建时序时,才会含新帧概念);
     [theTC.inModelManager add:mModel];
@@ -120,7 +133,7 @@
     DebugE();
     
     //2. 识别概念;
-    [TCRecognitionInvoke recognitionAlgStep1:nil inModel:shortModel fuJia:nil];
+    [TCRecognitionInvoke recognitionAlgStep1:nil inModel:shortModel];
     
     //2. 转regroup生成protoFo;
     [TCRegroup pRegroup:mv shortModel:shortModel];
