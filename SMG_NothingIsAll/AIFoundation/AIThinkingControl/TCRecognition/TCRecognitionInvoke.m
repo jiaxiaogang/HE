@@ -1141,6 +1141,17 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //3. 每个abs_p分别索引;
         NSArray *protoAlgAbs_ps = [self getProtoAlgAbsPs:protoOrRegroupFo protoIndex:i inModel:inModel fromRegroup:fromRegroup];
         
+        
+        // TODOTOMORROW2026010: 查时序识别没结果。
+        // 1. 取索引的规则，有所不同。
+        // 2. 取似层的规则，有所不同。
+        // 总之得做下兼容，不然这里是跑不出结果的。
+        
+        if (ISOK(protoAlg, AIFeatureNode.class)) {
+            NSLog(@"");
+        }
+        
+        
         //4. 仅保留似层: 索引absAlg是交层,则直接continue (参考33111-TODO1);
         protoAlgAbs_ps = [SMGUtils filterArr:protoAlgAbs_ps checkValid:^BOOL(AIKVPointer *item) {
             return !item.isJiao;

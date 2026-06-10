@@ -38,12 +38,6 @@
     //2. 调用通用时序识别方法 (checkItemValid: 可考虑写个isBasedNode()判断,因protoAlg可里氏替换,目前仅支持后两层)
     [TCRecognitionInvoke recognitionFoStep1:protoFo except_ps:except_ps decoratorInModel:model fromRegroup:false matchAlgs:model.matchAlgs_Si protoOrRegroupCutIndex:protoFo.count - 1 debugMode:true];
     
-    // TODOTOMORROW20260608: 查时序识别没结果。
-    if (model.fos4Demand.count == 0) {
-        NSLog(@"");
-        [TCRecognitionInvoke recognitionFoStep1:protoFo except_ps:except_ps decoratorInModel:model fromRegroup:false matchAlgs:model.matchAlgs_Si protoOrRegroupCutIndex:protoFo.count - 1 debugMode:true];
-    }
-    
     //3. 识别二次过滤器;
     [AIFilter secondRecognitionFilter:model];
     
@@ -59,12 +53,6 @@
     Debug();
     IFTitleLog(@"pInput时序识别", @"\nprotoFo4PInput:%@",Fo2FStr(protoFo));
     [TCRecognitionInvoke recognitionFoStep1:protoFo except_ps:except_ps decoratorInModel:model fromRegroup:false matchAlgs:nil protoOrRegroupCutIndex:protoFo.count - 1 debugMode:true];
-    
-    // TODOTOMORROW20260608: 查时序识别没结果。
-    if (model.fos4Demand.count == 0) {
-        NSLog(@"");
-        [TCRecognitionInvoke recognitionFoStep1:protoFo except_ps:except_ps decoratorInModel:model fromRegroup:false matchAlgs:nil protoOrRegroupCutIndex:protoFo.count - 1 debugMode:true];
-    }
     
     //2. 二次过滤后,进行时序抽具象关联 (参考3313b-TODO4);
     [TCRecognitionInvoke recognitionFoStep2:protoFo inModel:model debugMode:true];

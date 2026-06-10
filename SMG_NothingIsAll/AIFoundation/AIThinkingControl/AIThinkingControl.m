@@ -255,8 +255,7 @@ static AIThinkingControl *_instance;
         [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height)]];
         
         // 把hsbST构建的alg输入到瞬时序列。
-        AIAlgNodeBase *assAlg = [theNet createAbsAlg_NoRepeat:@[mostClear.assT.p] conAlgs:nil];
-        [TCInput rInput:assAlg except_ps:nil fuJia:mostClear];
+        [TCInput rInput:mostClear.assT except_ps:nil fuJia:mostClear];
         
         // 把stModel.assST_ProtoRect 和 stModel.clarity 封装成稀疏码。
         AIKVPointer *x_p = [theNet getNetDataPointerWithData:@(fromRect.origin.x) algsType:at dataSource:STRFORMAT(@"%@_x",ds) isOut:false];
