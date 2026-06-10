@@ -46,23 +46,27 @@
     // 特征不做概念识别（参考38083-解答）。
     if (ISOK(algNode, AIFeatureNode.class)) {
         
-        // assST时，直接取有效抽象的refAlg都算。
+        // 把jvBuModel转成AIShortMatchModel类型，以兼容。
+        // assST的有效抽象都计为概念识别结果。
         AIFeatureJvBuModel *jvBuModel = fuJia;
         AIFeatureNode *assST = jvBuModel.assT;
         NSArray *allValids = jvBuModel.allValidAbsST_ps;
         
-        // TODOTOMORROW20260609：看把jvBuModel转成AIShortMatchModel类型，以兼容。
+        // 把assST做为protoAlg
+        mModel.protoAlg = assST;
         
-        // 1. 把assST做为protoAlg
-        mModel.protoAlg = jvBuModel.assT;
-        
-        // 2. 把allValidAbsST转存到matchAlgs_PS下
-        // 3.
-        
+        // 把allValidAbsST转存到matchAlgs_PS下
+        mModel.matchAlgs_PS = [SMGUtils convertArr:allValids convertBlock:^id(AIKVPointer *obj) {
+            AIMatchAlgModel *model = [[AIMatchAlgModel alloc] init];
+            model.matchAlg = obj;
+            model.matchCount = (int)assST.count;
+            return model;
+        }];
+    } else {
+        //2. 识别概念;
+        [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel];
     }
-    
-    //2. 识别概念;
-    [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel];
+
     
     //3. 将mModel保留 (只有先保留后,构建时序时,才会含新帧概念);
     [theTC.inModelManager add:mModel];
