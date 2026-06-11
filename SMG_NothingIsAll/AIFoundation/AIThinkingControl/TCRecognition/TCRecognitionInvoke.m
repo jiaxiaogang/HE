@@ -1141,22 +1141,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //3. 每个abs_p分别索引;
         NSArray *protoAlgAbs_ps = [self getProtoAlgAbsPs:protoOrRegroupFo protoIndex:i inModel:inModel fromRegroup:fromRegroup];
         
+        //4. 特征时,不执行“仅保留似层”（因为特征识别，并非仅识别似层，validAbs_ps全都是似层的）;
+        if (!ISOK(protoAlg, AIFeatureNode.class)) {
+            //4. 仅保留似层: 索引absAlg是交层,则直接continue (参考33111-TODO1);
+            protoAlgAbs_ps = [SMGUtils filterArr:protoAlgAbs_ps checkValid:^BOOL(AIKVPointer *item) {
+                return !item.isJiao;
+            }];
+        }
+        NSLog(@"索引数: %ld -> %ld",protoAlg.absPorts.count,protoAlgAbs_ps.count);
+        
         
         // TODOTOMORROW2026010: 查时序识别没结果。
-        // 1. 取索引的规则，有所不同。
-        // 2. 取似层的规则，有所不同。
-        // 总之得做下兼容，不然这里是跑不出结果的。
-        
-        if (ISOK(protoAlg, AIFeatureNode.class)) {
-            NSLog(@"");
-        }
         
         
-        //4. 仅保留似层: 索引absAlg是交层,则直接continue (参考33111-TODO1);
-        protoAlgAbs_ps = [SMGUtils filterArr:protoAlgAbs_ps checkValid:^BOOL(AIKVPointer *item) {
-            return !item.isJiao;
-        }];
-        NSLog(@"索引数: %ld -> %ld",protoAlg.absPorts.count,protoAlgAbs_ps.count);
         
         for (AIKVPointer *absAlg_p in protoAlgAbs_ps) {
             AIAlgNodeBase *absAlg = [SMGUtils searchNode:absAlg_p];
@@ -1527,9 +1524,17 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             return obj.matchAlg;
         }];
     } else {
-        //5. 别的,把抽象关联返回;
-        AIAlgNodeBase *protoAlg = [SMGUtils searchNode:proto_p];
-        protoAlgAbs_ps = Ports2Pits(protoAlg.absPorts);
+        if (PitIsFeature(proto_p)) {
+            // 特征时,中间帧也全部返回matchAlgs_PS;
+            AIShortMatchModel *mModel = [theTC.inModelManager getFrameModel:protoIndex];
+            protoAlgAbs_ps = [SMGUtils convertArr:mModel.matchAlgs_PS convertBlock:^id(AIMatchAlgModel *obj) {
+                return obj.matchAlg;
+            }];
+        } else {
+            // 别的,把抽象关联返回;
+            AIAlgNodeBase *protoAlg = [SMGUtils searchNode:proto_p];
+            protoAlgAbs_ps = Ports2Pits(protoAlg.absPorts);
+        }
     }
     return protoAlgAbs_ps;
 }
