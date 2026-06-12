@@ -454,18 +454,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
-    
-    // logDescInit筛选：只保留与输入logDesc一致的识别结果。
-    NSArray *stModels = [SMGUtils filterArr:decoratorJvBuModel.stModels checkValid:^BOOL(AIFeatureJvBuModel *item) {
-        return [item.assT.logDescInit isEqualToString:logDesc];
-    }];
-    // NSArray *stModels = decoratorJvBuModel.stModels;
 
     // ST递进淘汰法：主在前辅在后层层嵌套（参考38033）。
     NSInteger finalCount = 10; // 最终保留条数
-    NSInteger currentCount = stModels.count;
+    NSInteger currentCount = decoratorJvBuModel.stModels.count;
     double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
-    NSArray *sorts = stModels;
+    NSArray *sorts = decoratorJvBuModel.stModels;
 
     // 色差总值（替代数量，数量少的太多了，所以数量最重要）（参考38034-方案3 & 3803b）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
@@ -612,9 +606,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             
             // 收集
             for (AIPort *refPort in refPorts) {
+                if (PitIsFo(refPort.target_p)) continue;
                 [refModels addObject:[MapModel newWithV1:stModel v2:refPort]];
             }
-            
         }
     }
     NSArray *sorts = [SMGUtils sortBig2Small:refModels compareBlock:^double(MapModel *obj) {

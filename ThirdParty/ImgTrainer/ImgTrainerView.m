@@ -257,7 +257,7 @@
         CGFloat whSize = pow(3, VisionMaxLevel);
         CGRect normRect = CGRectMake(rect.origin.x / whSize, rect.origin.y / whSize, rect.size.width / whSize, rect.size.height / whSize);
         NSLog(@"聚焦反射 >> 裁剪重识别 normRect:%@ fromRect:%@",Rect2Str(normRect),Rect2Str(rect));
-        [AIVisionAlgsV2 commitInputV2:self.curImgView.image logDesc:STRFORMAT(@"聚焦_%@",NSStringFromCGRect(rect)) cropRect:normRect];
+        [AIVisionAlgsV2 commitInputV2:self.curImgView.image logDesc:STRFORMAT(@"聚焦_%@",Rect2Str(rect)) cropRect:normRect];
     }
 }
 

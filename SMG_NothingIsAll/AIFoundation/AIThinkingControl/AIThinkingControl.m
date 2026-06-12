@@ -249,7 +249,8 @@ static AIThinkingControl *_instance;
     AIFeatureJvBuModel *mostClear = [SMGUtils filterBestObj:decoratorJvBuModel.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *stModel) {
         return stModel.clarity;
     }];
-    if (mostClear && mostClear.clarity > 0.3) {
+    if (mostClear && mostClear.clarity < 0.7) {
+        NSLog(@"识别不清：%.2f，继续聚焦（%@）",mostClear.clarity,logDesc);
         // 反射反应。
         CGRect fromRect = mostClear.assST_ProtoRect;
         [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height)]];
