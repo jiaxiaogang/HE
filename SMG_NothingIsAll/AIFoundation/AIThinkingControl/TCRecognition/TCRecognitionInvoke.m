@@ -522,11 +522,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%02ld. 单特征识别结果:T%04ld %@",[validModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc);
-        if ([model.assT.logDescInit isEqualToString:logDesc]) {
-            [SMGUtils runByMainQueue:^{
-                [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
-            }];
-        }
+        [SMGUtils runByMainQueue:^{
+            [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
+        }];
     }
     
     //61. debugLog
@@ -1144,11 +1142,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
         NSLog(@"索引数: %ld -> %ld",protoAlg.absPorts.count,protoAlgAbs_ps.count);
         
-        
-        // TODOTOMORROW2026010: 查时序识别没结果。
-        
-        
-        
         for (AIKVPointer *absAlg_p in protoAlgAbs_ps) {
             AIAlgNodeBase *absAlg = [SMGUtils searchNode:absAlg_p];
             
@@ -1156,6 +1149,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSArray *refPorts = [[AINetUtils refPorts_All4Alg_Normal:absAlg] copy];
             
             //6. RFo的长度>1才有意义 (参考28183-BUG1);
+            NSLog(@"targetHavMv过滤前:%ld",refPorts.count);
             refPorts = [SMGUtils filterArr:refPorts checkValid:^BOOL(AIPort *item) {
                 if (Switch4RecognitionMatchRFos) {
                     //a. 打开pFos和rFos;
@@ -1166,6 +1160,22 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                     return item.targetHavMv;
                 }
             }];
+            
+            
+            // TODOTOMORROW2026012: 查时序识别没结果: 
+            // 1. 在targetHavMv过滤后，把特征指向的过滤掉了。
+            // 2. 但st经常指向mv，多跑跑会有，但很少，一般只有0，最多时只有1个。
+            // 问题：这个时序的激活数也太少了。
+            // 分析1：在识别st时，就仅保留带mv指向的。
+            // 分析2：抽象st，或局部st，更能触发”未知恐惧mv“，所以越是没明确，越能识别到？
+            // 分析3：这得控制分工：
+            //      第一步：最初预测到”未知恐惧mv“帮助进行识别出明确的st结果
+            //      第二步：后面再识别明确结果时，必须借助别的mv任务，来进行后面的思维流程。
+            // 疑问：这么控制分工太复杂了，得简化下，看能不能把st从不明确到明确的识别，想一个简化的通路流程。
+            
+            NSLog(@"targetHavMv过滤后:%ld",refPorts.count);
+            
+            
             
             //7. 每个refPort做两件事:
             for (AIPort *refPort in refPorts) {
