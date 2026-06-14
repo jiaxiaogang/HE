@@ -62,6 +62,18 @@
             model.matchCount = (int)assST.count;
             return model;
         }];
+        
+        // TODOTOMORROW20260614: 一步步向前查mv指向的问题。
+        for (AIMatchAlgModel *model in mModel.matchAlgs_PS) {
+            NSArray *refPorts = [AINetUtils refPorts_All:model.matchAlg];
+            NSArray *validRefPorts = [SMGUtils filterArr:refPorts checkValid:^BOOL(AIPort *item) {
+                return item.targetHavMv;
+            }];
+            if (validRefPorts.count > 0) {
+                NSLog(@"%ld/%ld",validRefPorts.count,refPorts.count);
+                NSLog(@"");
+            }
+        }
     } else {
         //2. 识别概念;
         [TCRecognitionInvoke recognitionAlgStep1:except_ps inModel:mModel];
