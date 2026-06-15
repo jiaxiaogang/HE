@@ -51,6 +51,8 @@
     AIFoNodeBase *protoFo = model.protoFo4PInput;
     [theTC updateOperCount:kFILENAME];
     Debug();
+    
+    // TODOTOMORROW20260615: 继续把习得sceneFo看能不能变更多些，这样尽可能快速响应识别等后续流程。
     IFTitleLog(@"pInput时序识别", @"\nprotoFo4PInput:%@",Fo2FStr(protoFo));
     [TCRecognitionInvoke recognitionFoStep1:protoFo except_ps:except_ps decoratorInModel:model fromRegroup:false matchAlgs:nil protoOrRegroupCutIndex:protoFo.count - 1 debugMode:true];
     
