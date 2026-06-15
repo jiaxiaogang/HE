@@ -14,7 +14,7 @@
 /**
  *  MARK:--------------------commitInput--------------------
  */
-+ (void) commitInputV2:(UIImage*)image logDesc:(NSString*)logDesc cropRect:(CGRect)cropRect;
++ (void) commitInputV2:(UIImage*)image logDesc:(NSString*)logDesc cropRect:(CGRect)cropRect looop:(NSInteger)looop;
 
 /**
  *  MARK:--------------------获取图片指定区域的RGB值--------------------

@@ -44,7 +44,7 @@
             //3. 当坚果时，改由多码视觉V2输入之（参考34111-测试点3）。
             if (ISOK(curView, FoodView.class)) {
                 FoodView *food = (FoodView*)curView;
-                [AIVisionAlgsV2 commitInputV2:food.imgView.image logDesc:food.imgName cropRect:CGRectMake(0, 0, 1, 1)];
+                [AIVisionAlgsV2 commitInputV2:food.imgView.image logDesc:food.imgName cropRect:CGRectMake(0, 0, 1, 1) looop:1];
                 return;
             }
             

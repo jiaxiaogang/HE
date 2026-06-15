@@ -42,7 +42,7 @@
  *  MARK:--------------------流入input--------------------
  */
 -(void) commitInputAsync:(NSObject*)algsModel;
--(void) commitInputWithSplitAsyncV2:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc;//输入无粒度，以支持自适应粒度
+-(void) commitInputWithSplitAsyncV2:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc looop:(NSInteger)looop;//输入无粒度，以支持自适应粒度
 -(void) commitInputWithModelsAsync:(NSArray*)dics algsType:(NSString*)algsType;
 /**
  *  MARK:--------------------输出的日志入网(输入小脑)--------------------

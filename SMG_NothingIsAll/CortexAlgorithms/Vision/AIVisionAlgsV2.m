@@ -151,7 +151,7 @@ static UIImage *_lastSSIMImage = nil;
 /**
  *  MARK:--------------------commitInput--------------------
  */
-+ (void) commitInputV2:(UIImage*)image logDesc:(NSString*)logDesc cropRect:(CGRect)cropRect {
++ (void) commitInputV2:(UIImage*)image logDesc:(NSString*)logDesc cropRect:(CGRect)cropRect looop:(NSInteger)looop {
     //1. 数据检查。
     if (!image) return;
 
@@ -205,7 +205,7 @@ static UIImage *_lastSSIMImage = nil;
     }];
     
     //7. 提交给思维控制器。
-    [theTC commitInputWithSplitAsyncV2:model algsType:NSStringFromClass(self) logDesc:logDesc];
+    [theTC commitInputWithSplitAsyncV2:model algsType:NSStringFromClass(self) logDesc:logDesc looop:looop];
 }
 
 #pragma mark - Test Methods

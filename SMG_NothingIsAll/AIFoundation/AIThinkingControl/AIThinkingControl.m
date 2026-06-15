@@ -163,23 +163,23 @@ static AIThinkingControl *_instance;
  *  @desc 现用于输入（多粒度）二维概念，如视觉图像，目前用于测支持多码特征
  *  @desc 为了方便开发，开发阶段不将Object转成Dictionary输入，后开发完成后下版本再转。
  */
--(void) commitInputWithSplitAsyncV2:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
+-(void) commitInputWithSplitAsyncV2:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc looop:(NSInteger)looop {
     __block AIVisionAlgsModelV2 *weakAlgsModel = algsModel;
     dispatch_async(self.tiQueue, ^{//30083去异步
         self.tiRuning1 = true;
-        [self commitInputWithSplitV2:weakAlgsModel algsType:algsType logDesc:logDesc];
+        [self commitInputWithSplitV2:weakAlgsModel algsType:algsType logDesc:logDesc looop:looop];
         //[self testZiJv:weakAlgsModel algsType:algsType logDesc:logDesc];
         self.tiRuning1 = false;
     });
 }
--(void) commitInputWithSplitV2:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc {
+-(void) commitInputWithSplitV2:(AIVisionAlgsModelV2*)algsModel algsType:(NSString*)algsType logDesc:(NSString*)logDesc looop:(NSInteger)looop {
     //1. 植物模式阻断感知;
     if (self.thinkMode == 2) return;
     
     //2. 对未切粒度的color字典进行自适应粒度并识别。
     //[self commitInputWithSplitV2_SingleTonDao:algsModel.hColors whSize:algsModel.whSize at:algsType ds:@"hColors" logDesc:logDesc algsModel:algsModel];
     //[self commitInputWithSplitV2_SingleTonDao:algsModel.sColors whSize:algsModel.whSize at:algsType ds:@"sColors" logDesc:logDesc algsModel:algsModel];
-    AIFeatureNode *bST = [self commitInputWithSplitV2_SingleTonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc algsModel:algsModel];
+    AIFeatureNode *bST = [self commitInputWithSplitV2_SingleTonDao:algsModel.bColors whSize:algsModel.whSize at:algsType ds:@"bColors" logDesc:logDesc algsModel:algsModel looop:looop];
     
     // TODO: 先关掉测特征，等特征测试ok后，再打开概念构建和识别rInput思维流程。
     ////4、构建具象概念。
@@ -195,7 +195,7 @@ static AIThinkingControl *_instance;
  *  TODO: 连续优化方案：连续视觉之间复用未变化视角区域的图像识别结果给下一帧视觉（比如屏幕上显示一堆代码，如果有一个地方变化了，我们按ctrlz就能看出来哪里变化了，其实可以没变的地方不重新识别，只有变化的重新识别）。
  *  TODO: 连续视觉的优化，可以直接复用gtZiJvGTPool和gtZiJvSTPool，如果AtProtoRect变化不大，直接复用即可。
  */
--(AIFeatureNode*) commitInputWithSplitV2_SingleTonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc algsModel:(AIVisionAlgsModelV2*)algsModel {
+-(AIFeatureNode*) commitInputWithSplitV2_SingleTonDao:(NSDictionary*)colorDic whSize:(CGFloat)whSize at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc algsModel:(AIVisionAlgsModelV2*)algsModel looop:(NSInteger)looop {
     // 数据准备 & 初始化。
     AIFeatureJvBuModels *decoratorJvBuModel = [AIFeatureJvBuModels new:colorDic.hash];
     decoratorJvBuModel.debug = [GroupDebug new];
@@ -249,11 +249,11 @@ static AIThinkingControl *_instance;
     AIFeatureJvBuModel *mostClear = [SMGUtils filterBestObj:decoratorJvBuModel.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *stModel) {
         return stModel.clarity;
     }];
-    if (mostClear && mostClear.clarity < 0.7) {
-        NSLog(@"识别不清：%.2f，继续聚焦（%@）",mostClear.clarity,logDesc);
+    if (mostClear && looop < 3) {
+        NSLog(@"识别不清：%.2f，继续聚焦（%@ -> %ld）",mostClear.clarity,logDesc,looop);
         // 反射反应。
         CGRect fromRect = mostClear.assST_ProtoRect;
-        [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height)]];
+        [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height),logDesc,@(looop)]];
         
         // 把hsbST构建的alg输入到瞬时序列。
         [TCInput rInput:mostClear.assT except_ps:nil fuJia:mostClear];

@@ -153,6 +153,8 @@
     //4. protoFo4PInput是以mv为结尾构建时序,然后又想以mv为一帧来识别 (参考30093-方案1-改动点 & 30094-todo3);
     shortModel.protoFo4PInput = [theNet createConFo_NoRepeat:[theTC.inModelManager shortCache:false]];
     
+    // TODOTOMORROW20260615: 继续把习得sceneFo看能不能变更多些，这样尽可能快速响应识别等后续流程。
+    
     //5. P不需要时序识别,但可以触发学习 => 提交学习识别;
     [TCRecognition pRecognition:shortModel];
     

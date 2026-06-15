@@ -254,10 +254,12 @@
                                  NUMTOOK(ARR_INDEX(model.datas, 1)).floatValue,
                                  NUMTOOK(ARR_INDEX(model.datas, 2)).floatValue,
                                  NUMTOOK(ARR_INDEX(model.datas, 3)).floatValue);
+        NSString *logDesc = ARR_INDEX(model.datas, 4);
+        NSInteger looop = NUMTOOK(ARR_INDEX(model.datas, 5)).integerValue;
         CGFloat whSize = pow(3, VisionMaxLevel);
         CGRect normRect = CGRectMake(rect.origin.x / whSize, rect.origin.y / whSize, rect.size.width / whSize, rect.size.height / whSize);
         NSLog(@"聚焦反射 >> 裁剪重识别 normRect:%@ fromRect:%@",Rect2Str(normRect),Rect2Str(rect));
-        [AIVisionAlgsV2 commitInputV2:self.curImgView.image logDesc:STRFORMAT(@"聚焦_%@",Rect2Str(rect)) cropRect:normRect];
+        [AIVisionAlgsV2 commitInputV2:self.curImgView.image logDesc:logDesc cropRect:normRect looop:looop + 1];
     }
 }
 
@@ -643,7 +645,7 @@
         if (!img) return;
         
         //2. 提交视觉
-        [AIVisionAlgsV2 commitInputV2:img logDesc:STRFORMAT(@"%@_%ld",model.imgName,model.imgIndex) cropRect:CGRectMake(0, 0, 1, 1)];
+        [AIVisionAlgsV2 commitInputV2:img logDesc:STRFORMAT(@"%@_%ld",model.imgName,model.imgIndex) cropRect:CGRectMake(0, 0, 1, 1) looop:1];
         
         //3. 预览图
         [self.curImgView setImage:img];
@@ -715,7 +717,7 @@
                 [self removePreviewDatas];
 
                 // 提交视觉
-                [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_0" cropRect:CGRectMake(0, 0, 1, 1)];
+                [AIVisionAlgsV2 commitInputV2:image logDesc:@"camera_0" cropRect:CGRectMake(0, 0, 1, 1) looop:1];
             }
 
             // 恢复预览session（如果之前是开启的）
