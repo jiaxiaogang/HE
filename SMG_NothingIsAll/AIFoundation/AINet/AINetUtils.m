@@ -538,7 +538,7 @@
         foNode.cmvNode_p = mvNode.pointer;
         
         //2. 对content.refPort标记mv;
-        [AINetUtils maskHavMv_AlgWithFo:foNode];
+        [AINetUtils maskHavMv_2Alg:foNode];
         
         //3. 存储foNode & cmvNode
         [SMGUtils insertNode:mvNode];
@@ -633,7 +633,7 @@
  *  MARK:--------------------对fo.content.refPort标记havMv--------------------
  *  @desc 根据fo标记alg.refPort的havMv (参考26022-2);
  */
-+(void) maskHavMv_AlgWithFo:(AIFoNodeBase*)foNode{
++(void) maskHavMv_2Alg:(AIFoNodeBase*)foNode {
     //1. 标记alg.refPort;
     for (AIKVPointer *alg_p in foNode.content_ps) {
         AIAlgNodeBase *algNode = [SMGUtils searchNode:alg_p];
@@ -647,7 +647,32 @@
                 [SMGUtils insertNode:algNode];
                 
                 //4. 继续向微观标记;
-                [self maskHavMv_ValueWithAlg:algNode];
+                if (ISOK(algNode, AIFeatureNode.class)) {
+                    [self maskHavMv_2GV:(AIFeatureNode*)algNode];
+                } else {
+                    [self maskHavMv_2SV:algNode];
+                }
+            }
+        }
+    }
+}
+
++(void) maskHavMv_2GV:(AIFeatureNode*)stNode {
+    // 标记value.refPort;
+    for (AIKVPointer *gv_p in stNode.content_ps) {
+        NSArray *gvRefPorts = [AINetUtils refPorts_All:gv_p];
+        for (AIPort *gvRefPort in gvRefPorts) {
+            
+            // 当refPort是当前alg,则标记为true;
+            if ([gvRefPort.target_p isEqual:stNode.p]) {
+                gvRefPort.targetHavMv = true;
+                
+                // 保存
+                AINodeBase *gvNode = [SMGUtils searchNode:gv_p];
+                [SMGUtils insertNode:gvNode];
+                
+                // 继续向微观标记
+                [self maskHavMv_2SV:gvNode];
             }
         }
     }
@@ -657,17 +682,18 @@
  *  MARK:--------------------对alg.content.refPort标记havMv--------------------
  *  @desc 根据alg标记value.refPort的havMv (参考26022-2);
  *  @test 取了db+mem的refPorts,但保存时,都保存到了db中 (但应该没啥影响,先不管);
+ *  @param groupValueNode : 传元素是value的：algNode 或 gv。
  *  @version
  *      2022.05.13: 将refPorts_All4Value()中防重处理,避免此处存到db后有重复 (参考26023);
  */
-+(void) maskHavMv_ValueWithAlg:(AIAlgNodeBase*)algNode{
++(void) maskHavMv_2SV:(AINodeBase*)groupValueNode {
     //1. 标记value.refPort;
-    for (AIKVPointer *value_p in algNode.content_ps) {
+    for (AIKVPointer *value_p in groupValueNode.content_ps) {
         NSArray *valueRefPorts = [AINetUtils refPorts_All4Value:value_p];
         for (AIPort *valueRefPort in valueRefPorts) {
             
             //2. 当refPort是当前alg,则标记为true;
-            if ([valueRefPort.target_p isEqual:algNode.pointer]) {
+            if ([valueRefPort.target_p isEqual:groupValueNode.p]) {
                 valueRefPort.targetHavMv = true;
                 
                 //3. 保存valueRefPorts到db;

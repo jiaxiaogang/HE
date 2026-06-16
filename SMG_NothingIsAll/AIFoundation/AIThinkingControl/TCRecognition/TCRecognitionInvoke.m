@@ -346,6 +346,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSValue *protoRect = gv.v2;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         for (AIPort *refPort in refPorts) {
+            // TODOTOMORROW20260616: 此处过滤后，一条都没了，要查一下，是targetHavMv没标记上？
+            if (!refPort.targetHavMv) continue;
             
             // 把粒度差太多的去掉：大识别小用聚焦行为，小识别大用云台行为（参考38041-方案2）。
             CGFloat sizeRatio = refPort.rect.size.width / protoRect.CGRectValue.size.width;
