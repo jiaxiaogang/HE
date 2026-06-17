@@ -281,9 +281,9 @@ static AIThinkingControl *_instance;
         AICMVNodeBase *mvNode = [theNet createConMv:algsArr];
 
         // TODOTOMORROW20260616: 补上havTargetMv时，此处ST识别结果，仍为0条。
-        // 此处的问题是：先识别才有pInput，pInput才有havTargetMv，但识别又依赖havTargetMv，死循环了。
-        // 改为：只要识别不明，就触发pInput，识别不到也得对protoST触发。
-        // 可以：像alg识别时一样，保留R结果和P结果。
+        // 在SV，GV，ST都即保留R结果，也保留P结果，不进行区分。
+        // 但即使如此，时序识别还是0条。。。
+        // 得把整个过程中的日志打出来，看在哪步没了的。或者每一步广入窄出，都分成R和P两种结果，各自竞争，各自保留足够的结果条数。
         
         //2. 加入瞬时记忆 & 生成时序指向mv等;
         [TCInput pInput:mvNode];
