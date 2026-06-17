@@ -280,6 +280,11 @@ static AIThinkingControl *_instance;
         NSArray *algsArr = [theNet algModelConvert2Pointers:modelDic algsType: NSStringFromClass(unknownModel.class)];
         AICMVNodeBase *mvNode = [theNet createConMv:algsArr];
 
+        // TODOTOMORROW20260616: 补上havTargetMv时，此处ST识别结果，仍为0条。
+        // 此处的问题是：先识别才有pInput，pInput才有havTargetMv，但识别又依赖havTargetMv，死循环了。
+        // 改为：只要识别不明，就触发pInput，识别不到也得对protoST触发。
+        // 可以：像alg识别时一样，保留R结果和P结果。
+        
         //2. 加入瞬时记忆 & 生成时序指向mv等;
         [TCInput pInput:mvNode];
     }

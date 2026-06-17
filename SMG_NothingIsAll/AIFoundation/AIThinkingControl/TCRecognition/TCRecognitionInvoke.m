@@ -229,6 +229,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             NSArray *refPorts = [AINetUtils refPorts_All:vMatchModel.match_p];
             //7. 每个refPort做两件事: (性能: 以下for循环耗150ms很正常);
             for (AIPort *refPort in refPorts) {
+                if (!refPort.targetHavMv) continue;
+                
                 //2025.04.22: 性能注意!!! 此处尽量别加任何复杂代码，除了加减乘除和objectForKey外，最好contains和AddDebugCodeBlock_Key也别加，不然几万次循环足以卡慢。
                 //注意：此循环内执行一次识别可能在数万次，所以这里不可再添加别的逻辑，如果要加过滤，到最后识别完后再在此循环外进行补充过滤。
                 //9. 找model (无则新建) (性能: 此处在循环中,所以防重耗60ms正常,收集耗100ms正常);
@@ -246,6 +248,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
         }
     }
+    NSLog(@"GV广入:%ld",resultDic.count);
     
     //11. 过滤掉匹配度为0的 & 非全含的 & 不识别protoG自己。
     NSArray *gMatchModels = [SMGUtils filterArr:resultDic.allValues checkValid:^BOOL(AIMatchModel *item) {
@@ -312,6 +315,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         }
         //NSLog(@"组码识别结果(%ld/%ld) GV%ld 匹配数:%ld 匹配度:%.2f",[gMatchModels indexOfObject:matchModel],gMatchModels.count,matchModel.match_p.pointerId,matchModel.matchCount,matchModel.matchValue);
     }
+    NSLog(@"GV窄出:%ld",gMatchModels.count);
     return gMatchModels;
 }
 
@@ -346,7 +350,6 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSValue *protoRect = gv.v2;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         for (AIPort *refPort in refPorts) {
-            // TODOTOMORROW20260616: 此处过滤后，一条都没了，要查一下，是targetHavMv没标记上？
             if (!refPort.targetHavMv) continue;
             
             // 把粒度差太多的去掉：大识别小用聚焦行为，小识别大用云台行为（参考38041-方案2）。
