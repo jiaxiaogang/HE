@@ -203,7 +203,7 @@ static AIThinkingControl *_instance;
     NSArray *stOrders = [self createSplitFor9BlockV2_Step1:algsModel algsType:at ds:ds logDesc:logDesc]; // 装箱SV层 & GV层。
     
     // GV识别。
-    NSArray *allGVs = [self commitInput4GV:colorDic canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc];
+    PRJSModel *allGVs = [self commitInput4GV:colorDic canvasRect:CGRectMake(0, 0, algsModel.whSize, algsModel.whSize) at:at ds:ds logDesc:logDesc];
     
     // ST识别。
     DDic *excepts = [DDic new];
@@ -242,7 +242,7 @@ static AIThinkingControl *_instance;
     // AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:colorDic at:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
     
     // debug
-    NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
+    NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.psArr.count + allGVs.rsArr.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
     // NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
 
     // 聚焦反射反应：找最明确区域一条，触发聚焦反射（参考38065-TODO3 & 38082-方案3）。
@@ -293,9 +293,9 @@ static AIThinkingControl *_instance;
 }
 
 // GV识别
--(NSArray*) commitInput4GV:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
+-(PRJSModel*) commitInput4GV:(NSDictionary*)colorDic canvasRect:(CGRect)canvasRect at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc {
     NSLog(@"depthRect:画布:%@ begin =============>",Rect2Str(canvasRect));
-    NSMutableArray *allGVs = [NSMutableArray new];
+    PRJSModel *result = [PRJSModel new];
     
     //1. 对未切粒度的color字典进行自适应粒度并识别。
     NSMutableDictionary *beginGVExcept = [NSMutableDictionary new]; // 类似范围的同一个gv只切入一次（防重）<K=gvId,V=[ProtoRect]>。
@@ -322,8 +322,9 @@ static AIThinkingControl *_instance;
                 CGRect curRect = CGRectMake(canvasRect.origin.x + startX * dotSizeW, canvasRect.origin.y + startY * dotSizeH, dotSizeW * 3, dotSizeH * 3);
                 
                 // 调用识别。
-                NSArray *itemGVs =[TCRecognitionInvoke recognitionSVAndGV:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
-                [allGVs addObjectsFromArray:itemGVs];
+                PRJSModel *itemGVs =[TCRecognitionInvoke recognitionSVAndGV_Step1:colorDic at:at ds:ds isOut:false protoRect:curRect beginGVExcept:beginGVExcept];
+                [result.psArr addObjectsFromArray:itemGVs.psArr];
+                [result.rsArr addObjectsFromArray:itemGVs.rsArr];
             }
         }
         
@@ -331,7 +332,7 @@ static AIThinkingControl *_instance;
         dotSizeW /= 1.3f;
         dotSizeH /= 1.3f;
     }
-    return allGVs;
+    return result;
 }
 
 -(AIGroupFeatureNode*) commitInput4ProtoGT:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {

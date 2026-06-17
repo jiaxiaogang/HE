@@ -85,6 +85,7 @@
 #import "GTZiJvModelV2.h"
 #import "STZiJvModelV2.h"
 #import "WeightedSumCutUtil.h"
+#import "PRJSModel.h"
 
 //短时记忆
 #import "TOAlgModel.h"

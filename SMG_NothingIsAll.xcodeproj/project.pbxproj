@@ -75,6 +75,7 @@
 		0839819F24DB7F8C00A020D2 /* HEView.m in Sources */ = {isa = PBXBuildFile; fileRef = 0839819E24DB7F8C00A020D2 /* HEView.m */; };
 		083981F92A19E9D400F61263 /* MathUtils.m in Sources */ = {isa = PBXBuildFile; fileRef = 083981F82A19E9D400F61263 /* MathUtils.m */; };
 		083ADA722A67AB4F00319561 /* AsyncMutableDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 083ADA712A67AB4F00319561 /* AsyncMutableDictionary.m */; };
+		084065432FE3622B00EC4603 /* PRJSModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 084065422FE3622B00EC4603 /* PRJSModel.m */; };
 		08412CA3216C324300483B6B /* AICerebel.m in Sources */ = {isa = PBXBuildFile; fileRef = 08412CA2216C324300483B6B /* AICerebel.m */; };
 		084219E11FD8CEFD009DA6BC /* AIReactorControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 084219E01FD8CEFD009DA6BC /* AIReactorControl.m */; };
 		084219ED1FD8CF81009DA6BC /* AIThinkingControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 084219EA1FD8CF81009DA6BC /* AIThinkingControl.m */; };
@@ -403,6 +404,8 @@
 		083981F82A19E9D400F61263 /* MathUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MathUtils.m; sourceTree = "<group>"; };
 		083ADA702A67AB4F00319561 /* AsyncMutableDictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AsyncMutableDictionary.h; sourceTree = "<group>"; };
 		083ADA712A67AB4F00319561 /* AsyncMutableDictionary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AsyncMutableDictionary.m; sourceTree = "<group>"; };
+		084065412FE3622B00EC4603 /* PRJSModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PRJSModel.h; sourceTree = "<group>"; };
+		084065422FE3622B00EC4603 /* PRJSModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PRJSModel.m; sourceTree = "<group>"; };
 		08412CA1216C324300483B6B /* AICerebel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AICerebel.h; sourceTree = "<group>"; };
 		08412CA2216C324300483B6B /* AICerebel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AICerebel.m; sourceTree = "<group>"; };
 		084219DF1FD8CEFD009DA6BC /* AIReactorControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AIReactorControl.h; sourceTree = "<group>"; };
@@ -1596,6 +1599,8 @@
 				081A3B852F2B7660003084E8 /* GTItemV2.m */,
 				08EF604C2F2EE89600E1AE3B /* GTModelV2.h */,
 				08EF604D2F2EE89600E1AE3B /* GTModelV2.m */,
+				084065412FE3622B00EC4603 /* PRJSModel.h */,
+				084065422FE3622B00EC4603 /* PRJSModel.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -2256,6 +2261,7 @@
 				8868F6EE210AA00B000EAC9B /* AINetAbsCMVUtil.m in Sources */,
 				08497A9921C32E17009E7D69 /* AIAlgNodeManager.m in Sources */,
 				08E084AB28B129000070B7F7 /* TCDebug.m in Sources */,
+				084065432FE3622B00EC4603 /* PRJSModel.m in Sources */,
 				082D03DF22D40AF000BB0B7A /* SMGUtils+General.m in Sources */,
 				88B23BE620BE20BC00BE8AF6 /* AIAbsFoManager.m in Sources */,
 				08FBE10E22D56F360088EF1A /* NVModuleUtil.m in Sources */,

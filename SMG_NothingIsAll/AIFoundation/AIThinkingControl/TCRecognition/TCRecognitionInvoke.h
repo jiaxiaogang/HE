@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class AIFeatureJvBuModels,DDic,AIGroupFeatureNode,AIFeatureJvBuItem;
+@class AIFeatureJvBuModels,DDic,AIGroupFeatureNode,AIFeatureJvBuItem,PRJSModel;
 @interface TCRecognitionInvoke : NSObject
 
 //MARK:===============================================================
@@ -19,12 +19,12 @@
 //MARK:===============================================================
 //MARK:                     < 稀疏码识别 >
 //MARK:===============================================================
-+(NSArray*) recognitionSVAndGV:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept;
++(PRJSModel*) recognitionSVAndGV_Step1:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept;
 
 //MARK:===============================================================
 //MARK:                     < 单特征识别 >
 //MARK:===============================================================
-+(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(NSArray*)allGVs;
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(PRJSModel*)allGVs;
 +(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoCount:(NSInteger)protoCount;
 
 //MARK:===============================================================

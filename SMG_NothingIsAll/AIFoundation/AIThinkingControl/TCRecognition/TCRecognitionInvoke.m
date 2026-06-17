@@ -169,7 +169,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 //MARK:                     < 稀疏码识别 >
 //MARK:===============================================================
 
-+(NSArray*) recognitionSVAndGV:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
++(PRJSModel*) recognitionSVAndGV_Step1:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoRect:(CGRect)protoRect beginGVExcept:(NSMutableDictionary*)beginGVExcept {
     //14. 切出当前gv：九宫。
     //2025.12.11: 切图复用（参考35105-TODO3.1）。
     MapModel *rectKey = [self getIndexsOfProtoRect:protoRect];
@@ -191,8 +191,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }]);
     
     //4. 组码识别
-    NSArray *gMatchModels = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
-        return [self recognitionSVAndGV_Invoke:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
+    PRJSModel *result = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
+        return [self recognitionSVAndGV_Step2:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
     
     // for (AIMatchModel *gModel in allGVs) {
@@ -204,14 +204,20 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //}
         //[gvIdProtoRects addObject:@(protoRect)];
     // }
-    return [SMGUtils convertArr:gMatchModels convertBlock:^id(AIMatchModel *gModel) {
+    
+    result.rsArr = [SMGUtils convertArr:result.rsArr convertBlock:^id(AIMatchModel *gModel) {
         return [MapModel newWithV1:gModel v2:@(protoRect)];
     }];
+    result.psArr = [SMGUtils convertArr:result.psArr convertBlock:^id(AIMatchModel *gModel) {
+        return [MapModel newWithV1:gModel v2:@(protoRect)];
+    }];
+    return result;
 }
 
-+(NSArray*) recognitionSVAndGV_Invoke:(NSArray*)vModels at:(NSString*)at isOut:(BOOL)isOut rate:(CGFloat)rate minLimit:(NSInteger)minLimit forProtoGV:(AIKVPointer*)forProtoGV {
++(PRJSModel*) recognitionSVAndGV_Step2:(NSArray*)vModels at:(NSString*)at isOut:(BOOL)isOut rate:(CGFloat)rate minLimit:(NSInteger)minLimit forProtoGV:(AIKVPointer*)forProtoGV {
     //1. 数据准备
     NSMutableDictionary *resultDic = [[NSMutableDictionary alloc] init];
+    PRJSModel *result = [PRJSModel new];
     
     //2. 先把protoGV解读成索引值。
     for (NSInteger itemIndex = 0; itemIndex < vModels.count; itemIndex++) {
@@ -237,6 +243,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 if (!model || model.matchCount < itemIndex) continue;
                 if (!model.matchDic) model.matchDic = [NSMutableDictionary new];
                 [resultDic setObject:model forKey:@(refPort.target_p.pointerId)];
+                
+                model.havMvCount += refPort.targetHavMv;
                 model.match_p = refPort.target_p;
                 model.matchCount++;
                 model.matchValue *= vMatchModel.matchValue;
@@ -252,6 +260,24 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *gMatchModels = [SMGUtils filterArr:resultDic.allValues checkValid:^BOOL(AIMatchModel *item) {
         return item.matchValue > 0 && item.matchCount == vModels.count && (!forProtoGV || ![item.match_p isEqual:forProtoGV]);
     }];
+    
+    // 把resultDic.allValues中，havMvCount > 0的存到result.psArr中，否则存到result.rsArr中。
+    for (AIMatchModel *model in resultDic.allValues) {
+        if (model.havMvCount > 0) {
+            [result.psArr addObject:model];
+        } else {
+            [result.rsArr addObject:model];
+        }
+    }
+    
+    // 对psArr和rsArr分别调用下面的递进淘汰法。
+    result.psArr = [self recognitionSVAndGV_Step3:result.psArr forProtoGV:forProtoGV].mutableCopy;
+    result.rsArr = [self recognitionSVAndGV_Step3:result.rsArr forProtoGV:forProtoGV].mutableCopy;
+
+    return result;
+}
+
++(NSArray*) recognitionSVAndGV_Step3:(NSArray*)gMatchModels forProtoGV:(AIKVPointer*)forProtoGV {
     
     // GV递进淘汰法：方向50%、均色值30%、色差15%、分隔点5%层层过滤（参考38036）。
     NSInteger finalCount = MAX(20, gMatchModels.count * 0.2f);
@@ -333,7 +359,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(NSArray*)allGVs {
++(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(PRJSModel*)allGVs {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
@@ -342,6 +368,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     
     // 对所有gv识别结果的，所有refPorts。
     NSMutableArray *refModels = [NSMutableArray new];
+    
+    // TODO: 当前PRJSModel中，有rsArr和psArr，明天继续。
+    
     for (MapModel *gv in allGVs) {
         AIMatchModel *gModel = gv.v1;
         NSValue *protoRect = gv.v2;

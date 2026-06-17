@@ -36,4 +36,6 @@
 @property (assign, nonatomic) NSInteger sumConStrong;       //ass被抽象的总强度，从conPort中取sumStrong（为了找出更稳定的显著的特征，在特征识别竞争中，加这一要素）。
 @property (assign, nonatomic) CGFloat matchConStrongRatio;  //显著度：被抽象强度程度（越高越好，因为它是更显著的特征）。
 
+@property (assign, nonatomic) NSInteger havMvCount;
+
 @end
