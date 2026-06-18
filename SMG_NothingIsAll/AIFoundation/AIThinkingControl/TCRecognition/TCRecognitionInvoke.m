@@ -359,19 +359,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(NSArray*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(PRJSModel*)allGVs {
-    // 数据准备
-    NSMutableArray *result = [NSMutableArray new];
-    NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
-    
++(PRJSModel*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(PRJSModel*)allGVs {
     // ================== 控制广入条数: refPorts竞争 ==================
     
     // 对所有gv识别结果的，所有refPorts。
-    NSMutableArray *refModels = [NSMutableArray new];
-    
-    // TODO: 当前PRJSModel中，有rsArr和psArr，明天继续。
-    
-    for (MapModel *gv in allGVs) {
+    PRJSModel *result = [PRJSModel new];
+    NSArray *prArrs = [SMGUtils collectArrA:allGVs.psArr arrB:allGVs.rsArr];
+    for (MapModel *gv in prArrs) {
         AIMatchModel *gModel = gv.v1;
         NSValue *protoRect = gv.v2;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
@@ -381,9 +375,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             CGFloat sizeRatio = refPort.rect.size.width / protoRect.CGRectValue.size.width;
             if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
             
-            [refModels addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort v3:protoRect]];
+            NSMutableArray *models = refPort.targetHavMv ? result.psArr : result.rsArr;
+            [models addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort v3:protoRect]];
         }
     }
+    result.psArr = [self recognitionFeatureV2_Step2:result.psArr ds:ds protoColorDic:protoColorDic stModels:stModels];
+    result.rsArr = [self recognitionFeatureV2_Step2:result.rsArr ds:ds protoColorDic:protoColorDic stModels:stModels];
+    return result;
+}
+
++(NSMutableArray*) recognitionFeatureV2_Step2:(NSArray*)refModels ds:(NSString*)ds protoColorDic:(NSDictionary*)protoColorDic stModels:(NSMutableArray*)stModels {
+    // 数据准备
+    NSMutableArray *result = [NSMutableArray new];
+    NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
     
     // 避免ST激活太多的: 强度越好 x 越准确的 = 越优先。
     NSArray *sorts = [SMGUtils sortBig2Small:refModels compareBlock:^double(MapModel *model) {
@@ -448,7 +452,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
-+(void) recognitionFeatureV2_Step2:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoCount:(NSInteger)protoCount {
++(void) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoCount:(NSInteger)protoCount {
     //43. 处理匹配度
     for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
         [model run4MatchValue];                                          // 匹配度

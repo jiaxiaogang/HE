@@ -208,11 +208,14 @@ static AIThinkingControl *_instance;
     // ST识别。
     DDic *excepts = [DDic new];
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
-    NSArray *stModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:decoratorJvBuModel.stModels allGVs:allGVs];
+    PRJSModel *stModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:decoratorJvBuModel.stModels allGVs:allGVs];
+    
+    // TODOTOMORROW20260618: 继续此处，把jvBuModel.stModels改成PRJSModel类型，以支持把PRArr都分开来。
+    
     [decoratorJvBuModel.stModels addObjectsFromArray:stModels];
     
     // ST竞争。
-    [TCRecognitionInvoke recognitionFeatureV2_Step2:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];
+    [TCRecognitionInvoke recognitionFeatureV2_Step3:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];
 
     // GT识别。
     NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];
