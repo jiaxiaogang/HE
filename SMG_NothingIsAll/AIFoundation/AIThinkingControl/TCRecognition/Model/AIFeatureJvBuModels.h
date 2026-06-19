@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class PRJSModel;
+
 /**
  *  MARK:--------------------单特征识别V2算法模型：一级--------------------
  *  @desc 现在单特征识别不再依赖protoT了，也没indexDic映射结果了，所以写下此模型，用于存识别中的数据，用于随后的组特征识别和单特征类比中要用。
@@ -22,9 +24,12 @@
 //protoT.protoImgColorDic的hash编号
 @property (assign, nonatomic) NSInteger protoTHash;
 
-//存识别结果：List<AIFeatureJvBuModel>
-@property (strong, nonatomic) NSMutableArray *stModels;
+//存识别结果：PRJSModel（psArr/rsArr均为List<AIFeatureJvBuModel>，P/R两组各自竞争，参考38065-TODO1）。
+@property (strong, nonatomic) PRJSModel *stModels;
 @property (strong, nonatomic) NSMutableArray *gtModels;
+
+// stModels的psArr+rsArr合并视图（用于不需要区分P/R的下游消费方，如GT识别、类比、mostClear等）。
+-(NSArray*) stModelsAll;
 
 @property (strong, nonatomic) GroupDebug *debug;
 

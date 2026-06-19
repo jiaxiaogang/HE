@@ -209,24 +209,25 @@ static AIThinkingControl *_instance;
     DDic *excepts = [DDic new];
     NSMutableDictionary *gvRectExcept = [NSMutableDictionary new];// <K=rect V=gv_ps>
     PRJSModel *stModels = [TCRecognitionInvoke recognitionFeatureV2_Step1:at ds:ds isOut:false protoColorDic:colorDic excepts:excepts gvRectExcept:gvRectExcept stModels:decoratorJvBuModel.stModels allGVs:allGVs];
-    
-    // TODOTOMORROW20260618: 继续此处，把jvBuModel.stModels改成PRJSModel类型，以支持把PRArr都分开来。
-    
-    [decoratorJvBuModel.stModels addObjectsFromArray:stModels];
-    
+
+    // 把识别到的P/R两组分别并入decorator（参考38065-TODO1）。
+    [decoratorJvBuModel.stModels.psArr addObjectsFromArray:stModels.psArr];
+    [decoratorJvBuModel.stModels.rsArr addObjectsFromArray:stModels.rsArr];
+
     // ST竞争。
     [TCRecognitionInvoke recognitionFeatureV2_Step3:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];
 
-    // GT识别。
-    NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels logDesc:logDesc colorDic:colorDic ds:ds];
+    // GT识别（GT不区分P/R，用合并后的stModels）。
+    NSArray *allSTModels = [decoratorJvBuModel stModelsAll];
+    NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:allSTModels logDesc:logDesc colorDic:colorDic ds:ds];
     [decoratorJvBuModel.gtModels addObjectsFromArray:gtModels];
-    
+
     // GT竞争。
     [TCRecognitionInvoke recognitionGroupFeatureV9_Step2:decoratorJvBuModel logDesc:logDesc ds:ds];
-    
+
     // ST类比（借助bestGVs来类比）。
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [AIAnalogy analogyFeatureV2:model protoTLogDesc:logDesc prefixIndex:[decoratorJvBuModel.stModels indexOfObject:model] + 1];
+    for (AIFeatureJvBuModel *model in allSTModels) {
+        [AIAnalogy analogyFeatureV2:model protoTLogDesc:logDesc prefixIndex:[allSTModels indexOfObject:model] + 1];
     }
     
     // GT类比（用子元素assSTs来类比）。
@@ -245,11 +246,11 @@ static AIThinkingControl *_instance;
     // AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:colorDic at:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
     
     // debug
-    NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.psArr.count + allGVs.rsArr.count,decoratorJvBuModel.stModels.count,decoratorJvBuModel.gtModels.count);
+    NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.psArr.count + allGVs.rsArr.count,allSTModels.count,decoratorJvBuModel.gtModels.count);
     // NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
 
     // 聚焦反射反应：找最明确区域一条，触发聚焦反射（参考38065-TODO3 & 38082-方案3）。
-    AIFeatureJvBuModel *mostClear = [SMGUtils filterBestObj:decoratorJvBuModel.stModels scoreBlock:^CGFloat(AIFeatureJvBuModel *stModel) {
+    AIFeatureJvBuModel *mostClear = [SMGUtils filterBestObj:allSTModels scoreBlock:^CGFloat(AIFeatureJvBuModel *stModel) {
         return stModel.clarity;
     }];
     if (mostClear && looop < 3) {
@@ -340,7 +341,7 @@ static AIThinkingControl *_instance;
 
 -(AIGroupFeatureNode*) commitInput4ProtoGT:(NSDictionary*)colorDic at:(NSString*)at ds:(NSString*)ds logDesc:(NSString*)logDesc jvBuModel:(AIFeatureJvBuModels*)jvBuModel {
     // 2025.11.28: 用absST构建ProtoGT，不然必然会各种重影（参考35074-方案v3 & TODOv4 & 35091-TODO1 & 35102-方案2）。
-    NSArray *goodSTModels = ARR_SUB(jvBuModel.stModels, 0, 20);
+    NSArray *goodSTModels = ARR_SUB([jvBuModel stModelsAll], 0, 20);
     
     // 方案1、========== 用assST来构建ProtoGT（参考35136）==========
     //NSMutableArray *gtOrders = [SMGUtils convertArr:goodSTModels convertBlock:^id(AIFeatureJvBuModel *model) {

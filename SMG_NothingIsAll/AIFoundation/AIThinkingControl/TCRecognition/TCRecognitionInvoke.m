@@ -13,6 +13,11 @@
 #define mIndexPsPool [NSMutableDictionary new]
 
 
+@interface TCRecognitionInvoke ()
++(NSMutableArray*) recognitionFeatureV2_Step4:(NSMutableArray*)group logDesc:(NSString*)logDesc;
+@end
+
+
 @implementation TCRecognitionInvoke
 
 static NSMutableDictionary *indexPsPool;
@@ -359,7 +364,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @version
  *      2025.08.02: v1-由单特征自举算法复用而来，可用于支持组特征自举识别功能（参考35061-TODO3）
  */
-+(PRJSModel*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(NSMutableArray*)stModels allGVs:(PRJSModel*)allGVs {
++(PRJSModel*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(PRJSModel*)stModels allGVs:(PRJSModel*)allGVs {
     // ================== 控制广入条数: refPorts竞争 ==================
     
     // 对所有gv识别结果的，所有refPorts。
@@ -384,7 +389,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     return result;
 }
 
-+(NSMutableArray*) recognitionFeatureV2_Step2:(NSArray*)refModels ds:(NSString*)ds protoColorDic:(NSDictionary*)protoColorDic stModels:(NSMutableArray*)stModels {
++(NSMutableArray*) recognitionFeatureV2_Step2:(NSArray*)refModels ds:(NSString*)ds protoColorDic:(NSDictionary*)protoColorDic stModels:(PRJSModel*)stModels {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
@@ -453,54 +458,66 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *      2025.08.07: 构建protoT废弃（参考35062-TODO3）。
  */
 +(void) recognitionFeatureV2_Step3:(AIFeatureJvBuModels*)decoratorJvBuModel ds:(NSString*)ds logDesc:(NSString*)logDesc protoCount:(NSInteger)protoCount {
-    //43. 处理匹配度
-    for (AIFeatureJvBuModel *model in decoratorJvBuModel.stModels) {
-        [model run4MatchValue];                                          // 匹配度
-        // [model run4OuterShapeMatchValue];                             // 外形（已废弃）
-        // [model run4InnerEigenMatchValue];                             // 内征（已废弃）
-        [model run4DirectionMatchValue];                                // 方向
-        [model run4JunMatchValue];                                      // 色均值
-        [model run4DiffMatchValue];                                     // 色差值
-        [model run4SepMatchValue];                                      // 分隔点
-        [model run4BestGVsSumDiff];                                     // bestGVs色差总值
-        [model run4BestGVsSumArea];                                     // bestGVs总面积
-        [model run4AllGVsSumDiff];                                      // assST色差总值
-        [model run4AllGVsSumArea];                                      // assST总面积
-        // [model run4AdjacentScore];                                   // 计算相邻度
-        // [model run4CenterScore];                                     // 中心度
-        [model run4BestGvsAtProtoTRect];                                // 计算bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
-        [model run4AssST_ProtoRect];                                    // 计算assST_ProtoRect（计算完整性要用到）
-        [model run4IntactRate];                                         // 完整性
-        [model run4AverageContentStrong];                               // 稳定性
+    //43. 处理匹配度（P/R两组都做，per-model计算不涉及组内归一化）。
+    for (NSMutableArray *group in @[decoratorJvBuModel.stModels.psArr, decoratorJvBuModel.stModels.rsArr]) {
+        for (AIFeatureJvBuModel *model in group) {
+            [model run4MatchValue];                                          // 匹配度
+            // [model run4OuterShapeMatchValue];                             // 外形（已废弃）
+            // [model run4InnerEigenMatchValue];                             // 内征（已废弃）
+            [model run4DirectionMatchValue];                                // 方向
+            [model run4JunMatchValue];                                      // 色均值
+            [model run4DiffMatchValue];                                     // 色差值
+            [model run4SepMatchValue];                                      // 分隔点
+            [model run4BestGVsSumDiff];                                     // bestGVs色差总值
+            [model run4BestGVsSumArea];                                     // bestGVs总面积
+            [model run4AllGVsSumDiff];                                      // assST色差总值
+            [model run4AllGVsSumArea];                                      // assST总面积
+            // [model run4AdjacentScore];                                   // 计算相邻度
+            // [model run4CenterScore];                                     // 中心度
+            [model run4BestGvsAtProtoTRect];                                // 计算bestGVs_Proto（计算assST_Proto要用到，然后在GT识别计算位置符合度时也要用到）。
+            [model run4AssST_ProtoRect];                                    // 计算assST_ProtoRect（计算完整性要用到）
+            [model run4IntactRate];                                         // 完整性
+            [model run4AverageContentStrong];                               // 稳定性
+        }
     }
-    
+
+    // 组内归一化得分：P/R两组各自归一化（参考38065-TODO1）。
     [decoratorJvBuModel run4AbsPortStrongScore];        // 抽象强度得分
     [decoratorJvBuModel run4ModelMatchCountScore];      // 匹配数归一化：防过抽。
     [decoratorJvBuModel run4AverageContentStrongScore]; // 强度归一化得分
     [decoratorJvBuModel run4BestsCountScore:protoCount];// 根据排名归一化：分子匹配数。
     [decoratorJvBuModel run4TotalCountScore:protoCount];// 根据排名归一化：分母总数。
-    
+
     // 竞争因子计算：防止过度抽象匹配数。
     // [decoratorJvBuModel run4BestGVsCountRatio];
-    
+
     // 竞争因子计算：在稳定层里，抽象优先。
     // [decoratorJvBuModel run4ModelMatchRatioScore];
-    
+
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
 
-    // ST递进淘汰法：主在前辅在后层层嵌套（参考38033）。
+    // ST递进淘汰法：P/R两组各自竞争窄出（参考38033 & 38065-TODO1）。
+    decoratorJvBuModel.stModels.psArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.psArr logDesc:logDesc];
+    decoratorJvBuModel.stModels.rsArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.rsArr logDesc:logDesc];
+}
+
+/**
+ *  MARK:--------------------单特征识别结果竞争（单组窄出）--------------------
+ *  @desc 对psArr或rsArr单独执行递进淘汰法、更新强度/映射/logDesc，返回窄出后的可变数组。
+ */
++(NSMutableArray*) recognitionFeatureV2_Step4:(NSMutableArray*)group logDesc:(NSString*)logDesc {
     NSInteger finalCount = 10; // 最终保留条数
-    NSInteger currentCount = decoratorJvBuModel.stModels.count;
+    NSInteger currentCount = group.count;
     double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
-    NSArray *sorts = decoratorJvBuModel.stModels;
+    NSArray *sorts = group;
 
     // 色差总值（替代数量，数量少的太多了，所以数量最重要）（参考38034-方案3 & 3803b）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.bestGVsSumDiff;
     }];
     sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.25) + 0.5f);
-    
+
     // 面积总值（替代数量，数量少的太多了，所以数量最重要）（参考38034-方案3 & 3803b）。
     sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
         return item.bestGVsSumArea;
@@ -530,37 +547,37 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         return item.sepMatchValue;
     }];
     sorts = ARR_SUB(sorts, 0, sorts.count * pow(baseRate, 0.1) + 0.5f);
-    
+
     // 内征（先关掉：现在内征不那么重要，且内征应该是计算相邻的GV间，其相对内征是否连续，对内征来说这个连续性才重要）（参考38034-方案3）。
     //sorts = [SMGUtils sortBig2Small:sorts compareBlock:^double(AIFeatureJvBuModel *item) {
     //    return item.innerEigenMatchValue;
     //}];
     //sorts = ARR_SUB(sorts, 0, sorts.count * filterRate + 0.5f);
-    
+
     // 防重过滤器：此处每个特征的不同层级，可能识别到同一个特征，可以按匹配度防下重（关掉:同一个assGT可能有多个groups结果 打开:全成了同一个结果，多个结果用注视完成）。
     //NSArray *validModels = [SMGUtils removeRepeat:sorts convertBlock:^id(AIFeatureJvBuModel *obj) {
     //    return @(obj.assT.pId);
     //}];
     NSArray *validModels = sorts;
-    NSLog(@"ST窄出:%ld 识别到:%ld",validModels.count,decoratorJvBuModel.stModels.count);
-    
+    NSLog(@"ST窄出:%ld 识别到:%ld",validModels.count,group.count);
+
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in validModels) {
         //2025.04.22: 这儿性能不太好，经查现在特征识别不需要组码索引强度做竞争，先关掉。
         [AINetUtils insertRefPorts_General:model.assT.p content_ps:[SMGUtils convertArr:model.bestGVs.allValues convertBlock:^id(AIFeatureJvBuItem *obj) {
             return obj.baseGV_p;
         }] difStrong:1 header:model.assT.header];
-        
+
         // 更新内容强度（用于计算稳定性）。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
-        
+
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
         NSLog(@"%02ld. 单特征识别结果:T%04ld %@",[validModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
     }
-    
+
     //61. debugLog
     [TCRecognitionInvoke printLogDescRate:validModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^NSArray*(AIFeatureJvBuModel *obj) {
         return [SMGUtils convertArr:obj.allValidAbsST_ps convertBlock:^id(AIKVPointer *obj) {
@@ -569,7 +586,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     } convertMatchBlock:^float(AIFeatureJvBuModel *obj) {
         return obj.stScore;
     }];
-    
+
     // 更新logDesc到assT（参考36052）。
     for (AIFeatureJvBuModel *model in validModels) {
         // [model.assT updateLogDescItem:logDesc rate:model.matchValue];
@@ -579,9 +596,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             [validAbs updateLogDescItem:logDesc rate:absMatch * model.matchValue];
         }
     }
-    
-    //60. 更新赋值回去。
-    decoratorJvBuModel.stModels = [[NSMutableArray alloc] initWithArray:validModels];
+
+    //60. 窄出结果返回。
+    return [validModels mutableCopy];
 }
 
 /**
@@ -1872,9 +1889,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  _param newBestGVsAtProtoTRect 切入点在proto上的rect。
  *  _param newBestGVsAtAssRect 切入点在assST上的rect。
  */
-+(AIFeatureJvBuModel*) getSTModelFromPoolV2:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(NSMutableArray*)runedSTModelsPool newBeginGV_ProtoRect:(CGRect)newBeginGV_ProtoRect newBeginAssIndex:(NSInteger)newBeginAssIndex assST:(AIFeatureNode*)assST {
++(AIFeatureJvBuModel*) getSTModelFromPoolV2:(NSMutableArray*)runingSTModelsPool runedSTModelsPool:(PRJSModel*)runedSTModelsPool newBeginGV_ProtoRect:(CGRect)newBeginGV_ProtoRect newBeginAssIndex:(NSInteger)newBeginAssIndex assST:(AIFeatureNode*)assST {
     MapModel *newIndexKeys = [self getIndexsOfProtoRect:newBeginGV_ProtoRect];
-    NSArray *allPool = [SMGUtils collectArrA:runedSTModelsPool arrB:runingSTModelsPool];
+    NSArray *runedAll = [SMGUtils collectArrA:runedSTModelsPool.psArr arrB:runedSTModelsPool.rsArr];
+    NSArray *allPool = [SMGUtils collectArrA:runedAll arrB:runingSTModelsPool];
     
     for (AIFeatureJvBuModel *oldModel in allPool) {
         // 找出同一个pid（参考35105-TODO6.1）。
