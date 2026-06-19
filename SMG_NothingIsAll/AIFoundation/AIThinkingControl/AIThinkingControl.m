@@ -213,6 +213,7 @@ static AIThinkingControl *_instance;
     // 把识别到的P/R两组分别并入decorator（参考38065-TODO1）。
     [decoratorJvBuModel.stModels.psArr addObjectsFromArray:stModels.psArr];
     [decoratorJvBuModel.stModels.rsArr addObjectsFromArray:stModels.rsArr];
+    NSLog(@"ST[并入decorator后] ps=%ld rs=%ld", decoratorJvBuModel.stModels.psArr.count, decoratorJvBuModel.stModels.rsArr.count);
 
     // ST竞争。
     [TCRecognitionInvoke recognitionFeatureV2_Step3:decoratorJvBuModel ds:ds logDesc:logDesc protoCount:stOrders.count];

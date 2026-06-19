@@ -366,7 +366,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  */
 +(PRJSModel*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(PRJSModel*)stModels allGVs:(PRJSModel*)allGVs {
     // ================== 控制广入条数: refPorts竞争 ==================
-    
+
+    NSLog(@"ST[Step1] 入口: allGVs ps=%ld rs=%ld", allGVs.psArr.count, allGVs.rsArr.count);
+
     // 对所有gv识别结果的，所有refPorts。
     PRJSModel *result = [PRJSModel new];
     NSArray *prArrs = [SMGUtils collectArrA:allGVs.psArr arrB:allGVs.rsArr];
@@ -375,21 +377,25 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         NSValue *protoRect = gv.v2;
         NSArray *refPorts = [AINetUtils refPorts_All:gModel.match_p];
         for (AIPort *refPort in refPorts) {
-            
+
             // 把粒度差太多的去掉：大识别小用聚焦行为，小识别大用云台行为（参考38041-方案2）。
             CGFloat sizeRatio = refPort.rect.size.width / protoRect.CGRectValue.size.width;
             if (sizeRatio > 1.3f || sizeRatio < 0.8f) continue;
-            
+
             NSMutableArray *models = refPort.targetHavMv ? result.psArr : result.rsArr;
             [models addObject:[MapModel newWithV1:@(gModel.matchValue) v2:refPort v3:protoRect]];
         }
     }
-    result.psArr = [self recognitionFeatureV2_Step2:result.psArr ds:ds protoColorDic:protoColorDic stModels:stModels];
-    result.rsArr = [self recognitionFeatureV2_Step2:result.rsArr ds:ds protoColorDic:protoColorDic stModels:stModels];
+    NSLog(@"ST[Step1] 分流后(按refPort.targetHavMv): result ps=%ld rs=%ld", result.psArr.count, result.rsArr.count);
+
+    result.psArr = [self recognitionFeatureV2_Step2:result.psArr ds:ds protoColorDic:protoColorDic stModels:stModels group:@"P"];
+    result.rsArr = [self recognitionFeatureV2_Step2:result.rsArr ds:ds protoColorDic:protoColorDic stModels:stModels group:@"R"];
+
+    NSLog(@"ST[Step1] 返回: ps=%ld rs=%ld", result.psArr.count, result.rsArr.count);
     return result;
 }
 
-+(NSMutableArray*) recognitionFeatureV2_Step2:(NSArray*)refModels ds:(NSString*)ds protoColorDic:(NSDictionary*)protoColorDic stModels:(PRJSModel*)stModels {
++(NSMutableArray*) recognitionFeatureV2_Step2:(NSArray*)refModels ds:(NSString*)ds protoColorDic:(NSDictionary*)protoColorDic stModels:(PRJSModel*)stModels group:(NSString*)group {
     // 数据准备
     NSMutableArray *result = [NSMutableArray new];
     NSMutableArray *assRectExcept = [NSMutableArray new];// 被成功匹配过所有GV区域防重。
@@ -403,32 +409,35 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     NSArray *valids = ARR_SUB(sorts, 0, MAX(10, MIN(600, sorts.count * 0.2f)));
     
     // ================== 识别 ==================
-    
+
+    // 跳过原因计数（用于定位psArr为0的卡点）。
+    NSInteger skip_admitOver = 0, skip_assTNil = 0, skip_badIndex = 0, skip_poolHit = 0;
+
     // 每个refPort自举，到proto对应下相关区域的匹配度符合度等;
     NSMutableDictionary *assSTCounted = [NSMutableDictionary new];
     for (MapModel *gvResult in valids) {
         AIPort *refPort = gvResult.v2;
         CGRect protoRect = VALTOOK(gvResult.v3).CGRectValue;
-        
+
         // 同一个assST只有10次准入机会（参考36037-TODO1）。
         NSInteger oldCount = NUMTOOK([assSTCounted objectForKey:@(refPort.target_p.pointerId)]).integerValue;
-        if (oldCount > 9) continue;
-        
+        if (oldCount > 9) { skip_admitOver++; continue; }
+
         // 数据准备
         AIFeatureNode *assT = [SMGUtils searchNode:refPort.target_p];
-        if (!assT) continue;
+        if (!assT) { skip_assTNil++; continue; }
         NSInteger beginAssIndex = [assT indexOfRect:refPort.rect];//[assT.content_ps indexOfObject:gModel.match_p];
-        if (beginAssIndex == -1) continue;
-        
+        if (beginAssIndex == -1) { skip_badIndex++; continue; }
+
         CGRect lastAtAssRect = refPort.rect;//ARR_INDEX(assT.rects, beginAssIndex).CGRectValue;
         CGRect lastProtoRect = protoRect;
-        
+
         // 2025.06.12：lastProtoRect强转为Int，避免精度太高，各种aiPort中的以rect防重和rect判等都无效。
         lastProtoRect = CGRectMake((int)(lastProtoRect.origin.x+0.5f), (int)(lastProtoRect.origin.y+0.5f), (int)(lastProtoRect.size.width+0.5f), (int)(lastProtoRect.size.height+0.5f));
-        
+
         // STModel防重复用池。
         AIFeatureJvBuModel *oldModel = [self getSTModelFromPoolV2:result runedSTModelsPool:stModels newBeginGV_ProtoRect:lastProtoRect newBeginAssIndex:beginAssIndex assST:assT];
-        if (oldModel) continue;
+        if (oldModel) { skip_poolHit++; continue; }
         
         //21. 自举：每个assT一条条自举自身的gv（移到stZiJvWithAssT方法中循环并整体返回）。
         CGRect beginGV_AssT = [assT rectByIndex:beginAssIndex];
@@ -448,7 +457,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         // 更新准入机会。
         [assSTCounted setObject:@(oldCount + 1) forKey:@(model.assT.pId)];
     }
-    NSLog(@"ST广入:%ld 识别到:%ld",valids.count,result.count);
+    NSLog(@"ST[Step2][%@] 广入:%ld 识别到:%ld (跳过:准入超限=%ld assTNil=%ld badIndex=%ld poolHit=%ld)", group, valids.count, result.count, skip_admitOver, skip_assTNil, skip_badIndex, skip_poolHit);
     return result;
 }
 
@@ -497,9 +506,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     // 竞争因子计算：分区竞争匹配度。
     // [decoratorJvBuModel run4AreaRankRatioV2];
 
+    NSLog(@"ST[Step3] 竞争前: ps=%ld rs=%ld", decoratorJvBuModel.stModels.psArr.count, decoratorJvBuModel.stModels.rsArr.count);
+
     // ST递进淘汰法：P/R两组各自竞争窄出（参考38033 & 38065-TODO1）。
+    NSInteger psIn = decoratorJvBuModel.stModels.psArr.count;
     decoratorJvBuModel.stModels.psArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.psArr logDesc:logDesc];
+    NSLog(@"ST[Step4][P] 窄出: 入%ld -> 出%ld", psIn, decoratorJvBuModel.stModels.psArr.count);
+
+    NSInteger rsIn = decoratorJvBuModel.stModels.rsArr.count;
     decoratorJvBuModel.stModels.rsArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.rsArr logDesc:logDesc];
+    NSLog(@"ST[Step4][R] 窄出: 入%ld -> 出%ld", rsIn, decoratorJvBuModel.stModels.rsArr.count);
 }
 
 /**
