@@ -196,10 +196,10 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     }]);
     
     //4. 组码识别
-    PRJSModel *result = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
+    PRJSModel *cached = [AIRecognitionCache getCache:gvKey cacheBlock:^id{
         return [self recognitionSVAndGV_Step2:vModels at:at isOut:isOut rate:0.15 minLimit:3 forProtoGV:nil];
     }];
-    
+
     // for (AIMatchModel *gModel in allGVs) {
         // 防重：80%相似的区域内，多个一样的gModel，只做一次切入点。
         //NSMutableArray *gvIdProtoRects = [beginGVExcept objectForKey:@(gModel.match_p.pointerId)];
@@ -209,11 +209,13 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //}
         //[gvIdProtoRects addObject:@(protoRect)];
     // }
-    
-    result.rsArr = [SMGUtils convertArr:result.rsArr convertBlock:^id(AIMatchModel *gModel) {
+
+    // 注意: 不可直接修改cached的psArr/rsArr, 因cache按引用持有同一对象, 下次命中会再次包装导致MapModel套MapModel (参考crash: -[MapModel match_p])。
+    PRJSModel *result = [PRJSModel new];
+    result.rsArr = [SMGUtils convertArr:cached.rsArr convertBlock:^id(AIMatchModel *gModel) {
         return [MapModel newWithV1:gModel v2:@(protoRect)];
     }];
-    result.psArr = [SMGUtils convertArr:result.psArr convertBlock:^id(AIMatchModel *gModel) {
+    result.psArr = [SMGUtils convertArr:cached.psArr convertBlock:^id(AIMatchModel *gModel) {
         return [MapModel newWithV1:gModel v2:@(protoRect)];
     }];
     return result;
