@@ -369,6 +369,16 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 +(PRJSModel*) recognitionFeatureV2_Step1:(NSString*)at ds:(NSString*)ds isOut:(BOOL)isOut protoColorDic:(NSDictionary*)protoColorDic excepts:(DDic*)excepts gvRectExcept:(NSMutableDictionary*)gvRectExcept stModels:(PRJSModel*)stModels allGVs:(PRJSModel*)allGVs {
     // ================== 控制广入条数: refPorts竞争 ==================
 
+    //TODO(性能优化): 单次ST识别周期约3.5s, 根因是切入数太多(漏斗太宽), 非代码性能问题。
+    //  实测数据链路(2026.06.20):
+    //    allGVs(约1.1万, ps≈2400+rs≈9000)
+    //      → Step1分流展开到refPorts(约14.5万, ps≈1.6万+rs≈13万)
+    //      → Step2广入(每组600, P+R共1200)
+    //      → Step4窄出(每组10, P+R共20)
+    //    99.9%的计算量消耗在中间层(分流展开14.5万 + Step2广入1200), 最终只产出20条。
+    //  优化方向: 在更上游收紧漏斗(如Step1的sizeRatio过滤阈值, 或GV识别阶段加强竞争),
+    //           而非微优化单次调用(已验证: searchNode/池查询/切图+compare单次均为微秒~百微秒级, 无明显瓶颈)。
+
     NSLog(@"ST[Step1] 入口: allGVs ps=%ld rs=%ld", allGVs.psArr.count, allGVs.rsArr.count);
 
     // 对所有gv识别结果的，所有refPorts。
