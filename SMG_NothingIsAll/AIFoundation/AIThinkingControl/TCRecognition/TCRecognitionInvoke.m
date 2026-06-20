@@ -14,7 +14,7 @@
 
 
 @interface TCRecognitionInvoke ()
-+(NSMutableArray*) recognitionFeatureV2_Step4:(NSMutableArray*)group logDesc:(NSString*)logDesc;
++(NSMutableArray*) recognitionFeatureV2_Step4:(NSMutableArray*)group logDesc:(NSString*)logDesc groupTag:(NSString*)groupTag;
 @end
 
 
@@ -522,11 +522,11 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
 
     // ST递进淘汰法：P/R两组各自竞争窄出（参考38033 & 38065-TODO1）。
     NSInteger psIn = decoratorJvBuModel.stModels.psArr.count;
-    decoratorJvBuModel.stModels.psArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.psArr logDesc:logDesc];
+    decoratorJvBuModel.stModels.psArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.psArr logDesc:logDesc groupTag:@"P"];
     NSLog(@"ST[Step4][P] 窄出: 入%ld -> 出%ld", psIn, decoratorJvBuModel.stModels.psArr.count);
 
     NSInteger rsIn = decoratorJvBuModel.stModels.rsArr.count;
-    decoratorJvBuModel.stModels.rsArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.rsArr logDesc:logDesc];
+    decoratorJvBuModel.stModels.rsArr = [self recognitionFeatureV2_Step4:decoratorJvBuModel.stModels.rsArr logDesc:logDesc groupTag:@"R"];
     NSLog(@"ST[Step4][R] 窄出: 入%ld -> 出%ld", rsIn, decoratorJvBuModel.stModels.rsArr.count);
 }
 
@@ -534,7 +534,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  MARK:--------------------单特征识别结果竞争（单组窄出）--------------------
  *  @desc 对psArr或rsArr单独执行递进淘汰法、更新强度/映射/logDesc，返回窄出后的可变数组。
  */
-+(NSMutableArray*) recognitionFeatureV2_Step4:(NSMutableArray*)group logDesc:(NSString*)logDesc {
++(NSMutableArray*) recognitionFeatureV2_Step4:(NSMutableArray*)group logDesc:(NSString*)logDesc groupTag:(NSString*)groupTag {
     NSInteger finalCount = 10; // 最终保留条数
     NSInteger currentCount = group.count;
     double baseRate = currentCount > finalCount ? (double)finalCount / currentCount : 1.0;
@@ -587,7 +587,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
     //    return @(obj.assT.pId);
     //}];
     NSArray *validModels = sorts;
-    NSLog(@"ST窄出:%ld 识别到:%ld",validModels.count,group.count);
+    NSLog(@"[%@]ST窄出:%ld 识别到:%ld",groupTag,validModels.count,group.count);
 
     //61. 更新: ref强度 & 相似度 & 抽具象 & 映射 & conPort.rect;
     for (AIFeatureJvBuModel *model in validModels) {
@@ -600,14 +600,14 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [model.assT updateContentPortStrong:model.bestGVs.allKeys difStrong:1];
 
         //52. debug (\t符合度:%.1f\t健全度:%.1f)
-        NSLog(@"%02ld. 单特征识别结果:T%04ld %@",[validModels indexOfObject:model]+1,model.assT.pId,model.stScoreDesc);
+        NSLog(@"%02ld. [%@]单特征识别结果:T%04ld %@",[validModels indexOfObject:model]+1,groupTag,model.assT.pId,model.stScoreDesc);
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
     }
 
     //61. debugLog
-    [TCRecognitionInvoke printLogDescRate:validModels protoLogDesc:nil prefix:@"单特征" convertNodeBlock:^NSArray*(AIFeatureJvBuModel *obj) {
+    [TCRecognitionInvoke printLogDescRate:validModels protoLogDesc:nil prefix:STRFORMAT(@"[%@]单特征",groupTag) convertNodeBlock:^NSArray*(AIFeatureJvBuModel *obj) {
         return [SMGUtils convertArr:obj.allValidAbsST_ps convertBlock:^id(AIKVPointer *obj) {
             return [SMGUtils searchNode:obj];
         }];

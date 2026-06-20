@@ -220,7 +220,7 @@ static AIThinkingControl *_instance;
 
     // GT识别（GT不区分P/R，用合并后的stModels）。
     NSArray *allSTModels = [decoratorJvBuModel stModelsAll];
-    NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:allSTModels logDesc:logDesc colorDic:colorDic ds:ds];
+    NSArray *gtModels = [TCRecognitionInvoke recognitionGroupFeatureV9_Step1:decoratorJvBuModel.stModels.psArr logDesc:logDesc colorDic:colorDic ds:ds];
     [decoratorJvBuModel.gtModels addObjectsFromArray:gtModels];
 
     // GT竞争。
@@ -247,7 +247,7 @@ static AIThinkingControl *_instance;
     // AIGroupFeatureNode *protoGT = [self commitInput4ProtoGT:colorDic at:at ds:ds logDesc:logDesc jvBuModel:decoratorJvBuModel];
     
     // debug
-    NSLog(@"\t识别结果数:(GV:%ld ST:%ld GT:%ld)",allGVs.psArr.count + allGVs.rsArr.count,allSTModels.count,decoratorJvBuModel.gtModels.count);
+    NSLog(@"\t识别结果数:(GV:[P:%ld+R:%ld] ST:[P:%ld+R:%ld] GT:%ld)",allGVs.psArr.count,allGVs.rsArr.count,decoratorJvBuModel.stModels.psArr.count,decoratorJvBuModel.stModels.rsArr.count,decoratorJvBuModel.gtModels.count);
     // NSLog(@"\tProto构建:(ST%ld(%ld) GT%ld(%ld))",protoST.pId,protoST.count,protoGT.pId,protoGT.count);
 
     // 聚焦反射反应：找最明确区域一条，触发聚焦反射（参考38065-TODO3 & 38082-方案3）。
@@ -259,6 +259,11 @@ static AIThinkingControl *_instance;
         // 反射反应。
         CGRect fromRect = mostClear.assST_ProtoRect;
         [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height),logDesc,@(looop)]];
+        
+        // TODOTOMORROW20260620: 此处用assT.valids来构建matchAlgs_PS，但是：
+        // 1. valids未必真是有targetHavMv的。
+        // 2. decoratorJvBuModel.stModels.psArr却是都有targetHavMv指向的。
+        
         
         // 把hsbST构建的alg输入到瞬时序列。
         [TCInput rInput:mostClear.assT except_ps:nil fuJia:mostClear];
@@ -284,11 +289,6 @@ static AIThinkingControl *_instance;
         NSDictionary *modelDic = [NSObject getDic:unknownModel containParent:true];
         NSArray *algsArr = [theNet algModelConvert2Pointers:modelDic algsType: NSStringFromClass(unknownModel.class)];
         AICMVNodeBase *mvNode = [theNet createConMv:algsArr];
-
-        // TODOTOMORROW20260616: 补上havTargetMv时，此处ST识别结果，仍为0条。
-        // 在SV，GV，ST都即保留R结果，也保留P结果，不进行区分。
-        // 但即使如此，时序识别还是0条。。。
-        // 得把整个过程中的日志打出来，看在哪步没了的。或者每一步广入窄出，都分成R和P两种结果，各自竞争，各自保留足够的结果条数。
         
         //2. 加入瞬时记忆 & 生成时序指向mv等;
         [TCInput pInput:mvNode];
