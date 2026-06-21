@@ -604,6 +604,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         [SMGUtils runByMainQueue:^{
             [theApp.imgTrainerView setDataForJvBuModelV2:model lab:STRFORMAT(@"%ld-识别单T%ld(%ld/%ld)",[validModels indexOfObject:model]+1, model.assT.pId,model.bestGVs.count,model.assT.count) left:0 top:0 tvId:1];
         }];
+        
+        // TODOTOMORROW20260621: 抽具象关联ProtoST与AssST。
     }
 
     //61. debugLog
@@ -1212,8 +1214,9 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         //3. 每个abs_p分别索引;
         NSArray *protoAlgAbs_ps = [self getProtoAlgAbsPs:protoOrRegroupFo protoIndex:i inModel:inModel fromRegroup:fromRegroup];
         
-        //4. 特征时,不执行“仅保留似层”（因为特征识别，并非仅识别似层，validAbs_ps全都是似层的）;
-        if (!ISOK(protoAlg, AIFeatureNode.class)) {
+        //4. 特征时,不执行”仅保留似层”（因为特征识别，并非仅识别似层，validAbs_ps全都是似层的）;
+        BOOL protoAlgIsFeature = ISOK(protoAlg, AIFeatureNode.class);
+        if (!protoAlgIsFeature) {
             //4. 仅保留似层: 索引absAlg是交层,则直接continue (参考33111-TODO1);
             protoAlgAbs_ps = [SMGUtils filterArr:protoAlgAbs_ps checkValid:^BOOL(AIKVPointer *item) {
                 return !item.isJiao;
@@ -1240,20 +1243,26 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 }
             }];
             NSLog(@"targetHavMv过滤后:%ld",refPorts.count);
+
+            // 38103: 统计refPorts后续淘汰原因，定位"过滤后很多条但最终0条"的卡点。
+            NSInteger skip_except = 0, skip_jiao = 0, skip_checkValid = 0, success = 0;
+
+            // TODOTOMORROW20260621: 打日志看一下，此处过滤后，还有很多条，但最终识别条数却是0条。
             
             //7. 每个refPort做两件事:
             for (AIPort *refPort in refPorts) {
                 //8. 不应期 -> 不可激活 & 收集到不应期同一fo仅处理一次;
-                if ([SMGUtils containsSub_p:refPort.target_p parent_ps:except_ps]) continue;
+                if ([SMGUtils containsSub_p:refPort.target_p parent_ps:except_ps]) { skip_except++; continue; }
                 except_ps = [SMGUtils collectArrA:except_ps arrB:@[refPort.target_p]];
-                
+
                 //7. 仅保留似层: 联想到的fo是交层,则直接continue (参考33111-TODO1);
-                if (refPort.target_p.isJiao) continue;
-                
+                //   特征时跳过此过滤（特征识别并非仅识别似层，参考38103）。
+                if (!protoAlgIsFeature && refPort.target_p.isJiao) { skip_jiao++; continue; }
+
                 //7. 全含判断;
                 AIFoNodeBase *refFo = [SMGUtils searchNode:refPort.target_p];
                 NSDictionary *indexDic = [self recognitionFo_CheckValidV3:refFo protoOrRegroupFo:protoOrRegroupFo fromRegroup:fromRegroup inModel:inModel];
-                if (!DICISOK(indexDic)) continue;
+                if (!DICISOK(indexDic)) { skip_checkValid++; continue; }
                 
                 //7. 取absCutIndex, 说明: cutIndex指已发生到的index,后面则为时序预测; matchValue指匹配度(0-1)
                 NSInteger cutIndex = [AINetUtils getCutIndexByIndexDicV2:indexDic protoOrRegroupCutIndex:protoOrRegroupCutIndex];
@@ -1276,7 +1285,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
                 } else {
                     [protoRModels addObject:newMatchFo];
                 }
+                success++;
             }
+
+            // 38103: 打印本absAlg的refPorts淘汰分布
+            NSLog(@"[时序识别统计] absAlg=%lld refPorts=%ld 成功=%ld 淘汰(不应期=%ld 交层=%ld 全含判断失败=%ld)",
+                  absAlg_p.pointerId, refPorts.count, success, skip_except, skip_jiao, skip_checkValid);
         }
     }
     

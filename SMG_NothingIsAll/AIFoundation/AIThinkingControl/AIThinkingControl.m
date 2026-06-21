@@ -260,13 +260,6 @@ static AIThinkingControl *_instance;
         CGRect fromRect = mostClear.assST_ProtoRect;
         [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height),logDesc,@(looop)]];
 
-        
-        // TODOTOMORROW20260621: 如果这里不需要取mostClear了，那反射反应到哪个rect？
-        // 所以MostClear肯定还是需要的，只是到瞬时序列成了protoST，时序识别也成了psArr而已。
-        // 1. psArr索引识别时序肯定需要。
-        // 2. 反射反应的rect肯定需要。
-        // 3. 
-        
         // 用protoST做protoAlg，psArr转matchAlgs_PS做Fo识别的索引切入
         // （psArr里的assT都有targetHavMv指向，allValidAbsST_ps未必有，参考38103）。
         [TCInput rInput:protoST except_ps:nil fuJia:decoratorJvBuModel];
