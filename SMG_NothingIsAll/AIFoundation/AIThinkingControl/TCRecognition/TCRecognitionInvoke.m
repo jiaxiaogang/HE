@@ -1289,8 +1289,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
 
             // 38103: 打印本absAlg的refPorts淘汰分布
-            NSLog(@"[时序识别统计] absAlg=%lld refPorts=%ld 成功=%ld 淘汰(不应期=%ld 交层=%ld 全含判断失败=%ld)",
-                  absAlg_p.pointerId, refPorts.count, success, skip_except, skip_jiao, skip_checkValid);
+            // NSLog(@"[时序识别统计] absAlg=%lld refPorts=%ld 成功=%ld 淘汰(不应期=%ld 交层=%ld 全含判断失败=%ld)",
+            //       absAlg_p.pointerId, refPorts.count, success, skip_except, skip_jiao, skip_checkValid);
         }
     }
     
@@ -1356,12 +1356,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         AIKVPointer *protoAlg_p = ARR_INDEX(protoOrRegroupFo.content_ps, protoIndex);
         for (NSInteger assIndex = nextStartForAssIndex; assIndex < assFo.count; assIndex++) {
             AIKVPointer *assAlg_p = ARR_INDEX(assFo.content_ps, assIndex);
-            
+
             //13. 概念识别没有进行关联,所以此处也调用getProtoAlgAbsPs,替代mIsC,末帧时直接可以用inModel.matchAlg_PS.contains()来 (参考3313b-TODO5);
             NSArray *protoAlgAbs_ps = [self getProtoAlgAbsPs:protoOrRegroupFo protoIndex:protoIndex inModel:inModel fromRegroup:fromRegroup];
             BOOL mIsC = [protoAlg_p isEqual:assAlg_p] || [protoAlgAbs_ps containsObject:assAlg_p];
             if (mIsC) {
-                
+
                 //13. 匹配时_记录下次循环ass时,从哪帧开始倒序循环: nextMaxForAssIndex进度;
                 //2024.12.01: 修复此处有可能输出0->1,1->0的BUG (参考33137-问题1);
                 nextStartForAssIndex = assIndex + 1;
@@ -1371,9 +1371,12 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
         }
     }
-    
+
+    // 38103: STEP1结束后打印映射概况（无条件，定位全含失败类型）
+    // NSLog(@"[全含判断] assFo=%ld帧 protoFo=%ld帧 映射数=%ld %@", assFo.count, protoOrRegroupFo.count, indexDic.count, CLEANSTR(indexDic));
+
     //==================== STEP2: 判断含不含proto末帧,以及前段匹配是否都充足 (参考33093-TIPS) ====================
-    
+
     //21. 前段必须全含,缺一帧也不行: 全含时,它发现的最大index就等于发现映射数 (如: 最大下标3时,发现4个);
     //说明: 中途assFo有任意一帧在proto中未匹配到,则全含失败;
     NSInteger maxAssIndex = -1;
@@ -1381,13 +1384,15 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (assIndex.integerValue > maxAssIndex) maxAssIndex = assIndex.integerValue;
     }
     if (maxAssIndex != indexDic.count - 1) {
+        // NSLog(@"[全含判断失败] 前段非全含: maxAssIndex=%ld 映射数=%ld (assFo=%ld帧 protoFo=%ld帧)", maxAssIndex, indexDic.count, assFo.count, protoOrRegroupFo.count);
         if (Log4MFo) NSLog(@"ass前段有一帧在proto未找到,则非全含:%@",CLEANSTR(indexDic));
         return [NSMutableDictionary new];
     }
-    
+
     //22. TI时序识别时,要求必须包含proto末帧,否则返回failure;
     //说明: 一帧帧全匹配到了,但最终没匹配到proto的末帧,也全含失败;
     if (!fromRegroup && ![indexDic objectForKey:@(protoOrRegroupFo.count - 1)]) {
+        // NSLog(@"[全含判断失败] 末帧未匹配: protoFo末帧index=%ld 未在indexDic中 (assFo=%ld帧 protoFo=%ld帧)", protoOrRegroupFo.count - 1, assFo.count, protoOrRegroupFo.count);
         if (Log4MFo) NSLog(@"ass最后未与proto末帧匹配上,则非全含:%@",CLEANSTR(indexDic));
         return [NSMutableDictionary new];
     }
