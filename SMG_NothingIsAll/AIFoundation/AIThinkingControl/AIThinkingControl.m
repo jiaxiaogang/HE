@@ -259,14 +259,17 @@ static AIThinkingControl *_instance;
         // 反射反应。
         CGRect fromRect = mostClear.assST_ProtoRect;
         [AIReactorControl commitReactor:FOCUS_RDS datas:@[@(fromRect.origin.x),@(fromRect.origin.y),@(fromRect.size.width),@(fromRect.size.height),logDesc,@(looop)]];
+
         
-        // TODOTOMORROW20260620: 此处用assT.valids来构建matchAlgs_PS，但是：
-        // 1. valids未必真是有targetHavMv的。
-        // 2. decoratorJvBuModel.stModels.psArr却是都有targetHavMv指向的。
+        // TODOTOMORROW20260621: 如果这里不需要取mostClear了，那反射反应到哪个rect？
+        // 所以MostClear肯定还是需要的，只是到瞬时序列成了protoST，时序识别也成了psArr而已。
+        // 1. psArr索引识别时序肯定需要。
+        // 2. 反射反应的rect肯定需要。
+        // 3. 
         
-        
-        // 把hsbST构建的alg输入到瞬时序列。
-        [TCInput rInput:mostClear.assT except_ps:nil fuJia:mostClear];
+        // 用protoST做protoAlg，psArr转matchAlgs_PS做Fo识别的索引切入
+        // （psArr里的assT都有targetHavMv指向，allValidAbsST_ps未必有，参考38103）。
+        [TCInput rInput:protoST except_ps:nil fuJia:decoratorJvBuModel];
         
         // 把stModel.assST_ProtoRect 和 stModel.clarity 封装成稀疏码。
         AIKVPointer *x_p = [theNet getNetDataPointerWithData:@(fromRect.origin.x) algsType:at dataSource:STRFORMAT(@"%@_x",ds) isOut:false];

@@ -45,21 +45,20 @@
     
     // 特征不做概念识别（参考38083-解答）。
     if (ISOK(algNode, AIFeatureNode.class)) {
-        
-        // 把jvBuModel转成AIShortMatchModel类型，以兼容。
-        // assST的有效抽象都计为概念识别结果。
-        AIFeatureJvBuModel *jvBuModel = fuJia;
-        AIFeatureNode *assST = jvBuModel.assT;
-        NSArray *allValids = jvBuModel.allValidAbsST_ps;
-        
-        // 把assST做为protoAlg
-        mModel.protoAlg = assST;
-        
-        // 把allValidAbsST转存到matchAlgs_PS下
-        mModel.matchAlgs_PS = [SMGUtils convertArr:allValids convertBlock:^id(AIKVPointer *obj) {
+
+        // 用protoST做protoAlg，psArr转matchAlgs_PS做Fo识别的索引切入
+        // （psArr里的assT都有targetHavMv指向，allValidAbsST_ps未必有，参考38103）。
+        AIFeatureJvBuModels *decorator = fuJia;
+        AIFeatureNode *protoST = (AIFeatureNode*)algNode;
+
+        // 把protoST做为protoAlg
+        mModel.protoAlg = protoST;
+
+        // 把stModels.psArr转为matchAlgs_PS（每项取assT.p，都有targetHavMv指向）。
+        mModel.matchAlgs_PS = [SMGUtils convertArr:decorator.stModels.psArr convertBlock:^id(AIFeatureJvBuModel *stModel) {
             AIMatchAlgModel *model = [[AIMatchAlgModel alloc] init];
-            model.matchAlg = obj;
-            model.matchCount = (int)assST.count;
+            model.matchAlg = stModel.assT.p;
+            model.matchCount = (int)stModel.assT.count;
             return model;
         }];
     } else {
