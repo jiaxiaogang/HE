@@ -1343,7 +1343,8 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
  *  @result 判断protoFo是否全含assFo: 成功时返回indexDic / 失败时返回空dic;
  */
 +(NSDictionary*) recognitionFo_CheckValidV3:(AIFoNodeBase*)assFo protoOrRegroupFo:(AIFoNodeBase*)protoOrRegroupFo fromRegroup:(BOOL)fromRegroup inModel:(AIShortMatchModel*)inModel {
-    if (Log4MFo) NSLog(@"------------------------ 时序全含检查 ------------------------\nass:%@->%@",Fo2FStr(assFo),Mvp2Str(assFo.cmvNode_p));
+    if (Log4MFo) NSLog(@"------------------------ 时序全含检查 ------------------------\nproto:%@\nass:%@->%@",
+                       Fo2FStr(protoOrRegroupFo),Fo2FStr(assFo),Mvp2Str(assFo.cmvNode_p));
     
     //==================== STEP1: 从前往后取匹配映射indexDic ====================
     
@@ -1371,10 +1372,7 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
             }
         }
     }
-
-    // 38103: STEP1结束后打印映射概况（无条件，定位全含失败类型）
-    // NSLog(@"[全含判断] assFo=%ld帧 protoFo=%ld帧 映射数=%ld %@", assFo.count, protoOrRegroupFo.count, indexDic.count, CLEANSTR(indexDic));
-
+    
     //==================== STEP2: 判断含不含proto末帧,以及前段匹配是否都充足 (参考33093-TIPS) ====================
 
     //21. 前段必须全含,缺一帧也不行: 全含时,它发现的最大index就等于发现映射数 (如: 最大下标3时,发现4个);
@@ -1384,15 +1382,19 @@ static int _curMaxSize; // 当前视觉输入的宽高尺寸。
         if (assIndex.integerValue > maxAssIndex) maxAssIndex = assIndex.integerValue;
     }
     if (maxAssIndex != indexDic.count - 1) {
-        // NSLog(@"[全含判断失败] 前段非全含: maxAssIndex=%ld 映射数=%ld (assFo=%ld帧 protoFo=%ld帧)", maxAssIndex, indexDic.count, assFo.count, protoOrRegroupFo.count);
         if (Log4MFo) NSLog(@"ass前段有一帧在proto未找到,则非全含:%@",CLEANSTR(indexDic));
+        
+        // TODOTOMORROW20260622: 此处，之所以无法全含，是因为assFo的前两帧，是上一次发生的：未知恐惧mv和反射反应rect。
+        // proto:F12[T125{Mnist0 = 2.00;}]
+        // ass:F2570[M3{↑无-11},A2563(20,A13,26,A26,-6),T181{Mnist1 = 0.24;Mnist0 = 2.00;},A2568(7,20,23.3333,A9,0.6762)]->M5{↑无-10}
+        // 待查：所以得查下，mv没切断fo构建的话，这个assFo哪构建的，构建时做了哪些处理？为什么会是这样？另外得查下：为什么第3帧不是另一个mv，不是mv在rect之后rInput的吗？
+        
         return [NSMutableDictionary new];
     }
 
     //22. TI时序识别时,要求必须包含proto末帧,否则返回failure;
     //说明: 一帧帧全匹配到了,但最终没匹配到proto的末帧,也全含失败;
     if (!fromRegroup && ![indexDic objectForKey:@(protoOrRegroupFo.count - 1)]) {
-        // NSLog(@"[全含判断失败] 末帧未匹配: protoFo末帧index=%ld 未在indexDic中 (assFo=%ld帧 protoFo=%ld帧)", protoOrRegroupFo.count - 1, assFo.count, protoOrRegroupFo.count);
         if (Log4MFo) NSLog(@"ass最后未与proto末帧匹配上,则非全含:%@",CLEANSTR(indexDic));
         return [NSMutableDictionary new];
     }
